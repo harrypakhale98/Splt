@@ -8,6 +8,10 @@ import Observation
 final class Router {
     var selectedTab: AppTab = .groups
     var sheet: AppSheet?
+    /// An invite that was opened from a link or a scan, waiting for the add friend sheet to confirm it.
+    var pendingInvite: FriendInvite?
+    /// A friend whose settle up sheet should open as soon as their screen appears.
+    var pendingSettleFriend: UUID?
 
     var friendsPath: [Route] = []
     var groupsPath: [Route] = []
@@ -61,8 +65,16 @@ final class Router {
             sheet = nil
             friendsPath = [.friend(id)]
             selectedTab = .friends
+        case .settle(let id):
+            sheet = nil
+            friendsPath = [.friend(id)]
+            pendingSettleFriend = id
+            selectedTab = .friends
         case .addExpense:
             sheet = .addExpense
+        case .invite(let invite):
+            pendingInvite = invite
+            sheet = .newFriend
         }
     }
 }
