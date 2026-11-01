@@ -42,9 +42,16 @@ final class GroupSettingsViewModel {
     @ObservationIgnored private let expenses: any ExpenseRepository
     @ObservationIgnored private let payments: any PaymentRepository
     @ObservationIgnored private let now: @Sendable () -> Date
+    @ObservationIgnored private let leftGroups: LeftGroupsStore
 
-    init(groupID: GroupID, services: DataServices, now: @escaping @Sendable () -> Date = { Date() }) {
+    init(
+        groupID: GroupID,
+        services: DataServices,
+        leftGroups: LeftGroupsStore = LeftGroupsStore(),
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.groupID = groupID
+        self.leftGroups = leftGroups
         groups = services.groups
         people = services.people
         expenses = services.expenses
@@ -204,6 +211,7 @@ final class GroupSettingsViewModel {
         try? await sharing.leave(groupID: groupID)
         do {
             try groups.removeMember(myRow.person.id, from: groupID)
+            leftGroups.insert(groupID)
             return true
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)

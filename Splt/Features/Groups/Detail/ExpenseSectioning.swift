@@ -33,11 +33,12 @@ enum ExpenseSectioning {
     static func title(
         for section: ExpenseSection, grouping: ExpenseGrouping, tripStart: Date?, calendar: Calendar, locale: Locale
     ) -> String {
+        let style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
         switch grouping {
         case .month:
-            return section.start.formatted(.dateTime.month(.wide).year().locale(locale))
+            return section.start.formatted(style.month(.wide).year())
         case .day:
-            let day = section.start.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(locale))
+            let day = section.start.formatted(style.weekday(.abbreviated).month(.abbreviated).day())
             guard let number = dayNumber(of: section.start, tripStart: tripStart, calendar: calendar), number >= 1 else {
                 return day
             }

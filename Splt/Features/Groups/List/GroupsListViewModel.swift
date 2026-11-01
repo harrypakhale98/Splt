@@ -8,31 +8,25 @@ import SpltCore
 final class GroupsListViewModel {
     var query = ""
     var errorMessage: String?
-    private(set) var meID: PersonID?
 
     @ObservationIgnored private let store: GroupsStore
     @ObservationIgnored private let groups: any GroupRepository
-    @ObservationIgnored private let people: any PersonRepository
+    @ObservationIgnored private let leftGroups: LeftGroupsStore
 
-    init(services: DataServices) {
+    init(services: DataServices, leftGroups: LeftGroupsStore = LeftGroupsStore()) {
         store = services.groupsStore
         groups = services.groups
-        people = services.people
+        self.leftGroups = leftGroups
         refresh()
     }
 
     func refresh() {
-        meID = (try? people.me())?.id
         store.refresh()
     }
 
-    /// Groups you belong to. The hidden two person groups behind friends are not groups people made.
+    /// Groups people made and you have not left. The hidden two person groups behind friends are not among them.
     private var listed: [GroupSummary] {
-        store.summaries.filter { summary in
-            guard summary.group.kind != .friend else { return false }
-            guard let meID else { return true }
-            return summary.group.memberIDs.contains(meID)
-        }
+        store.summaries.filter { $0.group.kind != .friend && !leftGroups.contains($0.group.id) }
     }
 
     var hasGroups: Bool { !listed.isEmpty }

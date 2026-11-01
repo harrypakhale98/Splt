@@ -24,11 +24,10 @@ enum GroupSymbolSuggester {
 
     /// A symbol for the first matching word, or nil when nothing fits.
     static func symbol(for name: String) -> String? {
-        let words = name.lowercased()
-            .split(whereSeparator: { !$0.isLetter })
-            .map { singular(String($0)) }
+        let words = name.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init)
         for word in words {
-            if let match = table.first(where: { $0.words.contains(word) }) {
+            let candidates = [word, singular(word)]
+            if let match = table.first(where: { entry in candidates.contains { entry.words.contains($0) } }) {
                 return match.symbol
             }
         }
