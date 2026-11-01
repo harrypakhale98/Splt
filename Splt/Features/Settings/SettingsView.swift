@@ -32,17 +32,7 @@ struct SettingsView: View {
                 Text("Notifications remind you about balances and new expenses in your groups.")
             }
 
-            Section {
-                LabeledContent {
-                    Text("Not Set Up")
-                } label: {
-                    Label("iCloud Sync", systemImage: "icloud")
-                }
-            } header: {
-                Text("Sync")
-            } footer: {
-                Text("Syncing groups with friends through iCloud is coming. For now your data stays on this device.")
-            }
+            SyncStatusSection()
 
             Section("Free Forever") {
                 Text("Splt has no ads, no limits and no subscription, now and later.")
@@ -61,6 +51,14 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .haptic(.selection, trigger: preferences.hapticsEnabled)
+        .onChange(of: preferences.notificationsEnabled) { _, isOn in
+            guard isOn else { return }
+            Task {
+                if await SyncRuntime.shared.requestNotificationAuthorization() == false {
+                    preferences.notificationsEnabled = false
+                }
+            }
+        }
     }
 }
 
