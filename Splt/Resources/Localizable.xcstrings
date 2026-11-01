@@ -1,654 +1,2841 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "About": {
-      "comment": "Settings section title",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "%" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
           }
         }
       }
     },
-    "Account": {
-      "comment": "Tab and screen title for the account and settings",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Account"
+    "%@ %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld"
           }
         }
       }
     },
-    "Activity": {
-      "comment": "Tab and screen title for recent expenses and payments",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activity"
+    "%@ added %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ added %2$@"
           }
         }
       }
     },
-    "Add Expense": {
-      "comment": "Button that starts adding an expense",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add Expense"
+    "%@ and %@ paid" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ and %2$@ paid"
           }
         }
       }
     },
-    "Add Friend": {
-      "comment": "Button that starts adding a friend",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add Friend"
+    "%@ archived the group" : {
+
+    },
+    "%@ changed the %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ changed the %2$@"
           }
         }
       }
     },
-    "Add friends to split bills and see who owes what.": {
-      "comment": "Empty state message on the Friends tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add friends to split bills and see who owes what."
+    "%@ commented on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ commented on %2$@"
           }
         }
       }
     },
-    "Appearance": {
-      "comment": "Setting row for light or dark appearance",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance"
+    "%@ commented on %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ commented on %2$@: %3$@"
           }
         }
       }
     },
-    "Close": {
-      "comment": "Button that dismisses a sheet",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+    "%@ commented: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ commented: %2$@"
           }
         }
       }
     },
-    "Coming Soon": {
-      "comment": "Title of a placeholder for a feature that is not built yet",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coming Soon"
+    "%@ created %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ created %2$@"
           }
         }
       }
     },
-    "Create Group": {
-      "comment": "Button that starts creating a group",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create Group"
+    "%@ deleted %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ deleted %2$@"
           }
         }
       }
     },
-    "Create a group for a trip, a home or a night out.": {
-      "comment": "Empty state message on the Groups tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create a group for a trip, a home or a night out."
+    "%@ edited %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ edited %2$@"
           }
         }
       }
     },
-    "Currency or code": {
-      "comment": "Search field prompt in the currency list",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Currency or code"
+    "%@ for the same amount was added on %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ for the same amount was added on %2$@."
           }
         }
       }
     },
-    "Default Currency": {
-      "comment": "Setting and screen title for the currency new groups start with",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Default Currency"
+    "%@ imported %lld expenses" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ imported %2$lld expenses"
           }
         }
       }
     },
-    "Expenses and payments from your groups will show up here.": {
-      "comment": "Empty state message on the Activity tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expenses and payments from your groups will show up here."
+    "%@ imported %lld expenses and %lld payments" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ imported %2$lld expenses and %3$lld payments"
           }
         }
       }
     },
-    "Feedback": {
-      "comment": "Settings section title",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Feedback"
+    "%@ in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ in %2$@"
           }
         }
       }
     },
-    "Find friends, groups and expenses.": {
-      "comment": "Empty state message on the search screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find friends, groups and expenses."
+    "%@ invited you to split costs on Splt." : {
+
+    },
+    "%@ is left to assign." : {
+
+    },
+    "%@ is not in this group, so they were left out." : {
+
+    },
+    "%@ is owed %@ in this group. Settle up before removing them." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is owed %2$@ in this group. Settle up before removing them."
           }
         }
       }
     },
-    "Free Forever": {
-      "comment": "Settings section title",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Free Forever"
+    "%@ left a comment" : {
+
+    },
+    "%@ left to assign" : {
+
+    },
+    "%@ may still owe you %@. Tap to send a friendly nudge." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ may still owe you %2$@. Tap to send a friendly nudge."
           }
         }
       }
     },
-    "Friend": {
-      "comment": "Title of a single friend screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Friend"
+    "%@ of the payments is still missing." : {
+
+    },
+    "%@ over" : {
+
+    },
+    "%@ owes %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ owes %2$@"
           }
         }
       }
     },
-    "Friend details will appear here.": {
-      "comment": "Placeholder message on a friend screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Friend details will appear here."
+    "%@ owes %@ in this group. Settle up before removing them." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ owes %2$@ in this group. Settle up before removing them."
           }
         }
       }
     },
-    "Friends": {
-      "comment": "Tab and screen title for the list of friends",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Friends"
+    "%@ owes you" : {
+
+    },
+    "%@ owes you %@, and you owe %@ %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ owes you %2$@, and you owe %3$@ %4$@."
           }
         }
       }
     },
-    "Friends, groups, expenses": {
-      "comment": "Search field prompt",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Friends, groups, expenses"
+    "%@ owes you %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ owes you %2$@."
           }
         }
       }
     },
-    "General": {
-      "comment": "Settings section title",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "General"
+    "%@ paid" : {
+
+    },
+    "%@ paid %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ paid %2$@"
           }
         }
       }
     },
-    "Group": {
-      "comment": "Title of a single group screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Group"
+    "%@ paid %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ paid %2$@ %3$@"
           }
         }
       }
     },
-    "Group details will appear here.": {
-      "comment": "Placeholder message on a group screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Group details will appear here."
+    "%@ paid you" : {
+
+    },
+    "%@ paid you %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ paid you %2$@"
           }
         }
       }
     },
-    "Groups": {
-      "comment": "Tab and screen title for the list of groups",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Groups"
+    "%@ pays %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ pays %2$@"
           }
         }
       }
     },
-    "Haptics": {
-      "comment": "Setting that turns vibration feedback on or off",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Haptics"
+    "%@ pays you" : {
+
+    },
+    "%@ recorded a payment" : {
+
+    },
+    "%@ removed %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ removed %2$@"
           }
         }
       }
     },
-    "License": {
-      "comment": "Software license row",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "License"
+    "%@ renamed %@ to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ renamed %2$@ to %3$@"
           }
         }
       }
     },
-    "MIT": {
-      "comment": "Name of the software license",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MIT"
+    "%@ renamed the group to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ renamed the group to %2$@"
           }
         }
       }
     },
-    "New Expense": {
-      "comment": "Sheet title for adding an expense",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New Expense"
+    "%@ restored %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ restored %2$@"
           }
         }
       }
     },
-    "New Friend": {
-      "comment": "Sheet title for adding a friend",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New Friend"
+    "%@ restored the group" : {
+
+    },
+    "%@ shares" : {
+
+    },
+    "%@ to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ to %2$@"
           }
         }
       }
     },
-    "New Group": {
-      "comment": "Button and sheet title for creating a group",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New Group"
+    "%@ undid %@ paying %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ undid %2$@ paying %3$@ %4$@"
           }
         }
       }
     },
-    "New groups start with this currency. Splt follows the light or dark appearance of your device.": {
-      "comment": "Footer of the General settings section",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New groups start with this currency. Splt follows the light or dark appearance of your device."
+    "%@ undid a payment" : {
+
+    },
+    "%@ will still be owed." : {
+
+    },
+    "%@: owes you %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: owes you %2$@"
           }
         }
       }
     },
-    "No Activity Yet": {
-      "comment": "Empty state title on the Activity tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No Activity Yet"
+    "%@: you owe %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: you owe %2$@"
           }
         }
       }
     },
-    "No Friends Yet": {
-      "comment": "Empty state title on the Friends tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No Friends Yet"
+    "%lld" : {
+
+    },
+    "%lld new updates in your groups." : {
+
+    },
+    "%lld people paid" : {
+
+    },
+    "%lld, including you" : {
+
+    },
+    "0" : {
+
+    },
+    "1 %@ = %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1 %1$@ = %2$@ %3$@"
           }
         }
       }
     },
-    "No Groups Yet": {
-      "comment": "Empty state title on the Groups tab",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No Groups Yet"
+    "1 %@ in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1 %1$@ in %2$@"
           }
         }
       }
     },
-    "Not Set Up": {
-      "comment": "Value of the iCloud sync row",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not Set Up"
+    "A gentle reminder about %@" : {
+
+    },
+    "A new expense is added automatically %@, starting after this one." : {
+
+    },
+    "About" : {
+      "comment" : "Settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
           }
         }
       }
     },
-    "Notifications": {
-      "comment": "Setting that turns notifications on or off",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notifications"
+    "Account" : {
+      "comment" : "Tab and screen title for the account and settings",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account"
           }
         }
       }
     },
-    "Notifications remind you about balances and new expenses in your groups.": {
-      "comment": "Footer of the Feedback settings section",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notifications remind you about balances and new expenses in your groups."
+    "Activity" : {
+      "comment" : "Tab and screen title for recent expenses and payments",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
           }
         }
       }
     },
-    "Same as System": {
-      "comment": "Value of the appearance row",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Same as System"
+    "Add" : {
+
+    },
+    "Add ${title} for ${amount}" : {
+
+    },
+    "Add %@" : {
+
+    },
+    "Add Expense" : {
+      "comment" : "Button that starts adding an expense",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Expense"
           }
         }
       }
     },
-    "Search": {
-      "comment": "Title of the search screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
+    "Add Friend" : {
+      "comment" : "Button that starts adding a friend",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Friend"
           }
         }
       }
     },
-    "Search Splt": {
-      "comment": "Empty state title on the search screen",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search Splt"
+    "Add Item" : {
+
+    },
+    "Add Recurring Expense" : {
+
+    },
+    "Add a comment" : {
+
+    },
+    "Add a note" : {
+
+    },
+    "Add a title to save." : {
+
+    },
+    "Add at least one item." : {
+
+    },
+    "Add by Name" : {
+
+    },
+    "Add by name" : {
+
+    },
+    "Add friends to split bills and see who owes what." : {
+      "comment" : "Empty state message on the Friends tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add friends to split bills and see who owes what."
           }
         }
       }
     },
-    "Settings": {
-      "comment": "Settings screen title and row",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
+    "Add from Contacts" : {
+
+    },
+    "Add from Friends" : {
+
+    },
+    "Add reaction" : {
+
+    },
+    "Add the first expense to start splitting." : {
+
+    },
+    "Add the person's real name as a friend first." : {
+
+    },
+    "Added %@, %@, to %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Added %1$@, %2$@, to %3$@."
           }
         }
       }
     },
-    "Settled up": {
-      "comment": "VoiceOver label for a zero balance",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settled up"
+    "Added by %@ on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Added by %1$@ on %2$@"
           }
         }
       }
     },
-    "Source Code": {
-      "comment": "Link to the source code",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Source Code"
+    "Adds an expense you paid and splits it equally." : {
+
+    },
+    "Adjustment" : {
+
+    },
+    "Adjustment for %@" : {
+
+    },
+    "Adjustments" : {
+
+    },
+    "All Activity" : {
+
+    },
+    "All Categories" : {
+
+    },
+    "All Currencies" : {
+
+    },
+    "All Groups" : {
+
+    },
+    "All assigned" : {
+
+    },
+    "Allow camera access in Settings, or ask your friend to send the invite link instead." : {
+
+    },
+    "Amount" : {
+
+    },
+    "Amount in %@" : {
+
+    },
+    "Amount owed by %@" : {
+
+    },
+    "Amount paid by %@" : {
+
+    },
+    "Amount to pay in %@" : {
+
+    },
+    "Amount was %@" : {
+
+    },
+    "Amounts" : {
+
+    },
+    "Any Time" : {
+
+    },
+    "Anyone" : {
+
+    },
+    "Appearance" : {
+      "comment" : "Setting row for light or dark appearance",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
           }
         }
       }
     },
-    "Splt has no ads, no limits and no subscription, now and later.": {
-      "comment": "Statement that the app is free",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Splt has no ads, no limits and no subscription, now and later."
+    "Apple Cash" : {
+
+    },
+    "Archive" : {
+
+    },
+    "Archive Group" : {
+
+    },
+    "Archived" : {
+
+    },
+    "Assign %@ to someone." : {
+
+    },
+    "Assign each item to the people who shared it. Tax, tip and discounts are spread in proportion." : {
+
+    },
+    "Balances" : {
+
+    },
+    "Bank Transfer" : {
+
+    },
+    "Biggest Category" : {
+
+    },
+    "Block" : {
+
+    },
+    "Blocked" : {
+
+    },
+    "Both Ways" : {
+
+    },
+    "By Category" : {
+
+    },
+    "By Group" : {
+
+    },
+    "By item" : {
+
+    },
+    "Can't Add Friends" : {
+
+    },
+    "Can't Create Groups" : {
+
+    },
+    "Can't Invite Yet" : {
+
+    },
+    "Can't Remove" : {
+
+    },
+    "Can't Settle Up" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Cash" : {
+
+    },
+    "Cash App" : {
+
+    },
+    "Category" : {
+
+    },
+    "Changes are saved on this device and will sync when you are back online." : {
+
+    },
+    "Choose Receipt Photo" : {
+
+    },
+    "Choose from Contacts" : {
+
+    },
+    "Choose what to settle with %@." : {
+
+    },
+    "Choose who paid." : {
+
+    },
+    "Choose who to split with." : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear Filters" : {
+
+    },
+    "Close" : {
+      "comment" : "Button that dismisses a sheet",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
           }
         }
       }
     },
-    "Sync": {
-      "comment": "Settings section title",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sync"
+    "Combines debts so the group settles with as few payments as possible." : {
+
+    },
+    "Coming Soon" : {
+      "comment" : "Title of a placeholder for a feature that is not built yet",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming Soon"
           }
         }
       }
     },
-    "Syncing groups with friends through iCloud is coming. For now your data stays on this device.": {
-      "comment": "Footer of the Sync settings section",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Syncing groups with friends through iCloud is coming. For now your data stays on this device."
+    "Comments" : {
+
+    },
+    "Copy Link" : {
+
+    },
+    "Could Not Save" : {
+
+    },
+    "Couldn't Add Friend" : {
+
+    },
+    "Couldn't Create Group" : {
+
+    },
+    "Couldn't Finish" : {
+
+    },
+    "Couldn't Invite" : {
+
+    },
+    "Couldn't Join Group" : {
+
+    },
+    "Couldn't Merge" : {
+
+    },
+    "Couldn't Record Payment" : {
+
+    },
+    "Couldn't undo the payment" : {
+
+    },
+    "Couple" : {
+
+    },
+    "Create" : {
+
+    },
+    "Create Group" : {
+      "comment" : "Button that starts creating a group",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create Group"
           }
         }
       }
     },
-    "This part of Splt is on its way.": {
-      "comment": "Message of a placeholder for a feature that is not built yet",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This part of Splt is on its way."
+    "Create a Group First" : {
+
+    },
+    "Create a group for a trip, a home or a night out." : {
+      "comment" : "Empty state message on the Groups tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a group for a trip, a home or a night out."
           }
         }
       }
     },
-    "Version": {
-      "comment": "App version row",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+    "Create a group in Splt first." : {
+
+    },
+    "Currency" : {
+
+    },
+    "Currency or code" : {
+      "comment" : "Search field prompt in the currency list",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Currency or code"
           }
         }
       }
     },
-    "You": {
-      "comment": "Name shown for the current person",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You"
+    "Custom Range" : {
+
+    },
+    "Date" : {
+
+    },
+    "Day %lld, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Day %1$lld, %2$@"
           }
         }
       }
     },
-    "You are owed %@": {
-      "comment": "VoiceOver label for a positive balance, the placeholder is an amount",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You are owed %@"
+    "Default Currency" : {
+      "comment" : "Setting and screen title for the currency new groups start with",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default Currency"
           }
         }
       }
     },
-    "You owe %@": {
-      "comment": "VoiceOver label for a negative balance, the placeholder is an amount",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You owe %@"
+    "Delete" : {
+
+    },
+    "Delete %@" : {
+
+    },
+    "Delete Expense" : {
+
+    },
+    "Delete Group" : {
+
+    },
+    "Delete Group?" : {
+
+    },
+    "Delete this expense?" : {
+
+    },
+    "Delete this recurring expense?" : {
+
+    },
+    "Deleted" : {
+
+    },
+    "Describe it" : {
+
+    },
+    "Dictate" : {
+
+    },
+    "Difference from total" : {
+
+    },
+    "Dining" : {
+
+    },
+    "Dinner 60 with Sam and Priya, I paid" : {
+
+    },
+    "Direct expenses" : {
+
+    },
+    "Direction" : {
+
+    },
+    "Discard Changes" : {
+
+    },
+    "Discard this expense?" : {
+
+    },
+    "Discount" : {
+
+    },
+    "Done" : {
+
+    },
+    "Double tap to reset the zoom" : {
+
+    },
+    "Drinks" : {
+
+    },
+    "Duplicate" : {
+
+    },
+    "Each Person Pays" : {
+
+    },
+    "Each payment is recorded so the group ends up square." : {
+
+    },
+    "Each person pays in proportion to their shares, for example 2 shares for a couple and 1 for a single person." : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit Expense" : {
+
+    },
+    "Edit Recurring" : {
+
+    },
+    "Education" : {
+
+    },
+    "End Date" : {
+
+    },
+    "Ends" : {
+
+    },
+    "Enter a name first." : {
+
+    },
+    "Enter an amount to add to someone's share, or a minus amount to take off. Everything else is split equally." : {
+
+    },
+    "Enter an amount to save." : {
+
+    },
+    "Enter each person's percentage. They must add up to 100." : {
+
+    },
+    "Enter how much was paid." : {
+
+    },
+    "Enter what each person owes. The amounts must add up to the total." : {
+
+    },
+    "Enter your name to make an invite link and a code." : {
+
+    },
+    "Entertainment" : {
+
+    },
+    "Equally" : {
+
+    },
+    "Every 2 Weeks" : {
+
+    },
+    "Every 3 Months" : {
+
+    },
+    "Every Day" : {
+
+    },
+    "Every Month" : {
+
+    },
+    "Every Week" : {
+
+    },
+    "Every Year" : {
+
+    },
+    "Every expense and payment in this group is removed for everyone. This can't be undone." : {
+
+    },
+    "Everyone" : {
+
+    },
+    "Everyone Else" : {
+
+    },
+    "Everyone Is Hidden" : {
+
+    },
+    "Everyone is settled up" : {
+
+    },
+    "Everyone selected pays the same." : {
+
+    },
+    "Everything shared with %@ moves to %@. %@ is removed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Everything shared with %1$@ moves to %2$@. %3$@ is removed."
           }
         }
       }
     },
-    "Your Apple Account identifies you. There is nothing to sign up for.": {
-      "comment": "Account tab subtitle",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your Apple Account identifies you. There is nothing to sign up for."
+    "Exact amounts" : {
+
+    },
+    "Expense" : {
+
+    },
+    "Expense Not Found" : {
+
+    },
+    "Expense Unavailable" : {
+
+    },
+    "Expense deleted" : {
+
+    },
+    "Expenses" : {
+
+    },
+    "Expenses Unavailable" : {
+
+    },
+    "Expenses and payments from your groups will show up here." : {
+      "comment" : "Empty state message on the Activity tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expenses and payments from your groups will show up here."
           }
         }
       }
     },
-    "iCloud Sync": {
-      "comment": "Row that shows whether iCloud sync is on",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iCloud Sync"
+    "Expenses are shared inside a group. Make one for your trip, home or night out." : {
+
+    },
+    "Expenses in the other currency use this rate instead of the daily one." : {
+
+    },
+    "Expenses it already made stay in the group." : {
+
+    },
+    "Expenses, payments and changes in this group show up here." : {
+
+    },
+    "Export" : {
+
+    },
+    "Export as PDF" : {
+
+    },
+    "Export as Spreadsheet (CSV)" : {
+
+    },
+    "Exported %@. Currency: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Exported %1$@. Currency: %2$@"
           }
         }
       }
+    },
+    "Feedback" : {
+      "comment" : "Settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
+          }
+        }
+      }
+    },
+    "Fill In" : {
+
+    },
+    "Filled in %@. Check it below." : {
+
+    },
+    "Filter" : {
+
+    },
+    "Find friends, groups and expenses." : {
+      "comment" : "Empty state message on the search screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find friends, groups and expenses."
+          }
+        }
+      }
+    },
+    "Find friends, groups and expenses. Try \"dinners Sam paid in March\"." : {
+
+    },
+    "Finished" : {
+
+    },
+    "Free Forever" : {
+      "comment" : "Settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free Forever"
+          }
+        }
+      }
+    },
+    "Friend" : {
+      "comment" : "Title of a single friend screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend"
+          }
+        }
+      }
+    },
+    "Friend Not Found" : {
+
+    },
+    "Friend details will appear here." : {
+      "comment" : "Placeholder message on a friend screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend details will appear here."
+          }
+        }
+      }
+    },
+    "Friends" : {
+      "comment" : "Tab and screen title for the list of friends",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends"
+          }
+        }
+      }
+    },
+    "Friends owe you %@, and you owe %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Friends owe you %1$@, and you owe %2$@."
+          }
+        }
+      }
+    },
+    "Friends owe you %@." : {
+
+    },
+    "Friends, groups, expenses" : {
+      "comment" : "Search field prompt",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends, groups, expenses"
+          }
+        }
+      }
+    },
+    "From" : {
+
+    },
+    "Fuel" : {
+
+    },
+    "Full Amount" : {
+
+    },
+    "General" : {
+      "comment" : "Settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        }
+      }
+    },
+    "Gifts" : {
+
+    },
+    "Give at least one person a share." : {
+
+    },
+    "Groceries" : {
+
+    },
+    "Group" : {
+      "comment" : "Title of a single group screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group"
+          }
+        }
+      }
+    },
+    "Group Currency" : {
+
+    },
+    "Group Name" : {
+
+    },
+    "Group Not Found" : {
+
+    },
+    "Group Settings" : {
+
+    },
+    "Group details will appear here." : {
+      "comment" : "Placeholder message on a group screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group details will appear here."
+          }
+        }
+      }
+    },
+    "Groups" : {
+      "comment" : "Tab and screen title for the list of groups",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groups"
+          }
+        }
+      }
+    },
+    "Groups and Members" : {
+
+    },
+    "Haptics" : {
+      "comment" : "Setting that turns vibration feedback on or off",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptics"
+          }
+        }
+      }
+    },
+    "Hasn't joined yet" : {
+
+    },
+    "Health" : {
+
+    },
+    "Hi %@, a gentle nudge from Splt: you owe me %@ for %@. No rush, whenever suits you. Thank you!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hi %1$@, a gentle nudge from Splt: you owe me %2$@ for %3$@. No rush, whenever suits you. Thank you!"
+          }
+        }
+      }
+    },
+    "Hi %@, a gentle nudge from Splt: you owe me %@ from our shared expenses. No rush, whenever suits you. Thank you!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hi %1$@, a gentle nudge from Splt: you owe me %2$@ from our shared expenses. No rush, whenever suits you. Thank you!"
+          }
+        }
+      }
+    },
+    "Hidden" : {
+
+    },
+    "Hidden and Blocked" : {
+
+    },
+    "Hidden people stay out of the list. Blocked people also stay out of search and reminders. This only changes what you see on this device." : {
+
+    },
+    "Hide" : {
+
+    },
+    "History" : {
+
+    },
+    "Home" : {
+
+    },
+    "How much was it?" : {
+
+    },
+    "In %@" : {
+
+    },
+    "In %@, you are owed %@ and owe %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In %1$@, you are owed %2$@ and owe %3$@."
+          }
+        }
+      }
+    },
+    "In %@, you are owed %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In %1$@, you are owed %2$@."
+          }
+        }
+      }
+    },
+    "In %@, you owe %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In %1$@, you owe %2$@."
+          }
+        }
+      }
+    },
+    "In 3 Days" : {
+
+    },
+    "In a Week" : {
+
+    },
+    "Invitation" : {
+
+    },
+    "Invite" : {
+
+    },
+    "Invite with Link" : {
+
+    },
+    "Invite with Link or QR Code" : {
+
+    },
+    "Invite with iCloud" : {
+
+    },
+    "It leaves everyone's balances. You can undo this right after." : {
+
+    },
+    "Item" : {
+
+    },
+    "Item name" : {
+
+    },
+    "Items" : {
+
+    },
+    "Join %@ on Splt" : {
+
+    },
+    "Join %@ on Splt to split costs together." : {
+
+    },
+    "Join %@ on Splt." : {
+
+    },
+    "Keep Editing" : {
+
+    },
+    "Last 30 Days" : {
+
+    },
+    "Last Month" : {
+
+    },
+    "Leave Group" : {
+
+    },
+    "Leave Group?" : {
+
+    },
+    "Left to assign" : {
+
+    },
+    "Let's split costs on Splt. It is free, with no ads. Add me: %@" : {
+
+    },
+    "License" : {
+      "comment" : "Software license row",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "License"
+          }
+        }
+      }
+    },
+    "MIT" : {
+      "comment" : "Name of the software license",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIT"
+          }
+        }
+      }
+    },
+    "Mark All Read" : {
+
+    },
+    "Members" : {
+
+    },
+    "Merge %@" : {
+
+    },
+    "Merge %@?" : {
+
+    },
+    "Merge With…" : {
+
+    },
+    "Merge into %@" : {
+
+    },
+    "Message" : {
+
+    },
+    "Method" : {
+
+    },
+    "More" : {
+
+    },
+    "Name" : {
+
+    },
+    "Needs Attention" : {
+
+    },
+    "Net Balances" : {
+
+    },
+    "Never" : {
+
+    },
+    "New Expense" : {
+      "comment" : "Sheet title for adding an expense",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Expense"
+          }
+        }
+      }
+    },
+    "New Friend" : {
+      "comment" : "Sheet title for adding a friend",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Friend"
+          }
+        }
+      }
+    },
+    "New Group" : {
+      "comment" : "Button and sheet title for creating a group",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Group"
+          }
+        }
+      }
+    },
+    "New groups start with this currency. Splt follows the light or dark appearance of your device." : {
+      "comment" : "Footer of the General settings section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New groups start with this currency. Splt follows the light or dark appearance of your device."
+          }
+        }
+      }
+    },
+    "Next" : {
+
+    },
+    "Next %@" : {
+
+    },
+    "No Activity Yet" : {
+      "comment" : "Empty state title on the Activity tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Activity Yet"
+          }
+        }
+      }
+    },
+    "No Expenses" : {
+
+    },
+    "No Friends Yet" : {
+      "comment" : "Empty state title on the Friends tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Friends Yet"
+          }
+        }
+      }
+    },
+    "No Groups Yet" : {
+      "comment" : "Empty state title on the Groups tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Groups Yet"
+          }
+        }
+      }
+    },
+    "No Recurring Expenses" : {
+
+    },
+    "No Totals Yet" : {
+
+    },
+    "No exchange rate is saved for %@. The amount is kept in %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No exchange rate is saved for %1$@. The amount is kept in %2$@."
+          }
+        }
+      }
+    },
+    "No expenses" : {
+
+    },
+    "No iCloud Account" : {
+
+    },
+    "Nobody Hidden" : {
+
+    },
+    "Nobody paid" : {
+
+    },
+    "Nobody to Merge With" : {
+
+    },
+    "Not Available" : {
+
+    },
+    "Not Now" : {
+
+    },
+    "Not Set Up" : {
+      "comment" : "Value of the iCloud sync row",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Set Up"
+          }
+        }
+      }
+    },
+    "Not involved" : {
+
+    },
+    "Not on Splt yet" : {
+
+    },
+    "Note" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes and Receipt" : {
+
+    },
+    "Nothing Matches" : {
+
+    },
+    "Nothing shared yet." : {
+
+    },
+    "Nothing to fill in. Try adding an amount and what it was for." : {
+
+    },
+    "Notifications" : {
+      "comment" : "Setting that turns notifications on or off",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Notifications remind you about balances and new expenses in your groups." : {
+      "comment" : "Footer of the Feedback settings section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications remind you about balances and new expenses in your groups."
+          }
+        }
+      }
+    },
+    "OK" : {
+
+    },
+    "Offline" : {
+
+    },
+    "One of the numbers is not valid." : {
+
+    },
+    "Only people who haven't joined Splt can be merged." : {
+
+    },
+    "Open Settings" : {
+
+    },
+    "Opens %@ so you can send the money. Come back and tap Record Payment when it's done." : {
+
+    },
+    "Opens Splt ready to settle up with a friend." : {
+
+    },
+    "Opens settle up" : {
+
+    },
+    "Opens the receipt photo full screen" : {
+
+    },
+    "Opens the recurring expense to edit" : {
+
+    },
+    "Options" : {
+
+    },
+    "Other" : {
+
+    },
+    "Other Currency" : {
+
+    },
+    "Over %@" : {
+
+    },
+    "Owes You" : {
+
+    },
+    "Owes you" : {
+
+    },
+    "Paid By" : {
+
+    },
+    "Paid by" : {
+
+    },
+    "Paid by %@" : {
+
+    },
+    "Paid by Person" : {
+
+    },
+    "Part of a recurring expense" : {
+
+    },
+    "Partial" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Paused" : {
+
+    },
+    "Pay with %@" : {
+
+    },
+    "PayPal" : {
+
+    },
+    "Payment Recorded" : {
+
+    },
+    "Payment undone" : {
+
+    },
+    "Payments" : {
+
+    },
+    "People" : {
+
+    },
+    "People who don't have Splt yet are added by name. They can join later." : {
+
+    },
+    "People you add to a group show up here next time." : {
+
+    },
+    "People you hide or block show up here." : {
+
+    },
+    "Per Day" : {
+
+    },
+    "Percent" : {
+
+    },
+    "Percent owed by %@" : {
+
+    },
+    "Percentages" : {
+
+    },
+    "Pets" : {
+
+    },
+    "Pin Exchange Rate" : {
+
+    },
+    "Possible Duplicate" : {
+
+    },
+    "Possible Matches" : {
+
+    },
+    "Preparing export" : {
+
+    },
+    "Preparing invite" : {
+
+    },
+    "Price" : {
+
+    },
+    "Price of %@" : {
+
+    },
+    "QR code that adds %@ as a friend" : {
+
+    },
+    "QR code to join %@" : {
+
+    },
+    "Quick Add" : {
+
+    },
+    "Rate" : {
+
+    },
+    "Read" : {
+
+    },
+    "Reading the receipt" : {
+
+    },
+    "Receipt" : {
+
+    },
+    "Receipt Unavailable" : {
+
+    },
+    "Receipt attached" : {
+
+    },
+    "Receipt photo" : {
+
+    },
+    "Recent" : {
+
+    },
+    "Record Payment" : {
+
+    },
+    "Recorded %lld payments" : {
+
+    },
+    "Recurring" : {
+
+    },
+    "Recurring Expenses" : {
+
+    },
+    "Recurring Unavailable" : {
+
+    },
+    "Refund" : {
+
+    },
+    "Remind" : {
+
+    },
+    "Remind %@" : {
+
+    },
+    "Remind Me" : {
+
+    },
+    "Reminder set for %@" : {
+
+    },
+    "Reminders need Notifications turned on in Splt's settings." : {
+
+    },
+    "Remove" : {
+
+    },
+    "Rename" : {
+
+    },
+    "Rent" : {
+
+    },
+    "Rent, subscriptions and bills can be added once and repeat on their own." : {
+
+    },
+    "Repeat" : {
+
+    },
+    "Restore" : {
+
+    },
+    "Restore Group" : {
+
+    },
+    "Restore Payment" : {
+
+    },
+    "Restricted" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Revolut" : {
+
+    },
+    "Same as System" : {
+      "comment" : "Value of the appearance row",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same as System"
+          }
+        }
+      }
+    },
+    "Save" : {
+
+    },
+    "Save Anyway" : {
+
+    },
+    "Says what you owe or are owed, overall or with one friend or group." : {
+
+    },
+    "Scan Code" : {
+
+    },
+    "Scan Receipt" : {
+
+    },
+    "Scan a Friend's Code" : {
+
+    },
+    "Scanned %lld items. Tap people under each item to assign it." : {
+
+    },
+    "Scanned %lld items. The numbers do not fully add up, so check them against the receipt." : {
+
+    },
+    "Scanning Isn't Available" : {
+
+    },
+    "Search" : {
+      "comment" : "Title of the search screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        }
+      }
+    },
+    "Search Splt" : {
+      "comment" : "Empty state title on the search screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search Splt"
+          }
+        }
+      }
+    },
+    "Search expenses" : {
+
+    },
+    "Search friends" : {
+
+    },
+    "Search groups" : {
+
+    },
+    "Send Reminder" : {
+
+    },
+    "Send comment" : {
+
+    },
+    "Sending and receiving changes." : {
+
+    },
+    "Settings" : {
+      "comment" : "Settings screen title and row",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "Settle" : {
+
+    },
+    "Settle Up" : {
+
+    },
+    "Settle everything" : {
+
+    },
+    "Settle up first. This person still owes or is owed money in the group." : {
+
+    },
+    "Settle up with ${friend}" : {
+
+    },
+    "Settled Up" : {
+
+    },
+    "Settled up" : {
+      "comment" : "VoiceOver label for a zero balance",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settled up"
+          }
+        }
+      }
+    },
+    "Several people paid" : {
+
+    },
+    "Share" : {
+
+    },
+    "Share Invite Link" : {
+
+    },
+    "Share Link" : {
+
+    },
+    "Shared Expenses" : {
+
+    },
+    "Shares" : {
+
+    },
+    "Shopping" : {
+
+    },
+    "Show" : {
+
+    },
+    "Show in Friends" : {
+
+    },
+    "Show the code to a friend, or send the link. They tap it to add you." : {
+
+    },
+    "Showing" : {
+
+    },
+    "Showing the fewest payments that settle the group." : {
+
+    },
+    "Showing what each person owes each other person directly." : {
+
+    },
+    "Shows the breakdown" : {
+
+    },
+    "Sign in to iCloud in the Settings app to share groups with friends." : {
+
+    },
+    "Simplify Debts" : {
+
+    },
+    "Someone" : {
+
+    },
+    "Someone can be removed once they are settled up. Swipe a member to remove them." : {
+
+    },
+    "Something Went Wrong" : {
+
+    },
+    "Something went wrong. Please try again." : {
+
+    },
+    "Source Code" : {
+      "comment" : "Link to the source code",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source Code"
+          }
+        }
+      }
+    },
+    "Split" : {
+
+    },
+    "Split Evenly Between Payers" : {
+
+    },
+    "Split Percentages Evenly" : {
+
+    },
+    "Split between %lld people, %@ each." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Split between %1$lld people, %2$@ each."
+          }
+        }
+      }
+    },
+    "Split between %lld people." : {
+
+    },
+    "Split equally after adding or taking off an amount for some people." : {
+
+    },
+    "Split with" : {
+
+    },
+    "Splt can't find that friend." : {
+
+    },
+    "Splt can't find that group." : {
+
+    },
+    "Splt could not open its data. Restart the app and try again." : {
+
+    },
+    "Splt couldn't open its data." : {
+
+    },
+    "Splt couldn't open its storage." : {
+
+    },
+    "Splt couldn't save that. Please try again." : {
+
+    },
+    "Splt friend" : {
+
+    },
+    "Splt friend, not on Splt yet" : {
+
+    },
+    "Splt group" : {
+
+    },
+    "Splt group with %@" : {
+
+    },
+    "Splt has no ads, no limits and no subscription, now and later." : {
+      "comment" : "Statement that the app is free",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splt has no ads, no limits and no subscription, now and later."
+          }
+        }
+      }
+    },
+    "Splt isn't allowed to send notifications. You can change this in the Settings app." : {
+
+    },
+    "Splt only sees the contacts you pick." : {
+
+    },
+    "Standard" : {
+
+    },
+    "Starts" : {
+
+    },
+    "Stay" : {
+
+    },
+    "Still to assign" : {
+
+    },
+    "Stop" : {
+
+    },
+    "Subscriptions" : {
+
+    },
+    "Suggested category for this title" : {
+
+    },
+    "Symbol" : {
+
+    },
+    "Sync" : {
+      "comment" : "Settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        }
+      }
+    },
+    "Sync is still getting ready. Try again in a moment." : {
+
+    },
+    "Sync ran into a problem. Your changes are safe on this device and will be sent later." : {
+
+    },
+    "Syncing" : {
+
+    },
+    "Syncing groups with friends through iCloud is coming. For now your data stays on this device." : {
+      "comment" : "Footer of the Sync settings section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing groups with friends through iCloud is coming. For now your data stays on this device."
+          }
+        }
+      }
+    },
+    "Tax" : {
+
+    },
+    "Tax, Tip and Discount" : {
+
+    },
+    "That did not work. Try again." : {
+
+    },
+    "That group could not be found." : {
+
+    },
+    "That group is no longer available." : {
+
+    },
+    "That image could not be read." : {
+
+    },
+    "That invite is from you." : {
+
+    },
+    "That isn't a Splt invite." : {
+
+    },
+    "That isn't an amount Splt can add." : {
+
+    },
+    "That isn't an amount." : {
+
+    },
+    "That payment isn't valid. Check the amount and who is paying." : {
+
+    },
+    "That person is no longer available." : {
+
+    },
+    "That photo could not be loaded." : {
+
+    },
+    "That scan could not be read." : {
+
+    },
+    "That's more than the %@ owed. Switch the direction to record an advance." : {
+
+    },
+    "The adjustments leave %@ with a negative share." : {
+
+    },
+    "The amount must be more than zero." : {
+
+    },
+    "The expense could not be saved. Try again." : {
+
+    },
+    "The group or expense may have been removed." : {
+
+    },
+    "The payments are %@ too high." : {
+
+    },
+    "The percentages are %@ over 100%%." : {
+
+    },
+    "The receipt is attached, but no items could be read. Add them by hand." : {
+
+    },
+    "The receipt photo is not on this device." : {
+
+    },
+    "The split is %@ over the total." : {
+
+    },
+    "These are shared in proportion to what each person ordered." : {
+
+    },
+    "They appear in the same expense or payment, so Splt can't combine them automatically. Edit or delete that item first." : {
+
+    },
+    "They don't need the app yet. Splt keeps their name until they join." : {
+
+    },
+    "This Month" : {
+
+    },
+    "This build of Splt runs without iCloud, so your data stays on this device." : {
+
+    },
+    "This expense does not add up. Check the amounts and try again." : {
+
+    },
+    "This expense may have been removed." : {
+
+    },
+    "This group is not shared." : {
+
+    },
+    "This group may have been deleted." : {
+
+    },
+    "This invitation is not valid any more. Ask for a new one." : {
+
+    },
+    "This looks like a duplicate" : {
+
+    },
+    "This part of Splt is on its way." : {
+      "comment" : "Message of a placeholder for a feature that is not built yet",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This part of Splt is on its way."
+          }
+        }
+      }
+    },
+    "This person may have been removed." : {
+
+    },
+    "This split does not add up." : {
+
+    },
+    "Tip" : {
+
+    },
+    "Title" : {
+
+    },
+    "Title was %@" : {
+
+    },
+    "To" : {
+
+    },
+    "To Settle Up" : {
+
+    },
+    "To share groups with friends, open the Settings app, tap your name, choose iCloud and turn it on. Until then your groups stay on this device." : {
+
+    },
+    "Today" : {
+
+    },
+    "Tomorrow" : {
+
+    },
+    "Total Spent" : {
+
+    },
+    "Total spent" : {
+
+    },
+    "Totals" : {
+
+    },
+    "Totals appear once the group has expenses." : {
+
+    },
+    "Translate" : {
+
+    },
+    "Transport" : {
+
+    },
+    "Travel" : {
+
+    },
+    "Trip" : {
+
+    },
+    "Trip Recap" : {
+
+    },
+    "Try a different filter." : {
+
+    },
+    "Turn On Notifications" : {
+
+    },
+    "Turn on iCloud to invite people straight from Splt. The link only opens this group on a device that already has it." : {
+
+    },
+    "Twice a Month" : {
+
+    },
+    "Type" : {
+
+    },
+    "Type or say what you spent and who shared it, and the form fills itself in." : {
+
+    },
+    "UPI" : {
+
+    },
+    "Unblock" : {
+
+    },
+    "Under %@" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Undo Payment" : {
+
+    },
+    "Undone" : {
+
+    },
+    "Unread" : {
+
+    },
+    "Up to Date" : {
+
+    },
+    "Use %@" : {
+
+    },
+    "Use Items Total as Amount" : {
+
+    },
+    "Utilities" : {
+
+    },
+    "Values cannot be negative." : {
+
+    },
+    "Venmo" : {
+
+    },
+    "Version" : {
+      "comment" : "App version row",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        }
+      }
+    },
+    "View Balance" : {
+
+    },
+    "View Receipt" : {
+
+    },
+    "View balance with ${friend}" : {
+
+    },
+    "What For" : {
+
+    },
+    "What was it for?" : {
+
+    },
+    "Who Owes Whom" : {
+
+    },
+    "Who Paid" : {
+
+    },
+    "Who do you want to settle up with?" : {
+
+    },
+    "Wise" : {
+
+    },
+    "With %@" : {
+
+    },
+    "Yesterday" : {
+
+    },
+    "You" : {
+      "comment" : "Name shown for the current person",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You"
+          }
+        }
+      }
+    },
+    "You Owe" : {
+
+    },
+    "You and %@ are settled up." : {
+
+    },
+    "You are all settled up" : {
+
+    },
+    "You are all settled up." : {
+
+    },
+    "You are not a member of this group." : {
+
+    },
+    "You are not involved" : {
+
+    },
+    "You are owed" : {
+
+    },
+    "You are owed %@" : {
+      "comment" : "VoiceOver label for a positive balance, the placeholder is an amount",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are owed %@"
+          }
+        }
+      }
+    },
+    "You are owed %@. Settle up before leaving." : {
+
+    },
+    "You are settled up in %@." : {
+
+    },
+    "You are the only member. Delete the group instead." : {
+
+    },
+    "You blocked this person, so Splt won't remind you about them." : {
+
+    },
+    "You get a quiet notification on your device. Nothing is sent to anyone." : {
+
+    },
+    "You no longer have permission to change a shared group. Your changes are kept on this device." : {
+
+    },
+    "You owe" : {
+
+    },
+    "You owe %@" : {
+      "comment" : "VoiceOver label for a negative balance, the placeholder is an amount",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You owe %@"
+          }
+        }
+      }
+    },
+    "You owe %@ %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You owe %1$@ %2$@."
+          }
+        }
+      }
+    },
+    "You owe %@. Settle up before leaving." : {
+
+    },
+    "You owe friends %@." : {
+
+    },
+    "You paid" : {
+
+    },
+    "You paid %@" : {
+
+    },
+    "You paid %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You paid %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "You pay %@" : {
+
+    },
+    "You stop seeing this group. The others keep it." : {
+
+    },
+    "Your Apple Account identifies you. There is nothing to sign up for." : {
+      "comment" : "Account tab subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Apple Account identifies you. There is nothing to sign up for."
+          }
+        }
+      }
+    },
+    "Your friends are hidden or blocked. Bring them back from the list below." : {
+
+    },
+    "Your groups are in sync across your devices and the people you share with." : {
+
+    },
+    "Your iCloud storage is full. Free up space or buy more in Settings and Splt will finish syncing. Your changes are safe on this device." : {
+
+    },
+    "Your name" : {
+
+    },
+    "Your share" : {
+
+    },
+    "Your share %@" : {
+
+    },
+    "Zelle" : {
+
+    },
+    "^[%lld expense](inflect: true) over ^[%lld day](inflect: true)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld expense](inflect: true) over ^[%2$lld day](inflect: true)"
+          }
+        }
+      }
+    },
+    "^[%lld member](inflect: true)" : {
+
+    },
+    "amount" : {
+
+    },
+    "are owed %@" : {
+
+    },
+    "category" : {
+
+    },
+    "date" : {
+
+    },
+    "discount %@" : {
+
+    },
+    "every day" : {
+
+    },
+    "every month" : {
+
+    },
+    "every three months" : {
+
+    },
+    "every two weeks" : {
+
+    },
+    "every week" : {
+
+    },
+    "every year" : {
+
+    },
+    "group" : {
+
+    },
+    "iCloud Sync" : {
+      "comment" : "Row that shows whether iCloud sync is on",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud Sync"
+          }
+        }
+      }
+    },
+    "iCloud is restricted on this device, so groups stay on this device." : {
+
+    },
+    "iCloud sync is not available in this build." : {
+
+    },
+    "iCloud sync isn't available in this build. Your groups stay on this device." : {
+
+    },
+    "is owed %@" : {
+
+    },
+    "items %@" : {
+
+    },
+    "location" : {
+
+    },
+    "notes" : {
+
+    },
+    "owe %@" : {
+
+    },
+    "owes %@" : {
+
+    },
+    "owes you" : {
+
+    },
+    "paid by %@" : {
+
+    },
+    "payer" : {
+
+    },
+    "payers" : {
+
+    },
+    "people" : {
+
+    },
+    "receipt" : {
+
+    },
+    "repeat" : {
+
+    },
+    "settled up" : {
+
+    },
+    "someone" : {
+
+    },
+    "split" : {
+
+    },
+    "tax %@" : {
+
+    },
+    "this item" : {
+
+    },
+    "tip %@" : {
+
+    },
+    "title" : {
+
+    },
+    "twice a month" : {
+
+    },
+    "you are owed" : {
+
+    },
+    "you owe" : {
+
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
