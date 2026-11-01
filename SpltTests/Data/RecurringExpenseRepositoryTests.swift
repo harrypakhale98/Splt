@@ -50,7 +50,7 @@ struct RecurringExpenseRepositoryTests {
         #expect(made.count == 2)
     }
 
-    @Test func generatedExpensesPointBackToTheTemplateAndAreLogged() throws {
+    @Test func createdExpensesPointBackToTheTemplateAndAreLogged() throws {
         let fixture = try Fixture()
         let value = template(fixture)
         try fixture.services.recurring.add(value)
