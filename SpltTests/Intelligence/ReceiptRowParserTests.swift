@@ -20,7 +20,7 @@ private struct Page {
     func shuffled() -> [ReceiptTextLine] { lines.reversed() }
 }
 
-private func usd(_ minor: Int64) -> Money { Money(minorUnits: minor, currencyCode: "USD") }
+private func usdMoney(_ minor: Int64) -> Money { Money(minorUnits: minor, currencyCode: "USD") }
 
 private let options = ReceiptParsingOptions(
     defaultCurrencyCode: "USD",
@@ -50,12 +50,12 @@ struct ReceiptRowParserTests {
         #expect(receipt.merchant == "Corner Bistro")
         #expect(receipt.items.map(\.name) == ["Margherita Pizza", "Caesar Salad", "Sparkling Water"])
         #expect(receipt.items.map(\.quantity) == [2, 1, 1])
-        #expect(receipt.items[0].unitPrice == usd(1200))
-        #expect(receipt.items.map(\.total) == [usd(2400), usd(950), usd(350)])
-        #expect(receipt.subtotal == usd(3700))
-        #expect(receipt.tax == usd(315))
-        #expect(receipt.tip == usd(740))
-        #expect(receipt.total == usd(4755))
+        #expect(receipt.items[0].unitPrice == usdMoney(1200))
+        #expect(receipt.items.map(\.total) == [usdMoney(2400), usdMoney(950), usdMoney(350)])
+        #expect(receipt.subtotal == usdMoney(3700))
+        #expect(receipt.tax == usdMoney(315))
+        #expect(receipt.tip == usdMoney(740))
+        #expect(receipt.total == usdMoney(4755))
         #expect(receipt.currencyCode == "USD")
         #expect(receipt.issues.isEmpty)
         #expect(receipt.isConsistent)
@@ -77,9 +77,9 @@ struct ReceiptRowParserTests {
         page.row("Total $4.60")
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
         #expect(receipt.items.map(\.name) == ["Bananas", "Oat Milk", "Coupon"])
-        #expect(receipt.items.map(\.total) == [usd(129), usd(399), usd(-100)])
-        #expect(receipt.subtotal == usd(428))
-        #expect(receipt.total == usd(460))
+        #expect(receipt.items.map(\.total) == [usdMoney(129), usdMoney(399), usdMoney(-100)])
+        #expect(receipt.subtotal == usdMoney(428))
+        #expect(receipt.total == usdMoney(460))
         #expect(receipt.isConsistent)
     }
 
@@ -95,12 +95,12 @@ struct ReceiptRowParserTests {
         #expect(receipt.items.count == 2)
         #expect(receipt.items[0].name == "Classic Burger")
         #expect(receipt.items[0].quantity == 3)
-        #expect(receipt.items[0].unitPrice == usd(800))
-        #expect(receipt.items[0].total == usd(2400))
+        #expect(receipt.items[0].unitPrice == usdMoney(800))
+        #expect(receipt.items[0].total == usdMoney(2400))
         #expect(receipt.items[1].quantity == 2)
-        #expect(receipt.items[1].unitPrice == usd(250))
-        #expect(receipt.items[1].total == usd(500))
-        #expect(receipt.total == usd(2900))
+        #expect(receipt.items[1].unitPrice == usdMoney(250))
+        #expect(receipt.items[1].total == usdMoney(500))
+        #expect(receipt.total == usdMoney(2900))
         #expect(receipt.isConsistent)
     }
 
@@ -112,7 +112,7 @@ struct ReceiptRowParserTests {
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
         #expect(receipt.items.first?.name == "Latte")
         #expect(receipt.items.first?.quantity == 2)
-        #expect(receipt.items.first?.unitPrice == usd(450))
+        #expect(receipt.items.first?.unitPrice == usdMoney(450))
     }
 
     @Test func flagsReceiptsThatDoNotAddUp() {
@@ -157,7 +157,7 @@ struct ReceiptRowParserTests {
         page.row("Total", "20.50")
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
         #expect(receipt.items.count == 1)
-        #expect(receipt.otherCharges == usd(100))
+        #expect(receipt.otherCharges == usdMoney(100))
         #expect(receipt.isConsistent)
     }
 
@@ -170,7 +170,7 @@ struct ReceiptRowParserTests {
         page.row("SGST 9%", "1.80")
         page.row("Total", "23.60")
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
-        #expect(receipt.tax == usd(360))
+        #expect(receipt.tax == usdMoney(360))
         #expect(receipt.isConsistent)
     }
 
@@ -182,7 +182,7 @@ struct ReceiptRowParserTests {
         page.row("TOTAL")
         page.row("20.00")
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
-        #expect(receipt.total == usd(2000))
+        #expect(receipt.total == usdMoney(2000))
     }
 
     @Test func tipWrittenAfterTheTotalUpdatesIt() {
@@ -195,8 +195,8 @@ struct ReceiptRowParserTests {
         page.row("Total", "36.00")
         page.row("Visa", "36.00")
         let receipt = ReceiptRowParser.parse(lines: page.lines, options: options)
-        #expect(receipt.tip == usd(600))
-        #expect(receipt.total == usd(3600))
+        #expect(receipt.tip == usdMoney(600))
+        #expect(receipt.total == usdMoney(3600))
         #expect(receipt.isConsistent)
     }
 

@@ -76,22 +76,22 @@ protocol InsightWriting: Sendable {
 struct FoundationModelsInsightWriter: InsightWriting {
     func write(facts: String) async throws -> String {
         guard OnDeviceModel.isAvailable else { throw OnDeviceModel.TimedOut() }
-        let generated = try await OnDeviceModel.respond(
+        let answer = try await OnDeviceModel.respond(
             instructions: """
                 You describe a group's shared spending in one or two short, friendly, plain sentences. \
                 Use only the facts given. Never use digits, currency symbols, emoji or lists, and never \
                 mention an amount. Only mention people and categories that appear in the facts.
                 """,
             prompt: facts,
-            generating: GeneratedInsight.self,
+            generating: InsightAnswer.self,
             timeout: .seconds(6)
         )
-        return generated.text
+        return answer.text
     }
 }
 
 @Generable(description: "One or two plain sentences about a group's spending.")
-struct GeneratedInsight: Sendable {
+struct InsightAnswer: Sendable {
     @Guide(description: "One or two short sentences, no digits and no amounts.")
     var text: String
 }

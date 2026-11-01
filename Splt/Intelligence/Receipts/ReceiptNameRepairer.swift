@@ -22,7 +22,7 @@ struct FoundationModelsNameRepairer: ReceiptNameRepairing {
             Items:
             \(numbered)
             """
-        let generated = try? await OnDeviceModel.respond(
+        let answer = try? await OnDeviceModel.respond(
             instructions: """
                 You tidy text read from a shop receipt by a text recogniser. Fix obvious misread \
                 characters and expand printer abbreviations into plain product names. Keep the same \
@@ -30,11 +30,11 @@ struct FoundationModelsNameRepairer: ReceiptNameRepairing {
                 drop items, and do not invent details that are not implied by the text.
                 """,
             prompt: prompt,
-            generating: GeneratedReceiptNames.self,
+            generating: ReceiptNameAnswer.self,
             timeout: .seconds(8)
         )
-        guard let generated else { return receipt }
-        return Self.apply(generated.merchant, generated.items, to: receipt)
+        guard let answer else { return receipt }
+        return Self.apply(answer.merchant, answer.items, to: receipt)
     }
 
     /// Applies suggestions that pass the checks. Pure, so it is tested without a model.
@@ -68,7 +68,7 @@ enum ReceiptNameCheck {
 }
 
 @Generable(description: "Tidied names for a receipt.")
-struct GeneratedReceiptNames: Sendable {
+struct ReceiptNameAnswer: Sendable {
     @Guide(description: "The tidied merchant name, or the input merchant unchanged if it looks right.")
     var merchant: String
 

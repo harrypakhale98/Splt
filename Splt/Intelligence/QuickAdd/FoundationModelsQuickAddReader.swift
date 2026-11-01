@@ -17,7 +17,7 @@ struct FoundationModelsQuickAddReader: QuickAddReader {
         let known = context.candidateNames.isEmpty
             ? "No other people are known yet."
             : "People already in the group: \(context.candidateNames.joined(separator: ", "))."
-        let generated = try await OnDeviceModel.respond(
+        let answer = try await OnDeviceModel.respond(
             instructions: """
                 You read short notes people type or speak to log a shared expense, such as \
                 "dinner 60 with Sam and Priya, I paid, Priya owes 10 less". The note may be in any \
@@ -26,14 +26,14 @@ struct FoundationModelsQuickAddReader: QuickAddReader {
                 \(known) Use the group spelling when a name matches.
                 """,
             prompt: "Note: \(text)",
-            generating: GeneratedQuickAdd.self
+            generating: QuickAddAnswer.self
         )
-        return generated.reading
+        return answer.reading
     }
 }
 
 @Generable(description: "The parts of a short note about a shared expense.")
-struct GeneratedQuickAdd: Sendable {
+struct QuickAddAnswer: Sendable {
     @Guide(description: "What was bought, in the writer's own words, without the amount or the people. Empty if not stated.")
     var title: String
 
@@ -50,10 +50,10 @@ struct GeneratedQuickAdd: Sendable {
     var payer: String
 
     @Guide(description: "adjustments when someone owes more or less than the others, equal when the note asks for an even split, otherwise none.")
-    var splitKind: GeneratedSplitKind
+    var splitKind: QuickAddAnswerSplit
 
     @Guide(description: "People who owe more or less than an even share. Empty unless splitKind is adjustments.")
-    var adjustments: [GeneratedAdjustment]
+    var adjustments: [QuickAddAnswerAdjustment]
 
     var reading: QuickAddReading {
         QuickAddReading(
@@ -77,20 +77,20 @@ struct GeneratedQuickAdd: Sendable {
 }
 
 @Generable
-enum GeneratedSplitKind: Sendable {
+enum QuickAddAnswerSplit: Sendable {
     case none
     case equal
     case adjustments
 }
 
 @Generable
-enum GeneratedDirection: Sendable {
+enum QuickAddAnswerDirection: Sendable {
     case less
     case more
 }
 
 @Generable(description: "One person who owes more or less than an even share.")
-struct GeneratedAdjustment: Sendable {
+struct QuickAddAnswerAdjustment: Sendable {
     @Guide(description: "The person's name as written.")
     var name: String
 
@@ -98,5 +98,5 @@ struct GeneratedAdjustment: Sendable {
     var amount: String
 
     @Guide(description: "less if they owe less, more if they owe more.")
-    var direction: GeneratedDirection
+    var direction: QuickAddAnswerDirection
 }
