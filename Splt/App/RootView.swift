@@ -2,6 +2,8 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(Router.self) private var router
+    @Environment(\.dataServices) private var services
+    @State private var unread: UnreadActivityStore?
 
     var body: some View {
         @Bindable var router = router
@@ -16,6 +18,7 @@ struct RootView: View {
             Tab("Activity", systemImage: "list.bullet.rectangle", value: AppTab.activity) {
                 ActivityView()
             }
+            .badge(unread?.count ?? 0)
             Tab("Account", systemImage: "person.crop.circle", value: AppTab.account) {
                 AccountView()
             }
@@ -26,7 +29,9 @@ struct RootView: View {
         .tabBarMinimizeBehavior(.onScrollDown)
         .generatesRecurringExpenses()
         .settleUndoBanner()
-        .settleUndoBanner()
+        .task {
+            if unread == nil, let services { unread = UnreadActivityStore(services: services) }
+        }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .newGroup:
