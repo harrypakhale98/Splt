@@ -9,7 +9,6 @@ struct ExchangeRatesTests {
         rates: ["USD": Decimal(string: "1.10")!, "JPY": 160, "KWD": Decimal(string: "0.33")!, "GBP": Decimal(string: "0.85")!]
     )
 
-    private func money(_ units: Int64, _ code: String) -> Money { Money(minorUnits: units, currencyCode: code) }
 
     @Test func rateFromBaseAndToBase() {
         #expect(rates.rate(from: "EUR", to: "USD") == Decimal(string: "1.10"))

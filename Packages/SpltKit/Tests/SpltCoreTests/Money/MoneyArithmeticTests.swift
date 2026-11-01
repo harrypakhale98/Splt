@@ -3,9 +3,6 @@ import Testing
 
 @Suite("Money arithmetic")
 struct MoneyArithmeticTests {
-    private func usd(_ units: Int64) -> Money { Money(minorUnits: units, currencyCode: "USD") }
-    private func eur(_ units: Int64) -> Money { Money(minorUnits: units, currencyCode: "EUR") }
-
     @Test func addsAndSubtracts() throws {
         #expect(try usd(150).adding(usd(275)) == usd(425))
         #expect(try usd(150).subtracting(usd(275)) == usd(-125))
