@@ -50,6 +50,17 @@
                ReferencedContainer = "container:Splt.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "022ADBAB17BA8A292126955B"
+               BuildableName = "SpltUITests.xctest"
+               BlueprintName = "SpltUITests"
+               ReferencedContainer = "container:Splt.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

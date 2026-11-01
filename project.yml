@@ -25,6 +25,13 @@ targets:
     dependencies:
       - package: SpltKit
         product: SpltCore
+    info:
+      path: Config/Info.plist
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: com.harrypakhale.splt
+            CFBundleURLSchemes:
+              - splt
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt
@@ -70,3 +77,4 @@ schemes:
     test:
       targets:
         - SpltTests
+        - SpltUITests
