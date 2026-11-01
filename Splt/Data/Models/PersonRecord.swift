@@ -65,7 +65,7 @@ extension PersonRecord: SyncTracked {
         var fields = SyncFields()
         fields.set("name", name)
         fields.set("contactHint", contactHint)
-        fields.set("kind", kindRaw)
+        fields.set("kind", kind == .me ? PersonKind.friend.rawValue : kindRaw)
         fields.set("claimedByCloudUserID", claimedByCloudUserID)
         fields.set("avatarSeed", Int64(avatarSeed))
         fields.set("createdAt", createdAt)
@@ -75,7 +75,9 @@ extension PersonRecord: SyncTracked {
     func applySyncFields(_ fields: SyncFields) {
         name = fields.string("name") ?? name
         contactHint = fields.string("contactHint")
-        kindRaw = fields.string("kind") ?? kindRaw
+        if kind != .me {
+            kindRaw = fields.string("kind") ?? kindRaw
+        }
         claimedByCloudUserID = fields.string("claimedByCloudUserID")
         avatarSeed = Int(fields.int("avatarSeed") ?? Int64(avatarSeed))
         createdAt = fields.date("createdAt") ?? createdAt

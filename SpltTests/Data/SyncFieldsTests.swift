@@ -110,4 +110,18 @@ struct SyncFieldsTests {
         #expect(record.zoneName == group.description)
         #expect(PersonRecord(Person(name: "A")).zoneName == nil)
     }
+
+    @Test func theCurrentUserTravelsAsAFriendAndStaysMeLocally() {
+        let mine = PersonRecord(Person(name: "Me", kind: .me))
+        #expect(mine.syncFields.string("kind") == PersonKind.friend.rawValue)
+
+        var fields = mine.syncFields
+        fields.set("kind", PersonKind.placeholder.rawValue)
+        mine.applySyncFields(fields)
+        #expect(mine.kind == .me)
+
+        let theirs = PersonRecord.blank(recordName: UUID().uuidString)
+        theirs.applySyncFields(mine.syncFields)
+        #expect(theirs.kind == .friend)
+    }
 }
