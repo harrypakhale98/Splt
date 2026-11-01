@@ -1,0 +1,576 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DF17DDCC89C004676CCF1107 /* SpltCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5EF76B9526D763596849BDC /* SpltCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5246FA9438E9A6D3700011B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260721B218F7E61DA17DCC4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8FC5153111E7AA4790072F82;
+			remoteInfo = Splt;
+		};
+		BBC14C0EF898CD4A9FCA20AD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260721B218F7E61DA17DCC4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8FC5153111E7AA4790072F82;
+			remoteInfo = Splt;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5221EDC14D74376768D4DC93 /* SpltKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpltKit; path = Packages/SpltKit; sourceTree = SOURCE_ROOT; };
+		96F33279B0DEA0DFCC8E555A /* Splt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Splt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		91AB7BEAAEAA8000769548EE /* Splt */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Splt;
+			sourceTree = "<group>";
+		};
+		A9C2F22DFA6DB41AA1481EA0 /* SpltUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = SpltUITests;
+			sourceTree = "<group>";
+		};
+		FDABB17870C7B5C7334A5750 /* SpltTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = SpltTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		511CFCA3EBA7DEF268EF20D3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DF17DDCC89C004676CCF1107 /* SpltCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		25816D36B1DC00496B3F2DF0 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				5221EDC14D74376768D4DC93 /* SpltKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		57FC395F181634B74AA0D728 = {
+			isa = PBXGroup;
+			children = (
+				25816D36B1DC00496B3F2DF0 /* Packages */,
+				91AB7BEAAEAA8000769548EE /* Splt */,
+				FDABB17870C7B5C7334A5750 /* SpltTests */,
+				A9C2F22DFA6DB41AA1481EA0 /* SpltUITests */,
+				6BE860C27D73AADB9E571A4B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6BE860C27D73AADB9E571A4B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				96F33279B0DEA0DFCC8E555A /* Splt.app */,
+				CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */,
+				AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		022ADBAB17BA8A292126955B /* SpltUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EBE185B153D98FA16A106550 /* Build configuration list for PBXNativeTarget "SpltUITests" */;
+			buildPhases = (
+				078FA291802052D57C79A6CE /* Sources */,
+				F95A172EBA48DE0239502B0D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F42FEAB66F8A03A872ED287E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A9C2F22DFA6DB41AA1481EA0 /* SpltUITests */,
+			);
+			name = SpltUITests;
+			packageProductDependencies = (
+			);
+			productName = SpltUITests;
+			productReference = AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		19920EC43439FDAF41F1F604 /* SpltTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86976DD4EBD0F3A5A997BA2B /* Build configuration list for PBXNativeTarget "SpltTests" */;
+			buildPhases = (
+				E0245A7DDEA3F422E196F661 /* Sources */,
+				8F58A1FD97985E1F09588AE3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				25DD876BD6E800B48D451520 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FDABB17870C7B5C7334A5750 /* SpltTests */,
+			);
+			name = SpltTests;
+			packageProductDependencies = (
+			);
+			productName = SpltTests;
+			productReference = CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		8FC5153111E7AA4790072F82 /* Splt */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C88EFD206B8AC353DFAEAB97 /* Build configuration list for PBXNativeTarget "Splt" */;
+			buildPhases = (
+				D9F1F496D85ED096CB13BF69 /* Sources */,
+				778B8115E338553259BA6CB3 /* Resources */,
+				511CFCA3EBA7DEF268EF20D3 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				91AB7BEAAEAA8000769548EE /* Splt */,
+			);
+			name = Splt;
+			packageProductDependencies = (
+				E5EF76B9526D763596849BDC /* SpltCore */,
+			);
+			productName = Splt;
+			productReference = 96F33279B0DEA0DFCC8E555A /* Splt.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		260721B218F7E61DA17DCC4F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					022ADBAB17BA8A292126955B = {
+						TestTargetID = 8FC5153111E7AA4790072F82;
+					};
+					8FC5153111E7AA4790072F82 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 38F41D9BB00564E2CB010047 /* Build configuration list for PBXProject "Splt" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 57FC395F181634B74AA0D728;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2BB6FE7EAABEE1AAA64B8F02 /* XCLocalSwiftPackageReference "Packages/SpltKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6BE860C27D73AADB9E571A4B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8FC5153111E7AA4790072F82 /* Splt */,
+				19920EC43439FDAF41F1F604 /* SpltTests */,
+				022ADBAB17BA8A292126955B /* SpltUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		778B8115E338553259BA6CB3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8F58A1FD97985E1F09588AE3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F95A172EBA48DE0239502B0D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		078FA291802052D57C79A6CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9F1F496D85ED096CB13BF69 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E0245A7DDEA3F422E196F661 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		25DD876BD6E800B48D451520 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8FC5153111E7AA4790072F82 /* Splt */;
+			targetProxy = BBC14C0EF898CD4A9FCA20AD /* PBXContainerItemProxy */;
+		};
+		F42FEAB66F8A03A872ED287E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8FC5153111E7AA4790072F82 /* Splt */;
+			targetProxy = 5246FA9438E9A6D3700011B0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		05F02F0C18329167691A7570 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Splt.app/Splt";
+			};
+			name = Release;
+		};
+		248F98B46BEE9E38828AE298 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Splt;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3D763CBAAA952EC0A7F72425 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Splt;
+			};
+			name = Debug;
+		};
+		5D47B6EB5831ECE8A1910053 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		ADEF597D06FCF9AE59524BA6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Splt.app/Splt";
+			};
+			name = Debug;
+		};
+		E4D87A01CF80A8BD7C59A47A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E6138B66C87A7C92B41D2071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Splt;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FC66B2D9C2C26BFF6C835B0C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Splt;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		38F41D9BB00564E2CB010047 /* Build configuration list for PBXProject "Splt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E4D87A01CF80A8BD7C59A47A /* Debug */,
+				5D47B6EB5831ECE8A1910053 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		86976DD4EBD0F3A5A997BA2B /* Build configuration list for PBXNativeTarget "SpltTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ADEF597D06FCF9AE59524BA6 /* Debug */,
+				05F02F0C18329167691A7570 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C88EFD206B8AC353DFAEAB97 /* Build configuration list for PBXNativeTarget "Splt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				248F98B46BEE9E38828AE298 /* Debug */,
+				E6138B66C87A7C92B41D2071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EBE185B153D98FA16A106550 /* Build configuration list for PBXNativeTarget "SpltUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D763CBAAA952EC0A7F72425 /* Debug */,
+				FC66B2D9C2C26BFF6C835B0C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		2BB6FE7EAABEE1AAA64B8F02 /* XCLocalSwiftPackageReference "Packages/SpltKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SpltKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E5EF76B9526D763596849BDC /* SpltCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SpltCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 260721B218F7E61DA17DCC4F /* Project object */;
+}

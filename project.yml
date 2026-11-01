@@ -1,0 +1,70 @@
+name: Splt
+options:
+  bundleIdPrefix: com.harrypakhale
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+packages:
+  SpltKit:
+    path: Packages/SpltKit
+targets:
+  Splt:
+    type: application
+    platform: iOS
+    sources:
+      - path: Splt
+        type: syncedFolder
+    dependencies:
+      - package: SpltKit
+        product: SpltCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Splt
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+  SpltTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SpltTests
+        type: syncedFolder
+    dependencies:
+      - target: Splt
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt.tests
+  SpltUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: SpltUITests
+        type: syncedFolder
+    dependencies:
+      - target: Splt
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt.uitests
+schemes:
+  Splt:
+    build:
+      targets:
+        Splt: all
+    test:
+      targets:
+        - SpltTests
