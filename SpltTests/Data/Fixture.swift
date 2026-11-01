@@ -34,7 +34,7 @@ struct Fixture {
         splitBetween people: Set<PersonID>? = nil, date: Date? = nil
     ) -> Expense {
         Expense(
-            groupID: group.id, title: title, total: usd(cents), date: date ?? clock.start,
+            groupID: group.id, title: title, total: usdAmount(cents), date: date ?? clock.start,
             paidBy: (payer ?? me).id, split: .equal(participants: people ?? everyone)
         )
     }

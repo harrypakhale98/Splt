@@ -30,8 +30,8 @@ struct ExpenseRepositoryTests {
     @Test func rejectsAnInvalidExpense() throws {
         let fixture = try Fixture()
         var bad = fixture.expense()
-        bad.payers = [fixture.me.id: usd(100)]
-        #expect(throws: DataError.invalidExpense(.payersDoNotMatchTotal(expected: usd(3000), actual: usd(100)))) {
+        bad.payers = [fixture.me.id: usdAmount(100)]
+        #expect(throws: DataError.invalidExpense(.payersDoNotMatchTotal(expected: usdAmount(3000), actual: usdAmount(100)))) {
             try fixture.services.expenses.add(bad)
         }
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).isEmpty)
@@ -58,15 +58,15 @@ struct ExpenseRepositoryTests {
         let expense = try fixture.addExpense("Pizza")
         let entry = try #require(try fixture.services.activity.entries(in: fixture.group.id, limit: 1).first)
         #expect(entry.actorID == fixture.me.id)
-        #expect(entry.event == .expenseAdded(ExpenseReference(id: expense.id, title: "Pizza", amount: usd(3000))))
+        #expect(entry.event == .expenseAdded(ExpenseReference(id: expense.id, title: "Pizza", amount: usdAmount(3000))))
     }
 
     @Test func editingStoresTheChangeLogsItAndKeepsHistory() throws {
         let fixture = try Fixture()
         var expense = try fixture.addExpense("Dinner", cents: 3000)
         expense.title = "Team dinner"
-        expense.total = usd(4500)
-        expense.payers = [fixture.me.id: usd(4500)]
+        expense.total = usdAmount(4500)
+        expense.payers = [fixture.me.id: usdAmount(4500)]
         try fixture.services.expenses.update(expense)
 
         #expect(try fixture.services.expenses.expense(id: expense.id) == expense)
@@ -74,7 +74,7 @@ struct ExpenseRepositoryTests {
         #expect(history.count == 1)
         #expect(history[0].changedFields == [.title, .total, .payers])
         #expect(history[0].previousTitle == "Dinner")
-        #expect(history[0].previousTotal == usd(3000))
+        #expect(history[0].previousTotal == usdAmount(3000))
         #expect(history[0].editor == fixture.me.id)
         let latest = try #require(try fixture.services.activity.entries(in: fixture.group.id, limit: 1).first)
         #expect(latest.event.kind == .expenseEdited)
@@ -110,11 +110,11 @@ struct ExpenseRepositoryTests {
     @Test func editingChangesBalances() throws {
         let fixture = try Fixture()
         var expense = try fixture.addExpense(cents: 3000)
-        expense.total = usd(6000)
-        expense.payers = [fixture.me.id: usd(6000)]
+        expense.total = usdAmount(6000)
+        expense.payers = [fixture.me.id: usdAmount(6000)]
         try fixture.services.expenses.update(expense)
         let balances = try fixture.services.groups.balances(for: fixture.group.id)
-        #expect(balances.net(for: fixture.me.id) == [usd(4000)])
+        #expect(balances.net(for: fixture.me.id) == [usdAmount(4000)])
     }
 
     @Test func editingAnUnknownOrDeletedExpenseThrows() throws {
@@ -154,7 +154,7 @@ struct ExpenseRepositoryTests {
         try fixture.services.expenses.restore(id: expense.id)
         let restored = try #require(try fixture.services.expenses.expense(id: expense.id))
         #expect(!restored.isDeleted)
-        #expect(try fixture.services.groups.balances(for: fixture.group.id).net(for: fixture.me.id) == [usd(2000)])
+        #expect(try fixture.services.groups.balances(for: fixture.group.id).net(for: fixture.me.id) == [usdAmount(2000)])
         let latest = try #require(try fixture.services.activity.entries(in: fixture.group.id, limit: 1).first)
         #expect(latest.event.kind == .expenseRestored)
     }

@@ -12,7 +12,7 @@ struct GroupExportTests {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner, \"Luigi's\"", cents: 3000, date: Date(timeIntervalSince1970: 1_741_953_600))
         try fixture.addExpense("Taxi", cents: 1000, paidBy: fixture.sam, splitBetween: [fixture.sam.id, fixture.me.id], date: Date(timeIntervalSince1970: 1_742_040_000))
-        let debt = Debt(debtor: fixture.priya.id, creditor: fixture.me.id, amount: usd(500))
+        let debt = Debt(debtor: fixture.priya.id, creditor: fixture.me.id, amount: usdAmount(500))
         try fixture.services.payments.settle(debt, in: fixture.group.id, date: Date(timeIntervalSince1970: 1_742_126_400))
         return fixture
     }
@@ -127,7 +127,7 @@ struct GroupExportTests {
     @Test func exportListsFormerMembersWhoAppearInOldExpenses() throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
-        let payment = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usd(1500))
+        let payment = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(1500))
         try fixture.services.payments.settle(payment, in: fixture.group.id, date: fixture.clock.start)
         try fixture.services.groups.removeMember(fixture.sam.id, from: fixture.group.id)
         let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)

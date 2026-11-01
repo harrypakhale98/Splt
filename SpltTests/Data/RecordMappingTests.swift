@@ -13,7 +13,7 @@ struct RecordMappingTests {
     private let c = PersonID()
     private let group = GroupID()
 
-    private func expense(split: SplitDefinition, payers: [PersonID: Money]? = nil, total: Money = usd(3000)) -> Expense {
+    private func expense(split: SplitDefinition, payers: [PersonID: Money]? = nil, total: Money = usdAmount(3000)) -> Expense {
         Expense(
             groupID: group, title: "Dinner, with \"quotes\"", total: total, date: when, category: .dining,
             payers: payers ?? [a: total], split: split, note: "second line\nof the note"
@@ -47,15 +47,15 @@ struct RecordMappingTests {
         let split: SplitDefinition
         switch kind {
         case "equal": split = .equal(participants: [a, b, c])
-        case "exact": split = .exact(amounts: [a: usd(1000), b: usd(2000)])
+        case "exact": split = .exact(amounts: [a: usdAmount(1000), b: usdAmount(2000)])
         case "percentages": split = .percentages(basisPoints: [a: 2500, b: 7500])
         case "shares": split = .shares(weights: [a: 2, b: 1])
-        case "adjustments": split = .adjustments(participants: [a, b], adjustments: [b: usd(500)])
+        case "adjustments": split = .adjustments(participants: [a, b], adjustments: [b: usdAmount(500)])
         default:
             split = .itemized(ItemizedSplit(
-                items: [SplitItem(name: "Pizza", amount: usd(2000), assignees: [a, b]),
-                        SplitItem(name: "Soda", amount: usd(800), assignees: [a])],
-                tax: usd(100), tip: usd(100)
+                items: [SplitItem(name: "Pizza", amount: usdAmount(2000), assignees: [a, b]),
+                        SplitItem(name: "Soda", amount: usdAmount(800), assignees: [a])],
+                tax: usdAmount(100), tip: usdAmount(100)
             ))
         }
         let original = expense(split: split)
@@ -64,10 +64,10 @@ struct RecordMappingTests {
     }
 
     @Test func expenseKeepsMultiplePayersAndRefundSigns() throws {
-        let multi = expense(split: .equal(participants: [a, b]), payers: [a: usd(1000), b: usd(2000)])
+        let multi = expense(split: .equal(participants: [a, b]), payers: [a: usdAmount(1000), b: usdAmount(2000)])
         #expect(try Expense(ExpenseRecord(multi)) == multi)
 
-        let refund = expense(split: .equal(participants: [a, b]), payers: [a: usd(-4000)], total: usd(-4000))
+        let refund = expense(split: .equal(participants: [a, b]), payers: [a: usdAmount(-4000)], total: usdAmount(-4000))
         #expect(try Expense(ExpenseRecord(refund)) == refund)
     }
 
@@ -84,8 +84,8 @@ struct RecordMappingTests {
         let record = ExpenseRecord(original)
         record.deletedAt = when
         original.title = "Lunch"
-        original.total = usd(900)
-        original.payers = [a: usd(900)]
+        original.total = usdAmount(900)
+        original.payers = [a: usdAmount(900)]
         record.update(from: original)
         #expect(record.title == "Lunch")
         #expect(record.totalMinorUnits == 900)
@@ -108,7 +108,7 @@ struct RecordMappingTests {
     @Test func historyRoundTrips() {
         let record = ExpenseRecord(expense(split: .equal(participants: [a])))
         let entry = ExpenseEditEntry(
-            date: when, editor: a, changedFields: [.title, .total], previousTitle: "Old", previousTotal: usd(100)
+            date: when, editor: a, changedFields: [.title, .total], previousTitle: "Old", previousTotal: usdAmount(100)
         )
         record.history = [entry]
         #expect(record.history == [entry])
@@ -125,7 +125,7 @@ struct RecordMappingTests {
 
     @Test func paymentRoundTrips() {
         let payment = Payment(
-            groupID: group, payer: a, receiver: b, amount: usd(2500), date: when, note: "Cash", deletedAt: when
+            groupID: group, payer: a, receiver: b, amount: usdAmount(2500), date: when, note: "Cash", deletedAt: when
         )
         #expect(Payment(PaymentRecord(payment)) == payment)
     }
@@ -139,8 +139,8 @@ struct RecordMappingTests {
     }
 
     @Test func activityRoundTripsEveryEventShape() {
-        let ref = ExpenseReference(id: ExpenseID(), title: "Dinner", amount: usd(3000))
-        let pay = PaymentReference(id: PaymentID(), payer: a, receiver: b, amount: usd(500))
+        let ref = ExpenseReference(id: ExpenseID(), title: "Dinner", amount: usdAmount(3000))
+        let pay = PaymentReference(id: PaymentID(), payer: a, receiver: b, amount: usdAmount(500))
         let events: [ActivityEvent] = [
             .groupCreated(name: "Flat"), .groupRenamed(from: "A", to: "B"), .groupArchived, .groupRestored,
             .memberAdded(a), .memberRemoved(b), .expenseAdded(ref), .expenseEdited(ref), .expenseDeleted(ref),
@@ -165,7 +165,7 @@ struct RecordMappingTests {
     @Test func recurringExpenseRoundTrips() throws {
         let rule = RecurrenceRule(frequency: .weekly, startDate: when, endDate: when.addingTimeInterval(86_400 * 90), maxOccurrences: 8)
         let template = RecurringExpense(
-            groupID: group, title: "Cleaner", total: usd(6000), category: .home, payers: [a: usd(6000)],
+            groupID: group, title: "Cleaner", total: usdAmount(6000), category: .home, payers: [a: usdAmount(6000)],
             split: .equal(participants: [a, b]), note: "weekly", rule: rule, lastCreatedOccurrence: when,
             isActive: false, createdBy: a, createdAt: when
         )
@@ -175,7 +175,7 @@ struct RecordMappingTests {
     @Test func templateMakesAnExpenseForAnOccurrence() {
         let rule = RecurrenceRule(frequency: .monthly, startDate: when)
         let template = RecurringExpense(
-            groupID: group, title: "Rent", total: usd(90_000), payers: [a: usd(90_000)],
+            groupID: group, title: "Rent", total: usdAmount(90_000), payers: [a: usdAmount(90_000)],
             split: .equal(participants: [a, b]), rule: rule
         )
         let next = when.addingTimeInterval(86_400 * 30)

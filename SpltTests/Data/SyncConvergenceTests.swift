@@ -65,7 +65,7 @@ struct SyncConvergenceTests {
 
     private func expense() -> Expense {
         Expense(
-            groupID: group.id, title: "Dinner", total: usd(3000), date: a.clock.start,
+            groupID: group.id, title: "Dinner", total: usdAmount(3000), date: a.clock.start,
             paidBy: me.id, split: .equal(participants: [me.id, sam.id])
         )
     }

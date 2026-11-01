@@ -23,10 +23,10 @@ struct StoresTests {
         let summary = try #require(store.summaries.first)
         #expect(summary.group.id == fixture.group.id)
         #expect(summary.memberCount == 3)
-        #expect(summary.myBalance == [usd(2000)])
+        #expect(summary.myBalance == [usdAmount(2000)])
         #expect(!summary.isSettled)
         #expect(summary.lastActivity != nil)
-        #expect(store.totals == BalanceTotals(owedToYou: [usd(2000)], youOwe: []))
+        #expect(store.totals == BalanceTotals(owedToYou: [usdAmount(2000)], youOwe: []))
     }
 
     @Test func groupsStoreSeparatesWhatYouOweFromWhatYouAreOwed() throws {
@@ -35,13 +35,13 @@ struct StoresTests {
         let other = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id])
         try fixture.services.groups.create(other)
         try fixture.services.expenses.add(Expense(
-            groupID: other.id, title: "Hotel", total: usd(10_000), date: fixture.clock.start,
+            groupID: other.id, title: "Hotel", total: usdAmount(10_000), date: fixture.clock.start,
             paidBy: fixture.sam.id, split: .equal(participants: [fixture.me.id, fixture.sam.id])
         ))
         let store = fixture.services.groupsStore
         store.refresh()
-        #expect(store.totals.owedToYou == [usd(2000)])
-        #expect(store.totals.youOwe == [usd(5000)])
+        #expect(store.totals.owedToYou == [usdAmount(2000)])
+        #expect(store.totals.youOwe == [usdAmount(5000)])
         #expect(store.summaries.count == 2)
     }
 
@@ -80,12 +80,12 @@ struct StoresTests {
         store.refresh()
         #expect(store.summaries.map(\.person.name) == ["Priya", "Sam"])
         let sam = try #require(store.summaries.first { $0.person.id == fixture.sam.id })
-        #expect(sam.balance == [usd(-1500)])
+        #expect(sam.balance == [usdAmount(-1500)])
         #expect(sam.byGroup.map(\.groupID) == [fixture.group.id])
         let priya = try #require(store.summaries.first { $0.person.id == fixture.priya.id })
         #expect(priya.isSettled)
         #expect(store.unsettled.map(\.id) == [fixture.sam.id])
-        #expect(store.totals == BalanceTotals(owedToYou: [], youOwe: [usd(1500)]))
+        #expect(store.totals == BalanceTotals(owedToYou: [], youOwe: [usdAmount(1500)]))
     }
 
     @Test func friendsStoreTotalsKeepCurrenciesApart() throws {
@@ -97,7 +97,7 @@ struct StoresTests {
         ))
         let store = fixture.services.friendsStore
         store.refresh()
-        #expect(store.totals.owedToYou == [usd(1500)])
+        #expect(store.totals.owedToYou == [usdAmount(1500)])
         #expect(store.totals.youOwe == [Money(minorUnits: 300, currencyCode: "EUR")])
     }
 
@@ -117,10 +117,10 @@ struct StoresTests {
         store.load(group: fixture.group.id)
         let rows = Dictionary(uniqueKeysWithValues: store.rows.map { ($0.id, $0) })
         #expect(rows[mine.id]?.paidByMe == true)
-        #expect(rows[mine.id]?.myNet == usd(2000))
+        #expect(rows[mine.id]?.myNet == usdAmount(2000))
         #expect(rows[mine.id]?.payers.map(\.name) == ["Me"])
         #expect(rows[sams.id]?.paidByMe == false)
-        #expect(rows[sams.id]?.myNet == usd(-300))
+        #expect(rows[sams.id]?.myNet == usdAmount(-300))
         #expect(rows[sams.id]?.payers.map(\.name) == ["Sam"])
     }
 
@@ -176,26 +176,26 @@ struct StoresTests {
 
     @Test func totalsSplitSignedAmountsPerCurrency() {
         let totals = BalanceTotals(amounts: [
-            usd(500), usd(-200), usd(100), Money(minorUnits: -700, currencyCode: "EUR"), usd(0)
+            usdAmount(500), usdAmount(-200), usdAmount(100), Money(minorUnits: -700, currencyCode: "EUR"), usdAmount(0)
         ])
-        #expect(totals.owedToYou == [usd(600)])
-        #expect(totals.youOwe == [Money(minorUnits: 700, currencyCode: "EUR"), usd(200)])
+        #expect(totals.owedToYou == [usdAmount(600)])
+        #expect(totals.youOwe == [Money(minorUnits: 700, currencyCode: "EUR"), usdAmount(200)])
         #expect(!totals.isSettled)
         #expect(BalanceTotals(amounts: []).isSettled)
     }
 
     @Test func totalsCanBeConvertedToOneCurrency() throws {
-        let totals = BalanceTotals(amounts: [usd(1000), Money(minorUnits: -900, currencyCode: "EUR")])
+        let totals = BalanceTotals(amounts: [usdAmount(1000), Money(minorUnits: -900, currencyCode: "EUR")])
         let rates = ExchangeRates(baseCurrency: "USD", rates: ["EUR": Decimal(string: "0.9")!])
         let converted = try #require(totals.converted(to: "USD", rates: rates))
-        #expect(converted.owedToYou == usd(1000))
-        #expect(converted.youOwe == usd(1000))
+        #expect(converted.owedToYou == usdAmount(1000))
+        #expect(converted.youOwe == usdAmount(1000))
         let missing = ExchangeRates(baseCurrency: "USD", rates: [:])
         #expect(totals.converted(to: "USD", rates: missing) == nil)
     }
 
     @Test func moneyTotalsDropAmountsThatCancel() {
-        #expect(MoneyTotals.sum([usd(500), usd(-500)]).isEmpty)
-        #expect(MoneyTotals.sum([usd(500), usd(250)]) == [usd(750)])
+        #expect(MoneyTotals.sum([usdAmount(500), usdAmount(-500)]).isEmpty)
+        #expect(MoneyTotals.sum([usdAmount(500), usdAmount(250)]) == [usdAmount(750)])
     }
 }

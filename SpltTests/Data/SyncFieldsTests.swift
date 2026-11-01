@@ -58,7 +58,7 @@ struct SyncFieldsTests {
         let a = PersonID()
         let group = GroupID()
         let expenseRecord = ExpenseRecord(Expense(
-            groupID: group, title: "Dinner", total: usd(3000), date: when, category: .dining, paidBy: a,
+            groupID: group, title: "Dinner", total: usdAmount(3000), date: when, category: .dining, paidBy: a,
             split: .equal(participants: [a]), note: "n"
         ), extras: ExpenseExtras(
             receiptFileName: "r.jpg", location: ExpenseLocation(name: "x", latitude: 1, longitude: 2),
@@ -71,7 +71,7 @@ struct SyncFieldsTests {
             reactions: [CommentReaction(person: a, emoji: "x")]
         ))
         let templateRecord = RecurringExpenseRecord(RecurringExpense(
-            groupID: group, title: "Rent", total: usd(1000), payers: [a: usd(1000)], split: .equal(participants: [a]),
+            groupID: group, title: "Rent", total: usdAmount(1000), payers: [a: usdAmount(1000)], split: .equal(participants: [a]),
             rule: RecurrenceRule(frequency: .monthly, startDate: when), lastCreatedOccurrence: when, createdBy: a
         ))
 
@@ -86,7 +86,7 @@ struct SyncFieldsTests {
             pinnedRate: PinnedRate(from: "USD", to: "EUR", rate: 0.9), createdAt: when
         )), GroupRecord.blank(recordName: UUID().uuidString))
         check(expenseRecord, ExpenseRecord.blank(recordName: UUID().uuidString))
-        check(PaymentRecord(Payment(groupID: group, payer: a, receiver: PersonID(), amount: usd(5), date: when, note: "n")),
+        check(PaymentRecord(Payment(groupID: group, payer: a, receiver: PersonID(), amount: usdAmount(5), date: when, note: "n")),
               PaymentRecord.blank(recordName: UUID().uuidString))
         check(commentRecord, CommentRecord.blank(recordName: UUID().uuidString))
         check(ActivityRecord(ActivityEntry(groupID: group, actorID: a, event: .groupArchived, createdAt: when)),
@@ -104,7 +104,7 @@ struct SyncFieldsTests {
     @Test func recordNameIsTheIDAndZoneIsTheGroup() {
         let group = GroupID()
         let record = ExpenseRecord(Expense(
-            groupID: group, title: "x", total: usd(1), date: when, paidBy: PersonID(), split: .equal(participants: [PersonID()])
+            groupID: group, title: "x", total: usdAmount(1), date: when, paidBy: PersonID(), split: .equal(participants: [PersonID()])
         ))
         #expect(record.recordName == record.id.uuidString)
         #expect(record.zoneName == group.description)

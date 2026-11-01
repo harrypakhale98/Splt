@@ -11,8 +11,8 @@ struct RecurringExpenseRepositoryTests {
     private func template(_ fixture: Fixture, frequency: RecurrenceFrequency = .monthly, startingDaysAgo: Int = 0) -> RecurringExpense {
         let start = fixture.clock.start.addingTimeInterval(TimeInterval(-startingDaysAgo) * 86_400)
         return RecurringExpense(
-            groupID: fixture.group.id, title: "Rent", total: usd(90_000), category: .rent,
-            payers: [fixture.me.id: usd(90_000)], split: .equal(participants: fixture.everyone),
+            groupID: fixture.group.id, title: "Rent", total: usdAmount(90_000), category: .rent,
+            payers: [fixture.me.id: usdAmount(90_000)], split: .equal(participants: fixture.everyone),
             rule: RecurrenceRule(frequency: frequency, startDate: start, timeZone: utc)
         )
     }

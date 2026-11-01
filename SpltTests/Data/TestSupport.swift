@@ -31,6 +31,6 @@ final class TestClock: Sendable {
     }
 }
 
-func usd(_ cents: Int64) -> Money {
+func usdAmount(_ cents: Int64) -> Money {
     Money(minorUnits: cents, currencyCode: "USD")
 }

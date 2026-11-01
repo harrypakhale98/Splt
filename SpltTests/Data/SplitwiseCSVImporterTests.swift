@@ -32,8 +32,8 @@ struct SplitwiseCSVImporterTests {
         let ana = try #require(result.members["Ana"])
         #expect(expense.title == "Dinner")
         #expect(expense.category == .dining)
-        #expect(expense.total == usd(3000))
-        #expect(expense.payers == [ana: usd(3000)])
+        #expect(expense.total == usdAmount(3000))
+        #expect(expense.payers == [ana: usdAmount(3000)])
         #expect(expense.split == .equal(participants: Set(result.members.values)))
         #expect(expense.groupID == group)
         #expect(result.warnings.isEmpty)
@@ -51,16 +51,16 @@ struct SplitwiseCSVImporterTests {
         let expense = try #require(result.expenses.first)
         let members = result.members
         #expect(expense.split == .exact(amounts: [
-            members["Ana"]!: usd(800), members["Ben"]!: usd(800), members["Cy"]!: usd(1400)
+            members["Ana"]!: usdAmount(800), members["Ben"]!: usdAmount(800), members["Cy"]!: usdAmount(1400)
         ]))
-        #expect(try expense.netBalances()[members["Ana"]!] == usd(2200))
+        #expect(try expense.netBalances()[members["Ana"]!] == usdAmount(2200))
     }
 
     @Test func roundingCentsStayWithinTheEqualSplit() throws {
         let result = try parse(["2025-03-14,Taxi,Taxi,10.00,USD,6.66,-3.33,-3.33"])
         let expense = try #require(result.expenses.first)
         try expense.validate()
-        #expect(expense.total == usd(1000))
+        #expect(expense.total == usdAmount(1000))
         #expect(try expense.netBalances().values.map(\.minorUnits).reduce(0, +) == 0)
     }
 
@@ -68,10 +68,10 @@ struct SplitwiseCSVImporterTests {
         let result = try parse(["2025-03-14,Refund,General,-30.00,USD,-20.00,10.00,10.00"])
         let expense = try #require(result.expenses.first)
         try expense.validate()
-        #expect(expense.total == usd(-3000))
+        #expect(expense.total == usdAmount(-3000))
         #expect(expense.isRefund)
         let balances = try expense.netBalances()
-        #expect(balances[result.members["Ana"]!] == usd(-2000))
+        #expect(balances[result.members["Ana"]!] == usdAmount(-2000))
     }
 
     @Test func severalPayersAreRebuiltAsAnEqualSplit() throws {
@@ -80,7 +80,7 @@ struct SplitwiseCSVImporterTests {
         try expense.validate()
         #expect(expense.payers.values.map(\.minorUnits).reduce(0, +) == 6000)
         let balances = try expense.netBalances()
-        #expect(balances[result.members["Cy"]!] == usd(-2000))
+        #expect(balances[result.members["Cy"]!] == usdAmount(-2000))
     }
 
     @Test func settlementsBecomePayments() throws {
@@ -88,7 +88,7 @@ struct SplitwiseCSVImporterTests {
         let payment = try #require(result.payments.first)
         #expect(payment.payer == result.members["Ben"])
         #expect(payment.receiver == result.members["Ana"])
-        #expect(payment.amount == usd(1500))
+        #expect(payment.amount == usdAmount(1500))
         #expect(result.expenses.isEmpty)
     }
 

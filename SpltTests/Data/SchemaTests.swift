@@ -33,15 +33,15 @@ struct SchemaTests {
         let context = services.container.mainContext
         let person = Person(name: "A")
         let group = SplitGroup(name: "G", currencyCode: "USD", memberIDs: [person.id])
-        let expense = Expense(groupID: group.id, title: "E", total: usd(100), date: Date(), paidBy: person.id, split: .equal(participants: [person.id]))
+        let expense = Expense(groupID: group.id, title: "E", total: usdAmount(100), date: Date(), paidBy: person.id, split: .equal(participants: [person.id]))
         context.insert(PersonRecord(person))
         context.insert(GroupRecord(group))
         context.insert(ExpenseRecord(expense))
-        context.insert(PaymentRecord(Payment(groupID: group.id, payer: person.id, receiver: PersonID(), amount: usd(1), date: Date())))
+        context.insert(PaymentRecord(Payment(groupID: group.id, payer: person.id, receiver: PersonID(), amount: usdAmount(1), date: Date())))
         context.insert(CommentRecord(ExpenseComment(authorID: person.id, text: "c")))
         context.insert(ActivityRecord(ActivityEntry(event: .groupArchived)))
         context.insert(RecurringExpenseRecord(RecurringExpense(
-            title: "R", total: usd(100), payers: [person.id: usd(100)], split: .equal(participants: [person.id]),
+            title: "R", total: usdAmount(100), payers: [person.id: usdAmount(100)], split: .equal(participants: [person.id]),
             rule: RecurrenceRule(frequency: .daily, startDate: Date())
         )))
         try context.save()

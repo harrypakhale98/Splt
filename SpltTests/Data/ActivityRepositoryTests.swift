@@ -41,7 +41,7 @@ struct ActivityRepositoryTests {
         try services.expenses.delete(id: expense.id)
         try services.expenses.restore(id: expense.id)
         let payment = try services.payments.settle(
-            Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usd(100)), in: fixture.group.id, date: fixture.clock.start
+            Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(100)), in: fixture.group.id, date: fixture.clock.start
         )
         try services.payments.undo(id: payment.id)
         try services.groups.setArchived(true, id: fixture.group.id)

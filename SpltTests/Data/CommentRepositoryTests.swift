@@ -37,7 +37,7 @@ struct CommentRepositoryTests {
         let expense = try fixture.addExpense("Pizza")
         try fixture.services.comments.add(comment(fixture, on: expense, text: "Yum"))
         let latest = try #require(try fixture.services.activity.entries(in: fixture.group.id, limit: 1).first)
-        let reference = ExpenseReference(id: expense.id, title: "Pizza", amount: usd(3000))
+        let reference = ExpenseReference(id: expense.id, title: "Pizza", amount: usdAmount(3000))
         #expect(latest.event == .commentAdded(expense: reference, text: "Yum"))
     }
 

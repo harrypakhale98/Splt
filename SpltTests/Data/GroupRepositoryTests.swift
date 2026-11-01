@@ -92,8 +92,8 @@ struct GroupRepositoryTests {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)
         let balances = try fixture.services.groups.balances(for: fixture.group.id)
-        #expect(balances.net(for: fixture.me.id) == [usd(2000)])
-        #expect(balances.net(for: fixture.sam.id) == [usd(-1000)])
+        #expect(balances.net(for: fixture.me.id) == [usdAmount(2000)])
+        #expect(balances.net(for: fixture.sam.id) == [usdAmount(-1000)])
         #expect(!balances.isSettled)
         #expect(balances.suggestedSettlements.count == 2)
     }
@@ -130,11 +130,11 @@ struct GroupRepositoryTests {
         let second = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id])
         try fixture.services.groups.create(second)
         try fixture.services.expenses.add(Expense(
-            groupID: second.id, title: "Taxi", total: usd(1000), date: fixture.clock.start,
+            groupID: second.id, title: "Taxi", total: usdAmount(1000), date: fixture.clock.start,
             paidBy: fixture.sam.id, split: .equal(participants: [fixture.me.id, fixture.sam.id])
         ))
         let balance = try fixture.services.people.friendBalance(with: fixture.sam.id)
-        #expect(balance.total == [usd(1000)])
+        #expect(balance.total == [usdAmount(1000)])
         #expect(balance.byGroup.count == 2)
         #expect(Set(balance.byGroup.map(\.groupID)) == [fixture.group.id, second.id])
     }
@@ -142,7 +142,7 @@ struct GroupRepositoryTests {
     @Test func friendBalanceIsNegativeWhenYouOwe() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000, paidBy: fixture.sam, splitBetween: [fixture.me.id, fixture.sam.id])
-        #expect(try fixture.services.people.friendBalance(with: fixture.sam.id).total == [usd(-1500)])
+        #expect(try fixture.services.people.friendBalance(with: fixture.sam.id).total == [usdAmount(-1500)])
     }
 
     @Test func friendBalanceKeepsCurrenciesApart() throws {
@@ -154,7 +154,7 @@ struct GroupRepositoryTests {
             split: .equal(participants: [fixture.me.id, fixture.sam.id])
         ))
         let balance = try fixture.services.people.friendBalance(with: fixture.sam.id)
-        #expect(balance.total == [Money(minorUnits: -300, currencyCode: "EUR"), usd(1500)])
+        #expect(balance.total == [Money(minorUnits: -300, currencyCode: "EUR"), usdAmount(1500)])
     }
 
     @Test func friendsYouAreSquareWithHaveNoBalance() throws {
