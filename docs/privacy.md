@@ -1,0 +1,56 @@
+---
+title: Privacy
+---
+
+# Privacy
+
+Last updated: November 2026
+
+Splt does not collect your data. There is no Splt server, no account and no analytics, and no third party sees anything you enter.
+
+## Where your data lives
+
+- On your iPhone, in the app's own storage.
+- In your own iCloud, if you are signed in to iCloud. Splt uses Apple's CloudKit to keep your devices in step and to share a group with the people you invite. This data belongs to your Apple Account and counts against your iCloud storage. We cannot see it.
+
+If you turn iCloud off, Splt keeps working and keeps everything on the device.
+
+## Who can see a group
+
+You and the people you invite to that group. An invite is a link that you send yourself, through Messages or any other way you choose. Only people who accept it can see the group's members, expenses, payments and comments.
+
+## What Splt does not do
+
+- It does not track you or use an advertising identifier.
+- It does not include ads, analytics or crash reporting from other companies.
+- It does not make network requests of its own. The only traffic is Apple's iCloud sync.
+- It does not read your contacts. When you add someone from Contacts, the system picker hands Splt only the people you choose.
+
+## Features that use the device
+
+- **Camera.** Receipts are scanned on the device with Apple's frameworks. A receipt photo you keep stays on the device that scanned it. Only its file name syncs.
+- **Microphone and speech.** Voice entry is turned into text on the device.
+- **Smart entry and suggestions.** These use Apple's on-device language model when it is available.
+- **Translation.** Comments are translated with Apple's system translation.
+- **Notifications.** Reminders are local notifications that Splt schedules on your device. A notice about a friend's change is built on your device after iCloud wakes the app. Splt has no push server.
+- **Pay with.** When you tap a payment app in Settle Up, Splt opens that app or its website with the amount and a short note. Splt never handles the payment, and what the other app does with it is up to that app.
+
+## Exports
+
+Exporting a group as CSV or PDF creates a file on your device. It goes where you send it from the share sheet, and nowhere else.
+
+## Deleting your data
+
+Deleting a group in the app removes it from your devices and your iCloud. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Deleting the app removes what it stored on the device.
+
+## Children
+
+Splt has no accounts and collects nothing, so there is nothing about children to collect.
+
+## Changes
+
+If this ever changes, the change will be in this file with a new date, and in the project history on GitHub.
+
+## Contact
+
+Open an issue at [github.com/harrypakhale98/Splt/issues](https://github.com/harrypakhale98/Splt/issues). For a private matter, see [SECURITY.md](https://github.com/harrypakhale98/Splt/blob/main/SECURITY.md).
