@@ -25,6 +25,7 @@ struct RootView: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .generatesRecurringExpenses()
+        .settleUndoBanner()
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .newGroup:

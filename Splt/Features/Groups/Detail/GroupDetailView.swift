@@ -91,7 +91,7 @@ private struct GroupDetailContent: View {
             DateRangeSheet(start: $model.filter.customStart, end: $model.filter.customEnd)
         }
         .sheet(item: $settleRoute) { route in
-            SettleUpStubSheet(route: route, names: model.names, currentPerson: model.me?.id)
+            SettleUpSheet(route: route)
         }
         .navigationDestination(isPresented: $showsActivity) {
             GroupActivityView(entries: model.activity, text: model.activityText)

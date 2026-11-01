@@ -1,0 +1,240 @@
+import Foundation
+import Observation
+import SpltCore
+
+/// The state behind the settle up sheet: what is being paid, by whom, and the payments it will write.
+@MainActor
+@Observable
+final class SettleModel {
+    enum AmountMode: Hashable, Sendable {
+        case full
+        case partial
+    }
+
+    enum AmountIssue: Equatable, Sendable {
+        case empty
+        case invalid
+        case notPositive
+        case exceedsBalance(Money)
+    }
+
+    struct DirectionOption: Identifiable, Equatable, Sendable {
+        var reversed: Bool
+        var title: String
+
+        var id: Bool { reversed }
+    }
+
+    let route: SettleRoute
+    var amountMode: AmountMode = .full {
+        didSet { if amountMode == .partial, amountText.isEmpty { amountText = fullAmount?.plainString(locale: locale) ?? "" } }
+    }
+    var amountText = ""
+    /// Flips who paid whom when there is a single debt.
+    var isReversed = false
+    var date: Date
+    var note = ""
+    var method: SettleMethod {
+        didSet { defaults.set(method.rawValue, forKey: Self.methodKey) }
+    }
+    private(set) var receipt: SettleReceipt?
+    var errorMessage: String?
+
+    private(set) var me: Person?
+    private(set) var peopleByID: [PersonID: Person] = [:]
+
+    static let methodKey = "settle.lastMethod"
+
+    @ObservationIgnored private let payments: any PaymentRepository
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let locale: Locale
+
+    init(
+        route: SettleRoute,
+        services: DataServices,
+        now: Date = Date(),
+        defaults: UserDefaults = .standard,
+        locale: Locale = .current
+    ) {
+        self.route = route
+        self.payments = services.payments
+        self.defaults = defaults
+        self.locale = locale
+        self.date = now
+        self.method = defaults.string(forKey: Self.methodKey).flatMap(SettleMethod.init(rawValue:)) ?? .cash
+        me = try? services.people.me()
+        peopleByID = Dictionary(
+            ((try? services.people.allPeople()) ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    // MARK: What is being paid
+
+    var isBatch: Bool { route.debts.count > 1 }
+
+    /// The debt being edited when there is exactly one.
+    var singleDebt: Debt? { route.debts.count == 1 ? route.debts.first : nil }
+
+    var fullAmount: Money? { singleDebt?.amount }
+
+    var payer: PersonID? {
+        guard let debt = singleDebt else { return nil }
+        return isReversed ? debt.creditor : debt.debtor
+    }
+
+    var receiver: PersonID? {
+        guard let debt = singleDebt else { return nil }
+        return isReversed ? debt.debtor : debt.creditor
+    }
+
+    /// The amount that will be recorded for a single debt, nil while the text is not a valid amount.
+    var amount: Money? {
+        guard let debt = singleDebt else { return nil }
+        switch amountMode {
+        case .full:
+            return debt.amount
+        case .partial:
+            guard let parsed = try? MoneyParser.parse(
+                amountText, currencyCode: debt.amount.currencyCode, locale: locale, allowNegative: false
+            ), parsed.isPositive else { return nil }
+            return parsed
+        }
+    }
+
+    var amountIssue: AmountIssue? {
+        guard let debt = singleDebt, amountMode == .partial else { return nil }
+        if amountText.trimmingCharacters(in: .whitespaces).isEmpty { return .empty }
+        guard let parsed = try? MoneyParser.parse(
+            amountText, currencyCode: debt.amount.currencyCode, locale: locale, allowNegative: false
+        ) else { return .invalid }
+        if !parsed.isPositive { return .notPositive }
+        if !isReversed, parsed.minorUnits > debt.amount.minorUnits { return .exceedsBalance(debt.amount) }
+        return nil
+    }
+
+    var isPartial: Bool {
+        guard let amount, let full = fullAmount else { return false }
+        return amount.minorUnits < full.minorUnits
+    }
+
+    /// What is left of the debt after a partial payment.
+    var remaining: Money? {
+        guard let amount, let full = fullAmount, !isReversed, amount.minorUnits < full.minorUnits else { return nil }
+        return Money(minorUnits: full.minorUnits - amount.minorUnits, currencyCode: full.currencyCode)
+    }
+
+    var totals: [Money] {
+        if let amount { return [amount] }
+        return MoneyTotals.sum(route.debts.map(\.amount))
+    }
+
+    var canRecord: Bool {
+        receipt == nil && !route.debts.isEmpty && (isBatch || (amount != nil && amountIssue == nil))
+    }
+
+    // MARK: Names
+
+    func name(of id: PersonID) -> String {
+        if id == me?.id { return String(localized: "You") }
+        return peopleByID[id]?.name ?? String(localized: "Someone")
+    }
+
+    /// "You pay Sam", "Sam pays you" or "Sam pays Priya".
+    func sentence(payer: PersonID, receiver: PersonID) -> String {
+        let to = name(of: receiver)
+        let from = name(of: payer)
+        if payer == me?.id { return String(localized: "You pay \(to)") }
+        if receiver == me?.id { return String(localized: "\(from) pays you") }
+        return String(localized: "\(from) pays \(to)")
+    }
+
+    var headline: String {
+        if let payer, let receiver { return sentence(payer: payer, receiver: receiver) }
+        return String(localized: "Settle everything")
+    }
+
+    /// The two ways to describe a single payment, for the direction picker.
+    var directionOptions: [DirectionOption] {
+        guard let debt = singleDebt else { return [] }
+        return [
+            DirectionOption(reversed: false, title: sentence(payer: debt.debtor, receiver: debt.creditor)),
+            DirectionOption(reversed: true, title: sentence(payer: debt.creditor, receiver: debt.debtor))
+        ]
+    }
+
+    // MARK: Pay with
+
+    /// The address that the "Pay with" button opens. Only when you are the one paying.
+    var payWithURL: URL? {
+        guard method.supportsPayWith, let amount, let payer, payer == me?.id, let receiver else { return nil }
+        return method.paymentURL(
+            amount: amount, note: note, recipient: peopleByID[receiver]?.contactHint
+        )
+    }
+
+    // MARK: Recording
+
+    func makePayments() -> [Payment] {
+        let text = SettleNote.compose(method: method, text: note)
+        if singleDebt != nil, let amount, let payer, let receiver {
+            return [Payment(groupID: route.groupID, payer: payer, receiver: receiver, amount: amount, date: date, note: text)]
+        }
+        return route.debts.map {
+            Payment(groupID: route.groupID, payer: $0.debtor, receiver: $0.creditor, amount: $0.amount, date: date, note: text)
+        }
+    }
+
+    /// Writes the payments. Returns the receipt, or nil after setting `errorMessage`.
+    @discardableResult
+    func record() -> SettleReceipt? {
+        guard canRecord else { return nil }
+        let planned = makePayments()
+        var saved: [Payment] = []
+        do {
+            for payment in planned {
+                try payments.record(payment)
+                saved.append(payment)
+            }
+        } catch {
+            for payment in saved { try? payments.undo(id: payment.id) }
+            errorMessage = SettleErrorMessage.text(for: error)
+            return nil
+        }
+        let made = SettleReceipt(
+            paymentIDs: saved.map(\.id), message: message(for: saved), total: MoneyTotals.sum(saved.map(\.amount))
+        )
+        receipt = made
+        errorMessage = nil
+        return made
+    }
+
+    func undo() {
+        guard let receipt else { return }
+        for id in receipt.paymentIDs { try? payments.undo(id: id) }
+        self.receipt = nil
+    }
+
+    private func message(for saved: [Payment]) -> String {
+        if saved.count == 1, let payment = saved.first {
+            let amount = MoneyFormatting.magnitudeString(payment.amount, locale: locale)
+            let to = name(of: payment.receiver), from = name(of: payment.payer)
+            if payment.payer == me?.id { return String(localized: "You paid \(to) \(amount)") }
+            if payment.receiver == me?.id { return String(localized: "\(from) paid you \(amount)") }
+            return String(localized: "\(from) paid \(to) \(amount)")
+        }
+        return String(localized: "Recorded \(saved.count) payments")
+    }
+}
+
+enum SettleErrorMessage {
+    static func text(for error: any Error) -> String {
+        if let error = error as? DataError {
+            switch error {
+            case .invalidPayment: return String(localized: "That payment isn't valid. Check the amount and who is paying.")
+            case .notFound, .missingGroup: return String(localized: "That group is no longer available.")
+            default: break
+            }
+        }
+        return String(localized: "Something went wrong. Please try again.")
+    }
+}
