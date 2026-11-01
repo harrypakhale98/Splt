@@ -1,6 +1,5 @@
 import Foundation
 import SpltCore
-import SwiftUI
 
 /// Moves everything that mentions a placeholder over to another person, then removes the placeholder.
 @MainActor
@@ -25,7 +24,21 @@ enum MergeError: Error, Equatable {
     }
 }
 
-extension EnvironmentValues {
-    /// Set by the app when merging is available. Nil hides the merge option.
-    @Entry var placeholderMerger: (any PlaceholderMerging)?
+/// Merges through the same rewrite sync uses when a placeholder joins.
+@MainActor
+struct LivePlaceholderMerger: PlaceholderMerging {
+    let services: DataServices
+
+    @discardableResult
+    func merge(_ placeholder: PersonID, into target: PersonID) throws -> Int {
+        do {
+            return try PlaceholderClaimer(tracker: services.makeChangeTracker()).claim(placeholder: placeholder, by: target)
+        } catch let error as ClaimError {
+            switch error {
+            case .notAPlaceholder: throw MergeError.notAPlaceholder
+            case .unknownPerson: throw MergeError.unknownPerson
+            case .bothInSameRecord(let count): throw MergeError.sharedRecord(count)
+            }
+        }
+    }
 }

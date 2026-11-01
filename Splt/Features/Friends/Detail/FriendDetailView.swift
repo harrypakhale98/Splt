@@ -31,7 +31,6 @@ private struct FriendDetailContent: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
-    @Environment(\.placeholderMerger) private var merger
     @Environment(\.dataServices) private var services
 
     @State private var model: FriendDetailModel
@@ -79,8 +78,8 @@ private struct FriendDetailContent: View {
             }
         }
         .sheet(isPresented: $showsMerge) {
-            if let friend = model.friend, let merger, let services {
-                MergeFriendView(placeholder: friend, services: services, merger: merger) { target in
+            if let friend = model.friend, let services {
+                MergeFriendView(placeholder: friend, services: services, merger: LivePlaceholderMerger(services: services)) { target in
                     router.friendsPath = [.friend(target.id.rawValue)]
                 }
             }
@@ -229,7 +228,7 @@ private struct FriendDetailContent: View {
                 showsRename = true
             }
         }
-        if friend.isPlaceholder, merger != nil {
+        if friend.isPlaceholder {
             ToolbarItem(placement: .secondaryAction) {
                 Button("Merge With\u{2026}", systemImage: "person.2.badge.gearshape") { showsMerge = true }
             }

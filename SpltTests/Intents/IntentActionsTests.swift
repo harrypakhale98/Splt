@@ -1,4 +1,5 @@
 import AppIntents
+import CoreSpotlight
 import Foundation
 import SpltCore
 import Testing
@@ -162,6 +163,16 @@ struct IntentEntityTests {
     }
 }
 
+private final class RecordingIndex: FriendSearchIndex, @unchecked Sendable {
+    private(set) var replaced: [[CSSearchableItem]] = []
+    var fails = false
+
+    func replaceAll(with items: [CSSearchableItem]) async throws {
+        if fails { throw CocoaError(.fileWriteUnknown) }
+        replaced.append(items)
+    }
+}
+
 @MainActor
 @Suite("Friend Spotlight")
 struct FriendSpotlightTests {
@@ -188,5 +199,20 @@ struct FriendSpotlightTests {
         #expect(item.domainIdentifier == FriendSpotlight.domain)
         #expect(item.attributeSet.title == "Ana Pena")
         #expect(item.attributeSet.contentDescription?.contains("not on Splt yet") == true)
+    }
+
+    @Test func theIndexerReplacesEverythingAndSkipsBlockedPeople() async {
+        let index = RecordingIndex()
+        let ana = Person(name: "Ana"), ben = Person(name: "Ben"), me = Person(name: "Me", kind: .me)
+        let count = await FriendIndexer(index: index).update(friends: [ana, ben, me], blocked: [ben.id])
+        #expect(count == 1)
+        #expect(index.replaced.count == 1)
+        #expect(index.replaced.first?.first?.uniqueIdentifier == FriendSpotlight.identifier(for: ana.id))
+    }
+
+    @Test func aFailingIndexIndexesNothing() async {
+        let index = RecordingIndex()
+        index.fails = true
+        #expect(await FriendIndexer(index: index).update(friends: [Person(name: "Ana")], blocked: []) == 0)
     }
 }
