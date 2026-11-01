@@ -24,10 +24,13 @@ struct RootView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .generatesRecurringExpenses()
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .newGroup:
                 CreateGroupView { router.open(.group($0.rawValue)) }
+            case .addExpense:
+                AddExpenseLauncher()
             default:
                 PlaceholderSheet(sheet: sheet)
             }
