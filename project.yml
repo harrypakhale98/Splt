@@ -32,6 +32,9 @@ targets:
           - CFBundleURLName: com.harrypakhale.splt
             CFBundleURLSchemes:
               - splt
+        CKSharingSupported: true
+        UIBackgroundModes:
+          - remote-notification
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt
@@ -46,7 +49,6 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: Splt/Sync/Splt.entitlements
-        INFOPLIST_FILE: Splt/Sync/SyncInfo.plist
   SpltTests:
     type: bundle.unit-test
     platform: iOS
