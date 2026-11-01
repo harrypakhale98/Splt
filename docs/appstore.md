@@ -22,7 +22,7 @@ Add an expense and say who paid and who shares it. Splt keeps a running balance 
 
 Splitting
 - Equally, by exact amounts, percentages, shares, adjustments, or item by item
-- Any currency per expense, with an exchange rate you set for the trip
+- Any currency per expense, with reference exchange rates or a rate you set for the trip
 - Recurring expenses for rent and subscriptions you share
 
 Faster entry
@@ -44,7 +44,7 @@ Together
 Private by design
 - No account. Your Apple Account is your identity
 - Your data stays on your device and in your own iCloud
-- No analytics, no tracking, no third parties
+- No analytics, no tracking, no ads
 - Smart features run on the device
 
 Also
@@ -97,7 +97,7 @@ Note: members of a private group can comment on expenses. There is no public con
 | Data types | Data Not Collected |
 | Tracking | No |
 
-This matches `PrivacyInfo.xcprivacy` and [privacy.md](privacy.md). Splt has no server, and iCloud data belongs to the user's Apple Account.
+This matches `PrivacyInfo.xcprivacy` and [privacy.md](privacy.md). Splt has no server, and iCloud data belongs to the user's Apple Account. The exchange rate lookup sends no identifiers and no user data, and the service is only asked for a public table, so it is not collection. Revisit this answer if the lookup ever sends anything more.
 
 ## Export compliance
 
@@ -118,6 +118,7 @@ Optional features:
 - iCloud sync and group invites need a signed in iCloud account and a second device. Without iCloud the app runs on local data only.
 - Receipt scanning asks for camera access. Voice entry asks for microphone access.
 - Quick add and category suggestions use Apple's on-device language model on devices that have it. On other devices they use simple rules.
+- Splt asks the free Frankfurter service for exchange rates when an expense is in another currency. The request holds only a currency code and a date. It is skipped when a rate is pinned or the device is offline.
 - Settle Up can open payment apps. Splt never handles payments.
 
 Contact: name, phone and email go in App Store Connect.

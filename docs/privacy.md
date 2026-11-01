@@ -2,7 +2,7 @@
 
 Last updated: November 2026
 
-Splt does not collect your data. There is no Splt server, no account and no analytics, and no third party sees anything you enter.
+Splt does not collect your data. There is no Splt server, no account and no analytics. The one outside service it talks to is a free exchange rate lookup, described below.
 
 ## Where your data lives
 
@@ -19,8 +19,12 @@ You and the people you invite to that group. An invite is a link that you send y
 
 - It does not track you or use an advertising identifier.
 - It does not include ads, analytics or crash reporting from other companies.
-- It does not make network requests of its own. The only traffic is Apple's iCloud sync.
+- It does not send your groups, people, amounts or notes anywhere except your own iCloud.
 - It does not read your contacts. When you add someone from Contacts, the system picker hands Splt only the people you choose.
+
+## Exchange rates
+
+When an expense is in another currency than its group, Splt can look up a rate from Frankfurter (api.frankfurter.dev), a free service that publishes European Central Bank reference rates. The request holds a currency code and sometimes a date. It holds no account, no identifier and nothing about your groups. Like any web request, it shows your IP address to that service. Rates are cached on the device. If you pin a rate for a group, Splt uses it and does not ask.
 
 ## Features that use the device
 

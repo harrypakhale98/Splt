@@ -8,7 +8,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 
 - Groups and one to one balances, with debts simplified to the fewest payments
 - Equal, exact, percentage, share, adjustment and item splits
-- Any currency, with an exchange rate you set for the trip
+- Any currency, with reference rates or a rate you set for the trip
 - Quick add from a sentence or your voice, and receipt scanning
 - Invites by link or QR code, synced through iCloud
 - Export to a spreadsheet or PDF

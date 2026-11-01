@@ -12,7 +12,7 @@ It is built with SwiftUI and Apple frameworks only, with no third party packages
 
 - Groups and one to one balances with friends, with debts simplified to the fewest payments.
 - Six ways to split: equally, exact amounts, percentages, shares, adjustments and by item.
-- Any currency per expense, with an exchange rate you pin for the group.
+- Any currency per expense, with reference rates when you are online or a rate you pin for the group.
 - Recurring expenses.
 - Quick add from a sentence such as "dinner 60 with Sam and Priya", by typing or by voice.
 - Receipt scanning with the document camera, then split by item.
@@ -82,7 +82,7 @@ xcodebuild test -project Splt.xcodeproj -scheme Splt \
 
 ## Privacy
 
-Your data stays on your device and in your own iCloud. There is no analytics and no third party. See [docs/privacy.md](docs/privacy.md).
+Your data stays on your device and in your own iCloud. There is no analytics and no tracking. The only outside request is an optional exchange rate lookup. See [docs/privacy.md](docs/privacy.md).
 
 ## Contributing
 

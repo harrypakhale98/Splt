@@ -32,4 +32,4 @@ Then run the Splt scheme on a simulator. New behavior needs tests, written with 
 
 ## Privacy
 
-Splt collects nothing and talks to no server of its own. A change that adds a network call, a tracker or a new stored data type needs a clear reason and an update to `docs/privacy.md` and the privacy manifest.
+Splt collects nothing and has no server. The only outside request is the exchange rate lookup. A change that adds a network call, a tracker or a new stored data type needs a clear reason and an update to `docs/privacy.md` and the privacy manifest.

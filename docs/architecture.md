@@ -60,7 +60,7 @@ Each feature degrades quietly when the model is unavailable.
 
 ### Exchange rates
 
-A group pins a fixed rate for a trip, typed in by hand. The app makes no network requests to look rates up.
+Fetched from the free ECB-backed Frankfurter API, cached on the device, and always optional. A group can pin a fixed rate for a trip, typed in by hand, and a pinned rate always wins.
 
 ## Targets
 
