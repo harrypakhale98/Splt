@@ -83,7 +83,7 @@ Answer None or No to every question. The expected rating is 4+.
 | Gambling, contests, simulated gambling | None |
 | Medical or wellness content | None |
 | Unrestricted web access | No |
-| User generated content, messaging and chat | No, see the note below |
+| Content posted by users, messaging and chat | No, see the note below |
 | Advertising | No |
 | Parental controls, age assurance | No |
 
