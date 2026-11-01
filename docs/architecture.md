@@ -60,7 +60,7 @@ Each feature degrades quietly when the model is unavailable.
 
 ### Exchange rates
 
-Fetched from the free ECB-backed Frankfurter API, cached on the device, and always optional. A group can pin a fixed rate for a trip.
+A group pins a fixed rate for a trip, typed in by hand. The app makes no network requests to look rates up.
 
 ## Targets
 
@@ -71,4 +71,4 @@ Fetched from the free ECB-backed Frankfurter API, cached on the device, and alwa
 | `SpltUITests` | UI tests |
 | `SpltKit/SpltCore` | Shared logic package |
 
-Widgets, Shortcuts and share extensions are added as separate targets once the core is stable.
+Widgets and share extensions are not built yet. Siri and Shortcuts work through App Intents inside the app target.
