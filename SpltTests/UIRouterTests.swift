@@ -37,6 +37,13 @@ struct UIRouterTests {
         #expect(router.friendsPath == [.friend(id)])
     }
 
+    @Test func groupSettingsRouteIsPushedOnTheGroupsTab() {
+        let router = Router(selectedTab: .friends)
+        router.push(.groupSettings(id), in: .groups)
+        #expect(router.selectedTab == .groups)
+        #expect(router.groupsPath == [.groupSettings(id)])
+    }
+
     @Test func presentSetsSheet() {
         let router = Router()
         router.present(.newGroup)
