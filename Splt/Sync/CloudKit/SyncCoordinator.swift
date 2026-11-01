@@ -1,0 +1,209 @@
+import CloudKit
+import Foundation
+
+/// What the coordinator needs from one CKSyncEngine, so the logic can be tested with a fake.
+@MainActor
+protocol EngineQueue: AnyObject {
+    func queue(_ plan: OutgoingPlan)
+    func queue(saves: [CKRecord.ID])
+    func queue(zonesToSave: [CKRecordZone.ID])
+    func sendChanges() async throws
+    func fetchChanges() async throws
+}
+
+enum SyncAccountChange: Equatable, Sendable {
+    case signedIn(user: String)
+    case signedOut
+    case switched(to: String)
+}
+
+/// Everything that happens between CloudKit events and the data store: what to queue, how to
+/// apply what arrived, how to react to failures. The CKSyncEngine glue only translates events.
+@MainActor
+final class SyncCoordinator {
+    let adapter: SyncStoreAdapter
+    let services: DataServices
+    private(set) var userRecordName: String?
+    private(set) var machine = SyncStatusMachine()
+    private(set) var isReady = false
+    private var queues: [DatabaseScope: any EngineQueue] = [:]
+    private var retry: RetryScheduler?
+
+    /// Called with the report of every batch of remote changes, for notifications and similar.
+    var onRemoteChanges: (@MainActor (ApplyReport) -> Void)?
+    var onSuggestions: (@MainActor ([ClaimSuggestion]) -> Void)?
+    var onStatusChange: (@MainActor (SyncStatus) -> Void)?
+
+    init(services: DataServices, adapter: SyncStoreAdapter, retry: RetryScheduler? = nil) {
+        self.services = services
+        self.adapter = adapter
+        self.retry = retry
+    }
+
+    func setRetry(_ scheduler: RetryScheduler) {
+        retry = scheduler
+    }
+
+    func attach(_ queue: any EngineQueue, for scope: DatabaseScope) {
+        queues[scope] = queue
+    }
+
+    var status: SyncStatus { machine.status }
+
+    // MARK: Lifecycle
+
+    func begin(user: String) throws {
+        userRecordName = user
+        try adoptIdentity()
+        if let known = adapter.metadata.userRecordName, known != user {
+            try adapter.resetForNewAccount(userRecordName: user)
+        } else {
+            adapter.updateMetadata { $0.userRecordName = user }
+        }
+    }
+
+    /// Local changes are only queued once the first fetch has told us which zones are shared.
+    func markReady() {
+        isReady = true
+    }
+
+    func adoptIdentity() throws {
+        guard let user = userRecordName else { return }
+        try IdentityAdopter(tracker: adapter.tracker).adopt(userRecordName: user)
+    }
+
+    // MARK: Queueing
+
+    /// Queues everything the data store has waiting.
+    func reconcile() throws {
+        guard isReady else { return }
+        try adoptIdentity()
+        let plan = try adapter.collectOutgoing()
+        guard !plan.isEmpty else { return }
+        for scope in DatabaseScope.allCases {
+            let part = plan.part(for: scope)
+            if !part.isEmpty { queues[scope]?.queue(part) }
+        }
+    }
+
+    func updateStatus(_ change: (inout SyncStatusMachine) -> Void) {
+        let before = machine.status
+        change(&machine)
+        if machine.status != before { onStatusChange?(machine.status) }
+    }
+
+    // MARK: Fetched
+
+    func fetchedZones(
+        modified: [CKRecordZone.ID], deleted: [(id: CKRecordZone.ID, reason: ZoneDeletionReason)]
+    ) throws {
+        modified.forEach(adapter.registerZone)
+        var needsSend = false
+        for zone in deleted {
+            needsSend = try adapter.zoneDeleted(zone.id, reason: zone.reason) || needsSend
+        }
+        if needsSend { try reconcile() }
+    }
+
+    func fetchedRecords(modifications: [CKRecord], deletions: [(id: CKRecord.ID, recordType: String)]) throws {
+        let report = try adapter.applyFetched(modifications: modifications, deletions: deletions)
+        for id in report.requeue {
+            queues[id.zoneID.scope]?.queue(saves: [id])
+        }
+        try afterRemoteChanges(report)
+        onRemoteChanges?(report)
+    }
+
+    private func afterRemoteChanges(_ report: ApplyReport) throws {
+        guard let user = userRecordName else { return }
+        let importer = ParticipantImporter(services: services)
+        var suggestions: [ClaimSuggestion] = []
+        for share in report.shares {
+            suggestions += try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
+        }
+        for zone in report.touchedZones where adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
+            try importer.ensureMembership(ofMe: user, inZone: zone)
+        }
+        if !suggestions.isEmpty { onSuggestions?(suggestions) }
+        if !report.shares.isEmpty || !report.touchedZones.isEmpty { try reconcile() }
+    }
+
+    // MARK: Sent
+
+    func sentZones(
+        saved: [CKRecordZone], failedSaves: [(zone: CKRecordZone, error: CKError)],
+        deleted: [CKRecordZone.ID], failedDeletes: [CKRecordZone.ID: CKError], scope: DatabaseScope
+    ) throws {
+        adapter.zonesSaved(saved)
+        for id in deleted {
+            try adapter.zoneDeleteConfirmed(id)
+        }
+        var failures: [SyncFailure] = failedSaves.map { SyncFailure($0.error) }
+        for (id, error) in failedDeletes {
+            if SyncFailure(error) == .zoneMissing {
+                try adapter.zoneDeleteConfirmed(id)
+            } else {
+                failures.append(SyncFailure(error))
+            }
+        }
+        noteResult(failures: failures, scope: scope)
+    }
+
+    func sentRecords(
+        saved: [CKRecord], failedSaves: [(record: CKRecord, error: CKError)],
+        deleted: [CKRecord.ID], failedDeletes: [CKRecord.ID: CKError], scope: DatabaseScope
+    ) throws {
+        try adapter.didSend(saved: saved, deleted: deleted)
+        var failures: [SyncFailure] = []
+        for failed in failedSaves {
+            let outcome = try adapter.saveFailed(record: failed.record, error: failed.error)
+            if outcome.requeue { queues[scope]?.queue(saves: [failed.record.recordID]) }
+            if let zone = outcome.recreateZone { queues[scope]?.queue(zonesToSave: [zone]) }
+            if let zone = outcome.goneZone { try fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
+            if outcome.failure != .conflict { failures.append(outcome.failure) }
+        }
+        for (id, error) in failedDeletes {
+            failures.append(try adapter.deleteFailed(id: id, error: error))
+        }
+        noteResult(failures: failures, scope: scope)
+        if failures.isEmpty { try reconcile() }
+    }
+
+    private func noteResult(failures: [SyncFailure], scope: DatabaseScope) {
+        let source = SyncStatusMachine.Source(scope: scope, isSending: true)
+        if let worst = failures.first(where: { $0.status != nil }) ?? failures.first {
+            updateStatus { $0.failed(worst, source: source) }
+            retry?.failed(worst)
+        } else {
+            updateStatus { $0.succeeded(source: source) }
+            retry?.succeeded()
+        }
+    }
+
+    func fetchSucceeded(scope: DatabaseScope) {
+        updateStatus { $0.succeeded(source: .init(scope: scope, isSending: false)) }
+    }
+
+    func fetchFailed(_ error: any Error, scope: DatabaseScope) {
+        let failure = SyncFailure(error)
+        updateStatus { $0.failed(failure, source: .init(scope: scope, isSending: false)) }
+        retry?.failed(failure)
+    }
+
+    // MARK: Account
+
+    func accountChanged(_ change: SyncAccountChange) throws {
+        switch change {
+        case .signedIn(let user):
+            try begin(user: user)
+            updateStatus { $0.clearProblems() }
+        case .signedOut:
+            updateStatus { $0.failed(.noAccount, source: .init(scope: .privateDatabase, isSending: false)) }
+        case .switched(let user):
+            userRecordName = user
+            try adoptIdentity()
+            try adapter.resetForNewAccount(userRecordName: user)
+            updateStatus { $0.clearProblems() }
+        }
+    }
+}
