@@ -1,0 +1,654 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "About": {
+      "comment": "Settings section title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "Account": {
+      "comment": "Tab and screen title for the account and settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "Activity": {
+      "comment": "Tab and screen title for recent expenses and payments",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activity"
+          }
+        }
+      }
+    },
+    "Add Expense": {
+      "comment": "Button that starts adding an expense",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Expense"
+          }
+        }
+      }
+    },
+    "Add Friend": {
+      "comment": "Button that starts adding a friend",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Friend"
+          }
+        }
+      }
+    },
+    "Add friends to split bills and see who owes what.": {
+      "comment": "Empty state message on the Friends tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add friends to split bills and see who owes what."
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "comment": "Setting row for light or dark appearance",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Close": {
+      "comment": "Button that dismisses a sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "Coming Soon": {
+      "comment": "Title of a placeholder for a feature that is not built yet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coming Soon"
+          }
+        }
+      }
+    },
+    "Create Group": {
+      "comment": "Button that starts creating a group",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Group"
+          }
+        }
+      }
+    },
+    "Create a group for a trip, a home or a night out.": {
+      "comment": "Empty state message on the Groups tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a group for a trip, a home or a night out."
+          }
+        }
+      }
+    },
+    "Currency or code": {
+      "comment": "Search field prompt in the currency list",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency or code"
+          }
+        }
+      }
+    },
+    "Default Currency": {
+      "comment": "Setting and screen title for the currency new groups start with",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default Currency"
+          }
+        }
+      }
+    },
+    "Expenses and payments from your groups will show up here.": {
+      "comment": "Empty state message on the Activity tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expenses and payments from your groups will show up here."
+          }
+        }
+      }
+    },
+    "Feedback": {
+      "comment": "Settings section title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feedback"
+          }
+        }
+      }
+    },
+    "Find friends, groups and expenses.": {
+      "comment": "Empty state message on the search screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find friends, groups and expenses."
+          }
+        }
+      }
+    },
+    "Free Forever": {
+      "comment": "Settings section title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free Forever"
+          }
+        }
+      }
+    },
+    "Friend": {
+      "comment": "Title of a single friend screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friend"
+          }
+        }
+      }
+    },
+    "Friend details will appear here.": {
+      "comment": "Placeholder message on a friend screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friend details will appear here."
+          }
+        }
+      }
+    },
+    "Friends": {
+      "comment": "Tab and screen title for the list of friends",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friends"
+          }
+        }
+      }
+    },
+    "Friends, groups, expenses": {
+      "comment": "Search field prompt",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friends, groups, expenses"
+          }
+        }
+      }
+    },
+    "General": {
+      "comment": "Settings section title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "Group": {
+      "comment": "Title of a single group screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group"
+          }
+        }
+      }
+    },
+    "Group details will appear here.": {
+      "comment": "Placeholder message on a group screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group details will appear here."
+          }
+        }
+      }
+    },
+    "Groups": {
+      "comment": "Tab and screen title for the list of groups",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groups"
+          }
+        }
+      }
+    },
+    "Haptics": {
+      "comment": "Setting that turns vibration feedback on or off",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haptics"
+          }
+        }
+      }
+    },
+    "License": {
+      "comment": "Software license row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "License"
+          }
+        }
+      }
+    },
+    "MIT": {
+      "comment": "Name of the software license",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIT"
+          }
+        }
+      }
+    },
+    "New Expense": {
+      "comment": "Sheet title for adding an expense",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Expense"
+          }
+        }
+      }
+    },
+    "New Friend": {
+      "comment": "Sheet title for adding a friend",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Friend"
+          }
+        }
+      }
+    },
+    "New Group": {
+      "comment": "Button and sheet title for creating a group",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Group"
+          }
+        }
+      }
+    },
+    "New groups start with this currency. Splt follows the light or dark appearance of your device.": {
+      "comment": "Footer of the General settings section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New groups start with this currency. Splt follows the light or dark appearance of your device."
+          }
+        }
+      }
+    },
+    "No Activity Yet": {
+      "comment": "Empty state title on the Activity tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Activity Yet"
+          }
+        }
+      }
+    },
+    "No Friends Yet": {
+      "comment": "Empty state title on the Friends tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Friends Yet"
+          }
+        }
+      }
+    },
+    "No Groups Yet": {
+      "comment": "Empty state title on the Groups tab",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Groups Yet"
+          }
+        }
+      }
+    },
+    "Not Set Up": {
+      "comment": "Value of the iCloud sync row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Set Up"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "comment": "Setting that turns notifications on or off",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Notifications remind you about balances and new expenses in your groups.": {
+      "comment": "Footer of the Feedback settings section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications remind you about balances and new expenses in your groups."
+          }
+        }
+      }
+    },
+    "Same as System": {
+      "comment": "Value of the appearance row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same as System"
+          }
+        }
+      }
+    },
+    "Search": {
+      "comment": "Title of the search screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "Search Splt": {
+      "comment": "Empty state title on the search screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Splt"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "comment": "Settings screen title and row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "Settled up": {
+      "comment": "VoiceOver label for a zero balance",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settled up"
+          }
+        }
+      }
+    },
+    "Source Code": {
+      "comment": "Link to the source code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source Code"
+          }
+        }
+      }
+    },
+    "Splt has no ads, no limits and no subscription, now and later.": {
+      "comment": "Statement that the app is free",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Splt has no ads, no limits and no subscription, now and later."
+          }
+        }
+      }
+    },
+    "Sync": {
+      "comment": "Settings section title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        }
+      }
+    },
+    "Syncing groups with friends through iCloud is coming. For now your data stays on this device.": {
+      "comment": "Footer of the Sync settings section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing groups with friends through iCloud is coming. For now your data stays on this device."
+          }
+        }
+      }
+    },
+    "This part of Splt is on its way.": {
+      "comment": "Message of a placeholder for a feature that is not built yet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This part of Splt is on its way."
+          }
+        }
+      }
+    },
+    "Version": {
+      "comment": "App version row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "You": {
+      "comment": "Name shown for the current person",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You"
+          }
+        }
+      }
+    },
+    "You are owed %@": {
+      "comment": "VoiceOver label for a positive balance, the placeholder is an amount",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are owed %@"
+          }
+        }
+      }
+    },
+    "You owe %@": {
+      "comment": "VoiceOver label for a negative balance, the placeholder is an amount",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You owe %@"
+          }
+        }
+      }
+    },
+    "Your Apple Account identifies you. There is nothing to sign up for.": {
+      "comment": "Account tab subtitle",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Apple Account identifies you. There is nothing to sign up for."
+          }
+        }
+      }
+    },
+    "iCloud Sync": {
+      "comment": "Row that shows whether iCloud sync is on",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Sync"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

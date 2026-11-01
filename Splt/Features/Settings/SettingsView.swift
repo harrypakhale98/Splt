@@ -14,7 +14,9 @@ struct SettingsView: View {
                         value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
                     )
                 }
-                LabeledContent("Appearance", value: "Same as System")
+                LabeledContent("Appearance") {
+                    Text("Same as System")
+                }
             } header: {
                 Text("General")
             } footer: {
@@ -48,7 +50,9 @@ struct SettingsView: View {
 
             Section("About") {
                 LabeledContent("Version", value: AppInfo.versionDescription)
-                LabeledContent("License", value: "MIT")
+                LabeledContent("License") {
+                    Text("MIT")
+                }
                 Link(destination: AppInfo.sourceCodeURL) {
                     Label("Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
                 }

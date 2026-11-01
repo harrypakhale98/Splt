@@ -31,7 +31,7 @@ struct MoneyLabel: View {
     }
 
     private var accessibilityText: String {
-        let amount = MoneyFormatting.string(money.magnitude, locale: locale, showsSign: false)
+        let amount = MoneyFormatting.magnitudeString(money, locale: locale)
         guard style == .balance else { return amount }
         if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
         if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
@@ -42,13 +42,16 @@ struct MoneyLabel: View {
 enum MoneyFormatting {
     /// Display only. Stored amounts stay in integer minor units.
     static func string(_ money: Money, locale: Locale = .current, showsSign: Bool = false) -> String {
-        let digits = fractionDigits(for: money.currencyCode, locale: locale)
-        let magnitude = Decimal(sign: .plus, exponent: -digits, significand: Decimal(money.minorUnits.magnitude))
-        let style = Decimal.FormatStyle.Currency(code: money.currencyCode, locale: locale)
-        let text = magnitude.formatted(style)
+        let text = magnitudeString(money, locale: locale)
         guard showsSign, money.minorUnits != 0 else { return text }
-        let sign = money.minorUnits > 0 ? "+" : "-"
-        return sign + text
+        return (money.minorUnits > 0 ? "+" : "-") + text
+    }
+
+    /// The amount without any sign.
+    static func magnitudeString(_ money: Money, locale: Locale = .current) -> String {
+        let digits = fractionDigits(for: money.currencyCode, locale: locale)
+        let value = Decimal(sign: .plus, exponent: -digits, significand: Decimal(money.minorUnits.magnitude))
+        return value.formatted(Decimal.FormatStyle.Currency(code: money.currencyCode, locale: locale))
     }
 
     static func fractionDigits(for currencyCode: String, locale: Locale = .current) -> Int {
@@ -57,12 +60,6 @@ enum MoneyFormatting {
         formatter.numberStyle = .currency
         formatter.currencyCode = currencyCode
         return formatter.maximumFractionDigits
-    }
-}
-
-private extension Money {
-    var magnitude: Money {
-        Money(minorUnits: Int64(minorUnits.magnitude), currencyCode: currencyCode)
     }
 }
 
