@@ -6,25 +6,37 @@ struct GroupSettingsView: View {
     let groupID: GroupID
     /// Called after the group is deleted or you leave it, so the screen behind can step back.
     var onGroupRemoved: () -> Void = {}
+    /// True when shown inside a navigation stack as a pushed screen, which has its own back button.
+    var isPushed = false
 
     @Environment(\.dataServices) private var services
 
     var body: some View {
-        NavigationStack {
-            if let services {
-                GroupSettingsForm(groupID: groupID, services: services, onGroupRemoved: onGroupRemoved)
-            } else {
-                EmptyStateView(
-                    title: "Group Not Found",
-                    systemImage: "person.3",
-                    description: "Splt couldn't open its storage."
-                )
-            }
+        if isPushed {
+            content
+        } else {
+            NavigationStack { content }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let services {
+            GroupSettingsForm(
+                groupID: groupID, services: services, showsCancel: !isPushed, onGroupRemoved: onGroupRemoved
+            )
+        } else {
+            EmptyStateView(
+                title: "Group Not Found",
+                systemImage: "person.3",
+                description: "Splt couldn't open its storage."
+            )
         }
     }
 }
 
 private struct GroupSettingsForm: View {
+    let showsCancel: Bool
     let onGroupRemoved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -37,7 +49,8 @@ private struct GroupSettingsForm: View {
     @State private var showsLeaveConfirmation = false
     @State private var newMemberName = ""
 
-    init(groupID: GroupID, services: DataServices, onGroupRemoved: @escaping () -> Void) {
+    init(groupID: GroupID, services: DataServices, showsCancel: Bool, onGroupRemoved: @escaping () -> Void) {
+        self.showsCancel = showsCancel
         self.onGroupRemoved = onGroupRemoved
         _model = State(initialValue: GroupSettingsViewModel(groupID: groupID, services: services))
     }
@@ -59,8 +72,10 @@ private struct GroupSettingsForm: View {
         .navigationTitle("Group Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel", role: .cancel) { dismiss() }
+            if showsCancel {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", role: .cancel) { dismiss() }
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done", action: save)
@@ -141,14 +156,8 @@ private struct GroupSettingsForm: View {
 
             membersSection
 
-            Section("Invite") {
-                if let group = model.group {
-                    NavigationLink {
-                        InviteGroupView(groupID: group.id, groupName: group.name)
-                    } label: {
-                        Label("Invite with Link or QR Code", systemImage: "qrcode")
-                    }
-                }
+            if let group = model.group {
+                GroupInviteSection(groupID: group.id, groupName: group.name)
             }
 
             exportSection

@@ -31,6 +31,8 @@ struct RouteDestinationView: View {
             ExpenseDetailView(expenseID: ExpenseID(rawValue: id))
         case .recurringExpenses(let id):
             RecurringExpensesView(groupID: GroupID(rawValue: id))
+        case .groupSettings(let id):
+            GroupSettingsView(groupID: GroupID(rawValue: id), isPushed: true)
         }
     }
 }

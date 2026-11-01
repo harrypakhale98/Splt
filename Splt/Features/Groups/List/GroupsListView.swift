@@ -130,6 +130,9 @@ private struct GroupsListContent: View {
                     model.archive(summary.group.id)
                 }
             }
+            Button("Group Settings", systemImage: "gearshape") {
+                router.push(.groupSettings(summary.group.id.rawValue), in: .groups)
+            }
             Button("Delete", systemImage: "trash", role: .destructive) {
                 pendingDelete = summary.group
             }

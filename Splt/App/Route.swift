@@ -10,6 +10,8 @@ enum Route: Hashable, Sendable {
     case expense(UUID)
     /// The recurring expenses of a group, by group id.
     case recurringExpenses(UUID)
+    /// The settings of a group, by group id, pushed instead of presented as a sheet.
+    case groupSettings(UUID)
 }
 
 /// Full screen flows presented as sheets over the tab bar.
