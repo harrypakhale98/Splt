@@ -15,14 +15,8 @@ struct RouteDestinationView: View {
 
     var body: some View {
         switch route {
-        case .group:
-            EmptyStateView(
-                title: "Group",
-                systemImage: "person.3",
-                description: "Group details will appear here."
-            )
-            .navigationTitle("Group")
-            .navigationBarTitleDisplayMode(.inline)
+        case .group(let id):
+            GroupDetailView(groupID: GroupID(rawValue: id))
         case .friend:
             EmptyStateView(
                 title: "Friend",

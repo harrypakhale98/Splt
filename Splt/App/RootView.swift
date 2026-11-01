@@ -11,7 +11,7 @@ struct RootView: View {
                 FriendsView()
             }
             Tab("Groups", systemImage: "person.3", value: AppTab.groups) {
-                GroupsView()
+                GroupsListView()
             }
             Tab("Activity", systemImage: "list.bullet.rectangle", value: AppTab.activity) {
                 ActivityView()
@@ -25,7 +25,12 @@ struct RootView: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(item: $router.sheet) { sheet in
-            PlaceholderSheet(sheet: sheet)
+            switch sheet {
+            case .newGroup:
+                CreateGroupView { router.open(.group($0.rawValue)) }
+            default:
+                PlaceholderSheet(sheet: sheet)
+            }
         }
     }
 }
