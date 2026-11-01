@@ -14,6 +14,7 @@ struct SpltApp: App {
                 .onOpenURL { router.open($0) }
                 .syncLifecycle(services: services, router: router)
                 .groupSpotlight(services: services, router: router)
+                .friendSpotlight(services: services, router: router)
                 .reminderNotifications(router: router)
         }
     }

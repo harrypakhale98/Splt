@@ -13,6 +13,6 @@ enum LaunchServices {
         if arguments.contains("-uitesting") {
             return try? DataServices.inMemory()
         }
-        return try? DataServices.live()
+        return IntentServices.shared.live()
     }
 }
