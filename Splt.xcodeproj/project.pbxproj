@@ -34,9 +34,22 @@
 		CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		994FCC5F42583173FB30E276 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Sync/SyncInfo.plist,
+			);
+			target = 8FC5153111E7AA4790072F82 /* Splt */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		91AB7BEAAEAA8000769548EE /* Splt */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				994FCC5F42583173FB30E276 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			explicitFileTypes = {
 			};
 			explicitFolders = (
@@ -299,10 +312,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Splt/Sync/Splt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_FILE = Splt/Sync/SyncInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Splt;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts to split them.";
@@ -485,10 +499,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Splt/Sync/Splt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_FILE = Splt/Sync/SyncInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Splt;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts to split them.";
