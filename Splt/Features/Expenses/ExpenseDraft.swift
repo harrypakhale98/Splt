@@ -13,6 +13,8 @@ struct ExpenseDraft: Hashable, Sendable {
     var payers: [PersonID: Money] = [:]
     /// Nil means an equal split between the whole group.
     var split: SplitDefinition?
+    /// Starts the form with "Repeat" already chosen.
+    var repeats: RecurrenceFrequency?
 
     init(
         title: String = "",
@@ -21,7 +23,8 @@ struct ExpenseDraft: Hashable, Sendable {
         category: ExpenseCategory? = nil,
         note: String = "",
         payers: [PersonID: Money] = [:],
-        split: SplitDefinition? = nil
+        split: SplitDefinition? = nil,
+        repeats: RecurrenceFrequency? = nil
     ) {
         self.title = title
         self.total = total
@@ -30,6 +33,7 @@ struct ExpenseDraft: Hashable, Sendable {
         self.note = note
         self.payers = payers
         self.split = split
+        self.repeats = repeats
     }
 
     /// A copy of an existing expense, for "duplicate". The date becomes today.

@@ -1,0 +1,83 @@
+import SpltCore
+import SwiftUI
+
+struct PayerSection: View {
+    @Bindable var model: ExpenseFormModel
+
+    var body: some View {
+        Section {
+            if !model.payer.isMultiple {
+                Picker("Paid by", selection: Binding(
+                    get: { model.payer.single ?? model.me?.id },
+                    set: { if let id = $0 { model.selectPayer(id) } }
+                )) {
+                    ForEach(model.members) { person in
+                        Text(model.displayName(for: person.id)).tag(Optional(person.id))
+                    }
+                }
+            }
+
+            Toggle("Several people paid", isOn: Binding(
+                get: { model.payer.isMultiple },
+                set: { model.setMultiplePayers($0) }
+            ))
+
+            if model.payer.isMultiple {
+                PeopleChips(
+                    people: model.members, selected: model.payer.selected,
+                    currentPerson: model.me?.id, toggle: model.togglePayer
+                )
+                ForEach(model.members.filter { model.payer.selected.contains($0.id) }) { person in
+                    HStack {
+                        AvatarView(name: person.name, size: 28)
+                        Text(model.displayName(for: person.id))
+                        Spacer(minLength: 8)
+                        TextField("Amount", text: Binding(
+                            get: { model.payer.amounts[person.id, default: ""] },
+                            set: { model.payer.amounts[person.id] = $0 }
+                        ), prompt: Text("0"))
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                        .frame(maxWidth: 140)
+                        .accessibilityLabel("Amount paid by \(model.displayName(for: person.id))")
+                    }
+                }
+                if let remaining = model.payerRemaining {
+                    RemainingRow(remaining: remaining, title: "Still to assign")
+                }
+                if model.payer.selected.count > 1 {
+                    Button("Split Evenly Between Payers", action: model.splitPaymentsEvenly)
+                }
+            }
+        } header: {
+            Text("Paid By")
+        }
+    }
+}
+
+/// Shows how much is left to assign: orange while something remains, red when over, green when exact.
+struct RemainingRow: View {
+    let remaining: Money
+    var title: LocalizedStringKey = "Left to assign"
+
+    var body: some View {
+        LabeledContent(title) {
+            if remaining.isZero {
+                Label("All assigned", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                MoneyLabel(money: remaining)
+                    .foregroundStyle(remaining.isNegative ? .red : .orange)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var accessibilityText: String {
+        let amount = MoneyFormatting.magnitudeString(remaining)
+        if remaining.isZero { return String(localized: "All assigned") }
+        return remaining.isNegative ? String(localized: "\(amount) over") : String(localized: "\(amount) left to assign")
+    }
+}
