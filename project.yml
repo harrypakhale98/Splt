@@ -28,6 +28,9 @@ targets:
     info:
       path: Config/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
           - CFBundleURLName: com.harrypakhale.splt
             CFBundleURLSchemes:
