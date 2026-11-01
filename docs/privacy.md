@@ -1,7 +1,3 @@
----
-title: Privacy
----
-
 # Privacy
 
 Last updated: November 2026
