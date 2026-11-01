@@ -1,0 +1,32 @@
+name: Bug report
+description: Something in Splt does not work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Say what you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a group
+        2. Add an expense
+        3. ...
+  - type: input
+    id: version
+    attributes:
+      label: Splt version
+      description: Shown in Settings, under About.
+  - type: input
+    id: ios
+    attributes:
+      label: iOS version and device
+      placeholder: iOS 26.1, iPhone 16
+  - type: markdown
+    attributes:
+      value: Please leave out names, amounts and anything else you would not want public. A screenshot of the problem screen is enough.

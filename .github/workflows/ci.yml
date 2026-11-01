@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|_rc|release' | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      - name: Cache Swift package build
+        uses: actions/cache@v4
+        with:
+          path: Packages/SpltKit/.build
+          key: spm-${{ runner.os }}-${{ hashFiles('Packages/SpltKit/Package.swift') }}
+
+      - name: Test SpltKit
+        working-directory: Packages/SpltKit
+        run: swift test
+
+      - name: Pick an iPhone simulator
+        run: |
+          udid=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))] | last | .udid')
+          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
+
+      - name: Build the app and tests
+        run: |
+          xcodebuild build-for-testing \
+            -project Splt.xcodeproj \
+            -scheme Splt \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run the app tests
+        run: |
+          xcodebuild test-without-building \
+            -project Splt.xcodeproj \
+            -scheme Splt \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath build \
+            -only-testing:SpltTests \
+            CODE_SIGNING_ALLOWED=NO
