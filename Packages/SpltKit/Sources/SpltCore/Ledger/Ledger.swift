@@ -10,7 +10,9 @@ public struct Ledger: Sendable {
     /// Net balance per person, keyed by currency code. Each currency's balances add up to zero.
     public let netBalances: [String: [PersonID: Money]]
     /// Direct debts between pairs of people, netted in both directions, never zero.
-    /// Sorted by currency, then debtor, then creditor.
+    /// Sorted by currency, then debtor, then creditor. After paying the shortcuts from
+    /// `simplifiedDebts` everyone is settled but these direct debts can remain; they then
+    /// cancel out when added up per person.
     public let debts: [Debt]
     /// Entries that were skipped, in the order they were found.
     public let issues: [LedgerIssue]
