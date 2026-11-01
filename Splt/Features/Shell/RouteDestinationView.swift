@@ -1,3 +1,4 @@
+import SpltCore
 import SwiftUI
 
 extension View {
@@ -32,6 +33,10 @@ struct RouteDestinationView: View {
             .navigationBarTitleDisplayMode(.inline)
         case .settings:
             SettingsView()
+        case .expense(let id):
+            ExpenseDetailView(expenseID: ExpenseID(rawValue: id))
+        case .recurringExpenses(let id):
+            RecurringExpensesView(groupID: GroupID(rawValue: id))
         }
     }
 }
