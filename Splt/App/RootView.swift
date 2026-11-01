@@ -1,14 +1,36 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(Router.self) private var router
+
     var body: some View {
-        NavigationStack {
-            ContentUnavailableView("Splt", systemImage: "person.2", description: Text("Split costs with friends."))
-                .navigationTitle("Splt")
+        @Bindable var router = router
+
+        TabView(selection: $router.selectedTab) {
+            Tab("Friends", systemImage: "person.2", value: AppTab.friends) {
+                FriendsView()
+            }
+            Tab("Groups", systemImage: "person.3", value: AppTab.groups) {
+                GroupsView()
+            }
+            Tab("Activity", systemImage: "list.bullet.rectangle", value: AppTab.activity) {
+                ActivityView()
+            }
+            Tab("Account", systemImage: "person.crop.circle", value: AppTab.account) {
+                AccountView()
+            }
+            Tab(value: AppTab.search, role: .search) {
+                SearchView()
+            }
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .sheet(item: $router.sheet) { sheet in
+            PlaceholderSheet(sheet: sheet)
         }
     }
 }
 
 #Preview {
     RootView()
+        .environment(Router())
 }
