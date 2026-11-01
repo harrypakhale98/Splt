@@ -48,6 +48,7 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts to split them.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
+        SWIFT_EMIT_LOC_STRINGS: YES
         CODE_SIGN_ENTITLEMENTS: Splt/Sync/Splt.entitlements
   SpltTests:
     type: bundle.unit-test
