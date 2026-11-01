@@ -4,6 +4,7 @@ import SwiftUI
 struct SpltApp: App {
     @State private var router = Router()
     @State private var services = LaunchServices.make()
+    @UIApplicationDelegateAdaptor(SyncAppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup {
@@ -11,6 +12,7 @@ struct SpltApp: App {
                 .environment(router)
                 .environment(\.dataServices, services)
                 .onOpenURL { router.open($0) }
+                .syncLifecycle(services: services, router: router)
                 .groupSpotlight(services: services, router: router)
         }
     }
