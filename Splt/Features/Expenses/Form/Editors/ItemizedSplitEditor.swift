@@ -57,14 +57,15 @@ private struct ItemRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                TextField("Item", text: $item.name, prompt: Text("Item name"))
-                TextField("Price", text: $item.amountText, prompt: Text("0"))
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .monospacedDigit()
-                    .frame(maxWidth: 110)
-                    .accessibilityLabel("Price of \(model.itemName(item))")
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    nameField
+                    priceField.frame(maxWidth: 110)
+                }
+                VStack(alignment: .leading) {
+                    nameField
+                    priceField
+                }
             }
             PeopleChips(
                 people: model.members, selected: item.assignees,
@@ -79,5 +80,17 @@ private struct ItemRow: View {
             .font(.footnote)
         }
         .padding(.vertical, 4)
+    }
+
+    private var nameField: some View {
+        TextField("Item", text: $item.name, prompt: Text("Item name"))
+    }
+
+    private var priceField: some View {
+        TextField("Price", text: $item.amountText, prompt: Text("0"))
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(.trailing)
+            .monospacedDigit()
+            .accessibilityLabel("Price of \(model.itemName(item))")
     }
 }

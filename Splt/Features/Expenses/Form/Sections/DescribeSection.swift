@@ -17,6 +17,7 @@ struct DescribeSection: View {
             .lineLimit(1...4)
             .submitLabel(.go)
             .focused($focused)
+            .accessibilityIdentifier("expense-describe")
             .onSubmit(fill)
             .accessibilityHint("Type or say what you spent and who shared it, and the form fills itself in.")
 

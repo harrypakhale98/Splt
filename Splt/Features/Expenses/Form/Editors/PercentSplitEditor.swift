@@ -6,20 +6,18 @@ struct PercentSplitEditor: View {
     var body: some View {
         Section {
             ForEach(model.participantList) { person in
-                HStack {
-                    AvatarView(name: person.name, size: 28)
-                    Text(model.displayName(for: person.id))
-                    Spacer(minLength: 8)
-                    TextField("Percent", text: Binding(
-                        get: { model.split.percent[person.id, default: ""] },
-                        set: { model.split.percent[person.id] = $0 }
-                    ), prompt: Text("0"))
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .monospacedDigit()
-                    .frame(maxWidth: 100)
-                    .accessibilityLabel("Percent owed by \(model.displayName(for: person.id))")
-                    Text("%").foregroundStyle(.secondary).accessibilityHidden(true)
+                PersonFieldRow(person: person, name: model.displayName(for: person.id), fieldWidth: 120) {
+                    HStack {
+                        TextField("Percent", text: Binding(
+                            get: { model.split.percent[person.id, default: ""] },
+                            set: { model.split.percent[person.id] = $0 }
+                        ), prompt: Text("0"))
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                        .accessibilityLabel("Percent owed by \(model.displayName(for: person.id))")
+                        Text("%").foregroundStyle(.secondary).accessibilityHidden(true)
+                    }
                 }
             }
             if let remaining = model.percentRemaining {

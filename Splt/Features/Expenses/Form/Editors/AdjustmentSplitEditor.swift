@@ -6,10 +6,7 @@ struct AdjustmentSplitEditor: View {
     var body: some View {
         Section {
             ForEach(model.participantList) { person in
-                HStack {
-                    AvatarView(name: person.name, size: 28)
-                    Text(model.displayName(for: person.id))
-                    Spacer(minLength: 8)
+                PersonFieldRow(person: person, name: model.displayName(for: person.id)) {
                     TextField("Adjustment", text: Binding(
                         get: { model.split.adjustments[person.id, default: ""] },
                         set: { model.split.adjustments[person.id] = $0 }
@@ -17,7 +14,6 @@ struct AdjustmentSplitEditor: View {
                     .keyboardType(.numbersAndPunctuation)
                     .multilineTextAlignment(.trailing)
                     .monospacedDigit()
-                    .frame(maxWidth: 140)
                     .accessibilityLabel("Adjustment for \(model.displayName(for: person.id))")
                 }
             }

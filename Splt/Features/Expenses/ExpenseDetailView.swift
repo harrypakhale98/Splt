@@ -146,3 +146,40 @@ private struct DeletedBanner: View {
         .accessibilityElement(children: .contain)
     }
 }
+
+#if DEBUG
+#Preview("Shared equally") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { ExpenseDetailView(expenseID: scene.expense("airbnb")) }
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Itemized") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { ExpenseDetailView(expenseID: scene.expense("seafood")) }
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Deleted") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { ExpenseDetailView(expenseID: scene.expense("mistake")) }
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Refund") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { ExpenseDetailView(expenseID: scene.expense("refund")) }
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Large text") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { ExpenseDetailView(expenseID: scene.expense("beachbar")) }
+        .environment(\.dataServices, scene.services)
+        .dynamicTypeSize(.accessibility3)
+}
+
+#Preview("Not found") {
+    NavigationStack { ExpenseDetailView(expenseID: ExpenseID()) }
+}
+#endif

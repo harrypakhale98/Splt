@@ -130,3 +130,31 @@ private struct RecurringRow: View {
         return "\(template.title). \(template.rule.frequency.title). \(amount). \(model.payerSummary(for: template)). \(statusText)"
     }
 }
+
+#if DEBUG
+#Preview("With expenses") {
+    let scene = ExpensePreviewSupport.scene()
+    let trip = scene.trip
+    let rule = RecurrenceRule(frequency: .monthly, startDate: Date())
+    let rent = RecurringExpense(
+        groupID: trip.flat.id, title: "Rent", total: Money(minorUnits: 120_000, currencyCode: "EUR"), category: .rent,
+        payers: [trip.me.id: Money(minorUnits: 120_000, currencyCode: "EUR")],
+        split: .equal(participants: [trip.me.id, trip.maya.id]), rule: rule
+    )
+    let internet = RecurringExpense(
+        groupID: trip.flat.id, title: "Internet", total: Money(minorUnits: 3_990, currencyCode: "EUR"), category: .utilities,
+        payers: [trip.maya.id: Money(minorUnits: 3_990, currencyCode: "EUR")],
+        split: .equal(participants: [trip.me.id, trip.maya.id]), rule: rule, isActive: false
+    )
+    try? scene.services.recurring.add(rent)
+    try? scene.services.recurring.add(internet)
+    return NavigationStack { RecurringExpensesView(groupID: trip.flat.id) }
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Empty") {
+    let scene = ExpensePreviewSupport.scene()
+    NavigationStack { RecurringExpensesView(groupID: scene.trip.flat.id) }
+        .environment(\.dataServices, scene.services)
+}
+#endif

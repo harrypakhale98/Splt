@@ -9,6 +9,7 @@ struct DetailsSection: View {
         Section {
             TextField("Title", text: $model.title, prompt: Text("What was it for?"))
                 .focused(focus, equals: .title)
+                .accessibilityIdentifier("expense-title")
                 .submitLabel(.done)
                 .onChange(of: model.title) { model.titleDidChange() }
 

@@ -9,11 +9,14 @@ struct ShareLine: Identifiable, Equatable {
     var name: String
     var share: Money
     var breakdown: ShareBreakdown?
+    var isYou = false
     var id: PersonID { person.id }
 
     func spokenText(locale: Locale) -> String {
         func amount(_ money: Money) -> String { MoneyFormatting.magnitudeString(money, locale: locale) }
-        var text = String(localized: "\(name) owes \(amount(share))")
+        var text = isYou
+            ? String(localized: "You owe \(amount(share))")
+            : String(localized: "\(name) owes \(amount(share))")
         if let breakdown {
             var parts = [String(localized: "items \(amount(breakdown.items))")]
             if !breakdown.tax.isZero { parts.append(String(localized: "tax \(amount(breakdown.tax))")) }
@@ -89,7 +92,9 @@ final class ExpenseDetailModel {
     private func rebuildLines(for expense: Expense) {
         let result = try? expense.shares()
         shareLines = (result?.shares ?? [:]).compactMap { id, share in
-            people[id].map { ShareLine(person: $0, name: name(for: id), share: share, breakdown: result?.breakdown?[id]) }
+            people[id].map { ShareLine(
+                person: $0, name: name(for: id), share: share, breakdown: result?.breakdown?[id], isYou: id == me?.id
+            ) }
         }
         .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         payerLines = expense.payers.compactMap { id, amount in

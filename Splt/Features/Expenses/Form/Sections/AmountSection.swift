@@ -16,6 +16,7 @@ struct AmountSection: View {
                     .font(.system(.largeTitle, design: .rounded, weight: .semibold).monospacedDigit())
                     .keyboardType(.decimalPad)
                     .focused(focus, equals: .amount)
+                    .accessibilityIdentifier("expense-amount")
                     .accessibilityLabel("Amount in \(model.currencyCode)")
             }
 

@@ -28,10 +28,7 @@ struct PayerSection: View {
                     currentPerson: model.me?.id, toggle: model.togglePayer
                 )
                 ForEach(model.members.filter { model.payer.selected.contains($0.id) }) { person in
-                    HStack {
-                        AvatarView(name: person.name, size: 28)
-                        Text(model.displayName(for: person.id))
-                        Spacer(minLength: 8)
+                    PersonFieldRow(person: person, name: model.displayName(for: person.id)) {
                         TextField("Amount", text: Binding(
                             get: { model.payer.amounts[person.id, default: ""] },
                             set: { model.payer.amounts[person.id] = $0 }
@@ -39,7 +36,6 @@ struct PayerSection: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .monospacedDigit()
-                        .frame(maxWidth: 140)
                         .accessibilityLabel("Amount paid by \(model.displayName(for: person.id))")
                     }
                 }

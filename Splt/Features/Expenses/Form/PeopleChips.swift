@@ -27,3 +27,13 @@ struct PeopleChips: View {
         .padding(.vertical, 4)
     }
 }
+
+#if DEBUG
+#Preview("Chips") {
+    let people = ["Jamie Rivera", "Maya Chen", "Jonas Weber", "Priya Nair", "Diego Alvarez", "Hana Sato"]
+        .map { Person(name: $0) }
+    return List {
+        PeopleChips(people: people, selected: Set(people.prefix(3).map(\.id)), currentPerson: people[0].id) { _ in }
+    }
+}
+#endif

@@ -104,6 +104,12 @@ private struct ExpenseFormScreen: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .keyboard) {
+            Spacer()
+            Button(focus == .amount ? "Next" : "Done") {
+                focus = focus == .amount ? .title : nil
+            }
+        }
         ToolbarItem(placement: .cancellationAction) {
             Button("Close", role: .close) {
                 if model.isDirty { confirmsDiscard = true } else { dismiss() }
@@ -174,3 +180,41 @@ private struct DuplicateWarningSection: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("New expense") {
+    let scene = ExpensePreviewSupport.scene()
+    ExpenseFormView(mode: .add(groupID: scene.trip.trip.id, prefill: nil))
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Prefilled") {
+    let scene = ExpensePreviewSupport.scene()
+    let draft = ExpenseDraft(title: "Taxi to Belem", total: Money(minorUnits: 1850, currencyCode: "EUR"), category: .transport)
+    ExpenseFormView(mode: .add(groupID: scene.trip.trip.id, prefill: draft))
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Edit itemized") {
+    let scene = ExpensePreviewSupport.scene()
+    ExpenseFormView(mode: .edit(scene.expense("seafood")))
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Edit with several payers") {
+    let scene = ExpensePreviewSupport.scene()
+    ExpenseFormView(mode: .edit(scene.expense("beachbar")))
+        .environment(\.dataServices, scene.services)
+}
+
+#Preview("Large text") {
+    let scene = ExpensePreviewSupport.scene()
+    ExpenseFormView(mode: .edit(scene.expense("groceries")))
+        .environment(\.dataServices, scene.services)
+        .dynamicTypeSize(.accessibility3)
+}
+
+#Preview("No data") {
+    ExpenseFormView(mode: .add(groupID: GroupID(), prefill: nil))
+}
+#endif

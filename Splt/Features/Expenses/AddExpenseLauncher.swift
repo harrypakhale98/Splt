@@ -39,3 +39,18 @@ struct AddExpenseLauncher: View {
         return groups.first?.id
     }
 }
+
+#if DEBUG
+#Preview("With groups") {
+    let scene = ExpensePreviewSupport.scene()
+    AddExpenseLauncher()
+        .environment(\.dataServices, scene.services)
+        .environment(Router())
+}
+
+#Preview("No groups") {
+    AddExpenseLauncher()
+        .environment(\.dataServices, try? DataServices.inMemory())
+        .environment(Router())
+}
+#endif
