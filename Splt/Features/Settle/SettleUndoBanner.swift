@@ -14,11 +14,13 @@ private struct SettleUndoBannerModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .environment(\.settleUndo, center)
-            .overlay(alignment: .top) {
+            .overlay(alignment: .bottom) {
                 if let banner = center.banner {
                     SettleUndoBanner(banner: banner, center: center)
                         .padding(.horizontal)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .padding(.bottom, 96)
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                        .motionTransition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .animation(reduceMotion ? nil : .snappy, value: center.banner)

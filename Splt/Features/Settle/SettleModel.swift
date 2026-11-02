@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 import SpltCore
 
 /// The state behind the settle up sheet: what is being paid, by whom, and the payments it will write.
@@ -123,6 +124,52 @@ final class SettleModel {
         return Money(minorUnits: full.minorUnits - amount.minorUnits, currencyCode: full.currencyCode)
     }
 
+    // MARK: Share of the debt
+
+    /// The step of the stepper and the drag: a whole unit of the currency, or a tenth of one for small debts.
+    var step: Int64 {
+        guard let full = fullAmount else { return 1 }
+        let one = Int64(pow(10, Double(full.exponent)))
+        return full.minorUnits >= 10 * one ? one : max(one / 10, 1)
+    }
+
+    /// How much of the debt is being paid, from 0 to 1. A payment above the debt counts as all of it.
+    var fraction: Double {
+        guard let amount, let full = fullAmount, full.minorUnits > 0 else { return 1 }
+        return min(Double(amount.minorUnits) / Double(full.minorUnits), 1)
+    }
+
+    /// Pays this share of the debt, rounded to the step. Everything above 98 percent means all of it.
+    func setFraction(_ value: Double) {
+        guard let full = fullAmount, !isReversed else { return }
+        let clamped = min(max(value, 0), 1)
+        if clamped >= 0.98 {
+            amountMode = .full
+            return
+        }
+        let raw = Int64((Double(full.minorUnits) * clamped).rounded())
+        let units = max((raw / step) * step, step)
+        setPartial(units)
+    }
+
+    /// Moves the amount by whole steps, for the stepper and for VoiceOver. Never below one step.
+    func nudge(by steps: Int) {
+        guard let full = fullAmount, let current = amount else { return }
+        var units = current.minorUnits + Int64(steps) * step
+        units = max(units, step)
+        if !isReversed, units >= full.minorUnits {
+            amountMode = .full
+            return
+        }
+        setPartial(units)
+    }
+
+    private func setPartial(_ units: Int64) {
+        guard let full = fullAmount else { return }
+        amountMode = .partial
+        amountText = Money(minorUnits: units, currencyCode: full.currencyCode).plainString(locale: locale)
+    }
+
     var totals: [Money] {
         if let amount { return [amount] }
         return MoneyTotals.sum(route.debts.map(\.amount))
@@ -146,6 +193,21 @@ final class SettleModel {
         if payer == me?.id { return String(localized: "You pay \(to)") }
         if receiver == me?.id { return String(localized: "\(from) pays you") }
         return String(localized: "\(from) pays \(to)")
+    }
+
+    /// The people of the payment with the colors they carry, payer first. A whole group lists everyone involved.
+    var participants: [SettleParticipant] {
+        var ordered: [PersonID] = []
+        if let payer, let receiver {
+            ordered = [payer, receiver]
+        } else {
+            for debt in route.debts {
+                for id in [debt.debtor, debt.creditor] where !ordered.contains(id) { ordered.append(id) }
+            }
+        }
+        return ordered.map {
+            SettleParticipant(id: $0, name: name(of: $0), color: PersonPalette.color(for: $0, in: ordered))
+        }
     }
 
     var headline: String {

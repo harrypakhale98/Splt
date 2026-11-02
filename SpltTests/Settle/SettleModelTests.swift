@@ -165,4 +165,75 @@ struct SettleModelTests {
         #expect(model.sentence(payer: fixture.me.id, receiver: fixture.priya.id) == "You pay Priya")
         #expect(model.sentence(payer: fixture.sam.id, receiver: fixture.priya.id) == "Sam pays Priya")
     }
+
+    @Test func theShareFollowsTheAmount() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        #expect(model.fraction == 1)
+        #expect(model.step == 100)
+        model.setFraction(0.5)
+        #expect(model.amountMode == .partial)
+        #expect(model.amount == usdAmount(500))
+        #expect(model.fraction == 0.5)
+        model.setFraction(0.333)
+        #expect(model.amount == usdAmount(300))
+        model.setFraction(0.99)
+        #expect(model.amountMode == .full)
+        #expect(model.amount == usdAmount(1000))
+    }
+
+    @Test func theShareNeverDropsBelowOneStep() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        model.setFraction(0)
+        #expect(model.amount == usdAmount(100))
+        model.setFraction(-3)
+        #expect(model.amount == usdAmount(100))
+    }
+
+    @Test func theStepperMovesByWholeUnits() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        model.nudge(by: -1)
+        #expect(model.amount == usdAmount(900))
+        #expect(model.amountMode == .partial)
+        model.nudge(by: -3)
+        #expect(model.amount == usdAmount(600))
+        model.nudge(by: 10)
+        #expect(model.amountMode == .full)
+        #expect(model.amount == usdAmount(1000))
+        model.nudge(by: -20)
+        #expect(model.amount == usdAmount(100))
+    }
+
+    @Test func smallDebtsStepByTenthsAndAdvancesMayGoHigher() throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Gum", cents: 300)
+        let debt = try #require(try fixture.services.groups.balances(for: fixture.group.id).suggestedSettlements.first)
+        let model = model(fixture, debts: [debt])
+        #expect(model.step == 10)
+        model.isReversed = true
+        model.nudge(by: 100)
+        #expect(model.amount == usdAmount(1100))
+        #expect(model.amountMode == .partial)
+        model.setFraction(0.5)
+        #expect(model.amount == usdAmount(1100))
+    }
+
+    @Test func participantsCarryDistinctColorsInPayerFirstOrder() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        #expect(model.participants.map(\.id) == [fixture.sam.id, fixture.me.id])
+        model.isReversed = true
+        #expect(model.participants.map(\.id) == [fixture.me.id, fixture.sam.id])
+        let batch = SettleModel(
+            route: SettleRoute(groupID: fixture.group.id, debts: debts), services: fixture.services,
+            defaults: defaults(), locale: english
+        )
+        #expect(Set(batch.participants.map(\.id)) == fixture.everyone)
+    }
 }
