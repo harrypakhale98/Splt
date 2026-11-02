@@ -34,6 +34,10 @@ private struct GroupDetailContent: View {
     @State private var showsCustomRange = false
     @State private var settleRoute: SettleRoute?
     @State private var summary: String?
+    @State private var condenseProgress = 0.0
+    @State private var showsRecap = false
+
+    private var condensed: Bool { condenseProgress > 0.85 }
 
     init(groupID: GroupID, services: DataServices) {
         _model = State(initialValue: GroupDetailViewModel(groupID: groupID, services: services))
@@ -45,18 +49,26 @@ private struct GroupDetailContent: View {
         Group {
             if let group = model.group {
                 List {
-                    GroupHeaderSection(
+                    GroupHeroSection(
                         group: group,
-                        memberCount: model.members.count,
+                        members: model.members,
                         totals: model.myTotals,
                         canSettle: !model.transfers.isEmpty,
-                        onSettleUp: { settleRoute = model.settleRoute() }
+                        onSettleUp: { settleRoute = model.settleRoute() },
+                        condense: condenseProgress
                     )
                     segmentPicker
                     content
                 }
                 .navigationTitle(group.name)
                 .navigationBarTitleDisplayMode(.inline)
+                .listSectionSpacing(10)
+                .onScrollGeometryChange(for: Double.self) { geometry in
+                    let offset = geometry.contentOffset.y + geometry.contentInsets.top
+                    return min(max(offset / 220, 0), 1)
+                } action: { _, progress in
+                    condenseProgress = progress
+                }
                 .searchable(text: $model.filter.query, prompt: "Search expenses")
                 .toolbar { toolbar }
             } else if model.didLoad {
@@ -80,6 +92,11 @@ private struct GroupDetailContent: View {
                 return
             }
             summary = await InsightSummarizer().summarize(input)
+        }
+        .fullScreenCover(isPresented: $showsRecap) {
+            if let group = model.group, let stats = model.recapStats {
+                TripRecapStoryView(group: group, stats: stats, members: group.memberIDs, summary: summary)
+            }
         }
         .sheet(isPresented: $showsAddExpense) {
             ExpenseFormView(mode: .add(groupID: model.groupID, prefill: nil))
@@ -134,7 +151,7 @@ private struct GroupDetailContent: View {
         case .balances:
             GroupBalancesSection(model: model, onSettle: { settleRoute = model.settleRoute(for: $0) })
         case .totals:
-            GroupTotalsSection(model: model, summary: summary)
+            GroupTotalsSection(model: model, summary: summary, onRecap: { showsRecap = true })
         }
     }
 
@@ -142,7 +159,7 @@ private struct GroupDetailContent: View {
     private var expensesContent: some View {
         let sections = model.sections
         if let recap = model.recap, !model.filter.isActive {
-            TripRecapSection(recap: recap)
+            TripRecapSection(recap: recap, onRecap: { showsRecap = true })
         }
         if model.filter.isFiltering {
             Section {
@@ -169,12 +186,28 @@ private struct GroupDetailContent: View {
             }
         } else {
             ForEach(sections) { section in
-                Section(model.sectionTitle(section, locale: locale)) {
+                Section {
                     ForEach(section.expenses) { expense in
                         NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                            ExpenseRowView(expense: expense, currentPerson: model.me?.id, people: model.members)
+                            GroupExpenseRow(
+                                expense: expense, currentPerson: model.me?.id,
+                                people: model.members, members: model.group?.memberIDs ?? []
+                            )
                         }
                     }
+                } header: {
+                    HStack {
+                        Text(model.sectionTitle(section, locale: locale))
+                        Spacer()
+                        if let total = section.total {
+                            Text(MoneyFormatting.string(total, locale: locale))
+                                .monospacedDigit()
+                        }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .textCase(nil)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isHeader)
                 }
             }
         }
@@ -184,6 +217,21 @@ private struct GroupDetailContent: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            VStack(spacing: 0) {
+                Text(model.group?.name ?? "")
+                    .font(.headline)
+                    .lineLimit(1)
+                if let line = model.myBalance.first {
+                    Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .opacity(condensed ? 1 : 0)
+            .motion(.smooth, value: condensed)
+            .accessibilityHidden(!condensed)
+        }
         ToolbarItemGroup(placement: .primaryAction) {
             filterMenu
             Button("Add Expense", systemImage: "plus") {
@@ -194,6 +242,10 @@ private struct GroupDetailContent: View {
             Button("Activity", systemImage: "list.bullet.rectangle") {
                 showsActivity = true
             }
+            Button("Recap", systemImage: "sparkles.rectangle.stack") {
+                showsRecap = true
+            }
+            .disabled(model.recapStats == nil)
             Button("Recurring Expenses", systemImage: "arrow.triangle.2.circlepath") {
                 router.push(.recurringExpenses(model.groupID.rawValue))
             }

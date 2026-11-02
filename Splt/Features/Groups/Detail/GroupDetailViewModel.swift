@@ -168,6 +168,11 @@ final class GroupDetailViewModel {
         Set(expenses.map(\.category)).sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
     }
 
+    /// The numbers for the recap story, or nil when nothing was spent in the group's currency.
+    var recapStats: RecapStats? {
+        group.flatMap { RecapStats(group: $0, expenses: expenses, names: names, now: now(), calendar: calendar) }
+    }
+
     var recap: TripRecap? {
         _ = expenses
         if memo.recapRevision == revision { return memo.recap }

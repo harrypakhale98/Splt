@@ -13,6 +13,17 @@ struct ExpenseSection: Identifiable, Equatable, Sendable {
     var expenses: [Expense]
 
     var id: Date { start }
+
+    /// What the section adds up to, or nil when it mixes currencies.
+    var total: Money? {
+        guard let code = expenses.first?.total.currencyCode,
+              expenses.allSatisfy({ $0.total.currencyCode == code }) else { return nil }
+        let units = expenses.reduce(Int64(0)) { sum, expense in
+            let (value, overflow) = sum.addingReportingOverflow(expense.total.minorUnits)
+            return overflow ? sum : value
+        }
+        return Money(minorUnits: units, currencyCode: code)
+    }
 }
 
 enum ExpenseSectioning {
