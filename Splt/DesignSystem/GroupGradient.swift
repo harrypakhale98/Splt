@@ -32,7 +32,7 @@ struct GroupGradient: View {
     private var meshColors: [Color] {
         let source = colors.isEmpty ? [Color.teal] : colors
         let base: Color = scheme == .dark ? Color(white: 0.11) : .white
-        let amount = scheme == .dark ? 0.55 : 0.68
+        let amount = scheme == .dark ? 0.6 : 0.58
         return (0..<9).map { index in
             let row = index / 3, column = index % 3
             return source[(row + column) % source.count].mix(with: base, by: amount)

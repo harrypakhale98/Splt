@@ -8,25 +8,28 @@ import SwiftUI
 struct AvatarView: View {
     let name: String
     private let hue: Int
+    private let showsInitials: Bool
     @ScaledMetric private var scaledDiameter: CGFloat
     private let baseDiameter: CGFloat
 
-    init(name: String, size: CGFloat = 40) {
+    init(name: String, size: CGFloat = 40, showsInitials: Bool = true) {
         self.name = name
+        self.showsInitials = showsInitials
         hue = PersonPalette.preferredIndex(forName: name)
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
 
-    init(name: String, id: PersonID, members: [PersonID] = [], size: CGFloat = 40) {
+    init(name: String, id: PersonID, members: [PersonID] = [], size: CGFloat = 40, showsInitials: Bool = true) {
         self.name = name
+        self.showsInitials = showsInitials
         hue = members.isEmpty ? PersonPalette.preferredIndex(for: id) : PersonPalette.index(for: id, in: members)
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
 
-    init(person: Person, members: [PersonID] = [], size: CGFloat = 40) {
-        self.init(name: person.name, id: person.id, members: members, size: size)
+    init(person: Person, members: [PersonID] = [], size: CGFloat = 40, showsInitials: Bool = true) {
+        self.init(name: person.name, id: person.id, members: members, size: size, showsInitials: showsInitials)
     }
 
     /// Grows with text, but never so far that it crowds its neighbors.
@@ -39,11 +42,13 @@ struct AvatarView: View {
             .fill(PersonPalette.color(at: hue))
             .frame(width: diameter, height: diameter)
             .overlay {
-                Text(AvatarStyle.initials(for: name))
-                    .font(.system(size: diameter * 0.4, weight: .semibold, design: .rounded))
-                    .foregroundStyle(PersonPalette.onColor)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
+                if showsInitials {
+                    Text(AvatarStyle.initials(for: name))
+                        .font(.system(size: diameter * 0.4, weight: .semibold, design: .rounded))
+                        .foregroundStyle(PersonPalette.onColor)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                }
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(name)

@@ -37,7 +37,7 @@ struct AvatarStack: View {
     var body: some View {
         HStack(spacing: -diameter * 0.3) {
             ForEach(shown) { item in
-                AvatarView(name: item.name, id: item.id, members: members, size: baseDiameter)
+                AvatarView(name: item.name, id: item.id, members: members, size: baseDiameter, showsInitials: baseDiameter >= 34)
                     .overlay { Circle().strokeBorder(ring, lineWidth: 2) }
             }
             if overflow > 0 {
