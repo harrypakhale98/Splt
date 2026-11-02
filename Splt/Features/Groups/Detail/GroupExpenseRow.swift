@@ -21,8 +21,15 @@ struct ExpenseRowSummary: Equatable {
     var caption: String? {
         guard let yourNet else { return nil }
         if yourNet.minorUnits > 0 { return String(localized: "you lent") }
-        if yourNet.minorUnits < 0 { return String(localized: "you borrowed") }
+        if yourNet.minorUnits < 0 { return String(localized: "you owe") }
         return String(localized: "even")
+    }
+
+    /// The short line under the total: "you owe $12.00", "you lent $20.00" or "even".
+    func detail(locale: Locale) -> String? {
+        guard let yourNet, let caption else { return nil }
+        if yourNet.isZero { return caption }
+        return "\(caption) \(MoneyFormatting.magnitudeString(yourNet, locale: locale))"
     }
 }
 
@@ -55,6 +62,7 @@ struct GroupExpenseRow: View {
                 Text(expense.title)
                     .font(.body.weight(.medium))
                     .lineLimit(2)
+                    .layoutPriority(1)
                 HStack(spacing: 6) {
                     payerMarkers(summary.payers)
                     Text(summary.payerText)
@@ -63,18 +71,25 @@ struct GroupExpenseRow: View {
                 }
             }
             if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
+            trailing(summary)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText(summary))
+    }
+
+    private func trailing(_ summary: ExpenseRowSummary) -> some View {
+        Group {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 3) {
                 MoneyLabel(money: expense.total)
                     .font(.body.weight(.semibold))
-                if let net = summary.yourNet, let caption = summary.caption {
-                    HStack(spacing: 4) {
-                        Text(caption)
-                        if !net.isZero {
-                            Text(MoneyFormatting.magnitudeString(net, locale: locale)).monospacedDigit()
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(net.minorUnits > 0 ? Color.green : (net.minorUnits < 0 ? Color.red : Color.secondary))
+                if let net = summary.yourNet, let detail = summary.detail(locale: locale) {
+                    Text(detail)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .foregroundStyle(net.minorUnits > 0 ? Color.green : (net.minorUnits < 0 ? Color.red : Color.secondary))
                 } else {
                     Text("Not involved")
                         .font(.caption)
@@ -82,9 +97,7 @@ struct GroupExpenseRow: View {
                 }
             }
         }
-        .padding(.vertical, 2)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText(summary))
+        .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
     }
 
     private func payerMarkers(_ ids: [PersonID]) -> some View {
@@ -102,9 +115,8 @@ struct GroupExpenseRow: View {
     private func accessibilityText(_ summary: ExpenseRowSummary) -> String {
         let total = MoneyFormatting.magnitudeString(expense.total, locale: locale)
         var parts = [expense.title, "\(summary.payerText) \(total)"]
-        if let net = summary.yourNet, let caption = summary.caption {
-            let amount = MoneyFormatting.magnitudeString(net, locale: locale)
-            parts.append(net.isZero ? caption : "\(caption) \(amount)")
+        if let detail = summary.detail(locale: locale) {
+            parts.append(detail)
         } else {
             parts.append(String(localized: "You are not involved"))
         }

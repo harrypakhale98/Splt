@@ -23,6 +23,7 @@ struct GroupDetailDesignTests {
         )
         #expect(summary.yourNet == usdAmount(2000))
         #expect(summary.caption == "you lent")
+        #expect(summary.detail(locale: GroupsTestCalendar.english) == "you lent $20.00")
         #expect(summary.payerText == "You paid")
         #expect(summary.payers == [fixture.me.id])
     }
@@ -32,7 +33,8 @@ struct GroupDetailDesignTests {
         let expense = try fixture.addExpense("Taxi", cents: 3000, paidBy: fixture.sam)
         let summary = ExpenseRowSummary(expense: expense, currentPerson: fixture.me.id, names: [fixture.sam.id: "Sam"])
         #expect(summary.yourNet == usdAmount(-1000))
-        #expect(summary.caption == "you borrowed")
+        #expect(summary.caption == "you owe")
+        #expect(summary.detail(locale: GroupsTestCalendar.english) == "you owe $10.00")
         #expect(summary.payerText == "Sam paid")
     }
 
@@ -42,6 +44,7 @@ struct GroupDetailDesignTests {
         let summary = ExpenseRowSummary(expense: expense, currentPerson: fixture.me.id, names: [:])
         #expect(summary.yourNet == nil)
         #expect(summary.caption == nil)
+        #expect(summary.detail(locale: GroupsTestCalendar.english) == nil)
     }
 
     @Test func payingExactlyYourShareIsEven() throws {
@@ -54,6 +57,7 @@ struct GroupDetailDesignTests {
         let summary = ExpenseRowSummary(expense: expense, currentPerson: fixture.me.id, names: [fixture.sam.id: "Sam"])
         #expect(summary.yourNet == usdAmount(0))
         #expect(summary.caption == "even")
+        #expect(summary.detail(locale: GroupsTestCalendar.english) == "even")
         #expect(summary.payers.count == 2)
     }
 
