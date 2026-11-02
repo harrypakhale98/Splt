@@ -62,4 +62,11 @@ final class FriendsViewModel {
     func refresh() {
         services.friendsStore.refresh()
     }
+
+    /// Drops the scheduled reminder of anyone who no longer owes you, for example after they paid.
+    func cancelRemindersForFriendsWhoOweNothing(using scheduler: ReminderScheduler = ReminderScheduler()) async {
+        for summary in summaries where !summary.balance.contains(where: \.isPositive) {
+            await scheduler.cancel(for: summary.id)
+        }
+    }
 }

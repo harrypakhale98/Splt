@@ -45,7 +45,7 @@ private struct SettleUpContent: View {
                     SettleConfirmationView(message: receipt.message, onUndo: { model.undo() })
                         .task(id: receipt.id) {
                             guard !voiceOverOn else { return }
-                            try? await Task.sleep(for: .seconds(2))
+                            try? await Task.sleep(for: SettleTiming.confirmation)
                             if model.receipt?.id == receipt.id { finish() }
                         }
                 } else {

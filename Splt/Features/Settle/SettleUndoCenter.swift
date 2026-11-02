@@ -23,7 +23,7 @@ final class SettleUndoCenter {
     @ObservationIgnored private let visibleFor: Duration
     @ObservationIgnored private var hideTask: Task<Void, Never>?
 
-    init(visibleFor: Duration = .seconds(8)) {
+    init(visibleFor: Duration = SettleTiming.banner) {
         self.visibleFor = visibleFor
     }
 
@@ -63,4 +63,14 @@ final class SettleUndoCenter {
 extension EnvironmentValues {
     /// Set once by the app root. Nil in a bare preview, where nothing offers an undo.
     @Entry var settleUndo: SettleUndoCenter?
+}
+
+/// How long the calm moments last. UI tests pass `-slowfeedback` so a slow machine cannot miss them.
+enum SettleTiming {
+    private static let slow = ProcessInfo.processInfo.arguments.contains("-slowfeedback")
+
+    /// The check mark, before the sheet closes by itself.
+    static let confirmation: Duration = slow ? .seconds(60) : .seconds(2)
+    /// The undo banner.
+    static let banner: Duration = slow ? .seconds(120) : .seconds(8)
 }

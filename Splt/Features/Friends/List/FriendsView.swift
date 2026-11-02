@@ -71,6 +71,7 @@ private struct FriendsContent: View {
                 }
             }
         }
+        .task(id: model.summaries) { await model.cancelRemindersForFriendsWhoOweNothing() }
         .settleFlow($settleRequest)
         .sheet(item: $remindTarget) { target in
             RemindSheet(friend: target.person, owed: target.owed, groupNames: target.groupNames)

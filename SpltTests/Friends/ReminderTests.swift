@@ -147,4 +147,14 @@ struct ReminderTests {
         await scheduler(center).cancel(for: friend.id)
         #expect(center.removed == [ReminderScheduler.identifier(for: friend.id)])
     }
+
+    @Test func remindersForSettledFriendsAreDropped() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
+        fixture.services.friendsStore.refresh()
+        let model = FriendsViewModel(services: fixture.services, visibility: FriendVisibilityStore(defaults: isolatedDefaults()))
+        let center = FakeReminderCenter()
+        await model.cancelRemindersForFriendsWhoOweNothing(using: scheduler(center))
+        #expect(center.removed == [ReminderScheduler.identifier(for: fixture.priya.id)])
+    }
 }
