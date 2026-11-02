@@ -200,12 +200,18 @@ private struct GroupDetailContent: View {
                         }
                     }
                 } header: {
-                    HStack {
+                    let layout = typeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+                        : AnyLayout(HStackLayout())
+                    layout {
                         Text(model.sectionTitle(section, locale: locale))
-                        Spacer()
+                        if !typeSize.isAccessibilitySize { Spacer() }
                         if let total = section.total {
                             Text(MoneyFormatting.string(total, locale: locale))
                                 .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .fixedSize(horizontal: true, vertical: false)
                         }
                     }
                     .font(.subheadline.weight(.semibold))
