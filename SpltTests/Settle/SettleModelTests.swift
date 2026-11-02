@@ -51,11 +51,21 @@ struct SettleModelTests {
         #expect(model.amountText == "10.00")
         model.amountText = "4.00"
         #expect(model.amount == usdAmount(400))
-        #expect(model.isPartial)
         #expect(model.remaining == usdAmount(600))
         model.record()
         let balance = try fixture.services.people.friendBalance(with: fixture.sam.id)
         #expect(balance.total == [usdAmount(600)])
+    }
+
+    @Test func whatRemainsIsStillKnownAfterRecording() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        model.setFraction(0.4)
+        model.record()
+        #expect(model.receipt != nil)
+        #expect(model.remaining == usdAmount(600))
+        #expect(model.amount == usdAmount(400))
     }
 
     @Test func rejectsAnAmountThatIsNotAllowed() throws {
@@ -90,7 +100,7 @@ struct SettleModelTests {
         model.isReversed = true
         #expect(model.payer == fixture.me.id)
         #expect(model.receiver == fixture.sam.id)
-        #expect(model.directionOptions.map(\.title) == ["Sam pays you", "You pay Sam"])
+        #expect(model.headline == "You pay Sam")
     }
 
     @Test func settlingAWholeGroupSquaresIt() throws {

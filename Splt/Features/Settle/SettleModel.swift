@@ -19,13 +19,6 @@ final class SettleModel {
         case exceedsBalance(Money)
     }
 
-    struct DirectionOption: Identifiable, Equatable, Sendable {
-        var reversed: Bool
-        var title: String
-
-        var id: Bool { reversed }
-    }
-
     let route: SettleRoute
     var amountMode: AmountMode = .full {
         didSet { if amountMode == .partial, amountText.isEmpty { amountText = fullAmount?.plainString(locale: locale) ?? "" } }
@@ -111,11 +104,6 @@ final class SettleModel {
         if !parsed.isPositive { return .notPositive }
         if !isReversed, parsed.minorUnits > debt.amount.minorUnits { return .exceedsBalance(debt.amount) }
         return nil
-    }
-
-    var isPartial: Bool {
-        guard let amount, let full = fullAmount else { return false }
-        return amount.minorUnits < full.minorUnits
     }
 
     /// What is left of the debt after a partial payment.
@@ -206,22 +194,15 @@ final class SettleModel {
             }
         }
         return ordered.map {
-            SettleParticipant(id: $0, name: name(of: $0), color: PersonPalette.color(for: $0, in: ordered))
+            SettleParticipant(
+                id: $0, name: name(of: $0), color: PersonPalette.color(for: $0), avatarName: peopleByID[$0]?.name
+            )
         }
     }
 
     var headline: String {
         if let payer, let receiver { return sentence(payer: payer, receiver: receiver) }
         return String(localized: "Settle everything")
-    }
-
-    /// The two ways to describe a single payment, for the direction picker.
-    var directionOptions: [DirectionOption] {
-        guard let debt = singleDebt else { return [] }
-        return [
-            DirectionOption(reversed: false, title: sentence(payer: debt.debtor, receiver: debt.creditor)),
-            DirectionOption(reversed: true, title: sentence(payer: debt.creditor, receiver: debt.debtor))
-        ]
     }
 
     // MARK: Pay with

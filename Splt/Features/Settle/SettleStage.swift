@@ -6,6 +6,8 @@ struct SettleParticipant: Identifiable, Equatable {
     var id: PersonID
     var name: String
     var color: Color
+    /// The name the person is stored under, for their initials. `name` may read "You".
+    var avatarName: String?
 }
 
 /// The two people of a payment facing each other, with an arc between them in their blended colors.
@@ -162,7 +164,7 @@ struct SettleStage: View {
     }
 
     private func avatar(_ person: SettleParticipant, at point: CGPoint) -> some View {
-        AvatarView(name: person.name, id: person.id, members: [person.id], size: baseDiameter)
+        AvatarView(name: person.avatarName ?? person.name, id: person.id, size: baseDiameter)
             .position(point)
             .motion(.smooth, value: point)
     }

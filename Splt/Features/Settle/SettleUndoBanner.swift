@@ -27,6 +27,8 @@ private struct SettleUndoBannerModifier: ViewModifier {
     }
 }
 
+/// A compact banner: one icon, at most two lines of text and a single Undo button, whatever the text size.
+/// The full sentence is always what VoiceOver reads.
 struct SettleUndoBanner: View {
     let banner: SettleUndoCenter.Banner
     let center: SettleUndoCenter
@@ -40,15 +42,21 @@ struct SettleUndoBanner: View {
                 .accessibilityHidden(true)
             Text(banner.message)
                 .font(.subheadline.weight(.medium))
+                .lineLimit(2)
+                .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityLabel(banner.message)
             if case .recorded = banner, let services {
                 Button("Undo") { center.undo(using: services.payments) }
                     .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.glass)
+                    .fixedSize()
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .glassEffect(.regular, in: .capsule)
+        .padding(.vertical, 10)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        .glassEffect(.regular, in: .rect(cornerRadius: 24))
         .accessibilityElement(children: .contain)
     }
 
