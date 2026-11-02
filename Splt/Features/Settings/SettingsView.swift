@@ -34,6 +34,14 @@ struct SettingsView: View {
 
             SyncStatusSection()
 
+            Section {
+                NavigationLink {
+                    SplitwiseImportView()
+                } label: {
+                    Label("Import from Splitwise", systemImage: "square.and.arrow.down")
+                }
+            }
+
             Section("Free Forever") {
                 Text("Splt has no ads, no limits and no subscription, now and later.")
             }
