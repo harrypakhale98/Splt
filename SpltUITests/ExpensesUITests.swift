@@ -112,7 +112,9 @@ final class ExpenseDesignShotsUITests: XCTestCase {
         shot("1-empty")
 
         typeAmount("126.40", in: app)
+        if big { app.buttons["Done"].firstMatch.tap() }
         let title = element("expense-title", in: app)
+        reveal(title, in: app)
         title.tap()
         title.typeText("Welcome dinner")
         title.typeText("\n")

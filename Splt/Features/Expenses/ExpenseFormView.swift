@@ -214,12 +214,16 @@ private struct ExpenseFormScreen: View {
 private struct TitleField: View {
     @Bindable var model: ExpenseFormModel
     var focus: FocusState<ExpenseFormField?>.Binding
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(spacing: 8) {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 8))
+        layout {
             TextField("Title", text: $model.title, prompt: Text("What was it for?"))
                 .font(.title3.weight(.medium))
-                .multilineTextAlignment(model.suggestedCategory == nil ? .center : .leading)
+                .multilineTextAlignment(model.suggestedCategory == nil && !typeSize.isAccessibilitySize ? .center : .leading)
                 .submitLabel(.done)
                 .focused(focus, equals: .title)
                 .onChange(of: model.title) { model.titleDidChange() }
@@ -230,7 +234,6 @@ private struct TitleField: View {
                 } label: {
                     Label(suggestion.title, systemImage: suggestion.symbolName)
                         .font(.footnote.weight(.semibold))
-                        .lineLimit(1)
                 }
                 .buttonStyle(.glass)
                 .buttonBorderShape(.capsule)

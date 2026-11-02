@@ -74,8 +74,9 @@ struct SplitBarView: View {
     }
 
     private func segmentWidths(total: CGFloat) -> [CGFloat] {
-        guard data.scale > 0 else { return data.segments.map { _ in total / CGFloat(max(data.segments.count, 1)) } }
-        return data.segments.map { total * CGFloat($0.weight) / CGFloat(data.scale) }
+        let usable = total.isFinite ? max(total, 0) : 0
+        guard data.scale > 0 else { return data.segments.map { _ in usable / CGFloat(max(data.segments.count, 1)) } }
+        return data.segments.map { max(usable * CGFloat($0.weight) / CGFloat(data.scale), 0) }
     }
 
     private func fraction(of segment: SplitBarSegment) -> Double {
@@ -92,7 +93,7 @@ struct SplitBarView: View {
     // MARK: Dividers
 
     private func handle(divider: Int, width: CGFloat) -> some View {
-        let position = width * CGFloat(data.weights[...divider].reduce(0, +)) / CGFloat(max(data.scale, 1))
+        let position = max(width, 0) * CGFloat(data.weights[...divider].reduce(0, +)) / CGFloat(max(data.scale, 1))
         return Capsule()
             .fill(.white)
             .frame(width: 6, height: height * 0.46)

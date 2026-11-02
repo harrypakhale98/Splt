@@ -4,6 +4,7 @@ import SwiftUI
 struct ExpenseHeaderSection: View {
     let model: ExpenseDetailModel
     let expense: Expense
+    @ScaledMetric(relativeTo: .title2) private var badge: CGFloat = 56
 
     var body: some View {
         Section {
@@ -11,7 +12,7 @@ struct ExpenseHeaderSection: View {
                 Image(systemName: expense.category.symbolName)
                     .font(.title2.weight(.medium))
                     .foregroundStyle(.tint)
-                    .frame(width: 56, height: 56)
+                    .frame(width: badge, height: badge)
                     .background(.tint.opacity(0.15), in: .circle)
                     .accessibilityHidden(true)
                 Text(expense.title)

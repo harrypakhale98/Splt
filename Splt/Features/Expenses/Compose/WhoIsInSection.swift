@@ -9,10 +9,16 @@ struct WhoIsInSection: View {
     var onChange: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(headline)
                     .font(.headline)
+                if model.split.method != .itemized, !typeSize.isAccessibilitySize {
+                    Text("Hold a person for who paid")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
                 Spacer()
                 if model.split.method != .itemized {
                     Button(allIn ? "None" : "Everyone") {
@@ -41,11 +47,6 @@ struct WhoIsInSection: View {
                 .scrollClipDisabled()
                 .padding(.horizontal, -20)
             }
-            if model.split.method != .itemized {
-                Text("Touch and hold a person to say who paid.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
     }
 
@@ -60,7 +61,11 @@ struct WhoIsInSection: View {
 
     private func chip(for person: Person, members: [PersonID]) -> some View {
         let selected = isHighlighted(person.id)
-        return PersonChip(person: person, members: members, isSelected: selected) {
+        var shown = person
+        if typeSize.isAccessibilitySize, let first = person.name.split(separator: " ").first {
+            shown.name = String(first)
+        }
+        return PersonChip(person: shown, members: members, isSelected: selected) {
             model.tapPerson(person.id)
             onChange()
         }
@@ -89,6 +94,7 @@ struct WhoIsInSection: View {
                 onChange()
             }
         }
+        .accessibilityLabel(person.name)
         .accessibilityValue(model.isPayer(person.id) ? String(localized: "Paid") : "")
         .accessibilityAction(named: Text("Paid by \(model.displayName(for: person.id))")) { model.makeSolePayer(person.id) }
         .accessibilityAction(named: Text("Also paid")) { model.toggleAlsoPaid(person.id) }
