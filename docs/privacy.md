@@ -37,7 +37,7 @@ When an expense is in another currency than its group, Splt can look up a rate f
 
 ## Exports
 
-Exporting a group as CSV or PDF creates a file on your device. It goes where you send it from the share sheet, and nowhere else.
+Exporting a group as CSV, PDF or JSON creates a file on your device. It goes where you send it from the share sheet, and nowhere else.
 
 ## Deleting your data
 

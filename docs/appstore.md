@@ -154,8 +154,7 @@ CloudKit
 - [ ] In the CloudKit Dashboard, deploy the schema to Production.
 
 Version
-- [ ] Set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` and make sure `Config/Info.plist` reads them from the build settings.
-- [ ] Add `ITSAppUsesNonExemptEncryption` set to NO to the Info.plist.
+- [ ] Set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`.
 - [ ] Run the tests and the CI workflow on the release commit.
 
 TestFlight

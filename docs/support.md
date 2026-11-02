@@ -1,6 +1,6 @@
 # Support
 
-The fastest way to get help is a GitHub issue: [open one here](https://github.com/harrypakhale98/Splt/issues/new/choose). Say what you did, what you expected and what happened. Leave out names and amounts you would rather keep private. The version number is in Settings, under About.
+The fastest way to get help is a GitHub issue: [open one here](https://github.com/harrypakhale98/Splt/issues/new/choose). Say what you did, what you expected and what happened. Leave out names and amounts you would rather keep private. The version number is in Account, under About.
 
 To report a security problem, please do not use an issue. Follow [SECURITY.md](https://github.com/harrypakhale98/Splt/blob/main/SECURITY.md) instead.
 
@@ -24,7 +24,7 @@ On your device and in your own iCloud. There is no Splt server, and the develope
 
 ### Why is sync not working?
 
-Open Settings in Splt to see the sync status. Check that you are signed in to iCloud on your device and that you have free iCloud storage. Splt keeps changes on the device and uploads them when it can. Sync does not run in the iOS Simulator.
+Open Account in Splt to see the sync status. Check that you are signed in to iCloud on your device and that you have free iCloud storage. Splt keeps changes on the device and uploads them when it can. Sync does not run in the iOS Simulator.
 
 ### Can I move my data out?
 

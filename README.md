@@ -21,7 +21,7 @@ It is built with SwiftUI and Apple frameworks only, with no third party packages
 - Comments on expenses, with system translation.
 - An activity feed, search in plain language, Spotlight, Siri and Shortcuts.
 - Invite people with a link or a QR code.
-- Export a group as a spreadsheet (CSV) or PDF.
+- Export a group as a spreadsheet (CSV), PDF or JSON.
 - Totals, charts and a trip recap for each group.
 
 When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
