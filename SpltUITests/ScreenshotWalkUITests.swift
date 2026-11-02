@@ -66,6 +66,7 @@ final class ScreenshotWalkUITests: XCTestCase {
             app.buttons["Close"].tap()
         }
 
+        for _ in 0..<3 { scroll(.down, in: app) }
         let settle = app.buttons["Settle Up"].firstMatch
         if settle.waitForExistence(timeout: 5) {
             settle.tap()
@@ -76,7 +77,11 @@ final class ScreenshotWalkUITests: XCTestCase {
         }
 
         let backToGroups = app.navigationBars.buttons["Groups"]
-        if backToGroups.exists { backToGroups.tap() }
+        if backToGroups.exists {
+            backToGroups.tap()
+        } else if app.navigationBars.buttons.firstMatch.exists {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
         openTab("Friends", in: app)
         XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 10))
         shot("11-friends")
@@ -98,10 +103,13 @@ final class ScreenshotWalkUITests: XCTestCase {
             field.tap()
             field.typeText("dinner")
             shot("14-search")
+            // the search keyboard would otherwise cover the tab bar
+            let cancel = app.buttons["Cancel"].firstMatch
+            if cancel.exists { cancel.tap() } else { app.swipeDown() }
         }
 
         openTab("Account", in: app)
-        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Settings"].firstMatch.waitForExistence(timeout: 10), "the Account screen did not open")
         shot("15-account")
         app.swipeUp()
         shot("16-account-more")
