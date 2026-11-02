@@ -16,4 +16,9 @@ enum GroupErrorMessage {
             return String(localized: "Something went wrong. Please try again.")
         }
     }
+
+    static func exportText(for error: any Error) -> String {
+        if let error = error as? DataError, case .notFound = error { return text(for: error) }
+        return String(localized: "Splt couldn't prepare the export. Try again.")
+    }
 }

@@ -43,7 +43,6 @@ private struct GroupSettingsForm: View {
     @Environment(\.groupSharing) private var sharing
     @Environment(\.locale) private var locale
     @State private var model: GroupSettingsViewModel
-    @State private var files: GroupExportFiles?
     @State private var showsContacts = false
     @State private var showsDeleteConfirmation = false
     @State private var showsLeaveConfirmation = false
@@ -83,7 +82,6 @@ private struct GroupSettingsForm: View {
             }
         }
         .onAppear { model.locale = locale }
-        .task { prepareExports() }
         .sheet(isPresented: $showsContacts) {
             ContactPicker { drafts in
                 for draft in drafts { model.addMember(named: draft.name, contactHint: draft.contactHint) }
@@ -269,16 +267,10 @@ private struct GroupSettingsForm: View {
 
     private var exportSection: some View {
         Section("Export") {
-            if let files {
-                ShareLink(item: files.csv) {
-                    Label("Export as Spreadsheet (CSV)", systemImage: "tablecells")
+            ForEach(GroupExportKind.allCases) { kind in
+                GroupExportRow(kind: kind, state: model.exportState(kind)) {
+                    Task { await model.prepareExport(kind) }
                 }
-                ShareLink(item: files.pdf) {
-                    Label("Export as PDF", systemImage: "doc.richtext")
-                }
-            } else {
-                Label("Preparing export", systemImage: "hourglass")
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -294,10 +286,6 @@ private struct GroupSettingsForm: View {
     private func addTypedMember() {
         model.addMember(named: newMemberName)
         newMemberName = ""
-    }
-
-    private func prepareExports() {
-        files = try? model.exportFiles()
     }
 
     private func save() {

@@ -312,39 +312,138 @@ struct GroupSettingsViewModelTests {
         #expect(!text.contains("Mistake"))
     }
 
-    @Test func exportWritesAReadableSpreadsheetAndPDF() throws {
+    private func exportDirectory() -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("splt-tests-\(UUID().uuidString)", isDirectory: true)
+    }
+
+    private func readyURL(_ model: GroupSettingsViewModel, _ kind: GroupExportKind) throws -> URL {
+        guard case .ready(let url) = model.exportState(kind) else {
+            throw ExportNotReady(state: model.exportState(kind))
+        }
+        return url
+    }
+
+    private struct ExportNotReady: Error { var state: GroupExportState }
+
+    @Test func exportsStartIdleAndNothingIsBuiltUntilAsked() throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        for kind in GroupExportKind.allCases {
+            #expect(model.exportState(kind) == .idle)
+        }
+    }
+
+    @Test func exportWritesAReadableSpreadsheet() async throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000)
-        let files = try makeModel(fixture).exportFiles()
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.csv)
 
-        #expect(files.csv.lastPathComponent == "Flat.csv")
-        #expect(files.pdf.lastPathComponent == "Flat.pdf")
-        let csv = try String(contentsOf: files.csv, encoding: .utf8)
+        let url = try readyURL(model, .csv)
+        #expect(url.lastPathComponent == "Flat.csv")
+        let csv = try String(contentsOf: url, encoding: .utf8)
         #expect(csv.hasPrefix("Date,Description,Category,Cost,Currency,Me,Sam,Priya"))
         #expect(csv.contains("Dinner"))
         #expect(csv.contains("Total balance"))
-
-        let document = try #require(PDFDocument(url: files.pdf))
-        #expect(document.pageCount == 1)
-        let pdfText = document.string ?? ""
-        #expect(pdfText.contains("Flat"))
-        #expect(pdfText.contains("Dinner"))
+        #expect(model.exportState(.pdf) == .idle)
     }
 
-    @Test func aLongReportContinuesOnMorePages() throws {
+    @Test func exportWritesAReadablePDF() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000)
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.pdf)
+
+        let url = try readyURL(model, .pdf)
+        #expect(url.lastPathComponent == "Flat.pdf")
+        let document = try #require(PDFDocument(url: url))
+        #expect(document.pageCount == 1)
+        let text = document.string ?? ""
+        #expect(text.contains("Flat"))
+        #expect(text.contains("Dinner"))
+    }
+
+    @Test func exportWritesJSONThatReadsBack() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000)
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.json)
+
+        let url = try readyURL(model, .json)
+        #expect(url.lastPathComponent == "Flat.json")
+        let document = try GroupJSONExporter.decode(Data(contentsOf: url))
+        #expect(document.expenses.map(\.title) == ["Dinner"])
+    }
+
+    @Test func aLongReportContinuesOnMorePages() async throws {
         let fixture = try Fixture()
         for index in 0..<120 {
             try fixture.addExpense("Expense \(index)", cents: 100)
         }
-        let files = try makeModel(fixture).exportFiles()
-        let document = try #require(PDFDocument(url: files.pdf))
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.pdf)
+        let document = try #require(PDFDocument(url: try readyURL(model, .pdf)))
         #expect(document.pageCount > 1)
         #expect((document.string ?? "").contains("Expense 119"))
     }
 
+    @Test func aFailedExportSaysSoAndRetrySucceeds() async throws {
+        let fixture = try Fixture()
+        let blocker = FileManager.default.temporaryDirectory.appendingPathComponent("splt-tests-\(UUID().uuidString)")
+        try Data().write(to: blocker)
+        let model = makeModel(fixture)
+
+        model.exportDirectory = blocker
+        await model.prepareExport(.csv)
+        guard case .failed(let message) = model.exportState(.csv) else {
+            Issue.record("expected a failure, got \(model.exportState(.csv))")
+            return
+        }
+        #expect(message.contains("Try again"))
+
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.csv)
+        _ = try readyURL(model, .csv)
+    }
+
+    @Test func exportingAGroupThatIsGoneFails() async throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        _ = model.delete()
+        await model.prepareExport(.pdf)
+        guard case .failed(let message) = model.exportState(.pdf) else {
+            Issue.record("expected a failure, got \(model.exportState(.pdf))")
+            return
+        }
+        #expect(message.contains("no longer available"))
+    }
+
+    @Test func changingTheGroupDiscardsPreparedFiles() async throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        model.exportDirectory = exportDirectory()
+        await model.prepareExport(.csv)
+        _ = try readyURL(model, .csv)
+
+        model.name = "Renamed"
+        try model.save()
+        #expect(model.exportState(.csv) == .idle)
+    }
+
     @Test func fileNamesAreSafe() {
-        #expect(GroupExportFiles.fileName(for: "Trip: Rome/Paris") == "Trip- Rome-Paris")
-        #expect(GroupExportFiles.fileName(for: "  ") == "Group")
-        #expect(GroupExportFiles.fileName(for: "Flat 4B") == "Flat 4B")
+        #expect(GroupExportFile.fileName(for: "Trip: Rome/Paris") == "Trip- Rome-Paris")
+        #expect(GroupExportFile.fileName(for: "  ") == "Group")
+        #expect(GroupExportFile.fileName(for: "Flat 4B") == "Flat 4B")
+    }
+
+    @Test func eachKindHasItsExtension() {
+        #expect(GroupExportKind.csv.fileExtension == "csv")
+        #expect(GroupExportKind.json.fileExtension == "json")
+        #expect(GroupExportKind.pdf.fileExtension == "pdf")
     }
 }

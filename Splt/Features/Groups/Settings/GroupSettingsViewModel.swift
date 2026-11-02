@@ -147,6 +147,7 @@ final class GroupSettingsViewModel {
             }
         }
         try groups.update(edited)
+        invalidateExports()
         group = edited
     }
 
@@ -237,6 +238,14 @@ final class GroupSettingsViewModel {
 
     // MARK: Export
 
+    private(set) var exportStates: [GroupExportKind: GroupExportState] = [:]
+    /// Where export files are written. Tests point it somewhere else.
+    @ObservationIgnored var exportDirectory = GroupExportFile.defaultDirectory
+
+    func exportState(_ kind: GroupExportKind) -> GroupExportState {
+        exportStates[kind] ?? .idle
+    }
+
     func report() throws -> GroupReport {
         guard let group = try groups.group(id: groupID) else { throw DataError.notFound("group \(groupID)") }
         let everyone = Dictionary(try people.allPeople().map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -250,17 +259,42 @@ final class GroupSettingsViewModel {
         )
     }
 
-    /// Writes the spreadsheet and the PDF for sharing.
-    func exportFiles() throws -> GroupExportFiles {
-        let csv = try groups.export(group: groupID, format: .csv)
-        let report = try report()
-        let pdf = GroupPDFRenderer.data(for: report, locale: locale)
-        return try GroupExportFiles.write(csv: csv, pdf: pdf, groupName: report.groupName)
+    /// Builds one export when asked. The data is read here and the file is drawn and written off the
+    /// main actor. The state shows progress, the finished file or why it failed.
+    func prepareExport(_ kind: GroupExportKind) async {
+        if exportState(kind) == .preparing { return }
+        exportStates[kind] = .preparing
+        do {
+            let url = try await exportJob(kind).run()
+            exportStates[kind] = .ready(url)
+        } catch {
+            exportStates[kind] = .failed(GroupErrorMessage.exportText(for: error))
+        }
+    }
+
+    private func exportJob(_ kind: GroupExportKind) throws -> GroupExportJob {
+        let content: GroupExportJob.Content
+        let name: String
+        if let format = kind.format {
+            content = .data(try groups.export(group: groupID, format: format))
+            name = try groups.group(id: groupID)?.name ?? ""
+        } else {
+            let report = try report()
+            content = .pdf(report, locale)
+            name = report.groupName
+        }
+        return GroupExportJob(content: content, groupName: name, fileExtension: kind.fileExtension, directory: exportDirectory)
+    }
+
+    /// Shared files no longer match once the group changes.
+    private func invalidateExports() {
+        exportStates = [:]
     }
 
     private func perform(_ work: () throws -> Void) {
         do {
             try work()
+            invalidateExports()
             try reloadMembers()
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)
