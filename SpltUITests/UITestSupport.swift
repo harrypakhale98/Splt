@@ -1,0 +1,153 @@
+import XCTest
+
+extension XCTestCase {
+    /// Launches the app on an empty store (`-uitesting`) or the sample trip (`-sampledata`).
+    @MainActor
+    func launchApp(
+        _ mode: String = "-uitesting", textSize: String? = nil, extra: [String] = []
+    ) -> XCUIApplication {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = [mode] + extra
+        if let textSize {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize]
+        }
+        app.launch()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30), "the tab bar never appeared")
+        return app
+    }
+
+    /// The first element with this accessibility identifier, whatever its type.
+    @MainActor
+    func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// The first element whose label starts with this text.
+    @MainActor
+    func element(labelStartingWith text: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", text)).firstMatch
+    }
+
+    /// Labels of the buttons and segments the tree holds right now, for failure messages.
+    @MainActor
+    func visibleControls(in app: XCUIApplication) -> String {
+        (app.buttons.allElementsBoundByIndex + app.segmentedControls.buttons.allElementsBoundByIndex)
+            .map { "\($0.label)\($0.isHittable ? "" : "*")" }.joined(separator: " | ")
+    }
+
+    /// The first element whose label contains this text.
+    @MainActor
+    func element(labelContaining text: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    @MainActor
+    func openTab(_ name: String, in app: XCUIApplication) {
+        let button = app.tabBars.firstMatch.buttons[name]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "\(name) tab missing")
+        button.tap()
+    }
+
+    /// Drags the content by about a screenful, up or down. It starts in the upper half so it still reaches the
+    /// list when the keyboard covers the lower half, which a plain swipe would hit instead.
+    @MainActor
+    func scroll(_ direction: ScrollDirection, in app: XCUIApplication) {
+        let top = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+        let middle = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+        switch direction {
+        case .up: middle.press(forDuration: 0.05, thenDragTo: top)
+        case .down: top.press(forDuration: 0.05, thenDragTo: middle)
+        }
+    }
+
+    enum ScrollDirection {
+        case up
+        case down
+    }
+
+    /// Scrolls until the element can be tapped. Lists only build the rows near the visible area, so an element
+    /// below the fold may not exist yet, and one scrolled past the top is above the screen.
+    @MainActor
+    func reveal(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let height = app.frame.height
+        // far enough from the screen edges that the tab bar, keyboard and home indicator do not cover it
+        func isComfortable() -> Bool {
+            element.isHittable && element.frame.midY > height * 0.18 && element.frame.midY < height * 0.72
+        }
+        var attempts = 0
+        while !isComfortable() && attempts < 14 {
+            let isAbove = element.exists && element.frame.midY <= height * 0.18
+            scroll(isAbove ? .down : .up, in: app)
+            attempts += 1
+        }
+        XCTAssertTrue(element.isHittable, "\(element) never became tappable", file: file, line: line)
+    }
+
+    /// Picks Expenses, Balances or Totals on the group screen. The picker is a menu at accessibility text sizes.
+    @MainActor
+    func selectSegment(_ name: String, in app: XCUIApplication) {
+        let direct = app.segmentedControls.buttons[name]
+        let menu = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Show'")).firstMatch
+        var attempts = 0
+        while !direct.exists && !menu.exists && attempts < 8 {
+            scroll(.up, in: app)
+            attempts += 1
+        }
+        if direct.exists {
+            reveal(direct, in: app)
+            direct.tap()
+            return
+        }
+        reveal(menu, in: app)
+        menu.tap()
+        let option = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        XCTAssertTrue(option.waitForExistence(timeout: 5), "\(name) missing among: \(visibleControls(in: app))")
+        option.tap()
+    }
+
+    /// Opens the Groups tab, then a group by name.
+    @MainActor
+    func openGroup(_ name: String, in app: XCUIApplication) {
+        openTab("Groups", in: app)
+        let row = app.staticTexts[name].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) is not listed")
+        row.tap()
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+    }
+
+    /// Creates a group with the given members through the New Group sheet and leaves the group open.
+    @MainActor
+    func createGroup(named name: String, members: [String], in app: XCUIApplication) {
+        openTab("Groups", in: app)
+        app.buttons["Create Group"].firstMatch.tap()
+
+        let groupName = app.textFields["Group Name"]
+        XCTAssertTrue(groupName.waitForExistence(timeout: 5))
+        groupName.tap()
+        groupName.typeText(name)
+        let keyboardDone = app.keyboards.buttons["Done"]
+        if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
+
+        let memberField = app.textFields["Add by name"]
+        for member in members {
+            reveal(memberField, in: app)
+            memberField.tap()
+            memberField.typeText("\(member)\n")
+            XCTAssertTrue(app.staticTexts[member].waitForExistence(timeout: 5))
+        }
+        app.buttons["Create"].tap()
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+    }
+
+    /// Writes a screenshot to the folder named by `SPLT_SHOTS_DIR`. Does nothing when it is not set.
+    @MainActor
+    func snapshot(_ app: XCUIApplication, _ name: String) {
+        guard let folder = ProcessInfo.processInfo.environment["SPLT_SHOTS_DIR"] else { return }
+        // let a push or sheet animation finish before the picture is taken
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.7))
+        let url = URL(fileURLWithPath: folder).appendingPathComponent("\(name).png")
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? app.screenshot().pngRepresentation.write(to: url)
+    }
+}
