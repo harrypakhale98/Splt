@@ -134,6 +134,8 @@ private struct GroupDetailContent: View {
                     ForEach(GroupDetailViewModel.Segment.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.menu)
+                .labelsHidden()
+                .accessibilityLabel("Show")
             } else {
                 Picker("Show", selection: $model.segment) {
                     ForEach(GroupDetailViewModel.Segment.allCases) { Text($0.title).tag($0) }

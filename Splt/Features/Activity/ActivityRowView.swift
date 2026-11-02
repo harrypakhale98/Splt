@@ -29,14 +29,8 @@ struct ActivityRowView: View {
                     .font(.body)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
-                HStack(spacing: 6) {
-                    if let groupName {
-                        Text(groupName)
-                        Text("\u{00B7}")
-                    }
-                    Text(entry.createdAt, style: .time)
-                }
-                .font(.footnote)
+                caption
+                    .font(.footnote)
                 .foregroundStyle(.secondary)
             }
             .padding(.top, 8)
@@ -55,6 +49,16 @@ struct ActivityRowView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityValue(entry.isRead ? "" : String(localized: "Unread"))
+    }
+
+    /// Group and time on one line, wrapping at large sizes instead of clipping.
+    @ViewBuilder
+    private var caption: some View {
+        if let groupName {
+            Text("\(groupName) \u{00B7} \(entry.createdAt, style: .time)")
+        } else {
+            Text(entry.createdAt, style: .time)
+        }
     }
 
     @ViewBuilder
