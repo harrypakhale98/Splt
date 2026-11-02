@@ -62,6 +62,10 @@ final class ExpenseFormModel {
     var repeatChoice = RepeatChoice()
     var receipt = ReceiptAttachment()
     private(set) var isFindingRate = false
+    /// The receipt item waiting for a tap on a person chip to be assigned.
+    var selectedItemID: ItemDraft.ID?
+    /// True while the payments were divided evenly by the payer chips, so they follow the amount.
+    var payersFollowAmount = false
     @ObservationIgnored private var fetchedRates: (key: String, rates: ExchangeRates?)?
 
     var describeText = ""

@@ -218,6 +218,7 @@ extension ExpenseFormModel {
         split.discountText = other < 0
             ? AmountInput.text(for: Money(minorUnits: -other, currencyCode: parsed.currencyCode), locale: locale) : ""
         split.method = .itemized
+        selectedItemID = split.items.first?.id
         let computed = split.itemizedTotal(currencyCode: parsed.currencyCode, locale: locale)
         if let amount = parsed.total ?? computed { amountText = AmountInput.text(for: amount, locale: locale) }
         scanNotice = parsed.isConsistent

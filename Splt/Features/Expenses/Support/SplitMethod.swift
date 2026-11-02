@@ -33,6 +33,18 @@ enum SplitMethod: String, CaseIterable, Identifiable, Hashable, Sendable {
         }
     }
 
+    /// A word short enough for a segmented control.
+    var shortTitle: String {
+        switch self {
+        case .equal: String(localized: "Equal")
+        case .exact: String(localized: "Exact")
+        case .percentage: String(localized: "Percent")
+        case .shares: String(localized: "Shares")
+        case .adjustment: String(localized: "Adjust")
+        case .itemized: String(localized: "Items")
+        }
+    }
+
     var symbolName: String {
         switch self {
         case .equal: "equal"
