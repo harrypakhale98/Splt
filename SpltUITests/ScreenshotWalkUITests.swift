@@ -1,8 +1,8 @@
 import XCTest
 
-/// Walks every main screen and saves a screenshot of each, in light and dark and at the default and
-/// largest accessibility text sizes, for reviewing the layouts by eye. It runs only when `SPLT_SHOTS_DIR`
-/// names the folder to write to.
+/// Walks every main screen and saves a screenshot of each at the default and the largest accessibility text
+/// size, for reviewing the layouts by eye. It runs only when `SPLT_SHOTS_DIR` names the folder to write to.
+/// Set `SPLT_SHOTS_DARK` to run it in the dark appearance.
 final class ScreenshotWalkUITests: XCTestCase {
     private static let largest = "UICTContentSizeCategoryAccessibilityXXXL"
 
@@ -11,34 +11,20 @@ final class ScreenshotWalkUITests: XCTestCase {
         try XCTSkipUnless(ProcessInfo.processInfo.environment["SPLT_SHOTS_DIR"] != nil, "set SPLT_SHOTS_DIR to run the walk")
     }
 
-    override func tearDown() async throws {
-        await MainActor.run { XCUIDevice.shared.appearance = .light }
+    @MainActor
+    func testWalkDefaultSize() {
+        walk(variant: "default", textSize: nil)
     }
 
     @MainActor
-    func testWalkLightDefaultSize() {
-        walk(variant: "light", dark: false, textSize: nil)
+    func testWalkLargestText() {
+        walk(variant: "xxxl", textSize: Self.largest)
     }
 
     @MainActor
-    func testWalkDarkDefaultSize() {
-        walk(variant: "dark", dark: true, textSize: nil)
-    }
-
-    @MainActor
-    func testWalkLightLargestText() {
-        walk(variant: "light-xxxl", dark: false, textSize: Self.largest)
-    }
-
-    @MainActor
-    func testWalkDarkLargestText() {
-        walk(variant: "dark-xxxl", dark: true, textSize: Self.largest)
-    }
-
-    @MainActor
-    private func walk(variant: String, dark: Bool, textSize: String?) {
-        XCUIDevice.shared.appearance = dark ? .dark : .light
-        let app = launchApp("-sampledata", textSize: textSize)
+    private func walk(variant: String, textSize: String?) {
+        let dark = ProcessInfo.processInfo.environment["SPLT_SHOTS_DARK"] != nil
+        let app = launchApp("-sampledata", textSize: textSize, extra: dark ? ["-darkmode"] : [])
         func shot(_ name: String) { snapshot(app, "\(variant)/\(name)") }
 
         openTab("Groups", in: app)
@@ -59,11 +45,11 @@ final class ScreenshotWalkUITests: XCTestCase {
         selectSegment("Expenses", in: app)
 
         let expense = element(labelStartingWith: "Beach bar", in: app)
-        if expense.waitForExistence(timeout: 5) {
-            expense.tap()
-            shot("06-expense-detail")
-            app.navigationBars.buttons.firstMatch.tap()
-        }
+        reveal(expense, in: app)
+        expense.tap()
+        XCTAssertTrue(app.navigationBars["Beach bar in Cascais"].waitForExistence(timeout: 5), "expense detail did not open")
+        shot("06-expense-detail")
+        app.navigationBars.buttons.firstMatch.tap()
 
         app.buttons["More"].firstMatch.tap()
         if app.buttons["Group Settings"].waitForExistence(timeout: 5) {
@@ -89,6 +75,8 @@ final class ScreenshotWalkUITests: XCTestCase {
             }
         }
 
+        let backToGroups = app.navigationBars.buttons["Groups"]
+        if backToGroups.exists { backToGroups.tap() }
         openTab("Friends", in: app)
         XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 10))
         shot("11-friends")

@@ -45,6 +45,12 @@ extension XCTestCase {
     @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
         let button = app.tabBars.firstMatch.buttons[name]
+        // the tab bar shrinks to the current tab while a list is scrolled down
+        var attempts = 0
+        while !button.exists && attempts < 8 {
+            scroll(.down, in: app)
+            attempts += 1
+        }
         XCTAssertTrue(button.waitForExistence(timeout: 10), "\(name) tab missing")
         button.tap()
     }
@@ -113,7 +119,7 @@ extension XCTestCase {
         let row = app.staticTexts[name].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10), "\(name) is not listed")
         row.tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "\(name) did not open")
     }
 
     /// Creates a group with the given members through the New Group sheet and leaves the group open.
@@ -137,7 +143,7 @@ extension XCTestCase {
             XCTAssertTrue(app.staticTexts[member].waitForExistence(timeout: 5))
         }
         app.buttons["Create"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "\(name) was not created")
     }
 
     /// Writes a screenshot to the folder named by `SPLT_SHOTS_DIR`. Does nothing when it is not set.
