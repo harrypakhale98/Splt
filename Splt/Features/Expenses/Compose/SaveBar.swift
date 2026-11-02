@@ -36,5 +36,6 @@ struct SaveBar: View {
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 4)
+        .background(.regularMaterial)
     }
 }
