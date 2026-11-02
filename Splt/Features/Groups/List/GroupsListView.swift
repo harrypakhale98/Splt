@@ -66,10 +66,14 @@ private struct GroupsListContent: View {
         .searchable(text: $model.query, prompt: "Search groups")
         .refreshable { model.refresh() }
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("New Group", systemImage: "plus") {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button("New Group", systemImage: "person.2.badge.plus") {
                     router.present(.newGroup)
                 }
+                Button("Add Expense", systemImage: "plus") {
+                    router.present(.addExpense)
+                }
+                .disabled(!model.hasGroups)
             }
             ToolbarItem(placement: .secondaryAction) {
                 Button("Import from Splitwise", systemImage: "square.and.arrow.down") {
