@@ -127,6 +127,7 @@ struct UIPersonColorLookupTests {
 }
 
 @Suite("Balance tint")
+@MainActor
 struct UIBalanceTintTests {
     @Test func oneRuleForGreenRedAndQuiet() {
         #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == .green)

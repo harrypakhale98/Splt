@@ -16,6 +16,7 @@ struct RecapBackdropTests {
             me: nil
         )
         let group = SplitGroup(
+            id: GroupID(rawValue: UUID(uuidString: "00000000-0000-4000-8000-0000000000C3")!),
             name: "Trip", currencyCode: "USD", kind: .trip, memberIDs: [ana, ben],
             tripStart: utcDate(2026, 5, 8), tripEnd: utcDate(2026, 5, 10)
         )
