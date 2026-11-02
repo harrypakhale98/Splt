@@ -56,7 +56,8 @@ private struct GroupDetailContent: View {
                         canSettle: !model.transfers.isEmpty,
                         onSettleUp: { settleRoute = model.settleRoute() },
                         condense: condenseProgress,
-                        compact: model.segment != .expenses
+                        compact: model.segment != .expenses,
+                        showsAmount: model.segment != .balances
                     )
                     segmentPicker
                     content
@@ -159,8 +160,8 @@ private struct GroupDetailContent: View {
     @ViewBuilder
     private var expensesContent: some View {
         let sections = model.sections
-        if let recap = model.recap, !model.filter.isActive {
-            TripRecapSection(recap: recap, onRecap: { showsRecap = true })
+        if let group = model.group, group.kind == .trip, let stats = model.recapStats, !model.filter.isActive {
+            RecapEntryCard(group: group, stats: stats, members: model.members, onOpen: { showsRecap = true })
         }
         if model.filter.isFiltering {
             Section {

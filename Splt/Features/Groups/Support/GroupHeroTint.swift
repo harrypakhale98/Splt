@@ -83,7 +83,15 @@ enum GroupHeroTint {
 
 /// A quiet three by three mesh in the group's own colors. Small text may sit on it.
 struct GroupHeroBackground: View {
-    let group: SplitGroup
+    let hues: [Int]
+
+    init(group: SplitGroup) {
+        hues = GroupHeroTint.hues(for: group)
+    }
+
+    init(hues: [Int]) {
+        self.hues = hues.isEmpty ? [0] : hues
+    }
 
     private static let points: [SIMD2<Float>] = [
         [0, 0], [0.5, 0], [1, 0],
@@ -92,7 +100,6 @@ struct GroupHeroBackground: View {
     ]
 
     var body: some View {
-        let hues = GroupHeroTint.hues(for: group)
         let dominant = GroupHeroTint.color(index: hues[0], role: .dominant)
         let first = GroupHeroTint.color(index: hues.count > 1 ? hues[1] : hues[0], role: .accent)
         let second = GroupHeroTint.color(index: hues.count > 2 ? hues[2] : hues[0], role: .accent)

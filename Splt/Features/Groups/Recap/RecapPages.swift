@@ -8,7 +8,8 @@ private struct RecapTitle: View {
     var body: some View {
         Text(text)
             .font(.title3.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.primary.opacity(0.7))
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -46,10 +47,9 @@ struct RecapTotalPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Spacer()
             Image(systemName: group.symbol)
                 .font(.largeTitle)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.primary.opacity(0.7))
                 .accessibilityHidden(true)
             Text(group.name)
                 .font(.largeTitle.weight(.bold))
@@ -59,9 +59,7 @@ struct RecapTotalPage: View {
             RecapNumber(money: stats.total, hidden: hidesAmounts, active: active, size: 68)
             Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
                 .font(.headline)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Spacer()
+                .foregroundStyle(Color.primary.opacity(0.7))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
@@ -78,7 +76,6 @@ struct RecapDaysPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Spacer()
             RecapTitle(text: stats.bucket == .day ? "Day by day" : "Month by month")
             Chart(stats.slices) { slice in
                 BarMark(
@@ -105,9 +102,7 @@ struct RecapDaysPage: View {
             }
             Text("About \(recapAmount(stats.average, hidden: hidesAmounts, locale: locale)) a \(stats.bucket == .day ? "day" : "month") on average")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Spacer()
+                .foregroundStyle(Color.primary.opacity(0.7))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -127,8 +122,7 @@ struct RecapBiggestPage: View {
     var body: some View {
         if let biggest = stats.biggest {
             VStack(alignment: .leading, spacing: 14) {
-                Spacer()
-                RecapTitle(text: "The biggest one")
+                    RecapTitle(text: "The biggest one")
                 Image(systemName: biggest.category.symbolName)
                     .font(.system(size: 44))
                     .foregroundStyle(.tint)
@@ -143,10 +137,8 @@ struct RecapBiggestPage: View {
                 RecapNumber(money: biggest.amount, hidden: hidesAmounts, active: active, size: 52)
                 Text(detail(biggest))
                     .font(.headline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Spacer()
-            }
+                    .foregroundStyle(Color.primary.opacity(0.7))
+                    }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
         }
@@ -172,8 +164,7 @@ struct RecapPayerPage: View {
         if let payer = stats.topPayer {
             let color = PersonPalette.color(for: payer.id, in: members)
             VStack(spacing: 18) {
-                Spacer()
-                RecapTitle(text: "Who paid the most")
+                    RecapTitle(text: "Who paid the most")
                 ZStack {
                     Circle().stroke(color.opacity(0.18), lineWidth: 16)
                     Circle()
@@ -190,13 +181,11 @@ struct RecapPayerPage: View {
                     .fontDesign(.serif)
                 Text("covered \(payer.percent)% of the bills")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.primary.opacity(0.7))
                 Text(recapAmount(payer.paid, hidden: hidesAmounts, locale: locale))
                     .font(.system(.title, design: .rounded, weight: .bold))
                     .monospacedDigit()
-                Spacer()
-                Spacer()
-            }
+                    }
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
         }
@@ -217,7 +206,6 @@ struct RecapCategoriesPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Spacer()
             RecapTitle(text: "Where it went")
             Chart(Array(stats.categories.enumerated()), id: \.element.id) { index, share in
                 SectorMark(
@@ -238,22 +226,19 @@ struct RecapCategoriesPage: View {
                         Circle().fill(color(at: index)).frame(width: 12, height: 12)
                         Label(share.category.title, systemImage: share.category.symbolName)
                             .font(.body)
-                        Spacer()
-                        Text("\(share.percent)%")
+                                    Text("\(share.percent)%")
                             .font(.body.weight(.semibold))
                             .monospacedDigit()
                         if !hidesAmounts {
                             Text(MoneyFormatting.string(share.amount, locale: locale))
                                 .font(.subheadline)
                                 .monospacedDigit()
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.primary.opacity(0.7))
                         }
                     }
                     .accessibilityElement(children: .combine)
                 }
             }
-            Spacer()
-            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -269,7 +254,6 @@ struct RecapSummaryPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Spacer()
             Image(systemName: "sparkles")
                 .font(.largeTitle)
                 .foregroundStyle(.tint)
@@ -281,8 +265,6 @@ struct RecapSummaryPage: View {
                 .opacity(active || reduceMotion ? 1 : 0)
                 .offset(y: active || reduceMotion ? 0 : 12)
                 .animation(reduceMotion ? nil : .smooth(duration: 0.8), value: active)
-            Spacer()
-            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -301,15 +283,14 @@ struct RecapShareCard: View {
                 Image(systemName: group.symbol)
                 Text(group.name)
                     .fontDesign(.serif)
-                Spacer()
-            }
+                }
             .font(.title2.weight(.bold))
             Text(recapAmount(stats.total, hidden: hidesAmounts))
                 .font(.system(size: 54, weight: .bold, design: .rounded))
                 .monospacedDigit()
             Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.primary.opacity(0.7))
             Chart(stats.slices) { slice in
                 BarMark(
                     x: .value("Date", slice.start, unit: stats.bucket == .day ? .day : .month),
@@ -337,7 +318,7 @@ struct RecapShareCard: View {
                 Text(summary)
                     .font(.callout)
                     .fontDesign(.serif)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.primary.opacity(0.7))
             }
             Spacer(minLength: 0)
             Text("Splt")

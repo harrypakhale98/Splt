@@ -24,14 +24,12 @@ struct GroupTotalsSection: View {
             }
         } else {
             let members = model.group?.memberIDs ?? []
+            if let group = model.group, let stats = model.recapStats {
+                RecapEntryCard(group: group, stats: stats, members: model.members, onOpen: onRecap)
+            }
             ForEach(model.totals) { totals in
                 Section {
                     hero(totals)
-                    if totals.currencyCode == model.primaryTotals?.currencyCode, model.recapStats != nil {
-                        Button(action: onRecap) {
-                            Label("Watch the Recap", systemImage: "sparkles.rectangle.stack")
-                        }
-                    }
                 }
 
                 if totals.byPerson.contains(where: { $0.paid.minorUnits > 0 }) {

@@ -12,6 +12,8 @@ struct GroupHeroSection: View {
     var condense: Double = 0
     /// A slim header for the Balances and Totals screens, so the content below stays above the fold.
     var compact = false
+    /// Whether the slim header repeats your balance. The orbit already shows it on Balances.
+    var showsAmount = true
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
@@ -73,7 +75,14 @@ struct GroupHeroSection: View {
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
                 : AnyLayout(HStackLayout(alignment: .lastTextBaseline, spacing: 8))
             layout {
-                compactBalance
+                if showsAmount {
+                    compactBalance
+                } else {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.primary.opacity(0.7))
+                        .lineLimit(2)
+                }
                 if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
                 Button(action: onSettleUp) {
                     Text("Settle Up")

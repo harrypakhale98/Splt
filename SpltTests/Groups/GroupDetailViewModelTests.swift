@@ -289,49 +289,6 @@ struct GroupDetailViewModelTests {
         #expect(model.primaryTotals?.currencyCode == "USD")
     }
 
-    // MARK: Trip recap
-
-    private func tripFixture(now: Date) throws -> (GroupDetailViewModel, Fixture) {
-        let fixture = try Fixture()
-        let trip = SplitGroup(
-            name: "Lisbon", currencyCode: "USD", kind: .trip, memberIDs: [fixture.me.id, fixture.sam.id],
-            tripStart: utcDate(2026, 5, 8), tripEnd: utcDate(2026, 5, 10)
-        )
-        try fixture.services.groups.create(trip)
-        _ = try fixture.add("Airbnb", cents: 6000, on: utcDate(2026, 5, 8), category: .lodging, in: trip)
-        _ = try fixture.add("Dinner", cents: 3000, on: utcDate(2026, 5, 9), category: .dining, in: trip)
-        return (makeModel(fixture, groupID: trip.id, now: now), fixture)
-    }
-
-    @Test func recapCoversTheDaysSoFar() throws {
-        let (model, _) = try tripFixture(now: utcDate(2026, 5, 9))
-        let recap = try #require(model.recap)
-        #expect(recap.total == usdAmount(9000))
-        #expect(recap.dayCount == 2)
-        #expect(recap.averagePerDay == usdAmount(4500))
-        #expect(recap.topCategory?.category == .lodging)
-        #expect(recap.biggestExpenseTitle == "Airbnb")
-        #expect(recap.expenseCount == 2)
-    }
-
-    @Test func recapStopsAtTheEndOfTheTrip() throws {
-        let (model, _) = try tripFixture(now: utcDate(2026, 6, 1))
-        let recap = try #require(model.recap)
-        #expect(recap.dayCount == 3)
-        #expect(recap.averagePerDay == usdAmount(3000))
-    }
-
-    @Test func recapBeforeTheTripCountsOneDay() throws {
-        let (model, _) = try tripFixture(now: utcDate(2026, 5, 1))
-        #expect(model.recap?.dayCount == 1)
-    }
-
-    @Test func standardGroupsHaveNoRecap() throws {
-        let fixture = try Fixture()
-        _ = try fixture.add("Dinner", cents: 3000, on: utcDate(2026, 5, 1))
-        #expect(makeModel(fixture).recap == nil)
-    }
-
     // MARK: Activity
 
     @Test func activityDescribesWhatHappened() throws {

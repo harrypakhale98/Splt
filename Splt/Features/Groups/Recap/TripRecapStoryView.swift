@@ -30,23 +30,31 @@ struct TripRecapStoryView: View {
         let pages = pages
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
-            GroupHeroBackground(group: group)
+            GroupHeroBackground(hues: RecapBackdrop.hues(for: pages[min(page, pages.count - 1)], group: group, stats: stats))
                 .ignoresSafeArea()
-            Color(.systemBackground).opacity(0.28).ignoresSafeArea()
+                .motion(.smooth(duration: 0.6), value: page)
+            Color(.systemBackground).opacity(0.2).ignoresSafeArea()
             TabView(selection: $page) {
                 ForEach(Array(pages.enumerated()), id: \.offset) { index, kind in
-                    content(for: kind, active: index == page)
-                        .padding(.horizontal, 28)
-                        .padding(.top, 84)
-                        .padding(.bottom, 96)
-                        .tag(index)
+                    GeometryReader { proxy in
+                        ScrollView {
+                            content(for: kind, active: index == page)
+                                .padding(.horizontal, 28)
+                                .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+                                .frame(maxWidth: .infinity, minHeight: max(proxy.size.height - 246, 200), alignment: .center)
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .contentMargins(.top, 96, for: .scrollContent)
+                        .contentMargins(.bottom, 150, for: .scrollContent)
+                    }
+                    .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
         }
         .overlay(alignment: .top) { header(count: pages.count) }
-        .overlay(alignment: .bottom) { footer(isLast: page == pages.count - 1) }
+        .overlay(alignment: .bottom) { footer }
         .task(id: hidesAmounts) { renderShareCard() }
         .accessibilityAction(.escape) { dismiss() }
     }
@@ -68,36 +76,48 @@ struct TripRecapStoryView: View {
             HStack {
                 Text("Recap")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.primary.opacity(0.7))
                 Spacer()
                 Button("Close", systemImage: "xmark") { dismiss() }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.glass)
                     .buttonBorderShape(.circle)
+                    .controlSize(.large)
             }
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
-    private func footer(isLast: Bool) -> some View {
-        HStack(spacing: 12) {
-            GlassPill {
-                Toggle("Hide Amounts", isOn: $hidesAmounts)
-                    .font(.subheadline)
-                    .fixedSize()
-            }
-            if let sharedImage {
-                ShareLink(item: sharedImage, preview: SharePreview(group.name, image: sharedImage)) {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .labelStyle(.iconOnly)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
-            }
+    private var footer: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) { hidePill; shareButton }
+            VStack(spacing: 12) { hidePill; shareButton }
         }
+        .padding(.horizontal, 20)
         .padding(.bottom, 20)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+
+    private var hidePill: some View {
+        GlassPill {
+            Toggle("Hide Amounts", isOn: $hidesAmounts)
+                .font(.subheadline)
+        }
+    }
+
+    @ViewBuilder
+    private var shareButton: some View {
+        if let sharedImage {
+            ShareLink(item: sharedImage, preview: SharePreview(group.name, image: sharedImage)) {
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .labelStyle(.iconOnly)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+        }
     }
 
     // MARK: Pages

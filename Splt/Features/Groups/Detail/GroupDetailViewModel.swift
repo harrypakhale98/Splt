@@ -61,7 +61,7 @@ final class GroupDetailViewModel {
         var totalsRevision = -1
         var totals: [GroupTotals] = []
         var recapRevision = -1
-        var recap: TripRecap?
+        var recapStats: RecapStats?
         var sectionsKey: SectionsKey?
         var sections: [ExpenseSection] = []
     }
@@ -170,15 +170,11 @@ final class GroupDetailViewModel {
 
     /// The numbers for the recap story, or nil when nothing was spent in the group's currency.
     var recapStats: RecapStats? {
-        group.flatMap { RecapStats(group: $0, expenses: expenses, names: names, now: now(), calendar: calendar) }
-    }
-
-    var recap: TripRecap? {
         _ = expenses
-        if memo.recapRevision == revision { return memo.recap }
-        let built = group.flatMap { TripRecap(group: $0, expenses: expenses, now: now(), calendar: calendar) }
+        if memo.recapRevision == revision { return memo.recapStats }
+        let built = group.flatMap { RecapStats(group: $0, expenses: expenses, names: names, now: now(), calendar: calendar) }
         memo.recapRevision = revision
-        memo.recap = built
+        memo.recapStats = built
         return built
     }
 
