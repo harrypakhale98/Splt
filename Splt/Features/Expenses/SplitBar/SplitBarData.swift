@@ -6,6 +6,8 @@ struct SplitBarSegment: Identifiable, Equatable {
     var weight: Int64
     /// What the person owes, when the total is known.
     var amount: Money?
+    /// For adjusted splits, how far this person is from an equal share.
+    var adjustment: Money?
 
     var id: PersonID { person.id }
 }

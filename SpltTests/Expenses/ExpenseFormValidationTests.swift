@@ -40,7 +40,7 @@ struct ExpenseFormValidationTests {
         let preview = model.sharePreview
         #expect(preview.count == 3)
         #expect(preview.allSatisfy { $0.amount == usd(2000) })
-        #expect(model.statusText.contains("3 people"))
+        #expect(model.summaryLine.contains("split 3 ways"))
     }
 
     @Test func nobodyInTheSplitBlocksSaving() throws {
