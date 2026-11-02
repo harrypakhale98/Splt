@@ -15,6 +15,8 @@ struct ItemsTray: View {
                 Spacer()
                 Button("Edit Items", action: onEdit)
                     .font(.subheadline.weight(.medium))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
             }
             if let notice = model.scanNotice {
                 Label(notice, systemImage: "doc.text.viewfinder")

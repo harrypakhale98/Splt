@@ -190,10 +190,11 @@ enum SplitBarMath {
     }
 
     /// Own plus-or-minus amounts that make an equal split land on `shares`.
-    static func adjustments(for shares: [Int64]) -> [Int64] {
+    /// `equal` is the equal split the calculator will use, so spare cents cancel out exactly.
+    static func adjustments(for shares: [Int64], equal: [Int64]? = nil) -> [Int64] {
         let total = shares.reduce(0, +)
-        let equal = equalWeights(count: shares.count, scale: total)
-        return zip(shares, equal).map { $0 - $1 }
+        let base = equal ?? equalWeights(count: shares.count, scale: total)
+        return zip(shares, base).map { $0 - $1 }
     }
 
     private static func gcd(_ a: Int64, _ b: Int64) -> Int64 {

@@ -113,6 +113,11 @@ final class ExpenseDetailModel {
         }
     }
 
+    /// Position in the group's member list, so the share rows follow the same order as the bar.
+    private func memberOrder(_ id: PersonID) -> Int {
+        memberIDs.firstIndex(of: id) ?? .max
+    }
+
     private func rebuildLines(for expense: Expense) {
         let result = try? expense.shares()
         shareLines = (result?.shares ?? [:]).compactMap { id, share in
@@ -120,7 +125,7 @@ final class ExpenseDetailModel {
                 person: $0, name: name(for: id), share: share, breakdown: result?.breakdown?[id], isYou: id == me?.id
             ) }
         }
-        .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        .sorted { memberOrder($0.id) < memberOrder($1.id) }
         payerLines = expense.payers.compactMap { id, amount in
             people[id].map { (person: $0, name: name(for: id), amount: amount) }
         }

@@ -164,8 +164,15 @@ extension ExpenseFormModel {
         }
     }
 
+    /// What an equal split gives each person, from the calculator itself so spare cents match.
+    private func calculatorEqualShares(for people: [PersonID], total: Money) -> [Int64]? {
+        guard let result = try? SplitCalculator.calculate(.equal(participants: Set(people)), total: total) else { return nil }
+        return people.map { result.share(for: $0).minorUnits }
+    }
+
     private func writeAdjustments(_ shares: [Int64], for segments: [SplitBarSegment]) {
-        for (segment, value) in zip(segments, SplitBarMath.adjustments(for: shares)) {
+        let equal = total.flatMap { calculatorEqualShares(for: segments.map(\.id), total: $0) }
+        for (segment, value) in zip(segments, SplitBarMath.adjustments(for: shares, equal: equal)) {
             split.adjustments[segment.id] = value == 0 ? "" : AmountInput.text(for: Money(minorUnits: value, currencyCode: currencyCode), locale: locale)
         }
     }
@@ -185,6 +192,8 @@ extension ExpenseFormModel {
         let fractions = barFractions()
         let people = barPeople
         let converts = previous != .itemized && fractions.count == people.count && !people.isEmpty
+        let preview = Dictionary(uniqueKeysWithValues: sharePreview.map { ($0.person.id, $0.amount.minorUnits) })
+        let currentShares: [Int64]? = people.allSatisfy({ preview[$0.id] != nil }) ? people.map { preview[$0.id] ?? 0 } : nil
 
         if converts {
             switch method {
@@ -194,14 +203,16 @@ extension ExpenseFormModel {
                 }
             case .exact:
                 if let total, total.minorUnits > 0 {
-                    for (person, amount) in zip(people, SplitBarMath.amounts(for: fractions, total: total)) {
-                        split.exact[person.id] = AmountInput.text(for: amount, locale: locale)
+                    let minors = currentShares ?? SplitBarMath.amounts(for: fractions, total: total).map(\.minorUnits)
+                    for (person, units) in zip(people, minors) {
+                        split.exact[person.id] = AmountInput.text(for: Money(minorUnits: units, currencyCode: currencyCode), locale: locale)
                     }
                 }
             case .adjustment:
                 if let total, total.minorUnits > 0 {
-                    let shares = SplitBarMath.amounts(for: fractions, total: total).map(\.minorUnits)
-                    for (person, value) in zip(people, SplitBarMath.adjustments(for: shares)) {
+                    let minors = currentShares ?? SplitBarMath.amounts(for: fractions, total: total).map(\.minorUnits)
+                    let equal = calculatorEqualShares(for: people.map(\.id), total: total)
+                    for (person, value) in zip(people, SplitBarMath.adjustments(for: minors, equal: equal)) {
                         split.adjustments[person.id] = value == 0 ? "" : AmountInput.text(for: Money(minorUnits: value, currencyCode: currencyCode), locale: locale)
                     }
                 }

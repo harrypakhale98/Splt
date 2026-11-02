@@ -20,6 +20,8 @@ struct WhoIsInSection: View {
                         onChange()
                     }
                     .font(.subheadline.weight(.medium))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
                 }
             }
             let ids = model.members.map(\.id)

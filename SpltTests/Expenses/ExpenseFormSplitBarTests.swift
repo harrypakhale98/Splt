@@ -118,6 +118,21 @@ struct ExpenseFormSplitBarTests {
         #expect(Set(model.sharePreview.map(\.amount.minorUnits)).count == 1)
     }
 
+    @Test func switchingToAdjustmentsKeepsAnEqualSplitEqualToTheCent() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        model.amountText = "120.01"
+        model.title = "Odd"
+        let before = model.sharePreview.map { $0.amount.minorUnits }
+        model.selectMethod(.adjustment)
+        #expect(model.split.adjustments.values.allSatisfy { $0.isEmpty })
+        #expect(model.sharePreview.map { $0.amount.minorUnits } == before)
+
+        model.selectMethod(.exact)
+        #expect(model.sharePreview.map { $0.amount.minorUnits } == before)
+        #expect(model.issue == nil)
+    }
+
     @Test func switchingFromEqualToSharesStartsAtOneEach() throws {
         let harness = try ExpenseFormHarness()
         let model = harness.filledDinner()

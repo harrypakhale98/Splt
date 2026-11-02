@@ -103,7 +103,8 @@ final class ExpenseDesignShotsUITests: XCTestCase {
 
         openTab("Groups", in: app)
         let group = element(labelStartingWith: "Lisbon Trip", in: app)
-        XCTAssertTrue(group.waitForExistence(timeout: 10), "Lisbon Trip is not listed")
+        reveal(group, in: app)
+        XCTAssertTrue(group.exists, "Lisbon Trip is not listed")
         group.tap()
         XCTAssertTrue(app.buttons["Add Expense"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["Add Expense"].firstMatch.tap()
