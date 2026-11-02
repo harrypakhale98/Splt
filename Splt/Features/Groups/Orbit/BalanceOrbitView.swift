@@ -30,9 +30,9 @@ struct BalanceOrbitView: View {
             ZStack {
                 ring(scene)
                 arcLayer(scene: scene, colors: colors)
-                amountLabels(scene: scene)
                 nodeLayer(scene: scene, colors: colors)
-                OrbitCenterView(center: board.center(for: focus), radius: scene.layout.ringRadius)
+                amountLabels(scene: scene)
+                OrbitCenterView(center: board.center(for: focus), diameter: scene.layout.centerRadius * 2)
                     .position(scene.layout.center)
                     .allowsHitTesting(false)
             }
@@ -87,17 +87,18 @@ struct BalanceOrbitView: View {
 
     @ViewBuilder
     private func amountLabels(scene: OrbitScene) -> some View {
-        let showsAll = board.transfers.count <= 3 && focus == .none
+        let showsAll = board.transfers.count == 1 && focus == .none
+        let highlighted = scene.arcs.filter { scene.emphasis(of: $0.transfer, focus: focus) == .highlighted }.count
         ForEach(scene.arcs, id: \.transfer.id) { transfer, geometry in
             let emphasis = scene.emphasis(of: transfer, focus: focus)
-            if pairs.isEmpty, showsAll || emphasis == .highlighted {
+            if pairs.isEmpty, showsAll || (emphasis == .highlighted && highlighted <= 4) {
                 Text(MoneyFormatting.string(transfer.amount, locale: locale))
                     .font(.caption.weight(.semibold).monospacedDigit())
                     .fontDesign(.rounded)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(.regularMaterial, in: .capsule)
-                    .position(geometry.middle)
+                    .position(scene.pillPoint(for: geometry))
                     .transition(.opacity)
                     .allowsHitTesting(false)
             }
@@ -109,7 +110,6 @@ struct BalanceOrbitView: View {
             let layout = scene.layout
             let emphasis = scene.emphasis(of: node.id, focus: focus)
             let point = layout.positions[index]
-            let outward = layout.outward(index)
             ZStack {
                 Circle()
                     .fill(colors.color(for: node.id))
@@ -127,7 +127,7 @@ struct BalanceOrbitView: View {
             }
             .frame(width: layout.nodeRadius * 2, height: layout.nodeRadius * 2)
             .position(point)
-            .opacity(emphasis == .dimmed ? 0.35 : 1)
+            .opacity(emphasis == .dimmed ? 0.55 : 1)
 
             if showsLabel(for: node, layout: layout) {
                 Text(label(for: node, layout: layout))
@@ -135,7 +135,7 @@ struct BalanceOrbitView: View {
                     .lineLimit(1)
                     .foregroundStyle(emphasis == .dimmed ? .tertiary : .secondary)
                     .fixedSize()
-                    .position(x: point.x, y: point.y + (outward.dy < -0.3 ? -1 : 1) * (layout.nodeRadius + 11))
+                    .position(layout.labelPosition(index))
             }
         }
     }
@@ -209,10 +209,9 @@ struct BalanceOrbitView: View {
 /// The big number in the middle: your balance, or the balance of whoever is focused.
 struct OrbitCenterView: View {
     let center: OrbitCenter
-    let radius: CGFloat
+    let diameter: CGFloat
 
     var body: some View {
-        let width = radius * 1.0
         VStack(spacing: 2) {
             switch center.kind {
             case .settled:
@@ -240,10 +239,10 @@ struct OrbitCenterView: View {
                 HeroAmount(signed, showsSign: center.subjectIsMe)
             }
         }
-        .frame(width: width)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 10)
-        .background(Color(.secondarySystemGroupedBackground).opacity(0.88), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .frame(width: diameter * 0.84)
+        .frame(width: diameter, height: diameter)
+        .background(Color(.secondarySystemGroupedBackground), in: .circle)
+        .overlay(Circle().strokeBorder(.separator.opacity(0.35)))
         .motion(.smooth, value: center)
         .accessibilityHidden(true)
     }

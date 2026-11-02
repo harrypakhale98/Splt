@@ -62,6 +62,13 @@ struct OrbitLayout: Equatable {
         return CGVector(dx: CGFloat(cos(angle)), dy: CGFloat(sin(angle)))
     }
 
+    /// Where the name label of a person is centered: under them, or above for the top of the ring.
+    func labelPosition(_ index: Int) -> CGPoint {
+        guard positions.indices.contains(index) else { return center }
+        let direction: CGFloat = outward(index).dy < -0.3 ? -1 : 1
+        return CGPoint(x: positions[index].x, y: positions[index].y + direction * (nodeRadius + 11))
+    }
+
     /// The widest an arc may be.
     var maxArcWidth: CGFloat { nodeRadius * 0.9 }
     var minArcWidth: CGFloat { 3 }
@@ -88,13 +95,16 @@ struct OrbitLayout: Equatable {
         )
     }
 
-    /// Arcs bow toward the middle like a chord diagram. A pair whose straight line would run right
-    /// through the middle, where the amount sits, arches out to the side instead.
+    /// The radius of the empty disc in the middle, where the amount sits.
+    var centerRadius: CGFloat { ringRadius * 0.52 }
+
+    /// Arcs bow toward the middle like a chord diagram but never into the disc where the amount sits.
+    /// A pair whose straight line would pass too close arches out to the side instead.
     private func controlPoint(_ a: CGPoint, _ b: CGPoint) -> CGPoint {
         let mid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
         let inward = CGVector(dx: center.x - mid.x, dy: center.y - mid.y)
         let distance = hypot(inward.dx, inward.dy)
-        let clear = ringRadius * 0.3
+        let clear = ringRadius * 0.68
         if distance < clear {
             var direction = CGVector(dx: -inward.dx / max(distance, 0.0001), dy: -inward.dy / max(distance, 0.0001))
             if distance < ringRadius * 0.02 {
@@ -104,10 +114,10 @@ struct OrbitLayout: Equatable {
                 direction = CGVector(dx: -chord.dy / length, dy: chord.dx / length)
                 if direction.dy > 0 { direction = CGVector(dx: -direction.dx, dy: -direction.dy) }
             }
-            let reach = 2 * (ringRadius * 0.78 - distance)
+            let reach = 2 * (ringRadius * 0.76 - distance)
             return CGPoint(x: mid.x + direction.dx * reach, y: mid.y + direction.dy * reach)
         }
-        let pull = 0.7
+        let pull = min(0.7, 2 * (1 - clear / distance))
         return CGPoint(x: mid.x + inward.dx * pull, y: mid.y + inward.dy * pull)
     }
 }
@@ -157,8 +167,22 @@ struct ArcGeometry: Equatable {
         return (left, right)
     }
 
-    /// The point at 0.5, where an amount label sits.
+    /// The point at 0.5.
     var middle: CGPoint { point(at: 0.5) }
+
+    /// Where an amount pill sits: beside the middle of the arc on the side facing away from `center`.
+    func pillPoint(awayFrom center: CGPoint, gap: CGFloat = 14) -> CGPoint {
+        let mid = middle
+        let dx = mid.x - center.x, dy = mid.y - center.y
+        let length = max(hypot(dx, dy), 0.0001)
+        let offset = width / 2 + gap
+        return CGPoint(x: mid.x + dx / length * offset, y: mid.y + dy / length * offset)
+    }
+
+    /// How close the curve comes to `point`.
+    func closestApproach(to point: CGPoint) -> CGFloat {
+        polyline(samples: 48).map { hypot($0.x - point.x, $0.y - point.y) }.min() ?? .greatestFiniteMagnitude
+    }
 
     /// Distance from `location` to the curve's center line.
     func distance(to location: CGPoint) -> CGFloat {

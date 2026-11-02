@@ -105,15 +105,18 @@ struct OrbitGeometryTests {
         #expect(distance(arc.middle, layout.center) < distance(straightMid, layout.center))
     }
 
-    @Test func noArcRunsThroughTheExactMiddle() throws {
+    @Test func noArcEntersTheDiscWhereTheAmountSits() throws {
         for count in 2...12 {
             let layout = OrbitLayout(size: square, count: count)
             for from in 0..<count {
                 for to in 0..<count where from != to {
                     let arc = try #require(layout.arc(from: from, to: to, width: 6))
-                    let reach = distance(arc.middle, layout.center)
-                    #expect(reach >= layout.ringRadius * 0.16, "\(from) to \(to) crosses the middle with \(count) people")
-                    #expect(reach <= layout.ringRadius * 1.02, "\(from) to \(to) leaves the ring with \(count) people")
+                    let approach = arc.closestApproach(to: layout.center)
+                    #expect(
+                        approach >= layout.centerRadius + 3 + arc.width / 2,
+                        "\(from) to \(to) touches the amount with \(count) people"
+                    )
+                    #expect(arc.middle.x.isFinite && arc.middle.y.isFinite)
                 }
             }
         }
@@ -124,11 +127,32 @@ struct OrbitGeometryTests {
             let layout = OrbitLayout(size: square, count: count)
             let arc = try #require(layout.arc(from: 0, to: count / 2, width: 6))
             let reach = distance(arc.middle, layout.center)
-            #expect(reach > layout.ringRadius * 0.55 && reach < layout.ringRadius * 1.02, "wrong reach at \(count)")
+            #expect(reach > layout.ringRadius * 0.6 && reach < layout.ringRadius * 1.02, "wrong reach at \(count)")
         }
         let pair = OrbitLayout(size: square, count: 2)
         let arc = try #require(pair.arc(from: 0, to: 1, width: 6))
         #expect(arc.middle.y < pair.center.y)
+    }
+
+    @Test func pillsSitOutsideTheArcAwayFromTheMiddle() throws {
+        for count in [2, 3, 6, 12] {
+            let layout = OrbitLayout(size: square, count: count)
+            let arc = try #require(layout.arc(from: 0, to: count - 1, width: 8))
+            let pill = arc.pillPoint(awayFrom: layout.center)
+            #expect(distance(pill, layout.center) > distance(arc.middle, layout.center))
+            #expect(distance(pill, arc.middle) >= 8 / 2 + 13.9)
+            #expect(distance(pill, layout.center) > layout.centerRadius + 10)
+        }
+    }
+
+    @Test func labelsSitUnderPeopleAndAboveTheTopOne() {
+        let layout = OrbitLayout(size: square, count: 6)
+        #expect(layout.labelPosition(0).y < layout.positions[0].y)
+        for index in [2, 3, 4] {
+            #expect(layout.labelPosition(index).y > layout.positions[index].y)
+            #expect(layout.labelPosition(index).x == layout.positions[index].x)
+        }
+        #expect(layout.labelPosition(9) == layout.center)
     }
 
     @Test func curveEndpointsAndMidpointAreExact() {
@@ -224,6 +248,22 @@ struct OrbitSceneTests {
         let arc = try #require(scene.arc(for: transfer(1, 0, 1000)))
         #expect(scene.hit(at: arc.middle) == .transfer(transfer(1, 0, 1000).id))
         #expect(scene.hit(at: CGPoint(x: 2, y: 2)) == .nothing)
+    }
+
+    @Test func pillsOfAFewArcsNeverSitOnAnAvatar() throws {
+        for count in [3, 5, 6, 9, 12] {
+            let people = Array(ids.prefix(1)) + (1..<count).map { _ in PersonID() }
+            let transfers = people.dropFirst().map { OrbitTransfer(debtor: $0, creditor: people[0], amount: usdAmount(1000)) }
+            let scene = OrbitScene(size: CGSize(width: 340, height: 340), people: people, transfers: Array(transfers.prefix(4)))
+            var crowded = 0
+            for (_, geometry) in scene.arcs {
+                let pill = scene.pillPoint(for: geometry)
+                let nearest = scene.layout.positions.map { hypot($0.x - pill.x, $0.y - pill.y) }.min() ?? 0
+                if nearest < scene.layout.nodeRadius + 6 { crowded += 1 }
+                #expect(hypot(pill.x - scene.layout.center.x, pill.y - scene.layout.center.y) > scene.layout.centerRadius)
+            }
+            #expect(crowded == 0, "\(crowded) pills crowd the people with \(count)")
+        }
     }
 
     @Test func targetsAreAtLeastFortyFourPointsAcross() {
