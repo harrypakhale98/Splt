@@ -135,7 +135,9 @@ private struct GroupSettingsForm: View {
                         color: model.group.map { GroupAppearance.color(for: $0.id) } ?? .accentColor
                     )
                 } label: {
-                    LabeledContent("Symbol") {
+                    HStack {
+                        Text("Symbol")
+                        Spacer()
                         Image(systemName: model.symbol)
                             .foregroundStyle(.tint)
                             .accessibilityHidden(true)

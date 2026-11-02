@@ -65,7 +65,9 @@ private struct CreateGroupForm: View {
                         color: .accentColor
                     )
                 } label: {
-                    LabeledContent("Symbol") {
+                    HStack {
+                        Text("Symbol")
+                        Spacer()
                         Image(systemName: model.symbol)
                             .foregroundStyle(.tint)
                             .accessibilityHidden(true)
