@@ -16,10 +16,26 @@ struct UIRouterTests {
 
     @Test func pushSelectsTabAndAppendsRoute() {
         let router = Router()
-        router.push(.settings, in: .account)
-        #expect(router.selectedTab == .account)
-        #expect(router.accountPath == [.settings])
+        router.push(.expense(id), in: .activity)
+        #expect(router.selectedTab == .activity)
+        #expect(router.activityPath == [.expense(id)])
         #expect(router.groupsPath.isEmpty)
+    }
+
+    @Test func settingsRouteShowsTheAccountScreen() {
+        let router = Router()
+        router.accountPath = [.expense(id)]
+        router.push(.settings, in: .groups)
+        #expect(router.selectedTab == .account)
+        #expect(router.accountPath.isEmpty)
+    }
+
+    @Test func activityLinkSelectsTheActivityTab() {
+        let router = Router()
+        router.present(.newGroup)
+        router.open(.activity)
+        #expect(router.selectedTab == .activity)
+        #expect(router.sheet == nil)
     }
 
     @Test func pushWithoutTabUsesSelectedTab() {
