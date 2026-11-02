@@ -55,7 +55,8 @@ private struct GroupDetailContent: View {
                         totals: model.myTotals,
                         canSettle: !model.transfers.isEmpty,
                         onSettleUp: { settleRoute = model.settleRoute() },
-                        condense: condenseProgress
+                        condense: condenseProgress,
+                        compact: model.segment != .expenses
                     )
                     segmentPicker
                     content
@@ -69,7 +70,7 @@ private struct GroupDetailContent: View {
                 } action: { _, progress in
                     condenseProgress = progress
                 }
-                .searchable(text: $model.filter.query, prompt: "Search expenses")
+                .modifier(ExpenseSearch(isOn: model.segment == .expenses, text: $model.filter.query))
                 .toolbar { toolbar }
             } else if model.didLoad {
                 EmptyStateView(
@@ -233,7 +234,7 @@ private struct GroupDetailContent: View {
             .accessibilityHidden(!condensed)
         }
         ToolbarItemGroup(placement: .primaryAction) {
-            filterMenu
+            if model.segment == .expenses { filterMenu }
             Button("Add Expense", systemImage: "plus") {
                 showsAddExpense = true
             }
@@ -291,6 +292,20 @@ private struct GroupDetailContent: View {
 
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
+    }
+}
+
+/// The expense search field, shown only while the Expenses screen is open.
+private struct ExpenseSearch: ViewModifier {
+    let isOn: Bool
+    @Binding var text: String
+
+    func body(content: Content) -> some View {
+        if isOn {
+            content.searchable(text: $text, prompt: "Search expenses")
+        } else {
+            content
+        }
     }
 }
 

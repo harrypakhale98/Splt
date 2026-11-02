@@ -10,29 +10,21 @@ struct GroupHeroSection: View {
     let onSettleUp: () -> Void
     /// 0 while the hero is fully on screen, 1 once it has scrolled up into the navigation bar.
     var condense: Double = 0
+    /// A slim header for the Balances and Totals screens, so the content below stays above the fold.
+    var compact = false
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
 
     var body: some View {
         Section {
-            VStack(alignment: .leading, spacing: 14) {
-                identity
-                balance
-                Button(action: onSettleUp) {
-                    Text("Settle Up")
-                        .font(.headline)
-                        .foregroundStyle(PersonPalette.onColor)
-                        .frame(maxWidth: .infinity, minHeight: 28)
-                }
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
-                .disabled(!canSettle)
+            Group {
+                if compact { compactContent } else { fullContent }
             }
-            .padding(20)
+            .padding(compact ? 16 : 20)
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background { GroupGradient(members: group.memberIDs) }
+            .background { GroupHeroBackground(group: group) }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.separator.opacity(0.5))
@@ -41,6 +33,84 @@ struct GroupHeroSection: View {
             .scaleEffect(1 - condense * 0.05, anchor: .top)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
+        }
+    }
+
+    private var fullContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            identity
+            balance
+            Button(action: onSettleUp) {
+                Text("Settle Up")
+                    .font(.headline)
+                    .foregroundStyle(PersonPalette.onColor)
+                    .frame(maxWidth: .infinity, minHeight: 28)
+            }
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+            .disabled(!canSettle)
+        }
+    }
+
+    private var compactContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: group.symbol)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                Text(group.name)
+                    .font(.title3.weight(.bold))
+                    .fontDesign(.serif)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 8)
+                if !typeSize.isAccessibilitySize {
+                    AvatarStack(members, members: group.memberIDs, size: 24, limit: 4)
+                }
+            }
+            let layout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                : AnyLayout(HStackLayout(alignment: .lastTextBaseline, spacing: 8))
+            layout {
+                compactBalance
+                if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
+                Button(action: onSettleUp) {
+                    Text("Settle Up")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PersonPalette.onColor)
+                        .padding(.horizontal, 6)
+                }
+                .buttonStyle(.glassProminent)
+                .controlSize(.regular)
+                .disabled(!canSettle)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var compactBalance: some View {
+        if totals.isSettled {
+            Label("You are all settled up", systemImage: "checkmark.circle.fill")
+                .font(.headline)
+        } else {
+            let line = totals.owedToYou.first.map { ($0, Int64(1)) } ?? totals.youOwe.first.map { ($0, Int64(-1)) }
+            if let (amount, sign) = line {
+                let money = Money(minorUnits: amount.minorUnits * sign, currencyCode: amount.currencyCode)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(sign > 0 ? "You are owed" : "You owe")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Text(MoneyFormatting.string(money, locale: locale, showsSign: true))
+                        .font(.system(.title, design: .rounded, weight: .bold))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .contentTransition(.numericText(value: Double(money.minorUnits)))
+                }
+                .accessibilityElement(children: .combine)
+            }
         }
     }
 

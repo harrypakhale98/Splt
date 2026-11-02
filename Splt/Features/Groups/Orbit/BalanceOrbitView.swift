@@ -41,6 +41,7 @@ struct BalanceOrbitView: View {
                 handle(scene.hit(at: value.location))
             })
         }
+        .dynamicTypeSize(...DynamicTypeSize.xLarge)
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: 460)
         .frame(maxWidth: .infinity)
