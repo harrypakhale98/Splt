@@ -211,7 +211,7 @@ struct OrbitCenterView: View {
     let radius: CGFloat
 
     var body: some View {
-        let width = radius * 1.15
+        let width = radius * 1.0
         VStack(spacing: 2) {
             switch center.kind {
             case .settled:

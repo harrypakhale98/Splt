@@ -88,13 +88,13 @@ struct OrbitLayout: Equatable {
         )
     }
 
-    /// Arcs bow toward the middle like a chord diagram, but never into the middle where the amount
-    /// sits. A pair whose straight line would pass through it arches out to the side instead.
+    /// Arcs bow toward the middle like a chord diagram. A pair whose straight line would run right
+    /// through the middle, where the amount sits, arches out to the side instead.
     private func controlPoint(_ a: CGPoint, _ b: CGPoint) -> CGPoint {
         let mid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
         let inward = CGVector(dx: center.x - mid.x, dy: center.y - mid.y)
         let distance = hypot(inward.dx, inward.dy)
-        let clear = ringRadius * 0.74
+        let clear = ringRadius * 0.3
         if distance < clear {
             var direction = CGVector(dx: -inward.dx / max(distance, 0.0001), dy: -inward.dy / max(distance, 0.0001))
             if distance < ringRadius * 0.02 {
@@ -104,10 +104,10 @@ struct OrbitLayout: Equatable {
                 direction = CGVector(dx: -chord.dy / length, dy: chord.dx / length)
                 if direction.dy > 0 { direction = CGVector(dx: -direction.dx, dy: -direction.dy) }
             }
-            let reach = 2 * (ringRadius * 0.86 - distance)
+            let reach = 2 * (ringRadius * 0.78 - distance)
             return CGPoint(x: mid.x + direction.dx * reach, y: mid.y + direction.dy * reach)
         }
-        let pull = min(0.7, 2 * (1 - clear / distance))
+        let pull = 0.7
         return CGPoint(x: mid.x + inward.dx * pull, y: mid.y + inward.dy * pull)
     }
 }
