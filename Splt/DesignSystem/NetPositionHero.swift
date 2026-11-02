@@ -65,6 +65,7 @@ struct NetPositionHero: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .accessibilityElement(children: .combine)
     }
 

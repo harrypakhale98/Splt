@@ -188,6 +188,9 @@
     "%@ is not in this group, so they were left out." : {
 
     },
+    "%@ is owed" : {
+
+    },
     "%@ is owed %@ in this group. Settle up before removing them." : {
       "localizations" : {
         "en" : {
@@ -197,6 +200,9 @@
           }
         }
       }
+    },
+    "%@ is settled up" : {
+
     },
     "%@ isn't installed or can't be opened here. You can copy the amount to use somewhere else, or record the payment now and pay later." : {
 
@@ -221,6 +227,9 @@
 
     },
     "%@ over" : {
+
+    },
+    "%@ owes" : {
 
     },
     "%@ owes %@" : {
@@ -315,6 +324,9 @@
     "%@ pays you" : {
 
     },
+    "%@ percent" : {
+
+    },
     "%@ recorded a payment" : {
 
     },
@@ -390,6 +402,39 @@
     "%@ will still be owed." : {
 
     },
+    "%@, %@ percent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@ percent"
+          }
+        }
+      }
+    },
+    "%@, is owed %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, is owed %2$@"
+          }
+        }
+      }
+    },
+    "%@, owes %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, owes %2$@"
+          }
+        }
+      }
+    },
+    "%@, settled up" : {
+
+    },
     "%@: owes you %@" : {
       "localizations" : {
         "en" : {
@@ -419,7 +464,23 @@
     "%lld people paid" : {
 
     },
+    "%lld people paid %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld people paid %2$@"
+          }
+        }
+      }
+    },
     "%lld, including you" : {
+
+    },
+    "(%@)" : {
+
+    },
+    "+%lld" : {
 
     },
     "0" : {
@@ -523,6 +584,9 @@
     "Add Item" : {
 
     },
+    "Add Items" : {
+
+    },
     "Add Recurring Expense" : {
 
     },
@@ -571,6 +635,9 @@
     "Add the person's real name as a friend first." : {
 
     },
+    "Add what you paid. Splt works out who owes whom, to the cent, and keeps it all in one place." : {
+
+    },
     "Add your name and payment details" : {
 
     },
@@ -597,6 +664,9 @@
     "Adds an expense you paid and splits it equally." : {
 
     },
+    "Adjust" : {
+
+    },
     "Adjustment" : {
 
     },
@@ -618,10 +688,22 @@
     "All Groups" : {
 
     },
+    "All Square" : {
+
+    },
     "All assigned" : {
 
     },
+    "All settled up" : {
+
+    },
     "Allow camera access in Settings, or ask your friend to send the invite link instead." : {
+
+    },
+    "Also %@" : {
+
+    },
+    "Also paid" : {
 
     },
     "Amount" : {
@@ -663,10 +745,22 @@
     "Archived" : {
 
     },
+    "Assign %@" : {
+
+    },
     "Assign %@ to someone." : {
 
     },
+    "Assign each item to people and the bar fills in." : {
+
+    },
     "Assign each item to the people who shared it. Tax, tip and discounts are spread in proportion." : {
+
+    },
+    "Assign items to people and the bar fills in." : {
+
+    },
+    "Balance View" : {
 
     },
     "Balances" : {
@@ -750,6 +844,9 @@
     "Choose Receipt Photo" : {
 
     },
+    "Choose at least one person to split with." : {
+
+    },
     "Choose from Contacts" : {
 
     },
@@ -787,6 +884,9 @@
 
     },
     "Comments" : {
+
+    },
+    "Continue" : {
 
     },
     "Copy Amount" : {
@@ -882,6 +982,9 @@
     "Custom Range" : {
 
     },
+    "Daily" : {
+
+    },
     "Date" : {
 
     },
@@ -894,6 +997,9 @@
           }
         }
       }
+    },
+    "Decimal point" : {
+
     },
     "Default Currency" : {
       "comment" : "Setting and screen title for the currency new groups start with",
@@ -937,10 +1043,16 @@
     "Dictate" : {
 
     },
+    "Did not pay" : {
+
+    },
     "Difference from total" : {
 
     },
     "Dining" : {
+
+    },
+    "Dinner 60 with Sam and Priya" : {
 
     },
     "Dinner 60 with Sam and Priya, I paid" : {
@@ -967,6 +1079,9 @@
     "Double tap to reset the zoom" : {
 
     },
+    "Drag the dividers. Tap a person to fine tune." : {
+
+    },
     "Drinks" : {
 
     },
@@ -979,6 +1094,9 @@
     "Each payment is recorded so the group ends up square." : {
 
     },
+    "Each person keeps one color in every group, balance and split, so you can tell who is who at a glance." : {
+
+    },
     "Each person pays in proportion to their shares, for example 2 shares for a couple and 1 for a single person." : {
 
     },
@@ -988,6 +1106,9 @@
     "Edit Expense" : {
 
     },
+    "Edit Items" : {
+
+    },
     "Edit Recurring" : {
 
     },
@@ -995,6 +1116,9 @@
 
     },
     "Email or phone" : {
+
+    },
+    "Empty" : {
 
     },
     "End Date" : {
@@ -1009,7 +1133,13 @@
     "Enter an amount to add to someone's share, or a minus amount to take off. Everything else is split equally." : {
 
     },
+    "Enter an amount to get started." : {
+
+    },
     "Enter an amount to save." : {
+
+    },
+    "Enter an amount to see what everyone pays." : {
 
     },
     "Enter each person's percentage. They must add up to 100." : {
@@ -1027,10 +1157,16 @@
     "Entertainment" : {
 
     },
+    "Equal" : {
+
+    },
     "Equally" : {
 
     },
     "Every 2 Weeks" : {
+
+    },
+    "Every 2 weeks" : {
 
     },
     "Every 3 Months" : {
@@ -1060,6 +1196,9 @@
     "Everyone Is Hidden" : {
 
     },
+    "Everyone has a color" : {
+
+    },
     "Everyone is settled up" : {
 
     },
@@ -1075,6 +1214,9 @@
           }
         }
       }
+    },
+    "Exact" : {
+
     },
     "Exact amounts" : {
 
@@ -1171,6 +1313,12 @@
 
     },
     "Finding the exchange rate" : {
+
+    },
+    "Fine Tune" : {
+
+    },
+    "Fine tune" : {
 
     },
     "Finished" : {
@@ -1362,6 +1510,9 @@
     "Hide" : {
 
     },
+    "Hide number pad" : {
+
+    },
     "History" : {
 
     },
@@ -1473,6 +1624,12 @@
     "Left to assign" : {
 
     },
+    "Less" : {
+
+    },
+    "Less for %@" : {
+
+    },
     "Let's split costs on Splt. It is free, with no ads. Add me: %@" : {
 
     },
@@ -1498,6 +1655,9 @@
         }
       }
     },
+    "List" : {
+
+    },
     "MIT" : {
       "comment" : "Name of the software license",
       "extractionState" : "manual",
@@ -1509,6 +1669,9 @@
           }
         }
       }
+    },
+    "Make it yours" : {
+
     },
     "Mark All Read" : {
 
@@ -1540,7 +1703,16 @@
     "Method" : {
 
     },
+    "Monthly" : {
+
+    },
     "More" : {
+
+    },
+    "More Options" : {
+
+    },
+    "More for %@" : {
 
     },
     "Name" : {
@@ -1600,9 +1772,6 @@
     "New groups start with this currency." : {
 
     },
-    "Next" : {
-
-    },
     "Next %@" : {
 
     },
@@ -1645,11 +1814,24 @@
         }
       }
     },
+    "No Receipt" : {
+
+    },
     "No Recurring Expenses" : {
 
     },
     "No Totals Yet" : {
 
+    },
+    "No exchange rate for %@ yet. The amount stays in %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No exchange rate for %1$@ yet. The amount stays in %2$@."
+          }
+        }
+      }
     },
     "No exchange rate is saved for %@. The amount is kept in %@." : {
       "localizations" : {
@@ -1670,16 +1852,25 @@
     "Nobody Hidden" : {
 
     },
+    "Nobody owes anybody. Enjoy it." : {
+
+    },
     "Nobody paid" : {
 
     },
     "Nobody to Merge With" : {
 
     },
+    "None" : {
+
+    },
     "Not Available" : {
 
     },
     "Not Now" : {
+
+    },
+    "Not assigned" : {
 
     },
     "Not involved" : {
@@ -1689,6 +1880,9 @@
 
     },
     "Note" : {
+
+    },
+    "Note added" : {
 
     },
     "Notes" : {
@@ -1730,13 +1924,25 @@
         }
       }
     },
+    "Number pad" : {
+
+    },
     "OK" : {
 
     },
     "Offline" : {
 
     },
+    "One %@ unit" : {
+
+    },
     "One of the numbers is not valid." : {
+
+    },
+    "One percent" : {
+
+    },
+    "One share" : {
 
     },
     "Only people who haven't joined Splt can be merged." : {
@@ -1763,6 +1969,9 @@
     "Opens settle up" : {
 
     },
+    "Opens the number pad" : {
+
+    },
     "Opens the receipt photo full screen" : {
 
     },
@@ -1775,6 +1984,9 @@
     "Options" : {
 
     },
+    "Orbit" : {
+
+    },
     "Other" : {
 
     },
@@ -1784,6 +1996,9 @@
     "Over %@" : {
 
     },
+    "Owe You" : {
+
+    },
     "Owes You" : {
 
     },
@@ -1791,6 +2006,19 @@
 
     },
     "PDF" : {
+
+    },
+    "Page %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Page %1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "Paid" : {
 
     },
     "Paid By" : {
@@ -1868,9 +2096,6 @@
     "Pin Exchange Rate" : {
 
     },
-    "Possible Duplicate" : {
-
-    },
     "Possible Matches" : {
 
     },
@@ -1892,6 +2117,9 @@
     "QR code to join %@" : {
 
     },
+    "Quarterly" : {
+
+    },
     "Quick Add" : {
 
     },
@@ -1908,6 +2136,9 @@
 
     },
     "Receipt Unavailable" : {
+
+    },
+    "Receipt added" : {
 
     },
     "Receipt attached" : {
@@ -1953,6 +2184,9 @@
 
     },
     "Remove" : {
+
+    },
+    "Remove Receipt" : {
 
     },
     "Rename" : {
@@ -2006,6 +2240,9 @@
     "Scan a Friend's Code" : {
 
     },
+    "Scan a receipt and the items fly onto the people who shared them." : {
+
+    },
     "Scanned %lld items. Tap people under each item to assign it." : {
 
     },
@@ -2046,6 +2283,9 @@
 
     },
     "Search groups" : {
+
+    },
+    "Select, then choose who shared it" : {
 
     },
     "Send Reminder" : {
@@ -2114,6 +2354,9 @@
     "Shared Expenses" : {
 
     },
+    "Shared by %@" : {
+
+    },
     "Shares" : {
 
     },
@@ -2123,7 +2366,22 @@
     "Show" : {
 
     },
+    "Show Bar" : {
+
+    },
+    "Show List" : {
+
+    },
+    "Show Welcome Tour" : {
+
+    },
+    "Show bar" : {
+
+    },
     "Show in Friends" : {
+
+    },
+    "Show list" : {
 
     },
     "Show the code to a friend, or send the link. They tap it to add you." : {
@@ -2145,6 +2403,9 @@
 
     },
     "Simplify Debts" : {
+
+    },
+    "Skip" : {
 
     },
     "Someone" : {
@@ -2180,6 +2441,9 @@
     "Split Percentages Evenly" : {
 
     },
+    "Split bar" : {
+
+    },
     "Split between %lld people, %@ each." : {
       "localizations" : {
         "en" : {
@@ -2196,7 +2460,13 @@
     "Split equally after adding or taking off an amount for some people." : {
 
     },
+    "Split method" : {
+
+    },
     "Split with" : {
+
+    },
+    "Split with people, not spreadsheets" : {
 
     },
     "Splitwise Import" : {
@@ -2250,6 +2520,9 @@
         }
       }
     },
+    "Splt is free forever: no ads, no limits, no subscription, and nothing to sign up for. With iCloud on, your groups sync between your devices and the people you share them with. Without it, everything stays on this device." : {
+
+    },
     "Splt isn't allowed to send notifications. You can change this in the Settings app." : {
 
     },
@@ -2260,6 +2533,9 @@
 
     },
     "Standard" : {
+
+    },
+    "Start Splitting" : {
 
     },
     "Starts" : {
@@ -2274,10 +2550,19 @@
     "Stop" : {
 
     },
+    "Stop dictating" : {
+
+    },
     "Subscriptions" : {
 
     },
+    "Suggested" : {
+
+    },
     "Suggested category for this title" : {
+
+    },
+    "Swipe up or down to change. %@ at a time." : {
 
     },
     "Symbol" : {
@@ -2302,6 +2587,9 @@
 
     },
     "Syncing" : {
+
+    },
+    "Take %@ Out of the Split" : {
 
     },
     "Tax" : {
@@ -2439,6 +2727,9 @@
     "To Settle Up" : {
 
     },
+    "To settle" : {
+
+    },
     "To share groups with friends, open the Settings app, tap your name, choose iCloud and turn it on. Until then your groups stay on this device." : {
 
     },
@@ -2458,6 +2749,9 @@
 
     },
     "Totals appear once the group has expenses." : {
+
+    },
+    "Touch and hold a person to say who paid." : {
 
     },
     "Translate" : {
@@ -2485,6 +2779,9 @@
 
     },
     "Twice a Month" : {
+
+    },
+    "Twice a month" : {
 
     },
     "Two people in the group are named %@. Rename one of them first." : {
@@ -2529,6 +2826,9 @@
     "Use Items Total as Amount" : {
 
     },
+    "Use the number pad to change it" : {
+
+    },
     "Utilities" : {
 
     },
@@ -2556,6 +2856,9 @@
     "View Receipt" : {
 
     },
+    "Weekly" : {
+
+    },
     "What For" : {
 
     },
@@ -2571,10 +2874,16 @@
     "Who do you want to settle up with?" : {
 
     },
+    "Who's in" : {
+
+    },
     "Wise" : {
 
     },
     "With %@" : {
+
+    },
+    "Yearly" : {
 
     },
     "Yesterday" : {
@@ -2628,6 +2937,19 @@
         }
       }
     },
+    "You are owed %@ and you owe %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You are owed %1$@ and you owe %2$@."
+          }
+        }
+      }
+    },
+    "You are owed %@." : {
+
+    },
     "You are owed %@. Settle up before leaving." : {
 
     },
@@ -2674,6 +2996,9 @@
         }
       }
     },
+    "You owe %@." : {
+
+    },
     "You owe %@. Settle up before leaving." : {
 
     },
@@ -2700,6 +3025,9 @@
 
     },
     "You stop seeing this group. The others keep it." : {
+
+    },
+    "Your Balance" : {
 
     },
     "Your Name" : {
@@ -2742,6 +3070,12 @@
     "^[%lld member](inflect: true)" : {
 
     },
+    "^[%lld payment](inflect: true) would settle this group." : {
+
+    },
+    "^[%lld person](inflect: true)" : {
+
+    },
     "^[%lld row](inflect: true) skipped" : {
 
     },
@@ -2758,6 +3092,9 @@
 
     },
     "discount %@" : {
+
+    },
+    "even" : {
 
     },
     "every day" : {
@@ -2853,6 +3190,24 @@
     "split" : {
 
     },
+    "split %lld ways" : {
+
+    },
+    "split by amount" : {
+
+    },
+    "split by item" : {
+
+    },
+    "split by percent" : {
+
+    },
+    "split by shares" : {
+
+    },
+    "split with adjustments" : {
+
+    },
     "tax %@" : {
 
     },
@@ -2872,6 +3227,12 @@
 
     },
     "you are owed" : {
+
+    },
+    "you borrowed" : {
+
+    },
+    "you lent" : {
 
     },
     "you owe" : {

@@ -16,6 +16,18 @@ enum LaunchServices {
         }
         return IntentServices.shared.live()
     }
+
+    /// Debug builds accept `-tab friends` (or groups, activity, account, search) to start on that tab.
+    @MainActor
+    static func startTab(arguments: [String] = ProcessInfo.processInfo.arguments) -> AppTab {
+        #if DEBUG
+        if let index = arguments.firstIndex(of: "-tab"), arguments.indices.contains(index + 1),
+           let tab = AppTab(rawValue: arguments[index + 1]) {
+            return tab
+        }
+        #endif
+        return .groups
+    }
 }
 
 enum LaunchAppearance {

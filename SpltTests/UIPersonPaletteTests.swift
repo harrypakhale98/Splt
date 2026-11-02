@@ -1,5 +1,6 @@
 import Foundation
 import SpltCore
+import SwiftUI
 import Testing
 @testable import Splt
 
@@ -51,8 +52,12 @@ struct UIPersonPaletteTests {
         #expect(PersonPalette.assignments(for: members + members).count == 3)
     }
 
-    @Test func hueLookupWraps() {
-        #expect(PersonPalette.color(at: 12) == PersonPalette.color(at: 0))
-        #expect(PersonPalette.color(at: -1) == PersonPalette.color(at: 11))
+    @Test @MainActor func hueLookupWraps() {
+        func resolved(_ color: Color) -> UIColor {
+            UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        }
+        #expect(resolved(PersonPalette.color(at: 12)) == resolved(PersonPalette.color(at: 0)))
+        #expect(resolved(PersonPalette.color(at: -1)) == resolved(PersonPalette.color(at: 11)))
+        #expect(resolved(PersonPalette.color(at: 0)) != resolved(PersonPalette.color(at: 1)))
     }
 }
