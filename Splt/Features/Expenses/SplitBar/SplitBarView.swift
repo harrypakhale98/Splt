@@ -14,6 +14,7 @@ struct SplitBarView: View {
 
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 76
     @Environment(\.locale) private var locale
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draggingDivider: Int?
     @State private var detentCount = 0
@@ -25,12 +26,16 @@ struct SplitBarView: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            ZStack(alignment: .leading) {
-                segmentsRow(width: width)
+            let layout = SplitBarLayout.make(weights: data.weights, scale: data.scale, width: width)
+            ZStack(alignment: .topLeading) {
+                segmentsRow(layout: layout)
                 if data.canDrag {
                     ForEach(0..<max(data.segments.count - 1, 0), id: \.self) { divider in
-                        handle(divider: divider, width: width)
+                        handle(divider: divider, layout: layout)
                     }
+                }
+                if let divider = draggingDivider, divider + 1 < layout.visual.count {
+                    callout(divider: divider, x: layout.visual[divider + 1], width: width)
                 }
             }
             .coordinateSpace(name: barSpace)
@@ -43,16 +48,15 @@ struct SplitBarView: View {
 
     // MARK: Segments
 
-    private func segmentsRow(width: CGFloat) -> some View {
-        let widths = segmentWidths(total: width)
-        return HStack(spacing: 0) {
+    private func segmentsRow(layout: SplitBarLayout) -> some View {
+        HStack(spacing: 0) {
             ForEach(Array(data.segments.enumerated()), id: \.element.id) { index, segment in
+                let segmentWidth = layout.widths.indices.contains(index) ? layout.widths[index] : 0
                 SegmentView(
-                    segment: segment, members: members, width: widths[index], locale: locale,
-                    isYou: segment.id == currentPerson, fraction: fraction(of: segment),
-                    method: data.method
+                    segment: segment, members: members, width: segmentWidth, locale: locale, scale: data.scale,
+                    method: data.method, style: colorScheme == .dark ? .dark : .light
                 )
-                .frame(width: widths[index], height: height)
+                .frame(width: segmentWidth, height: height)
                 .contentShape(.rect)
                 .onTapGesture { onTap(segment.id) }
                 .accessibilityElement(children: .ignore)
@@ -73,32 +77,22 @@ struct SplitBarView: View {
         .animation(draggingDivider == nil && !reduceMotion ? Motion.snappy : nil, value: data.weights)
     }
 
-    private func segmentWidths(total: CGFloat) -> [CGFloat] {
-        let usable = total.isFinite ? max(total, 0) : 0
-        guard data.scale > 0 else { return data.segments.map { _ in usable / CGFloat(max(data.segments.count, 1)) } }
-        return data.segments.map { max(usable * CGFloat($0.weight) / CGFloat(data.scale), 0) }
-    }
-
-    private func fraction(of segment: SplitBarSegment) -> Double {
-        data.scale > 0 ? Double(segment.weight) / Double(data.scale) : 0
-    }
-
     private func spokenValue(for segment: SplitBarSegment) -> String {
-        let percent = (fraction(of: segment) * 100).formatted(.number.precision(.fractionLength(0)))
-        guard let amount = segment.amount else { return String(localized: "\(percent) percent") }
+        let percent = SplitBarLabels.percent(segment, scale: data.scale, locale: locale)
+        guard let amount = segment.amount else { return String(localized: "\(percent)") }
         let money = MoneyFormatting.magnitudeString(amount, locale: locale)
-        return String(localized: "\(money), \(percent) percent")
+        return String(localized: "\(money), \(percent)")
     }
 
     // MARK: Dividers
 
-    private func handle(divider: Int, width: CGFloat) -> some View {
-        let position = max(width, 0) * CGFloat(data.weights[...divider].reduce(0, +)) / CGFloat(max(data.scale, 1))
+    private func handle(divider: Int, layout: SplitBarLayout) -> some View {
+        let position = layout.visual.indices.contains(divider + 1) ? layout.visual[divider + 1] : 0
         return Capsule()
             .fill(.white)
             .frame(width: 6, height: height * 0.46)
-            .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
-            .scaleEffect(draggingDivider == divider ? 1.15 : 1)
+            .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+            .scaleEffect(draggingDivider == divider ? 1.2 : 1)
             .frame(width: 44, height: height)
             .contentShape(.rect)
             .position(x: position, y: height / 2)
@@ -106,11 +100,9 @@ struct SplitBarView: View {
                 DragGesture(minimumDistance: 0, coordinateSpace: .named(barSpace))
                     .onChanged { value in
                         draggingDivider = divider
-                        let fraction = Double(value.location.x / max(width, 1))
+                        let fraction = layout.fraction(forX: value.location.x)
                         if let result = onDrag(divider, fraction) {
-                            if let snap = result.snappedTo, snap != lastSnap || result.didChange {
-                                if lastSnap != snap { detentCount += 1 }
-                            }
+                            if let snap = result.snappedTo, lastSnap != snap { detentCount += 1 }
                             lastSnap = result.snappedTo
                         }
                     }
@@ -121,6 +113,38 @@ struct SplitBarView: View {
             )
             .accessibilityHidden(true)
     }
+
+    /// The floating label above the divider being dragged: both neighbors and what they get.
+    private func callout(divider: Int, x: CGFloat, width: CGFloat) -> some View {
+        let pair = Array(data.segments[divider...(divider + 1)])
+        return GlassPill {
+            HStack(spacing: 12) {
+                ForEach(pair) { segment in
+                    let label = SplitBarLabels.make(method: data.method, segment: segment, scale: data.scale, wide: true, locale: locale)
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(PersonPalette.color(for: segment.id, in: members))
+                            .frame(width: 10, height: 10)
+                        Text(firstName(of: segment.person))
+                            .font(.caption.weight(.medium))
+                        Text(label.primary)
+                            .font(.system(.footnote, design: .rounded, weight: .bold))
+                            .monospacedDigit()
+                    }
+                }
+            }
+            .lineLimit(1)
+            .fixedSize()
+        }
+        .position(x: min(max(x, 90), max(width - 90, 90)), y: -22)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .transition(.opacity)
+    }
+
+    private func firstName(of person: Person) -> String {
+        person.name.split(separator: " ").first.map(String.init) ?? person.name
+    }
 }
 
 private struct SegmentView: View {
@@ -128,28 +152,40 @@ private struct SegmentView: View {
     let members: [PersonID]
     let width: CGFloat
     let locale: Locale
-    let isYou: Bool
-    let fraction: Double
+    let scale: Int64
     let method: SplitMethod
+    let style: UIUserInterfaceStyle
 
     var body: some View {
+        let fill = PersonPalette.color(for: segment.id, in: members)
+        let ink = ContrastInk.ink(on: fill, style: style)
         ZStack {
-            Rectangle().fill(PersonPalette.color(for: segment.id, in: members))
-            if width >= 36 {
+            Rectangle().fill(fill)
+            if width >= 26 {
                 VStack(spacing: 2) {
-                    AvatarView(name: segment.person.name, id: segment.id, members: members, size: 24)
-                        .overlay { Circle().strokeBorder(PersonPalette.onColor.opacity(0.9), lineWidth: 1.5) }
+                    initials(ink: ink)
                     if width >= 58 {
-                        Text(label)
+                        let label = SplitBarLabels.make(
+                            method: method, segment: segment, scale: scale, wide: width >= 84, locale: locale
+                        )
+                        Text(label.primary)
                             .font(.system(.caption, design: .rounded, weight: .bold))
                             .monospacedDigit()
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
-                            .foregroundStyle(PersonPalette.onColor)
+                            .foregroundStyle(ink)
                             .contentTransition(.numericText())
+                        if let secondary = label.secondary {
+                            Text(secondary)
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .monospacedDigit()
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
+                                .foregroundStyle(ink.opacity(0.85))
+                        }
                     }
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 3)
             }
         }
         .overlay(alignment: .trailing) {
@@ -157,8 +193,11 @@ private struct SegmentView: View {
         }
     }
 
-    private var label: String {
-        if let amount = segment.amount { return MoneyFormatting.magnitudeString(amount, locale: locale) }
-        return (fraction * 100).formatted(.number.precision(.fractionLength(0))) + "%"
+    private func initials(ink: Color) -> some View {
+        Text(AvatarStyle.initials(for: segment.person.name))
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundStyle(ink)
+            .frame(width: 24, height: 24)
+            .overlay { Circle().strokeBorder(ink.opacity(0.9), lineWidth: 1.5) }
     }
 }
