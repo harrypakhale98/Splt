@@ -15,10 +15,30 @@ struct GroupBalancesSection: View {
     let onSettle: (Debt) -> Void
 
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverOn
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var chosenMode: Mode?
     @State private var chosenCurrency: String?
 
     private var mode: Mode { chosenMode ?? (voiceOverOn ? .list : .orbit) }
+
+    private var controls: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            Toggle("Simplify Debts", isOn: Binding(
+                get: { model.simplifiesDebts },
+                set: { model.setSimplifiesDebts($0) }
+            ))
+            Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
+                Image(systemName: "circle.hexagongrid").tag(Mode.orbit).accessibilityLabel("Orbit")
+                Image(systemName: "list.bullet").tag(Mode.list).accessibilityLabel("List")
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(maxWidth: 110)
+        }
+    }
 
     private var currency: String {
         if let chosenCurrency, model.balanceCurrencies.contains(chosenCurrency) { return chosenCurrency }
@@ -27,37 +47,21 @@ struct GroupBalancesSection: View {
 
     var body: some View {
         Section {
-            Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
-                Text("Orbit").tag(Mode.orbit)
-                Text("List").tag(Mode.list)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-
+            controls
             if model.balanceCurrencies.count > 1 {
                 Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
                     ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
                 }
             }
-        }
-
-        if mode == .orbit {
-            Section {
+            if mode == .orbit {
                 BalanceOrbitView(
                     board: model.orbitBoard(currency: currency),
                     members: model.group?.memberIDs ?? [],
                     onSettle: onSettle
                 )
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 12, trailing: 8))
             }
-        }
-
-        Section {
-            Toggle("Simplify Debts", isOn: Binding(
-                get: { model.simplifiesDebts },
-                set: { model.setSimplifiesDebts($0) }
-            ))
         } footer: {
             if model.simplifiesDebts {
                 Text("Showing the fewest payments that settle the group.")
