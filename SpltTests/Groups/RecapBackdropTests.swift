@@ -4,11 +4,17 @@ import Testing
 @testable import Splt
 
 @Suite("Recap backdrops")
+@MainActor
 struct RecapBackdropTests {
     private let ana = PersonID(rawValue: UUID(uuidString: "00000000-0000-4000-8000-0000000000A1")!)
     private let ben = PersonID(rawValue: UUID(uuidString: "00000000-0000-4000-8000-0000000000B2")!)
 
     private func setup() throws -> (SplitGroup, RecapStats) {
+        PersonColorBook.reset()
+        PersonColorBook.update(
+            people: [Person(id: ana, name: "Ana"), Person(id: ben, name: "Ben", createdAt: Date(timeIntervalSinceNow: 60))],
+            me: nil
+        )
         let group = SplitGroup(
             name: "Trip", currencyCode: "USD", kind: .trip, memberIDs: [ana, ben],
             tripStart: utcDate(2026, 5, 8), tripEnd: utcDate(2026, 5, 10)
