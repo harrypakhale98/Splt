@@ -30,6 +30,7 @@ private struct SettleUpContent: View {
     @Environment(\.locale) private var locale
 
     @State private var model: SettleModel
+    @State private var payWithFailed = false
     @FocusState private var amountFocused: Bool
 
     init(route: SettleRoute, services: DataServices) {
@@ -73,6 +74,13 @@ private struct SettleUpContent: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(model.errorMessage ?? "")
+            }
+            .confirmationDialog(
+                "Can't Open \(model.method.title)", isPresented: $payWithFailed, titleVisibility: .visible
+            ) {
+                payWithFallbackActions
+            } message: {
+                Text("\(model.method.title) isn't installed or can't be opened here. You can copy the amount to use somewhere else, or record the payment now and pay later.")
             }
         }
         .presentationDetents([.large])
@@ -211,7 +219,7 @@ private struct SettleUpContent: View {
         if let url = model.payWithURL {
             Section {
                 Button {
-                    openURL(url)
+                    Task { await payWith(url) }
                 } label: {
                     Label("Pay with \(model.method.title)", systemImage: "arrow.up.forward.app")
                 }
@@ -221,7 +229,29 @@ private struct SettleUpContent: View {
         }
     }
 
+    @ViewBuilder
+    private var payWithFallbackActions: some View {
+        if let amount = model.amount {
+            Button("Copy Amount") {
+                UIPasteboard.general.string = amount.plainString(locale: locale)
+            }
+        }
+        if let website = model.method.websiteURL {
+            Button("Open \(model.method.title) Website") { openURL(website) }
+        }
+        if model.canRecord {
+            Button("Record Payment") { model.record() }
+        }
+        Button("Cancel", role: .cancel) {}
+    }
+
     // MARK: Actions
+
+    private func payWith(_ url: URL) async {
+        if await PayWithLauncher().launch(url) == .unavailable {
+            payWithFailed = true
+        }
+    }
 
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
