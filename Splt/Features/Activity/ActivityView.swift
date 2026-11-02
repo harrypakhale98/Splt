@@ -66,7 +66,7 @@ private struct ActivityContent: View {
                 } header: {
                     Text(model.title(for: section, locale: locale))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.65))
                         .textCase(nil)
                 }
             }

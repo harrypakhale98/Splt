@@ -1,12 +1,13 @@
 import SpltCore
 import SwiftUI
 
-/// One event on the timeline: an unread dot like Mail's, the actor's avatar on a rail, what happened, where and when.
+/// One event on the timeline: an unread dot like Mail's, one marker, what happened, where and when.
+/// Your own actions show only their symbol, because the sentence already says "You". Other people's show their avatar.
 struct ActivityRowView: View {
     let entry: ActivityEntry
     let text: String
     let groupName: String?
-    let actor: (id: PersonID, name: String)?
+    let actor: (id: PersonID, name: String, isMe: Bool)?
     var isFirst = false
     var isLast = false
 
@@ -27,7 +28,6 @@ struct ActivityRowView: View {
                 Text(text)
                     .font(.body)
                     .foregroundStyle(.primary)
-                    .fontWeight(entry.isRead ? .regular : .medium)
                     .multilineTextAlignment(.leading)
                 HStack(spacing: 6) {
                     if let groupName {
@@ -57,25 +57,32 @@ struct ActivityRowView: View {
         .accessibilityValue(entry.isRead ? "" : String(localized: "Unread"))
     }
 
+    @ViewBuilder
     private var marker: some View {
-        ZStack(alignment: .bottomTrailing) {
-            if let actor {
-                AvatarView(name: actor.name, id: actor.id, size: rail - 2, showsInitials: true)
+        Group {
+            if let actor, !actor.isMe {
+                ZStack(alignment: .bottomTrailing) {
+                    AvatarView(name: actor.name, id: actor.id, size: rail - 2)
+                    glyph(size: 16)
+                        .background(Color(.systemBackground), in: .circle)
+                        .overlay { Circle().strokeBorder(Color(.separator), lineWidth: 0.5) }
+                        .offset(x: 7, y: 7)
+                }
             } else {
-                Circle().fill(Color(.tertiarySystemFill))
-                    .frame(width: rail - 2, height: rail - 2)
+                glyph(size: rail - 2)
+                    .background(Color.accentColor.opacity(0.16), in: .circle)
             }
-            Image(systemName: entry.event.kind.symbol)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.primary)
-                .frame(width: 16, height: 16)
-                .background(Color(.systemBackground), in: .circle)
-                .overlay { Circle().strokeBorder(Color(.separator), lineWidth: 0.5) }
-                .offset(x: 7, y: 7)
         }
         .frame(width: rail, height: rail)
         .padding(.top, 6)
         .accessibilityHidden(true)
+    }
+
+    private func glyph(size: CGFloat) -> some View {
+        Image(systemName: entry.event.kind.symbol)
+            .font(.system(size: size * 0.5, weight: .semibold))
+            .foregroundStyle(.primary)
+            .frame(width: size, height: size)
     }
 
     private var accessibilityText: String {

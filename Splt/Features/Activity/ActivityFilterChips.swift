@@ -20,7 +20,13 @@ struct ActivityFilterChips: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 6)
         }
-        .scrollClipDisabled()
+        .mask {
+            // the last chips fade out at the edge, a hint that the row scrolls
+            LinearGradient(
+                stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.93), .init(color: .clear, location: 1)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -29,16 +35,13 @@ struct ActivityFilterChips: View {
         return Button {
             model.typeFilter = filter
         } label: {
-            GlassPill(tint: selected ? .accentColor : nil, isInteractive: true) {
-                Label(filter.shortTitle, systemImage: filter.symbol)
-                    .font(.subheadline.weight(.medium))
-                    .labelStyle(.titleOnly)
-                    .lineLimit(1)
-            }
+            Text(filter.shortTitle)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minHeight: 32)
         }
-        .buttonStyle(.plain)
-        .contentShape(.capsule)
-        .accessibilityElement(children: .ignore)
+        .chipStyle(selected: selected)
         .accessibilityLabel(filter.title)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .haptics(.tick, trigger: selected)
@@ -54,19 +57,30 @@ struct ActivityFilterChips: View {
                 }
             }
         } label: {
-            GlassPill(tint: selected == nil ? nil : .accentColor, isInteractive: true) {
-                HStack(spacing: 6) {
-                    Text(selected?.name ?? String(localized: "All Groups"))
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(1)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2.weight(.bold))
-                        .accessibilityHidden(true)
-                }
+            HStack(spacing: 6) {
+                Text(selected?.name ?? String(localized: "All Groups"))
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption2.weight(.bold))
+                    .accessibilityHidden(true)
             }
+            .frame(minHeight: 32)
         }
-        .contentShape(.capsule)
+        .chipStyle(selected: selected != nil)
         .accessibilityLabel("Group")
         .accessibilityValue(selected?.name ?? String(localized: "All Groups"))
+    }
+}
+
+private extension View {
+    /// A selected chip is solid accent with white text, the others are plain glass, so the choice reads at a glance.
+    @ViewBuilder
+    func chipStyle(selected: Bool) -> some View {
+        if selected {
+            buttonStyle(.glassProminent).buttonBorderShape(.capsule)
+        } else {
+            buttonStyle(.glass).buttonBorderShape(.capsule)
+        }
     }
 }

@@ -109,10 +109,11 @@ final class ActivityModel {
     }
 
     /// Who did it, for the avatar on the timeline. Nil when the event has no known actor.
-    func actor(for entry: ActivityEntry) -> (id: PersonID, name: String)? {
+    func actor(for entry: ActivityEntry) -> (id: PersonID, name: String, isMe: Bool)? {
         guard let id = entry.actorID else { return nil }
-        let name = id == me?.id ? (me?.name ?? String(localized: "You")) : names[id] ?? String(localized: "Someone")
-        return (id, name)
+        let isMe = id == me?.id
+        let name = isMe ? (me?.name ?? String(localized: "You")) : names[id] ?? String(localized: "Someone")
+        return (id, name, isMe)
     }
 
     func destination(for entry: ActivityEntry) -> Route? {
