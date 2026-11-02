@@ -1,20 +1,25 @@
 import SwiftUI
+import UIKit
 
 /// The animation vocabulary of the app. Use these instead of ad hoc values, and the modifiers
 /// below so people who turn on Reduce Motion get a quiet cross fade instead of movement.
 enum Motion {
     static let smooth = Animation.smooth
     static let snappy = Animation.snappy
-    /// Use sparingly, for moments of delight such as a settled debt.
-    static let bouncy = Animation.bouncy(duration: 0.5, extraBounce: 0.1)
-    /// How long a standard move takes, for things that need a number.
-    static let short: Duration = .milliseconds(200)
-    static let medium: Duration = .milliseconds(350)
-    static let long: Duration = .milliseconds(600)
 
     /// The animation to use, or nil to skip it when motion is reduced.
     static func animation(_ animation: Animation, reduceMotion: Bool) -> Animation? {
         reduceMotion ? nil : animation
+    }
+
+    /// Runs `changes` with an animation, or without one when Reduce Motion is on.
+    @MainActor
+    static func perform(_ animation: Animation = smooth, _ changes: () -> Void) {
+        if UIAccessibility.isReduceMotionEnabled {
+            changes()
+        } else {
+            withAnimation(animation, changes)
+        }
     }
 
     /// A transition that only fades when motion is reduced.

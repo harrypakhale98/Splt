@@ -103,7 +103,7 @@ private struct ExpenseFormScreen: View {
                 }
                 VStack(spacing: 12) {
                     AmountHero(model: model, keypadOpen: keypadOpen && !typeSize.isAccessibilitySize) {
-                        withAnimation(Motion.snappy) { keypadOpen.toggle() }
+                        Motion.perform(.snappy) { keypadOpen.toggle() }
                         focus = nil
                     }
                     TitleField(model: model, focus: $focus)

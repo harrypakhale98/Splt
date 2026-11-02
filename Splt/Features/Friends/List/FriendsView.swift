@@ -49,6 +49,7 @@ private struct FriendsContent: View {
             if !model.hasNoFriends, model.query.isEmpty {
                 Section {
                     NetPositionHero(
+                        scope: "With Friends",
                         totals: model.totals,
                         owedBy: model.summaries.filter { $0.balance.contains(where: \.isPositive) }.map(\.person),
                         owedTo: model.summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }.map(\.person)

@@ -47,7 +47,7 @@ private struct GroupsListContent: View {
         List {
             if model.hasGroups && !model.isSearching {
                 Section {
-                    NetPositionHero(totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
+                    NetPositionHero(scope: "Across All Groups", totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }

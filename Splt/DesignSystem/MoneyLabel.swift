@@ -24,7 +24,13 @@ struct MoneyLabel: View {
     }
 
     private var color: Color {
-        guard style == .balance else { return .primary }
+        style == .balance ? Self.balanceTint(for: money) : .primary
+    }
+
+    /// The one rule for money you owe or are owed in a row: green when you are owed, red when you owe,
+    /// quiet when settled. Heroes use the primary color and write the sign. Person colors never
+    /// color an amount, only avatars and bars.
+    static func balanceTint(for money: Money) -> Color {
         if money.minorUnits > 0 { return .green }
         if money.minorUnits < 0 { return .red }
         return .secondary

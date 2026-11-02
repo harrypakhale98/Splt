@@ -3,11 +3,12 @@ import SwiftUI
 
 /// A circle with a person's initials on their person color.
 ///
-/// Pass the group's members so two people in the same group never share a color. Without an id the
-/// color comes from the name.
+/// A person has the same color on every screen. `members` is kept for older callers and does not
+/// change the color. Without an id the color comes from the name.
 struct AvatarView: View {
     let name: String
-    private let hue: Int
+    private let personID: PersonID?
+    private let fixedHue: Int?
     private let showsInitials: Bool
     @ScaledMetric private var scaledDiameter: CGFloat
     private let baseDiameter: CGFloat
@@ -15,7 +16,8 @@ struct AvatarView: View {
     init(name: String, size: CGFloat = 40, showsInitials: Bool = true) {
         self.name = name
         self.showsInitials = showsInitials
-        hue = PersonPalette.preferredIndex(forName: name)
+        personID = nil
+        fixedHue = nil
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
@@ -23,7 +25,18 @@ struct AvatarView: View {
     init(name: String, id: PersonID, members: [PersonID] = [], size: CGFloat = 40, showsInitials: Bool = true) {
         self.name = name
         self.showsInitials = showsInitials
-        hue = members.isEmpty ? PersonPalette.preferredIndex(for: id) : PersonPalette.index(for: id, in: members)
+        personID = id
+        fixedHue = nil
+        baseDiameter = size
+        _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
+
+    /// An avatar in a given hue, for you before your person exists.
+    init(name: String, hue: Int, size: CGFloat = 40, showsInitials: Bool = true) {
+        self.name = name
+        self.showsInitials = showsInitials
+        personID = nil
+        fixedHue = hue
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
@@ -36,6 +49,13 @@ struct AvatarView: View {
     static func diameter(scaled: CGFloat, base: CGFloat) -> CGFloat { min(scaled, base * 1.5) }
 
     private var diameter: CGFloat { Self.diameter(scaled: scaledDiameter, base: baseDiameter) }
+
+    private var hue: Int {
+        _ = PersonColorRevision.shared.value
+        if let fixedHue { return fixedHue }
+        if let personID { return PersonPalette.index(for: personID) }
+        return PersonPalette.preferredIndex(forName: name)
+    }
 
     var body: some View {
         Circle()

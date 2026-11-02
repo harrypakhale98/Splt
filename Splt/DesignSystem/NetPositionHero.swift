@@ -31,6 +31,8 @@ struct NetPosition: Equatable, Sendable {
 /// The hero of the Groups and Friends tabs: one big number for where you stand, a quiet sentence,
 /// and who the money is between.
 struct NetPositionHero: View {
+    /// What the number covers, such as "Across All Groups" or "With Friends".
+    var scope: LocalizedStringKey = "Your Balance"
     let totals: BalanceTotals
     var owedBy: [Person] = []
     var owedTo: [Person] = []
@@ -42,7 +44,7 @@ struct NetPositionHero: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Your Balance")
+            Text(scope)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
             figure

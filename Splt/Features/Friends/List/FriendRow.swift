@@ -8,11 +8,6 @@ struct FriendRow: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
 
-    /// What they owe you wears their own color. What you owe stays plain, with the sign written out.
-    private var owedColor: Color {
-        PersonPalette.textColor(at: PersonPalette.preferredIndex(for: summary.person.id))
-    }
-
     var body: some View {
         let lines = BalanceLine.lines(for: summary.balance)
         HStack(spacing: 12) {
@@ -56,7 +51,7 @@ struct FriendRow: View {
                         Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
                             .font(.system(.body, design: .rounded, weight: .semibold))
                             .monospacedDigit()
-                            .foregroundStyle(line.direction == .owed ? owedColor : Color.primary)
+                            .foregroundStyle(MoneyLabel.balanceTint(for: line.money))
                             .accessibilityLabel(spoken(line))
                         Text(caption(for: line.direction))
                             .font(.caption2)

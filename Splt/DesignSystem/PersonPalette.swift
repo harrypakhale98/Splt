@@ -4,9 +4,13 @@ import UIKit
 
 /// One stable color per person, used for the avatar, split bar, charts, balance flow and group header.
 ///
-/// Twelve hues, each tuned for light and dark. A color comes from the person's id, and inside a
-/// group `assignments(for:)` moves a member to the next free hue when two would look alike.
+/// Twelve hues, each tuned for light and dark. A person has one hue on every screen: the app
+/// assigns hues once across everyone it knows (`PersonColorBook`), you first, and until it has
+/// done so a person falls back to the hue their id points to.
 enum PersonPalette {
+    /// The hue that belongs to you, the brand teal.
+    static let meIndex = 5
+
     static let count = 12
 
     /// Light and dark fills as hex values: fills carry white text in light and near black text in dark.
@@ -27,14 +31,15 @@ enum PersonPalette {
 
     // MARK: Colors
 
-    /// The color of a person inside a group, avoiding the colors of the other members.
+    /// The color of a person. The member list is kept for older callers: the color is the same
+    /// whichever list is passed.
     static func color(for person: PersonID, in members: [PersonID]) -> Color {
-        color(at: index(for: person, in: members))
+        color(at: index(for: person))
     }
 
-    /// The color of a person with no group around them.
+    /// The color of a person, the same on every screen.
     static func color(for person: PersonID) -> Color {
-        color(at: preferredIndex(for: person))
+        color(at: index(for: person))
     }
 
     /// A color for something that only has a name, such as a typed placeholder.
@@ -51,35 +56,36 @@ enum PersonPalette {
     /// The text color to put on a person color.
     static let onColor = dynamic(light: 0xFFFFFF, dark: 0x0E0E12)
 
-    /// A variant of the hue for text on a plain background: darker in light mode so it stays readable.
-    static func textColor(at index: Int) -> Color {
-        let pair = fills[((index % count) + count) % count]
-        return Color(UIColor { traits in
-            if traits.userInterfaceStyle == .dark { return UIColor(hex: pair.dark) }
-            return UIColor(hex: pair.light).adjustedBrightness(0.85)
-        })
-    }
-
     // MARK: Assignment
 
-    /// The hue each member gets. The first member keeps the hue the id points to, and a member whose
-    /// hue is taken moves to the next free one. The result depends on the order of `members`.
-    static func assignments(for members: [PersonID]) -> [PersonID: Int] {
-        var taken = Set<Int>()
+    /// Hands out hues in order. The first person keeps the hue their id points to and a person whose
+    /// hue is taken moves to the next free one. `reserved` hues are skipped, once all are used they repeat.
+    static func resolve(_ people: [PersonID], reserved: Set<Int> = []) -> [PersonID: Int] {
+        var taken = reserved
         var result: [PersonID: Int] = [:]
-        for member in members where result[member] == nil {
-            var candidate = preferredIndex(for: member)
+        for person in people where result[person] == nil {
+            var candidate = preferredIndex(for: person)
             if taken.count < count {
                 while taken.contains(candidate) { candidate = (candidate + 1) % count }
             }
             taken.insert(candidate)
-            result[member] = candidate
+            result[person] = candidate
         }
         return result
     }
 
+    /// The global hue of each listed person, never depending on who else is in the list.
+    static func assignments(for members: [PersonID]) -> [PersonID: Int] {
+        Dictionary(members.map { ($0, index(for: $0)) }, uniquingKeysWith: { first, _ in first })
+    }
+
     static func index(for person: PersonID, in members: [PersonID]) -> Int {
-        assignments(for: members)[person] ?? preferredIndex(for: person)
+        index(for: person)
+    }
+
+    /// The hue of a person on every screen.
+    static func index(for person: PersonID) -> Int {
+        PersonColorBook.index(for: person) ?? preferredIndex(for: person)
     }
 
     /// The hue an id points to before any collision is resolved. Stable across launches and devices.

@@ -4,6 +4,8 @@ import SwiftUI
 /// from the middle and settle on the ring. With Reduce Motion they are simply there.
 struct OrbitMotif<Center: View>: View {
     var names: [String]
+    /// The hue of each person, when they are real people. Otherwise the hues are spread around the ring.
+    var hues: [Int]?
     var size: CGFloat
     /// Lets the ring assemble when it appears. Turn off for a still picture, such as an icon preview.
     var animates = true
@@ -14,10 +16,11 @@ struct OrbitMotif<Center: View>: View {
     @ScaledMetric private var scale: CGFloat = 1
 
     init(
-        names: [String] = ["Sam", "Priya", "Alex", "Jo", "Mia"], size: CGFloat = 160, animates: Bool = true,
-        @ViewBuilder center: () -> Center
+        names: [String] = ["Sam", "Priya", "Alex", "Jo", "Mia"], hues: [Int]? = nil, size: CGFloat = 160,
+        animates: Bool = true, @ViewBuilder center: () -> Center
     ) {
         self.names = names
+        self.hues = hues
         self.size = size
         self.animates = animates
         self.center = center()
@@ -51,7 +54,7 @@ struct OrbitMotif<Center: View>: View {
 
     private func person(_ name: String, index: Int) -> some View {
         let angle = Angle.degrees(-90 + 360 * Double(index) / Double(max(names.count, 1)))
-        let hue = index * PersonPalette.count / max(names.count, 1) + 1
+        let hue = hues?[safe: index] ?? (index * PersonPalette.count / max(names.count, 1) + 1)
         return Circle()
             .fill(PersonPalette.color(at: hue))
             .frame(width: dot, height: dot)
@@ -74,7 +77,9 @@ struct OrbitMotif<Center: View>: View {
 
     private var ringGradient: AngularGradient {
         let count = max(names.count, 1)
-        let colors = (0..<count).map { PersonPalette.color(at: $0 * PersonPalette.count / count + 1).opacity(0.55) }
+        let colors = (0..<count).map {
+            PersonPalette.color(at: hues?[safe: $0] ?? ($0 * PersonPalette.count / count + 1)).opacity(0.55)
+        }
         return AngularGradient(colors: colors + [colors[0]], center: .center, startAngle: .degrees(-90), endAngle: .degrees(270))
     }
 }
@@ -83,6 +88,10 @@ extension OrbitMotif where Center == EmptyView {
     init(names: [String] = ["Sam", "Priya", "Alex", "Jo", "Mia"], size: CGFloat = 160, animates: Bool = true) {
         self.init(names: names, size: size, animates: animates) { EmptyView() }
     }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? { indices.contains(index) ? self[index] : nil }
 }
 
 #Preview {

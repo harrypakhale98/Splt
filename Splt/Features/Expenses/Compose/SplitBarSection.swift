@@ -36,7 +36,7 @@ struct SplitBarSection: View {
 
             SplitMethodSwitcher(selection: model.split.method) { method in
                 onInteract()
-                withAnimation(Motion.snappy) { model.selectMethod(method) }
+                Motion.perform(.snappy) { model.selectMethod(method) }
             }
             .padding(.horizontal, typeSize.isAccessibilitySize ? -20 : 0)
 
