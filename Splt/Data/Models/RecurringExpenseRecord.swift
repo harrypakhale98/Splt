@@ -107,7 +107,13 @@ extension RecurringExpenseRecord: SyncTracked {
     }
 
     static func find(recordName: String, in context: ModelContext) throws -> RecurringExpenseRecord? {
-        var descriptor = FetchDescriptor<RecurringExpenseRecord>(predicate: #Predicate { $0.recordName == recordName })
+        // the id column is indexed, so a UUID record name is found without scanning the table
+        var descriptor: FetchDescriptor<RecurringExpenseRecord>
+        if let uuid = UUID(uuidString: recordName) {
+            descriptor = FetchDescriptor(predicate: #Predicate { $0.id == uuid })
+        } else {
+            descriptor = FetchDescriptor(predicate: #Predicate { $0.recordName == recordName })
+        }
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }

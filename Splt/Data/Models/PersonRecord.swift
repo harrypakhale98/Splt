@@ -84,7 +84,13 @@ extension PersonRecord: SyncTracked {
     }
 
     static func find(recordName: String, in context: ModelContext) throws -> PersonRecord? {
-        var descriptor = FetchDescriptor<PersonRecord>(predicate: #Predicate { $0.recordName == recordName })
+        // the id column is indexed, so a UUID record name is found without scanning the table
+        var descriptor: FetchDescriptor<PersonRecord>
+        if let uuid = UUID(uuidString: recordName) {
+            descriptor = FetchDescriptor(predicate: #Predicate { $0.id == uuid })
+        } else {
+            descriptor = FetchDescriptor(predicate: #Predicate { $0.recordName == recordName })
+        }
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }
