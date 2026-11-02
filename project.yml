@@ -44,6 +44,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt
+        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Splt
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -68,6 +69,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt.tests
+        TARGETED_DEVICE_FAMILY: "1"
   SpltUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -80,6 +82,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt.uitests
+        TARGETED_DEVICE_FAMILY: "1"
 schemes:
   Splt:
     build:
