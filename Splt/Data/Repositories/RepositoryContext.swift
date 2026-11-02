@@ -8,18 +8,28 @@ final class RepositoryContext {
     let context: ModelContext
     let tracker: ChangeTracker
     let now: @Sendable () -> Date
+    /// Ledgers per group. The tracker keeps it current, so reads can trust it.
+    let balanceCache: BalanceCache
     /// A context does not keep its container alive, so anything that uses this object holds the container too.
     private let container: ModelContainer?
 
-    init(context: ModelContext, container: ModelContainer? = nil, now: @escaping @Sendable () -> Date = { Date() }) {
+    init(
+        context: ModelContext,
+        container: ModelContainer? = nil,
+        balanceCache: BalanceCache = BalanceCache(),
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.context = context
         self.container = container
         self.now = now
-        self.tracker = ChangeTracker(context: context, now: now)
+        self.balanceCache = balanceCache
+        self.tracker = ChangeTracker(context: context, balanceCache: balanceCache, now: now)
     }
 
-    convenience init(container: ModelContainer, now: @escaping @Sendable () -> Date = { Date() }) {
-        self.init(context: container.mainContext, container: container, now: now)
+    convenience init(
+        container: ModelContainer, balanceCache: BalanceCache = BalanceCache(), now: @escaping @Sendable () -> Date = { Date() }
+    ) {
+        self.init(context: container.mainContext, container: container, balanceCache: balanceCache, now: now)
     }
 
     func save() throws {
@@ -80,7 +90,13 @@ final class RepositoryContext {
         return try context.fetch(descriptor).map(Payment.init)
     }
 
+    /// The group's ledger, from the cache when nothing in the group changed since it was built.
     func ledger(forGroup groupID: GroupID) throws -> Ledger {
+        try balanceCache.ledger(for: groupID) { try freshLedger(forGroup: groupID) }
+    }
+
+    /// Builds the ledger from the stored rows, ignoring the cache.
+    func freshLedger(forGroup groupID: GroupID) throws -> Ledger {
         Ledger(expenses: try expenses(inGroup: groupID), payments: try payments(inGroup: groupID))
     }
 
@@ -92,11 +108,39 @@ final class RepositoryContext {
         return try context.fetch(descriptor).map(SplitGroup.init).filter { includeArchived || !$0.isArchived }
     }
 
-    /// Writes an activity row for the current user. Does nothing if there is no group to attach it to.
+    /// Ids from `ids` that already have an expense row, in a few queries rather than one per id.
+    func existingExpenseIDs(among ids: [UUID]) throws -> Set<UUID> {
+        var found = Set<UUID>()
+        for chunk in Self.chunks(of: ids) {
+            var descriptor = FetchDescriptor<ExpenseRecord>(predicate: #Predicate { chunk.contains($0.id) })
+            descriptor.propertiesToFetch = [\.id]
+            found.formUnion(try context.fetch(descriptor).map(\.id))
+        }
+        return found
+    }
+
+    func existingPaymentIDs(among ids: [UUID]) throws -> Set<UUID> {
+        var found = Set<UUID>()
+        for chunk in Self.chunks(of: ids) {
+            var descriptor = FetchDescriptor<PaymentRecord>(predicate: #Predicate { chunk.contains($0.id) })
+            descriptor.propertiesToFetch = [\.id]
+            found.formUnion(try context.fetch(descriptor).map(\.id))
+        }
+        return found
+    }
+
+    private static func chunks(of ids: [UUID], size: Int = 400) -> [[UUID]] {
+        stride(from: 0, to: ids.count, by: size).map { Array(ids[$0..<min($0 + size, ids.count)]) }
+    }
+
+    /// Writes an activity row for the current user.
     func log(_ event: ActivityEvent, groupID: GroupID?) throws {
-        let entry = ActivityEntry(
-            groupID: groupID, actorID: try currentUser()?.personID, event: event, createdAt: now()
-        )
+        try log(event, groupID: groupID, actor: try currentUser()?.personID)
+    }
+
+    /// Writes an activity row for a known actor, which saves looking the current user up again.
+    func log(_ event: ActivityEvent, groupID: GroupID?, actor: PersonID?) throws {
+        let entry = ActivityEntry(groupID: groupID, actorID: actor, event: event, createdAt: now())
         let record = ActivityRecord(entry)
         context.insert(record)
         tracker.recordEdit(record)

@@ -84,6 +84,6 @@ final class DataServices {
 
     /// A tracker on the main context for the sync engine, or on a context of its own for background work.
     func makeChangeTracker(context: ModelContext? = nil) -> ChangeTracker {
-        ChangeTracker(context: context ?? container.mainContext, now: environment.now)
+        ChangeTracker(context: context ?? container.mainContext, balanceCache: environment.balanceCache, now: environment.now)
     }
 }

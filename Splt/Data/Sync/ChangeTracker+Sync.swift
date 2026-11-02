@@ -64,6 +64,7 @@ extension ChangeTracker {
         recordType: SyncRecordType, recordName: String, at date: Date? = nil
     ) throws -> RemoteApplyOutcome? {
         guard let local = try recordType.modelType.find(recordName: recordName, in: context) else { return nil }
+        noteBalanceChange(local)
         let deletedAt = date ?? now()
         let remote = SyncStamp(modifiedAt: deletedAt, deletedAt: deletedAt, tieBreaker: "")
         let outcome: RemoteApplyOutcome
@@ -108,7 +109,10 @@ extension ChangeTracker {
     }
 
     private func applyWithoutSaving(_ payload: SyncPayload) throws -> RemoteApplyOutcome {
-        guard let local = try payload.recordType.modelType.find(recordName: payload.recordName, in: context) else {
+        let existing = try payload.recordType.modelType.find(recordName: payload.recordName, in: context)
+        if let existing { noteBalanceChange(existing) }
+        noteBalanceChange(type: payload.recordType, zone: payload.zoneName ?? payload.fields.string("groupID"))
+        guard let local = existing else {
             let record = payload.recordType.modelType.blank(recordName: payload.recordName)
             adopt(payload, into: record)
             context.insert(record)
