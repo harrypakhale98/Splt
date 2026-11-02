@@ -53,6 +53,9 @@ final class JourneyUITests: XCTestCase {
 
         // alex and sam each owe 10 + 20 + 30 + 40 + 10, so you are owed 110 by each of them
         selectSegment("Balances", in: app)
+        let listView = app.segmentedControls.buttons["List"]
+        reveal(listView, in: app)
+        listView.tap()
         let alex = element(labelContaining: "Alex owes", in: app)
         reveal(alex, in: app)
         XCTAssertTrue(alex.label.contains("110.00"), "Alex should owe 110.00, got \(alex.label)")
