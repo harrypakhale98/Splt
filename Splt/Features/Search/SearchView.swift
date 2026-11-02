@@ -71,7 +71,7 @@ private struct SearchContent: View {
                         Label {
                             Text(person.name)
                         } icon: {
-                            AvatarView(name: person.name, size: 32)
+                            AvatarView(person: person, size: 32)
                         }
                     }
                     .simultaneousGesture(TapGesture().onEnded { model.remember() })
@@ -135,7 +135,8 @@ private struct SearchContent: View {
             EmptyStateView(
                 title: "Search Splt",
                 systemImage: "magnifyingglass",
-                description: "Find friends, groups and expenses. Try \"dinners Sam paid in March\"."
+                description: "Find friends, groups and expenses. Try \"dinners Sam paid in March\".",
+                showsOrbit: true
             )
         } else if !model.trimmedQuery.isEmpty, model.hasSearched, model.isEmpty {
             ContentUnavailableView.search(text: model.query)

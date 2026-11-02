@@ -10,7 +10,7 @@ struct FriendRow: View {
     var body: some View {
         let lines = BalanceLine.lines(for: summary.balance)
         HStack(spacing: 12) {
-            AvatarView(name: summary.person.name, size: 44)
+            AvatarView(person: summary.person, size: 44)
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
                     nameBlock

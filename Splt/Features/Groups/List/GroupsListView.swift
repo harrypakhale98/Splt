@@ -5,6 +5,7 @@ import SwiftUI
 struct GroupsListView: View {
     @Environment(Router.self) private var router
     @Environment(\.dataServices) private var services
+    @Namespace private var zoomNamespace
 
     var body: some View {
         @Bindable var router = router
@@ -24,6 +25,7 @@ struct GroupsListView: View {
                     .navigationTitle("Groups")
                 }
             }
+            .environment(\.zoomNamespace, zoomNamespace)
             .routeDestinations()
         }
     }
@@ -44,7 +46,11 @@ private struct GroupsListContent: View {
 
         List {
             if model.hasGroups && !model.isSearching {
-                OverallBalanceSection(totals: model.totals)
+                Section {
+                    NetPositionHero(totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
             if !model.active.isEmpty {
                 Section {
@@ -109,7 +115,8 @@ private struct GroupsListContent: View {
                 systemImage: "person.3",
                 description: "Create a group for a trip, a home or a night out.",
                 actionTitle: "Create Group",
-                action: { router.present(.newGroup) }
+                action: { router.present(.newGroup) },
+                showsOrbit: true
             )
         } else if model.isSearching && !model.hasResults {
             ContentUnavailableView.search(text: model.query)
@@ -118,8 +125,9 @@ private struct GroupsListContent: View {
 
     private func row(_ summary: GroupSummary) -> some View {
         NavigationLink(value: Route.group(summary.group.id.rawValue)) {
-            GroupRowView(summary: summary)
+            GroupRowView(summary: summary, members: model.membersByGroup[summary.group.id] ?? [])
         }
+        .zoomSource(for: .group(summary.group.id.rawValue))
         .swipeActions(edge: .trailing) {
             if summary.group.isArchived {
                 Button("Restore", systemImage: "tray.and.arrow.up") {

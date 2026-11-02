@@ -103,7 +103,7 @@ private struct FriendDetailContent: View {
     private func header(_ friend: Person) -> some View {
         Section {
             VStack(spacing: 10) {
-                AvatarView(name: friend.name, size: 72)
+                AvatarView(person: friend, size: 72)
                 Text(friend.name)
                     .font(.title2.bold())
                 if friend.isPlaceholder {

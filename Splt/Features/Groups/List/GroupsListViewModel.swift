@@ -9,12 +9,19 @@ final class GroupsListViewModel {
     var query = ""
     var errorMessage: String?
 
+    private(set) var membersByGroup: [GroupID: [Person]] = [:]
+    /// Friends who owe you something, and friends you owe, for the hero at the top.
+    private(set) var owedBy: [Person] = []
+    private(set) var owedTo: [Person] = []
+
     @ObservationIgnored private let store: GroupsStore
+    @ObservationIgnored private let people: any PersonRepository
     @ObservationIgnored private let groups: any GroupRepository
     @ObservationIgnored private let leftGroups: LeftGroupsStore
 
     init(services: DataServices, leftGroups: LeftGroupsStore = LeftGroupsStore()) {
         store = services.groupsStore
+        people = services.people
         groups = services.groups
         self.leftGroups = leftGroups
         refresh()
@@ -22,6 +29,21 @@ final class GroupsListViewModel {
 
     func refresh() {
         store.refresh()
+        refreshPeople()
+    }
+
+    /// Looks people up once per refresh so rows do not query while they scroll.
+    private func refreshPeople() {
+        let everyone = (try? people.allPeople()) ?? []
+        let byID = Dictionary(everyone.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        membersByGroup = Dictionary(
+            uniqueKeysWithValues: store.summaries.map { summary in
+                (summary.group.id, summary.group.memberIDs.compactMap { byID[$0] })
+            }
+        )
+        let balances = (try? people.friendBalances()) ?? []
+        owedBy = balances.filter { $0.total.contains(where: \.isPositive) }.compactMap { byID[$0.friendID] }
+        owedTo = balances.filter { !$0.total.contains(where: \.isPositive) && !$0.total.isEmpty }.compactMap { byID[$0.friendID] }
     }
 
     /// Groups people made and you have not left. The hidden two person groups behind friends are not among them.

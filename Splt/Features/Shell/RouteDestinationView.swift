@@ -6,6 +6,7 @@ extension View {
     func routeDestinations() -> some View {
         navigationDestination(for: Route.self) { route in
             RouteDestinationView(route: route)
+                .modifier(ZoomDestination(route: route))
         }
     }
 }

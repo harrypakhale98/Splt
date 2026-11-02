@@ -5,6 +5,7 @@ import SwiftUI
 struct FriendsView: View {
     @Environment(Router.self) private var router
     @Environment(\.dataServices) private var services
+    @Namespace private var zoomNamespace
 
     var body: some View {
         @Bindable var router = router
@@ -22,6 +23,7 @@ struct FriendsView: View {
                 }
             }
             .navigationTitle("Friends")
+            .environment(\.zoomNamespace, zoomNamespace)
             .routeDestinations()
         }
     }
@@ -44,8 +46,16 @@ private struct FriendsContent: View {
         let sections = model.sections
 
         List {
-            if !model.hasNoFriends, !model.totals.isSettled {
-                TotalsSection(totals: model.totals)
+            if !model.hasNoFriends, model.query.isEmpty {
+                Section {
+                    NetPositionHero(
+                        totals: model.totals,
+                        owedBy: model.summaries.filter { $0.balance.contains(where: \.isPositive) }.map(\.person),
+                        owedTo: model.summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }.map(\.person)
+                    )
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
             }
             section("Owes You", sections.owesYou)
             section("You Owe", sections.youOwe)
@@ -86,6 +96,7 @@ private struct FriendsContent: View {
                     NavigationLink(value: Route.friend(summary.id.rawValue)) {
                         FriendRow(summary: summary)
                     }
+                    .zoomSource(for: .friend(summary.id.rawValue))
                     .swipeActions(edge: .leading) {
                         if !summary.isSettled {
                             Button("Settle", systemImage: "checkmark.circle") {
@@ -136,7 +147,8 @@ private struct FriendsContent: View {
                 systemImage: "person.2",
                 description: "Add friends to split bills and see who owes what.",
                 actionTitle: "Add Friend",
-                action: { router.present(.newFriend) }
+                action: { router.present(.newFriend) },
+                showsOrbit: true
             )
         } else if sections.isEmpty, !model.query.isEmpty {
             ContentUnavailableView.search(text: model.query)
@@ -164,37 +176,6 @@ private struct RemindTarget: Identifiable {
         owed = summary.balance.filter(\.isPositive)
         groupNames = model.settleRequest(for: summary)?.legs
             .filter { !$0.youOwe }.map(\.groupName).uniqued() ?? []
-    }
-}
-
-private struct TotalsSection: View {
-    let totals: BalanceTotals
-
-    var body: some View {
-        Section {
-            if !totals.owedToYou.isEmpty {
-                LabeledContent("You are owed") {
-                    amounts(totals.owedToYou, positive: true)
-                }
-            }
-            if !totals.youOwe.isEmpty {
-                LabeledContent("You owe") {
-                    amounts(totals.youOwe, positive: false)
-                }
-            }
-        }
-    }
-
-    private func amounts(_ values: [Money], positive: Bool) -> some View {
-        VStack(alignment: .trailing) {
-            ForEach(values, id: \.currencyCode) { value in
-                MoneyLabel(
-                    money: positive ? value : Money(minorUnits: -value.minorUnits, currencyCode: value.currencyCode),
-                    style: .balance
-                )
-                .font(.body.weight(.semibold))
-            }
-        }
     }
 }
 

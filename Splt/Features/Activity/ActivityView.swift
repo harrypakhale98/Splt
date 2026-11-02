@@ -97,7 +97,8 @@ private struct ActivityContent: View {
                 systemImage: "list.bullet.rectangle",
                 description: "Expenses and payments from your groups will show up here.",
                 actionTitle: "Add Expense",
-                action: { router.present(.addExpense) }
+                action: { router.present(.addExpense) },
+                showsOrbit: true
             )
         } else if model.sections.isEmpty, model.didLoad {
             ContentUnavailableView(

@@ -16,7 +16,7 @@ struct FriendPickerView: View {
                 changeCount += 1
             } label: {
                 HStack {
-                    AvatarView(name: friend.name, size: 36)
+                    AvatarView(person: friend, size: 36)
                     Text(friend.name)
                         .foregroundStyle(.primary)
                     Spacer()

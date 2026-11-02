@@ -9,7 +9,7 @@ struct HiddenFriendsView: View {
             Section {
                 ForEach(model.hiddenSummaries) { summary in
                     HStack(spacing: 12) {
-                        AvatarView(name: summary.person.name, size: 36)
+                        AvatarView(person: summary.person, size: 36)
                         VStack(alignment: .leading) {
                             Text(summary.person.name)
                             Text(model.state(of: summary.id) == .blocked ? "Blocked" : "Hidden")

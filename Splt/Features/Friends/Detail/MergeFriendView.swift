@@ -74,7 +74,7 @@ struct MergeFriendView: View {
                 choice = person
             } label: {
                 HStack(spacing: 12) {
-                    AvatarView(name: person.name, size: 36)
+                    AvatarView(person: person, size: 36)
                     Text(person.name).foregroundStyle(.primary)
                     Spacer()
                     if person.isPlaceholder {

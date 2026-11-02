@@ -220,7 +220,7 @@ private struct GroupSettingsForm: View {
         Section {
             ForEach(model.memberRows) { row in
                 HStack(spacing: 12) {
-                    AvatarView(name: row.person.name, size: 36)
+                    AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 36)
                     VStack(alignment: .leading) {
                         Text(row.isMe ? String(localized: "You") : row.person.name)
                         if row.person.isPlaceholder {

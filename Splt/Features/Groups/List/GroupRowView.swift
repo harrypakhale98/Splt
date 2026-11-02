@@ -1,25 +1,26 @@
 import SpltCore
 import SwiftUI
 
-/// One group in the list: symbol, name, who is in it and your balance.
+/// One group in the list: its mesh glyph, name, who is in it and your balance.
 struct GroupRowView: View {
     let summary: GroupSummary
+    var members: [Person] = []
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         let lines = BalanceLine.lines(for: summary.myBalance)
-        let icon = GroupIconView(symbol: summary.group.symbol, color: GroupAppearance.color(for: summary.group.id))
+        let glyph = GroupGlyph(symbol: summary.group.symbol, members: summary.group.memberIDs, size: 52)
         Group {
             if typeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 8) {
-                    icon
+                VStack(alignment: .leading, spacing: 10) {
+                    glyph
                     details
                     balance(lines)
                 }
             } else {
-                HStack(spacing: 12) {
-                    icon
+                HStack(spacing: 14) {
+                    glyph
                     details
                     Spacer(minLength: 8)
                     balance(lines)
@@ -27,30 +28,39 @@ struct GroupRowView: View {
                 }
             }
         }
+        .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
     }
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(summary.group.name)
                 .font(.headline)
-            Text("^[\(summary.memberCount) member](inflect: true)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            if members.isEmpty {
+                Text("^[\(summary.memberCount) member](inflect: true)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                AvatarStack(
+                    members, members: summary.group.memberIDs, size: 22, limit: 4,
+                    ring: Color(.secondarySystemGroupedBackground)
+                )
+            }
         }
     }
 
     @ViewBuilder
     private func balance(_ lines: [BalanceLine]) -> some View {
         if lines.isEmpty {
-            Text("Settled up")
+            Label("Settled up", systemImage: "checkmark")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         } else {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                 ForEach(lines) { line in
                     MoneyLabel(money: line.money, style: .balance)
-                        .font(.body.weight(.semibold))
+                        .font(.system(.body, design: .rounded, weight: .semibold))
                     Text(line.direction.caption)
                         .font(.caption)
                         .foregroundStyle(.secondary)
