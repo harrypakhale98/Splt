@@ -13,6 +13,8 @@ struct FriendHero: View {
     struct Action {
         var title: LocalizedStringKey
         var symbol: String
+        /// Spoken when the visible title is shortened to fit.
+        var spokenTitle: LocalizedStringKey?
         var run: () -> Void
     }
 
@@ -146,7 +148,7 @@ struct FriendHero: View {
         Button(action: primary.run) {
             HStack(spacing: 8) {
                 Image(systemName: primary.symbol)
-                Text(primary.title).lineLimit(1)
+                Text(primary.title).fixedSize(horizontal: true, vertical: false)
             }
             .font(.headline)
             .frame(maxWidth: .infinity)
@@ -156,12 +158,13 @@ struct FriendHero: View {
             Button(action: secondary.run) {
                 HStack(spacing: 8) {
                     Image(systemName: secondary.symbol)
-                    Text(secondary.title).lineLimit(1)
+                    Text(secondary.title).fixedSize(horizontal: true, vertical: false)
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.glass)
+            .accessibilityLabel(secondary.spokenTitle ?? secondary.title)
         }
     }
 }

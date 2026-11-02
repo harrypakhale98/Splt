@@ -100,4 +100,21 @@ final class FriendsDesignShotsUITests: XCTestCase {
             shot("15-search-none")
         }
     }
+
+    /// Only the friend hero, for a quick look after a change to it.
+    @MainActor
+    func testFriendHero() {
+        let env = ProcessInfo.processInfo.environment
+        let dark = env["SPLT_SHOTS_DARK"] != nil
+        let large = env["SPLT_SHOTS_SIZE"] == "xxxl"
+        let variant = (large ? "xxxl" : "default") + (dark ? "-dark" : "-light")
+        XCUIDevice.shared.appearance = dark ? .dark : .light
+        let app = launchApp(
+            "-sampledata", textSize: large ? "UICTContentSizeCategoryAccessibilityXXXL" : nil,
+            extra: dark ? ["-darkmode"] : []
+        )
+        app.open(URL(string: "splt://friend/00000000-0000-4000-8000-000000000012")!)
+        XCTAssertTrue(app.navigationBars["Jonas Weber"].waitForExistence(timeout: 10))
+        snapshot(app, "friends/\(variant)/hero")
+    }
 }

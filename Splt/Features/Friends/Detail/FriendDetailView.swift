@@ -102,11 +102,11 @@ private struct FriendDetailContent: View {
 
     private func hero(_ friend: Person) -> some View {
         let owedToYou = !model.owedToYou.isEmpty
-        let settle = FriendHero.Action(title: "Settle Up", symbol: "checkmark.circle") { settleRequest = model.settleRequest }
+        let settle = FriendHero.Action(title: "Settle Up", symbol: "checkmark.circle", spokenTitle: nil) { settleRequest = model.settleRequest }
         let remind = FriendHero.Action(
-            title: "Remind \(ReminderMessage.firstName(friend.name))", symbol: "bell"
+            title: "Remind \(ReminderMessage.firstName(friend.name))", symbol: "bell", spokenTitle: nil
         ) { showsRemind = true }
-        let add = FriendHero.Action(title: "Add Expense", symbol: "plus.circle") {
+        let add = FriendHero.Action(title: "Add", symbol: "plus.circle", spokenTitle: "Add Expense") {
             expenseTarget = model.expenseGroup().map(ExpenseTarget.init)
         }
         let primary: FriendHero.Action
