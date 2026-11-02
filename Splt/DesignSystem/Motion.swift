@@ -1,0 +1,55 @@
+import SwiftUI
+
+/// The animation vocabulary of the app. Use these instead of ad hoc values, and the modifiers
+/// below so people who turn on Reduce Motion get a quiet cross fade instead of movement.
+enum Motion {
+    static let smooth = Animation.smooth
+    static let snappy = Animation.snappy
+    /// Use sparingly, for moments of delight such as a settled debt.
+    static let bouncy = Animation.bouncy(duration: 0.5, extraBounce: 0.1)
+    /// How long a standard move takes, for things that need a number.
+    static let short: Duration = .milliseconds(200)
+    static let medium: Duration = .milliseconds(350)
+    static let long: Duration = .milliseconds(600)
+
+    /// The animation to use, or nil to skip it when motion is reduced.
+    static func animation(_ animation: Animation, reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : animation
+    }
+
+    /// A transition that only fades when motion is reduced.
+    static func transition(_ transition: AnyTransition, reduceMotion: Bool) -> AnyTransition {
+        reduceMotion ? .opacity : transition
+    }
+}
+
+extension View {
+    /// Animates changes of `value`, unless Reduce Motion is on.
+    func motion<V: Equatable>(_ animation: Animation = Motion.smooth, value: V) -> some View {
+        modifier(MotionAnimation(animation: animation, value: value))
+    }
+
+    /// A transition that becomes a plain fade when Reduce Motion is on.
+    func motionTransition(_ transition: AnyTransition) -> some View {
+        modifier(MotionTransition(transition: transition))
+    }
+}
+
+private struct MotionAnimation<V: Equatable>: ViewModifier {
+    let animation: Animation
+    let value: V
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content.animation(Motion.animation(animation, reduceMotion: reduceMotion), value: value)
+    }
+}
+
+private struct MotionTransition: ViewModifier {
+    let transition: AnyTransition
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content.transition(Motion.transition(transition, reduceMotion: reduceMotion))
+    }
+}
