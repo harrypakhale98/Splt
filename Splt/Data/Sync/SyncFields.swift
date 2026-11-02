@@ -69,9 +69,9 @@ struct SyncFields: Hashable, Sendable {
 
     /// A stable text form, used to break ties the same way on every device.
     var canonicalText: String {
-        values.keys.sorted().map { key in
+        values.sorted { $0.key < $1.key }.map { key, stored in
             let text: String
-            switch values[key]! {
+            switch stored {
             case .string(let value): text = "s:" + value
             case .int(let value): text = "i:" + String(value)
             case .double(let value): text = "d:" + String(value.bitPattern)

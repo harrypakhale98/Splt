@@ -51,6 +51,12 @@ struct SyncMetadata: Codable, Equatable, Sendable {
         personCopies[zoneName]?[recordName]
     }
 
+    /// True when the zone has no copy of the person yet, or the copy is older than `modifiedAt`.
+    func copyNeedsUpload(zoneName: String, recordName: String, modifiedAt: Date) -> Bool {
+        guard let copy = copy(zoneName: zoneName, recordName: recordName) else { return true }
+        return copy.sentModifiedAt < modifiedAt
+    }
+
     mutating func setCopy(_ copy: PersonCopy?, zoneName: String, recordName: String) {
         personCopies[zoneName, default: [:]][recordName] = copy
         if personCopies[zoneName]?.isEmpty == true {

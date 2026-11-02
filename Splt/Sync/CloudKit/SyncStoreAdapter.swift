@@ -90,8 +90,7 @@ final class SyncStoreAdapter {
         for (zone, uuids) in references where !retired.contains(zone) {
             for name in uuids {
                 guard let person = people[name], person.deletedAt == nil else { continue }
-                let copy = metadata.copy(zoneName: zone, recordName: name)
-                if copy == nil || copy!.sentModifiedAt < person.modifiedAt {
+                if metadata.copyNeedsUpload(zoneName: zone, recordName: name, modifiedAt: person.modifiedAt) {
                     queue.insert(PersonCopyKey(zoneName: zone, recordName: name))
                 }
             }
@@ -102,7 +101,9 @@ final class SyncStoreAdapter {
             switch change.operation {
             case .save:
                 let zones = metadata.zonesHoldingCopy(of: change.recordName).filter { !retired.contains($0) }
-                for zone in zones where metadata.copy(zoneName: zone, recordName: change.recordName)!.sentModifiedAt < change.modifiedAt {
+                for zone in zones where metadata.copyNeedsUpload(
+                    zoneName: zone, recordName: change.recordName, modifiedAt: change.modifiedAt
+                ) {
                     queue.insert(PersonCopyKey(zoneName: zone, recordName: change.recordName))
                 }
             case .delete:
@@ -160,10 +161,12 @@ final class SyncStoreAdapter {
         let zone = id.zoneID.zoneName
         if type == .person {
             guard model.deletedAt == nil else { return nil }
-            let copy = metadata.copy(zoneName: zone, recordName: id.recordName)
             let queued = metadata.personQueue.contains(PersonCopyKey(zoneName: zone, recordName: id.recordName))
-            guard queued || copy == nil || copy!.sentModifiedAt < model.modifiedAt else { return nil }
-            return RecordMapper.record(for: model.syncPayload, in: id.zoneID, systemFields: copy?.systemFields)
+            guard queued || metadata.copyNeedsUpload(zoneName: zone, recordName: id.recordName, modifiedAt: model.modifiedAt) else {
+                return nil
+            }
+            let systemFields = metadata.copy(zoneName: zone, recordName: id.recordName)?.systemFields
+            return RecordMapper.record(for: model.syncPayload, in: id.zoneID, systemFields: systemFields)
         }
         guard model.isDirty, model.pendingOperation == .save else { return nil }
         return RecordMapper.record(for: model.syncPayload, in: id.zoneID, systemFields: model.systemFields)
