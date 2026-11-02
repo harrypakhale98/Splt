@@ -1,3 +1,4 @@
+import SpltCore
 import SwiftUI
 
 /// A person's avatar and name with an input beside it. At accessibility text sizes the input
@@ -5,6 +6,7 @@ import SwiftUI
 struct PersonFieldRow<Field: View>: View {
     let person: Person
     let name: String
+    var members: [PersonID] = []
     var fieldWidth: CGFloat = 140
     @ViewBuilder var field: () -> Field
 
@@ -27,7 +29,7 @@ struct PersonFieldRow<Field: View>: View {
 
     private var label: some View {
         HStack {
-            AvatarView(name: person.name, size: 28)
+            AvatarView(person: person, members: members, size: 28)
             Text(name)
         }
     }

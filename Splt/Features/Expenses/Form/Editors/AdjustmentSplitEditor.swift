@@ -6,7 +6,7 @@ struct AdjustmentSplitEditor: View {
     var body: some View {
         Section {
             ForEach(model.participantList) { person in
-                PersonFieldRow(person: person, name: model.displayName(for: person.id)) {
+                PersonFieldRow(person: person, name: model.displayName(for: person.id), members: model.members.map(\.id)) {
                     TextField("Adjustment", text: Binding(
                         get: { model.split.adjustments[person.id, default: ""] },
                         set: { model.split.adjustments[person.id] = $0 }

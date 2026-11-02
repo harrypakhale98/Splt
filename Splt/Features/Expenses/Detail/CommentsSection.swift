@@ -59,7 +59,7 @@ private struct CommentRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                AvatarView(name: model.people[comment.authorID]?.name ?? "?", size: 28)
+                AvatarView(name: model.people[comment.authorID]?.name ?? "?", id: comment.authorID, members: model.memberIDs, size: 28)
                 Text(model.name(for: comment.authorID)).font(.subheadline.weight(.semibold))
                 Spacer(minLength: 8)
                 Text(comment.createdAt, format: .relative(presentation: .named))

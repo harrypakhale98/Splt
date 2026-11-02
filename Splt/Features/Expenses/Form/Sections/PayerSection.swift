@@ -28,7 +28,7 @@ struct PayerSection: View {
                     currentPerson: model.me?.id, toggle: model.togglePayer
                 )
                 ForEach(model.members.filter { model.payer.selected.contains($0.id) }) { person in
-                    PersonFieldRow(person: person, name: model.displayName(for: person.id)) {
+                    PersonFieldRow(person: person, name: model.displayName(for: person.id), members: model.members.map(\.id)) {
                         TextField("Amount", text: Binding(
                             get: { model.payer.amounts[person.id, default: ""] },
                             set: { model.payer.amounts[person.id] = $0 }

@@ -6,7 +6,7 @@ struct PercentSplitEditor: View {
     var body: some View {
         Section {
             ForEach(model.participantList) { person in
-                PersonFieldRow(person: person, name: model.displayName(for: person.id), fieldWidth: 120) {
+                PersonFieldRow(person: person, name: model.displayName(for: person.id), members: model.members.map(\.id), fieldWidth: 120) {
                     HStack {
                         TextField("Percent", text: Binding(
                             get: { model.split.percent[person.id, default: ""] },

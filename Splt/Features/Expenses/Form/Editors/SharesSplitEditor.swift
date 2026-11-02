@@ -13,7 +13,7 @@ struct SharesSplitEditor: View {
                     set: { model.setShareCount($0, for: person.id) }
                 ), in: 0...100, step: 1) {
                     HStack {
-                        AvatarView(name: person.name, size: 28)
+                        AvatarView(person: person, members: model.members.map(\.id), size: 28)
                         VStack(alignment: .leading) {
                             Text(name)
                             Text("\(count, format: .number.precision(.fractionLength(0...2))) shares")

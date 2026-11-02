@@ -57,6 +57,30 @@ final class ExpenseDetailModel {
 
     var isDeleted: Bool { expense?.isDeleted ?? false }
 
+    /// The group's members in order, so person colors never collide inside the group.
+    var memberIDs: [PersonID] {
+        let ordered = group?.memberIDs ?? []
+        let extra = people.keys.filter { !ordered.contains($0) }.sorted()
+        return ordered + extra
+    }
+
+    /// The shares as a read-only Split Bar, or nil for refunds and bills with nothing to draw.
+    var splitBarData: SplitBarData? {
+        guard let expense, expense.total.minorUnits > 0, shareLines.count > 1,
+              shareLines.allSatisfy({ $0.share.minorUnits >= 0 }) else { return nil }
+        let ordered = shareLines.sorted { lhs, rhs in
+            let order = memberIDs
+            return (order.firstIndex(of: lhs.id) ?? .max) < (order.firstIndex(of: rhs.id) ?? .max)
+        }
+        let segments = ordered.map {
+            SplitBarSegment(person: $0.person, weight: $0.share.minorUnits, amount: $0.share)
+        }
+        return SplitBarData(
+            method: SplitMethod(expense.split), segments: segments, scale: expense.total.minorUnits,
+            total: expense.total, canDrag: false
+        )
+    }
+
     func name(for id: PersonID) -> String {
         if id == me?.id { return String(localized: "You") }
         return people[id]?.name ?? String(localized: "Someone")

@@ -7,31 +7,55 @@ struct ExpenseHeaderSection: View {
 
     var body: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(spacing: 10) {
+                Image(systemName: expense.category.symbolName)
+                    .font(.title2.weight(.medium))
+                    .foregroundStyle(.tint)
+                    .frame(width: 56, height: 56)
+                    .background(.tint.opacity(0.15), in: .circle)
+                    .accessibilityHidden(true)
+                Text(expense.title)
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                HeroAmount(expense.total, showsSign: false)
+                Text(expense.date, format: .dateTime.weekday(.wide).day().month(.wide).year())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if !model.payerLines.isEmpty {
+                    HStack(spacing: 8) {
+                        if model.payerLines.count == 1, let only = model.payerLines.first {
+                            AvatarView(person: only.person, members: model.memberIDs, size: 28)
+                        } else {
+                            AvatarStack(model.payerLines.map(\.person), members: model.memberIDs, size: 28)
+                        }
+                        Text(payerText).font(.subheadline.weight(.medium))
+                    }
+                    .padding(.top, 4)
+                }
                 HStack(spacing: 12) {
-                    CategoryBadge(category: expense.category)
-                    VStack(alignment: .leading) {
-                        Text(expense.title).font(.title2.weight(.semibold))
-                        Text(expense.category.title).font(.subheadline).foregroundStyle(.secondary)
+                    if let group = model.group {
+                        Label(group.name, systemImage: group.symbol)
+                    }
+                    if expense.isRefund {
+                        Label("Refund", systemImage: "arrow.uturn.backward.circle")
                     }
                 }
-                MoneyLabel(money: expense.total)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                Text(expense.date, format: .dateTime.weekday(.wide).day().month(.wide).year())
-                    .foregroundStyle(.secondary)
-                if let group = model.group {
-                    Label(group.name, systemImage: group.symbol)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                if expense.isRefund {
-                    Label("Refund", systemImage: "arrow.uturn.backward.circle")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
             .accessibilityElement(children: .combine)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
+    }
+
+    private var payerText: String {
+        ExpenseSummary.payerText(
+            Dictionary(uniqueKeysWithValues: model.payerLines.map { ($0.person.id, $0.amount) }),
+            currentPerson: model.me?.id, names: model.people.mapValues(\.name)
+        )
     }
 }
 
@@ -43,7 +67,7 @@ struct PaidBySection: View {
         Section("Paid By") {
             ForEach(model.payerLines, id: \.person.id) { line in
                 HStack {
-                    AvatarView(name: line.person.name, size: 32)
+                    AvatarView(person: line.person, members: model.memberIDs, size: 32)
                     Text(line.name)
                     Spacer(minLength: 8)
                     MoneyLabel(money: line.amount)

@@ -62,7 +62,7 @@ struct SharePreviewSection: View {
             Section("Each Person Pays") {
                 ForEach(rows, id: \.person.id) { row in
                     HStack {
-                        AvatarView(name: row.person.name, size: 28)
+                        AvatarView(person: row.person, members: model.members.map(\.id), size: 28)
                         Text(model.displayName(for: row.person.id))
                         Spacer(minLength: 8)
                         MoneyLabel(money: row.amount)

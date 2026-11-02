@@ -9,19 +9,12 @@ struct PeopleChips: View {
     let toggle: (PersonID) -> Void
 
     var body: some View {
+        let ids = people.map(\.id)
         FlowLayout(spacing: 8) {
             ForEach(people) { person in
-                let name = person.id == currentPerson ? String(localized: "You") : person.name
-                Toggle(isOn: Binding(get: { selected.contains(person.id) }, set: { _ in toggle(person.id) })) {
-                    Label {
-                        Text(name)
-                    } icon: {
-                        AvatarView(name: person.name, size: 22)
-                    }
+                PersonChip(person: person, members: ids, isSelected: selected.contains(person.id)) {
+                    toggle(person.id)
                 }
-                .toggleStyle(.button)
-                .buttonBorderShape(.capsule)
-                .accessibilityLabel(name)
             }
         }
         .padding(.vertical, 4)

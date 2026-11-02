@@ -85,8 +85,8 @@ private struct ExpenseDetailScreen: View {
     private func content(_ expense: Expense) -> some View {
         List {
             ExpenseHeaderSection(model: model, expense: expense)
-            PaidBySection(model: model)
             ShareBreakdownSection(model: model, expense: expense)
+            PaidBySection(model: model)
             ReceiptSection(model: model)
             if !expense.note.isEmpty {
                 Section("Notes") { Text(expense.note) }
