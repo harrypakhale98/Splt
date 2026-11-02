@@ -20,6 +20,16 @@ enum ActivityTypeFilter: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    var shortTitle: String {
+        switch self {
+        case .all: String(localized: "All")
+        case .expenses: String(localized: "Expenses")
+        case .payments: String(localized: "Payments")
+        case .comments: String(localized: "Comments")
+        case .groups: String(localized: "Groups")
+        }
+    }
+
     var symbol: String {
         switch self {
         case .all: "list.bullet"

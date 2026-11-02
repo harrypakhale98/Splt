@@ -39,22 +39,22 @@ private struct ActivityContent: View {
 
     var body: some View {
         List {
-            if model.isFiltering {
-                Section {
-                    Button("Clear Filters", systemImage: "xmark.circle") { model.clearFilters() }
-                }
-            }
             ForEach(model.sections) { section in
-                Section(model.title(for: section, locale: locale)) {
-                    ForEach(section.entries) { entry in
+                Section {
+                    ForEach(Array(section.entries.enumerated()), id: \.element.id) { index, entry in
                         Button { open(entry) } label: {
                             ActivityRowView(
                                 entry: entry,
                                 text: model.text(for: entry, locale: locale),
-                                groupName: model.groupName(for: entry)
+                                groupName: model.groupName(for: entry),
+                                actor: model.actor(for: entry),
+                                isFirst: index == 0,
+                                isLast: index == section.entries.count - 1
                             )
                         }
                         .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 16))
+                        .listRowSeparator(.hidden)
                         .swipeActions(edge: .leading) {
                             if !entry.isRead {
                                 Button("Read", systemImage: "envelope.open") { model.markRead(entry) }
@@ -63,8 +63,17 @@ private struct ActivityContent: View {
                         }
                         .swipeActions(edge: .trailing) { paymentAction(for: entry) }
                     }
+                } header: {
+                    Text(model.title(for: section, locale: locale))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
                 }
             }
+        }
+        .listStyle(.plain)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if !model.entries.isEmpty { ActivityFilterChips(model: model) }
         }
         .overlay { emptyState }
         .toolbar { toolbar }
@@ -112,42 +121,11 @@ private struct ActivityContent: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            filterMenu
-        }
-        ToolbarItem(placement: .secondaryAction) {
             Button("Mark All Read", systemImage: "envelope.open") { model.markAllRead() }
                 .disabled(model.unreadCount == 0)
         }
         ToolbarItem(placement: .secondaryAction) {
             Button("Add Expense", systemImage: "plus") { router.present(.addExpense) }
-        }
-    }
-
-    private var filterMenu: some View {
-        @Bindable var model = model
-
-        return Menu {
-            Picker("Type", selection: $model.typeFilter) {
-                ForEach(ActivityTypeFilter.allCases) { filter in
-                    Label(filter.title, systemImage: filter.symbol).tag(filter)
-                }
-            }
-            Picker("Group", selection: $model.groupFilter) {
-                Text("All Groups").tag(GroupID?.none)
-                ForEach(model.filterGroups) { group in
-                    Text(group.name).tag(Optional(group.id))
-                }
-            }
-            if model.isFiltering {
-                Button("Clear Filters", systemImage: "xmark.circle", role: .destructive) { model.clearFilters() }
-            }
-        } label: {
-            Label(
-                "Filter",
-                systemImage: model.isFiltering
-                    ? "line.3.horizontal.decrease.circle.fill"
-                    : "line.3.horizontal.decrease.circle"
-            )
         }
     }
 

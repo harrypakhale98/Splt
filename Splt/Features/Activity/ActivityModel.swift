@@ -108,6 +108,13 @@ final class ActivityModel {
         return group.name
     }
 
+    /// Who did it, for the avatar on the timeline. Nil when the event has no known actor.
+    func actor(for entry: ActivityEntry) -> (id: PersonID, name: String)? {
+        guard let id = entry.actorID else { return nil }
+        let name = id == me?.id ? (me?.name ?? String(localized: "You")) : names[id] ?? String(localized: "Someone")
+        return (id, name)
+    }
+
     func destination(for entry: ActivityEntry) -> Route? {
         ActivityDestination.route(for: entry, me: me?.id, groups: groups)
     }

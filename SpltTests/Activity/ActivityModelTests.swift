@@ -44,6 +44,24 @@ struct ActivityModelTests {
         #expect(sections[1].entries.contains { $0.event.kind == .expenseAdded })
     }
 
+    @Test func namesWhoDidIt() throws {
+        let (fixture, model, _) = try scene()
+        let entry = try #require(model.visibleEntries.first)
+        let actor = try #require(model.actor(for: entry))
+        #expect(actor.id == fixture.me.id)
+        let anonymous = ActivityEntry(event: .groupArchived)
+        #expect(model.actor(for: anonymous) == nil)
+        let stranger = ActivityEntry(actorID: PersonID(), event: .groupArchived)
+        #expect(model.actor(for: stranger)?.name == "Someone")
+    }
+
+    @Test func everyFilterHasAShortTitle() {
+        for filter in ActivityTypeFilter.allCases {
+            #expect(!filter.shortTitle.isEmpty)
+            #expect(filter.shortTitle.count <= filter.title.count)
+        }
+    }
+
     @Test func titlesTodayAndYesterday() throws {
         let fixture = try Fixture()
         let model = ActivityModel(services: fixture.services, calendar: calendar)
