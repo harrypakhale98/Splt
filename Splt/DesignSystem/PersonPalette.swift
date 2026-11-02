@@ -20,7 +20,7 @@ enum PersonPalette {
         (0xD2570A, 0xFF9F5A), // orange
         (0x9A6A00, 0xF5C44E), // amber
         (0x5D7F00, 0xB5E04A), // lime
-        (0x2E8B3E, 0x5FD97A), // green
+        (0x2B8639, 0x5FD97A), // green
         (0x00806F, 0x3DDBB9), // teal
         (0x007F99, 0x4CD0EE), // cyan
         (0x1A6FD8, 0x6AAEFF), // azure
