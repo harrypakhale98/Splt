@@ -157,10 +157,11 @@ struct UIBalanceTintTests {
     @Test(arguments: [false, true])
     func moneyTextReaches4Point5OnSystemBackgrounds(dark: Bool) {
         let style = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
-        let backgrounds: [UIColor] = [
+        let system: [UIColor] = [
             .systemBackground, .secondarySystemBackground, .systemGroupedBackground,
             .secondarySystemGroupedBackground
-        ].map { $0.resolvedColor(with: style) }
+        ]
+        let backgrounds = system.map { $0.resolvedColor(with: style) }
         for tint in [MoneyTint.owed, MoneyTint.owes] {
             for background in backgrounds {
                 let ratio = contrast(resolved(tint, dark: dark), background)

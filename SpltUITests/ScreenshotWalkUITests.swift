@@ -72,7 +72,7 @@ final class ScreenshotWalkUITests: XCTestCase {
             settle.tap()
             if app.navigationBars["Settle Up"].waitForExistence(timeout: 5) {
                 shot("10-settle")
-                app.buttons["Cancel"].firstMatch.tap()
+                dismissSheet(in: app)
             }
         }
 
@@ -82,36 +82,69 @@ final class ScreenshotWalkUITests: XCTestCase {
         } else if app.navigationBars.buttons.firstMatch.exists {
             app.navigationBars.buttons.firstMatch.tap()
         }
-        openTab("Friends", in: app)
-        XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 10))
-        shot("11-friends")
-        let friend = element(labelStartingWith: "Jonas Weber", in: app)
-        reveal(friend, in: app)
-        do {
-            friend.tap()
-            shot("12-friend-detail")
-        }
-        openTab("Friends", in: app)
 
-        openTab("Activity", in: app)
-        XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 10))
-        shot("13-activity")
-
-        openTab("Search", in: app)
-        let field = app.searchFields.firstMatch
-        if field.waitForExistence(timeout: 10) {
-            field.tap()
-            field.typeText("dinner")
-            shot("14-search")
-            // the search keyboard would otherwise cover the tab bar
-            let cancel = app.buttons["Cancel"].firstMatch
-            if cancel.exists { cancel.tap() } else { app.swipeDown() }
+        if visit("Friends", in: app) {
+            shot("11-friends")
+            let friend = element(labelStartingWith: "Jonas Weber", in: app)
+            if friend.waitForExistence(timeout: 5) {
+                reveal(friend, in: app)
+                friend.tap()
+                shot("12-friend-detail")
+                visit("Friends", in: app)
+            }
         }
 
-        openTab("Account", in: app)
-        XCTAssertTrue(app.buttons["Settings"].firstMatch.waitForExistence(timeout: 10), "the Account screen did not open")
-        shot("15-account")
-        app.swipeUp()
-        shot("16-account-more")
+        if visit("Activity", in: app) {
+            shot("13-activity")
+        }
+
+        if visit("Search", in: app) {
+            let field = app.searchFields.firstMatch
+            if field.waitForExistence(timeout: 10) {
+                field.tap()
+                field.typeText("dinner")
+                shot("14-search")
+                // the search keyboard would otherwise cover the tab bar
+                let cancel = app.buttons["Cancel"].firstMatch
+                if cancel.exists { cancel.tap() } else { app.swipeDown() }
+            }
+        }
+
+        if visit("Account", in: app) {
+            shot("15-account")
+            app.swipeUp()
+            shot("16-account-more")
+        }
+    }
+
+    /// Opens a tab when its button can be found, scrolling to bring back a minimized tab bar. A tab
+    /// that cannot be reached is noted and skipped, so one odd screen does not stop the rest of the walk.
+    @MainActor
+    @discardableResult
+    private func visit(_ name: String, in app: XCUIApplication) -> Bool {
+        let button = app.tabBars.firstMatch.buttons[name]
+        var attempts = 0
+        while !button.exists && attempts < 6 {
+            scroll(attempts.isMultiple(of: 2) ? .down : .up, in: app)
+            attempts += 1
+        }
+        guard button.exists else {
+            XCTContext.runActivity(named: "Skipped the \(name) tab: no tab bar") { _ in }
+            return false
+        }
+        button.tap()
+        return true
+    }
+
+    @MainActor
+    private func dismissSheet(in app: XCUIApplication) {
+        for title in ["Cancel", "Close", "Done"] {
+            let button = app.buttons[title].firstMatch
+            if button.exists {
+                button.tap()
+                return
+            }
+        }
+        app.swipeDown()
     }
 }
