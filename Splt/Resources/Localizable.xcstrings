@@ -298,6 +298,16 @@
         }
       }
     },
+    "%@ paid %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ paid %2$lld%%"
+          }
+        }
+      }
+    },
     "%@ paid you" : {
 
     },
@@ -399,7 +409,7 @@
     "%@ undid a payment" : {
 
     },
-    "%@ will still be owed." : {
+    "%@ will still be owed" : {
 
     },
     "%@, %@ percent" : {
@@ -408,6 +418,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@ percent"
+          }
+        }
+      }
+    },
+    "%@, %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$lld%%"
           }
         }
       }
@@ -435,6 +455,16 @@
     "%@, settled up" : {
 
     },
+    "%@, shared groups: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, shared groups: %2$@"
+          }
+        }
+      }
+    },
     "%@: owes you %@" : {
       "localizations" : {
         "en" : {
@@ -461,6 +491,9 @@
     "%lld new updates in your groups." : {
 
     },
+    "%lld people" : {
+
+    },
     "%lld people paid" : {
 
     },
@@ -473,6 +506,12 @@
           }
         }
       }
+    },
+    "%lld percent of what is owed" : {
+
+    },
+    "%lld%%" : {
+
     },
     "%lld, including you" : {
 
@@ -527,6 +566,16 @@
         }
       }
     },
+    "About %@ a %@ on average" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "About %1$@ a %2$@ on average"
+          }
+        }
+      }
+    },
     "Account" : {
       "comment" : "Tab and screen title for the account and settings",
       "extractionState" : "manual",
@@ -538,6 +587,9 @@
           }
         }
       }
+    },
+    "Across All Groups" : {
+
     },
     "Activity" : {
       "comment" : "Tab and screen title for recent expenses and payments",
@@ -638,7 +690,7 @@
     "Add what you paid. Splt works out who owes whom, to the cent, and keeps it all in one place." : {
 
     },
-    "Add your name and payment details" : {
+    "Add your name so friends know it is you" : {
 
     },
     "Added %@, %@, to %@." : {
@@ -676,6 +728,9 @@
     "Adjustments" : {
 
     },
+    "All" : {
+
+    },
     "All Activity" : {
 
     },
@@ -697,6 +752,9 @@
     "All settled up" : {
 
     },
+    "All square" : {
+
+    },
     "Allow camera access in Settings, or ask your friend to send the invite link instead." : {
 
     },
@@ -707,6 +765,12 @@
 
     },
     "Amount" : {
+
+    },
+    "Amount %@" : {
+
+    },
+    "Amount hidden" : {
 
     },
     "Amount in %@" : {
@@ -769,10 +833,7 @@
     "Bank Transfer" : {
 
     },
-    "Biggest Category" : {
-
-    },
-    "Biggest Expense" : {
+    "Biggest: %@" : {
 
     },
     "Block" : {
@@ -783,6 +844,16 @@
     },
     "Both Ways" : {
 
+    },
+    "Busiest %@: %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Busiest %1$@: %2$@, %3$@"
+          }
+        }
+      }
     },
     "By Category" : {
 
@@ -998,6 +1069,9 @@
         }
       }
     },
+    "Day by day" : {
+
+    },
     "Decimal point" : {
 
     },
@@ -1061,9 +1135,6 @@
     "Direct expenses" : {
 
     },
-    "Direction" : {
-
-    },
     "Discard Changes" : {
 
     },
@@ -1107,6 +1178,9 @@
 
     },
     "Edit Items" : {
+
+    },
+    "Edit Profile" : {
 
     },
     "Edit Recurring" : {
@@ -1309,7 +1383,7 @@
     "Filter" : {
 
     },
-    "Find friends, groups and expenses. Try \"dinners Sam paid in March\"." : {
+    "Find friends, groups and expenses, or ask in your own words." : {
 
     },
     "Finding the exchange rate" : {
@@ -1395,9 +1469,6 @@
 
     },
     "Fuel" : {
-
-    },
-    "Full Amount" : {
 
     },
     "General" : {
@@ -1510,10 +1581,16 @@
     "Hide" : {
 
     },
+    "Hide Amounts" : {
+
+    },
     "Hide number pad" : {
 
     },
     "History" : {
+
+    },
+    "Hold a person for who paid" : {
 
     },
     "Home" : {
@@ -1700,7 +1777,7 @@
     "Message" : {
 
     },
-    "Method" : {
+    "Month by month" : {
 
     },
     "Monthly" : {
@@ -1716,9 +1793,6 @@
 
     },
     "Name" : {
-
-    },
-    "Name and payment details" : {
 
     },
     "Needs Attention" : {
@@ -1820,6 +1894,9 @@
     "No Recurring Expenses" : {
 
     },
+    "No Results" : {
+
+    },
     "No Totals Yet" : {
 
     },
@@ -1892,6 +1969,19 @@
 
     },
     "Nothing Matches" : {
+
+    },
+    "Nothing matches “%@”. Check the spelling, or ask a question such as “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nothing matches “%1$@”. Check the spelling, or ask a question such as “%2$@”."
+          }
+        }
+      }
+    },
+    "Nothing owed between you and %@." : {
 
     },
     "Nothing shared yet." : {
@@ -2002,9 +2092,6 @@
     "Owes You" : {
 
     },
-    "Owes you" : {
-
-    },
     "PDF" : {
 
     },
@@ -2030,13 +2117,33 @@
     "Paid by %@" : {
 
     },
+    "Paid by %@ on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paid by %1$@ on %2$@"
+          }
+        }
+      }
+    },
+    "Paid by %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paid by %1$@ · %2$@"
+          }
+        }
+      }
+    },
     "Paid by Person" : {
 
     },
-    "Part of a recurring expense" : {
+    "Paid with" : {
 
     },
-    "Partial" : {
+    "Part of a recurring expense" : {
 
     },
     "Pause" : {
@@ -2049,9 +2156,6 @@
 
     },
     "PayPal" : {
-
-    },
-    "Payment Details" : {
 
     },
     "Payment Recorded" : {
@@ -2075,7 +2179,10 @@
     "People you hide or block show up here." : {
 
     },
-    "Per Day" : {
+    "Per day" : {
+
+    },
+    "Per month" : {
 
     },
     "Percent" : {
@@ -2130,6 +2237,9 @@
 
     },
     "Reading the receipt" : {
+
+    },
+    "Recap" : {
 
     },
     "Receipt" : {
@@ -2432,6 +2542,9 @@
         }
       }
     },
+    "Spent" : {
+
+    },
     "Split" : {
 
     },
@@ -2470,6 +2583,9 @@
 
     },
     "Splitwise Import" : {
+
+    },
+    "Splt" : {
 
     },
     "Splt can't find that friend." : {
@@ -2562,6 +2678,9 @@
     "Suggested category for this title" : {
 
     },
+    "Swap who pays" : {
+
+    },
     "Swipe up or down to change. %@ at a time." : {
 
     },
@@ -2613,6 +2732,9 @@
     "That invite is from you." : {
 
     },
+    "That is the story of %@." : {
+
+    },
     "That isn't a Splt invite." : {
 
     },
@@ -2634,13 +2756,16 @@
     "That scan could not be read." : {
 
     },
-    "That's more than the %@ owed. Switch the direction to record an advance." : {
+    "That's more than the %@ owed. Swap the direction to record an advance." : {
 
     },
     "The adjustments leave %@ with a negative share." : {
 
     },
     "The amount must be more than zero." : {
+
+    },
+    "The biggest one" : {
 
     },
     "The expense could not be saved. Try again." : {
@@ -2709,6 +2834,9 @@
     "This person may have been removed." : {
 
     },
+    "This records a payment the other way, such as an advance." : {
+
+    },
     "This split does not add up." : {
 
     },
@@ -2749,9 +2877,6 @@
 
     },
     "Totals appear once the group has expenses." : {
-
-    },
-    "Touch and hold a person to say who paid." : {
 
     },
     "Translate" : {
@@ -2856,6 +2981,9 @@
     "View Receipt" : {
 
     },
+    "Watch the Recap" : {
+
+    },
     "Weekly" : {
 
     },
@@ -2865,13 +2993,16 @@
     "What was it for?" : {
 
     },
+    "Where it went" : {
+
+    },
     "Who Owes Whom" : {
 
     },
-    "Who Paid" : {
+    "Who do you want to settle up with?" : {
 
     },
-    "Who do you want to settle up with?" : {
+    "Who paid the most" : {
 
     },
     "Who's in" : {
@@ -2881,6 +3012,9 @@
 
     },
     "With %@" : {
+
+    },
+    "With Friends" : {
 
     },
     "Yearly" : {
@@ -3024,6 +3158,9 @@
     "You pay %@" : {
 
     },
+    "You spent together" : {
+
+    },
     "You stop seeing this group. The others keep it." : {
 
     },
@@ -3048,6 +3185,9 @@
     "Your name" : {
 
     },
+    "Your name is what friends see. You can change both later." : {
+
+    },
     "Your share" : {
 
     },
@@ -3057,15 +3197,31 @@
     "Zelle" : {
 
     },
-    "^[%lld expense](inflect: true) over ^[%lld day](inflect: true)" : {
+    "^[%lld expense](inflect: true) in %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "^[%1$lld expense](inflect: true) over ^[%2$lld day](inflect: true)"
+            "value" : "^[%1$lld expense](inflect: true) in %2$@"
           }
         }
       }
+    },
+    "^[%lld expense](inflect: true) over ^[%lld %@](inflect: true)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld expense](inflect: true) over ^[%2$lld %3$@](inflect: true)"
+          }
+        }
+      }
+    },
+    "^[%lld friend](inflect: true)" : {
+
+    },
+    "^[%lld group](inflect: true)" : {
+
     },
     "^[%lld member](inflect: true)" : {
 
@@ -3088,7 +3244,16 @@
     "category" : {
 
     },
+    "coffee this week" : {
+
+    },
+    "covered %lld%% of the bills" : {
+
+    },
     "date" : {
+
+    },
+    "dinners paid last month" : {
 
     },
     "discount %@" : {
@@ -3163,6 +3328,9 @@
     "owes you" : {
 
     },
+    "owes you %@" : {
+
+    },
     "paid by %@" : {
 
     },
@@ -3176,6 +3344,9 @@
 
     },
     "receipt" : {
+
+    },
+    "rent over 500" : {
 
     },
     "repeat" : {
@@ -3208,6 +3379,9 @@
     "split with adjustments" : {
 
     },
+    "still owed" : {
+
+    },
     "tax %@" : {
 
     },
@@ -3229,13 +3403,19 @@
     "you are owed" : {
 
     },
-    "you borrowed" : {
-
-    },
     "you lent" : {
 
     },
+    "you lent %@" : {
+
+    },
     "you owe" : {
+
+    },
+    "you owe %@" : {
+
+    },
+    "·" : {
 
     }
   },

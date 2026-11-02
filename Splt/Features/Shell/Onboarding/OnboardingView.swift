@@ -1,3 +1,4 @@
+import SpltCore
 import SwiftUI
 
 /// Three short beats on first launch: what Splt is, what colors mean, then your name and currency.
@@ -43,6 +44,7 @@ struct OnboardingView: View {
                 Button(action: advance) {
                     Text(page == lastPage ? "Start Splitting" : "Continue")
                         .font(.headline)
+                        .foregroundStyle(PersonPalette.onColor)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glassProminent)
@@ -59,7 +61,7 @@ struct OnboardingView: View {
                     }
                 }
             }
-            .background(Color(.systemBackground))
+            .background(Color(.systemGroupedBackground))
         }
         .interactiveDismissDisabled(page == lastPage)
         .accessibilityIdentifier("onboarding")
@@ -139,22 +141,44 @@ private struct SetupBeat: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                OrbitMotif(names: [profile.effectiveName, "Sam", "Priya", "Alex"], size: 140)
-                    .padding(.top, 8)
-                Text("Make it yours")
-                    .font(.largeTitle.bold())
-                    .accessibilityAddTraits(.isHeader)
+            VStack(spacing: 32) {
+                OrbitMotif(names: ["Sam", "Priya", "Alex", "Jo", "Mia"], size: 240) {
+                    ZStack {
+                        AvatarView(
+                            name: profile.displayName, hue: PersonPalette.meIndex, size: 88,
+                            showsInitials: profile.hasName
+                        )
+                        if !profile.hasName {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 36))
+                                .foregroundStyle(PersonPalette.onColor)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                }
+                .padding(.top, 24)
+
+                VStack(spacing: 12) {
+                    Text("Make it yours")
+                        .font(.largeTitle.bold())
+                        .multilineTextAlignment(.center)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Your name is what friends see. You can change both later.")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
                 VStack(spacing: 0) {
                     TextField("Your name", text: $profile.displayName, prompt: Text("Your Name"))
+                        .font(.system(.title3, design: .rounded, weight: .semibold))
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
-                        .padding(16)
-                        .frame(minHeight: 52)
+                        .padding(18)
+                        .frame(minHeight: 56)
                         .accessibilityIdentifier("onboarding.name")
-                    Divider().padding(.leading, 16)
+                    Divider().padding(.leading, 18)
                     NavigationLink {
                         CurrencyPickerView()
                     } label: {
@@ -170,19 +194,21 @@ private struct SetupBeat: View {
                                 .foregroundStyle(.tertiary)
                                 .accessibilityHidden(true)
                         }
-                        .padding(16)
-                        .frame(minHeight: 52)
+                        .padding(18)
+                        .frame(minHeight: 56)
                     }
+                    .buttonStyle(.plain)
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .cardSurface(radius: 24)
 
                 Text("Splt is free forever: no ads, no limits, no subscription, and nothing to sign up for. With iCloud on, your groups sync between your devices and the people you share them with. Without it, everything stays on this device.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 28)
             .padding(.bottom, 48)
+            .frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
