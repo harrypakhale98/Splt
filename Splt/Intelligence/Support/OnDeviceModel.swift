@@ -14,7 +14,11 @@ enum OnDeviceModel {
     }
 
     /// Greedy sampling so the same input reads the same way every time.
+    #if compiler(>=6.4)
     static let options = GenerationOptions(samplingMode: .greedy)
+    #else
+    static let options = GenerationOptions(sampling: .greedy)
+    #endif
 
     /// Asks the model one question in a fresh session and returns its structured answer.
     /// Throws on timeout, cancellation, guardrails or an unsupported language.
