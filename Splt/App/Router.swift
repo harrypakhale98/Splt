@@ -23,6 +23,12 @@ final class Router {
     }
 
     func push(_ route: Route, in tab: AppTab? = nil) {
+        if route == .settings {
+            // the settings sections are the Account screen itself
+            selectedTab = .account
+            accountPath = []
+            return
+        }
         let target = tab ?? selectedTab
         selectedTab = target
         switch target {
@@ -62,6 +68,9 @@ final class Router {
             selectedTab = .friends
         case .addExpense:
             sheet = .addExpense
+        case .activity:
+            sheet = nil
+            selectedTab = .activity
         case .invite(let invite):
             pendingInvite = invite
             sheet = .newFriend

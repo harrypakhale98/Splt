@@ -12,6 +12,8 @@ enum DeepLink: Hashable, Sendable {
     /// Opens a friend with the settle up sheet ready.
     case settle(UUID)
     case addExpense
+    /// Opens the Activity tab.
+    case activity
     case invite(FriendInvite)
 
     init?(url: URL) {
@@ -31,6 +33,8 @@ enum DeepLink: Hashable, Sendable {
         case ("settle", 2):
             guard let id = UUID(uuidString: parts[1]) else { return nil }
             self = .settle(id)
+        case ("activity", 1):
+            self = .activity
         case ("invite", 1):
             guard let invite = FriendInvite(url: url) else { return nil }
             self = .invite(invite)
@@ -45,6 +49,7 @@ enum DeepLink: Hashable, Sendable {
         case .friend(let id): URL(string: "\(Self.scheme)://friend/\(id.uuidString)")!
         case .settle(let id): URL(string: "\(Self.scheme)://settle/\(id.uuidString)")!
         case .addExpense: URL(string: "\(Self.scheme)://add-expense")!
+        case .activity: URL(string: "\(Self.scheme)://activity")!
         case .invite(let invite): invite.url
         }
     }

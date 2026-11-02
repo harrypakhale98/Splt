@@ -6,6 +6,10 @@ struct SpltApp: App {
     @State private var services = LaunchServices.make()
     @UIApplicationDelegateAdaptor(SyncAppDelegate.self) private var appDelegate
 
+    init() {
+        NotificationCoordinator.shared.install()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -15,7 +19,7 @@ struct SpltApp: App {
                 .syncLifecycle(services: services, router: router)
                 .groupSpotlight(services: services, router: router)
                 .friendSpotlight(services: services, router: router)
-                .reminderNotifications(router: router)
+                .notificationRouting(router: router)
         }
     }
 }
