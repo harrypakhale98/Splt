@@ -1,5 +1,6 @@
 import SpltCore
 import SwiftUI
+import UIKit
 
 /// Shows an amount with tabular digits.
 ///
@@ -31,8 +32,8 @@ struct MoneyLabel: View {
     /// quiet when settled. Heroes use the primary color and write the sign. Person colors never
     /// color an amount, only avatars and bars.
     static func balanceTint(for money: Money) -> Color {
-        if money.minorUnits > 0 { return .green }
-        if money.minorUnits < 0 { return .red }
+        if money.minorUnits > 0 { return MoneyTint.owed }
+        if money.minorUnits < 0 { return MoneyTint.owes }
         return .secondary
     }
 
@@ -42,6 +43,20 @@ struct MoneyLabel: View {
         if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
         if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
         return String(localized: "Settled up")
+    }
+}
+
+/// Green and red for money text. Darker than the system colors in light mode and lighter in dark
+/// mode, so text reaches 4.5 to 1 on the system backgrounds. Use the system colors for shapes.
+enum MoneyTint {
+    static let owedHex: (light: UInt32, dark: UInt32) = (0x1F7A33, 0x4CD964)
+    static let owesHex: (light: UInt32, dark: UInt32) = (0xC62828, 0xFF6B6B)
+
+    static let owed = adaptive(owedHex)
+    static let owes = adaptive(owesHex)
+
+    private static func adaptive(_ pair: (light: UInt32, dark: UInt32)) -> Color {
+        Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: pair.dark) : UIColor(hex: pair.light) })
     }
 }
 

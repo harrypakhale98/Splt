@@ -89,7 +89,7 @@ struct GroupExpenseRow: View {
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-                        .foregroundStyle(net.minorUnits > 0 ? Color.green : (net.minorUnits < 0 ? Color.red : Color.secondary))
+                        .foregroundStyle(MoneyLabel.balanceTint(for: net))
                 } else {
                     Text("Not involved")
                         .font(.caption)

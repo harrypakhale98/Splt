@@ -129,10 +129,44 @@ struct UIPersonColorLookupTests {
 @Suite("Balance tint")
 @MainActor
 struct UIBalanceTintTests {
+    private func resolved(_ color: Color, dark: Bool) -> UIColor {
+        UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: dark ? .dark : .light))
+    }
+
+    private func luminance(_ color: UIColor) -> Double {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        func channel(_ value: CGFloat) -> Double {
+            let v = Double(value)
+            return v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+    }
+
+    private func contrast(_ first: UIColor, _ second: UIColor) -> Double {
+        let a = luminance(first), b = luminance(second)
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
     @Test func oneRuleForGreenRedAndQuiet() {
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == .green)
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: -100, currencyCode: "USD")) == .red)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == MoneyTint.owed)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: -100, currencyCode: "USD")) == MoneyTint.owes)
         #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == .secondary)
+    }
+
+    @Test(arguments: [false, true])
+    func moneyTextReaches4Point5OnSystemBackgrounds(dark: Bool) {
+        let style = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
+        let backgrounds: [UIColor] = [
+            .systemBackground, .secondarySystemBackground, .systemGroupedBackground,
+            .secondarySystemGroupedBackground
+        ].map { $0.resolvedColor(with: style) }
+        for tint in [MoneyTint.owed, MoneyTint.owes] {
+            for background in backgrounds {
+                let ratio = contrast(resolved(tint, dark: dark), background)
+                #expect(ratio >= 4.5, "\(dark ? "dark" : "light") text has contrast \(ratio)")
+            }
+        }
     }
 }
 
