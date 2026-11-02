@@ -46,6 +46,25 @@ final class GroupDetailViewModel {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
+    @ObservationIgnored private var revision = 0
+    @ObservationIgnored private var memo = Memo()
+
+    /// Work that depends only on the loaded data, kept until the next refresh so a screen that reads
+    /// it again while it redraws does not repeat it for thousands of expenses.
+    private struct Memo {
+        struct SectionsKey: Equatable {
+            var revision: Int
+            var filter: ExpenseFilter
+            var grouping: ExpenseGrouping
+        }
+
+        var totalsRevision = -1
+        var totals: [GroupTotals] = []
+        var recapRevision = -1
+        var recap: TripRecap?
+        var sectionsKey: SectionsKey?
+        var sections: [ExpenseSection] = []
+    }
 
     init(
         groupID: GroupID,
@@ -65,6 +84,7 @@ final class GroupDetailViewModel {
     }
 
     func refresh() {
+        revision += 1
         do {
             guard let loaded = try groups.group(id: groupID) else {
                 group = nil
@@ -122,7 +142,13 @@ final class GroupDetailViewModel {
     }
 
     var sections: [ExpenseSection] {
-        ExpenseSectioning.sections(visibleExpenses, grouping: grouping, calendar: calendar)
+        let key = Memo.SectionsKey(revision: revision, filter: filter, grouping: grouping)
+        _ = expenses
+        if memo.sectionsKey == key { return memo.sections }
+        let built = ExpenseSectioning.sections(visibleExpenses, grouping: grouping, calendar: calendar)
+        memo.sectionsKey = key
+        memo.sections = built
+        return built
     }
 
     func sectionTitle(_ section: ExpenseSection, locale: Locale) -> String {
@@ -143,7 +169,12 @@ final class GroupDetailViewModel {
     }
 
     var recap: TripRecap? {
-        group.flatMap { TripRecap(group: $0, expenses: expenses, now: now(), calendar: calendar) }
+        _ = expenses
+        if memo.recapRevision == revision { return memo.recap }
+        let built = group.flatMap { TripRecap(group: $0, expenses: expenses, now: now(), calendar: calendar) }
+        memo.recapRevision = revision
+        memo.recap = built
+        return built
     }
 
     // MARK: Balances
@@ -182,7 +213,12 @@ final class GroupDetailViewModel {
     // MARK: Totals
 
     var totals: [GroupTotals] {
-        GroupTotals.make(expenses: expenses, names: names)
+        _ = expenses
+        if memo.totalsRevision == revision { return memo.totals }
+        let built = GroupTotals.make(expenses: expenses, names: names)
+        memo.totalsRevision = revision
+        memo.totals = built
+        return built
     }
 
     /// The totals in the group's own currency, or the biggest one when that has no spending.

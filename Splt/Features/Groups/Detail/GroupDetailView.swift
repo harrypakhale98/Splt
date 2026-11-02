@@ -140,6 +140,7 @@ private struct GroupDetailContent: View {
 
     @ViewBuilder
     private var expensesContent: some View {
+        let sections = model.sections
         if let recap = model.recap, !model.filter.isActive {
             TripRecapSection(recap: recap)
         }
@@ -161,13 +162,13 @@ private struct GroupDetailContent: View {
                 )
                 .listRowBackground(Color.clear)
             }
-        } else if model.sections.isEmpty {
+        } else if sections.isEmpty {
             Section {
                 ContentUnavailableView.search(text: model.filter.query)
                     .listRowBackground(Color.clear)
             }
         } else {
-            ForEach(model.sections) { section in
+            ForEach(sections) { section in
                 Section(model.sectionTitle(section, locale: locale)) {
                     ForEach(section.expenses) { expense in
                         NavigationLink(value: Route.expense(expense.id.rawValue)) {
