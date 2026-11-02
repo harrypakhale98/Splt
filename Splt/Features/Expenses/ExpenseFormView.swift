@@ -69,6 +69,7 @@ private struct ExpenseFormScreen: View {
             Text(model.saveError ?? "")
         }
         .haptic(.success, trigger: model.saveCount)
+        .task(id: model.rateKey) { await model.refreshRate() }
         .task {
             guard !model.isEditing, model.total == nil else { return }
             try? await Task.sleep(for: .milliseconds(350))

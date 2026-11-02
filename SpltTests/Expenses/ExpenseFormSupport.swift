@@ -35,6 +35,17 @@ struct ExpenseFormHarness {
         )
     }
 
+    /// A new expense whose rate lookups go through `service`, the way the app's rates service would.
+    func newExpense(rates service: RatesService) -> ExpenseFormModel {
+        var value = dependencies
+        value.rateLookup = { group, date, code in
+            await service.exchangeRates(for: group, on: date, from: code)
+        }
+        return ExpenseFormModel(
+            mode: .add(groupID: fixture.group.id, prefill: nil), services: fixture.services, dependencies: value
+        )
+    }
+
     func editor(for id: ExpenseID) -> ExpenseFormModel {
         ExpenseFormModel(mode: .edit(id), services: fixture.services, dependencies: dependencies)
     }

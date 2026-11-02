@@ -39,6 +39,14 @@ struct AmountSection: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
+            } else if model.isFindingRate {
+                HStack {
+                    ProgressView()
+                    Text("Finding the exchange rate")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
             } else if model.lacksRate {
                 Label("No exchange rate is saved for \(model.currencyCode). The amount is kept in \(model.currencyCode).", systemImage: "exclamationmark.circle")
                     .font(.footnote)
