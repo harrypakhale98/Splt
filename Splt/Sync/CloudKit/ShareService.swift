@@ -1,49 +1,72 @@
 import CloudKit
 import Foundation
 
+/// The three database calls sharing needs, so the logic can run against in memory records.
+protocol ShareDatabase: Sendable {
+    func fetchRecord(_ id: CKRecord.ID) async throws -> CKRecord
+    func saveRecord(_ record: CKRecord) async throws -> CKRecord
+    func deleteRecord(_ id: CKRecord.ID) async throws
+}
+
+struct CloudKitShareDatabase: ShareDatabase {
+    let database: CKDatabase
+
+    func fetchRecord(_ id: CKRecord.ID) async throws -> CKRecord {
+        try await database.record(for: id)
+    }
+
+    func saveRecord(_ record: CKRecord) async throws -> CKRecord {
+        let result = try await database.modifyRecords(saving: [record], deleting: [])
+        guard let saved = try result.saveResults[record.recordID]?.get() else { throw SyncError.notReady }
+        return saved
+    }
+
+    func deleteRecord(_ id: CKRecord.ID) async throws {
+        _ = try await database.deleteRecord(withID: id)
+    }
+}
+
 /// Creates, finds and removes the CKShare of a group's record zone.
 struct ShareService {
-    let container: CKContainer
+    let privateDatabase: any ShareDatabase
+    let sharedDatabase: any ShareDatabase
 
     /// The zone wide share for a group in your private database, created on first use.
     /// Invitees can read and write, and nobody can join without being invited.
     func prepare(zoneID: CKRecordZone.ID, title: String) async throws -> CKShare {
-        let database = container.privateCloudDatabase
-        if let existing = try await existingShare(zoneID: zoneID, in: database) {
+        if let existing = try await existingShare(zoneID: zoneID, in: privateDatabase) {
             return existing
         }
         let share = CKShare(recordZoneID: zoneID)
         share[CKShare.SystemFieldKey.title] = title as NSString
         share.publicPermission = .none
-        let result = try await database.modifyRecords(saving: [share], deleting: [])
-        guard let saved = try result.saveResults[share.recordID]?.get() as? CKShare else {
+        guard let saved = try await privateDatabase.saveRecord(share) as? CKShare else {
             throw SyncError.notReady
         }
         return saved
     }
 
     /// The share of a zone in either database, or nil when the zone is not shared.
-    func existingShare(zoneID: CKRecordZone.ID, in database: CKDatabase) async throws -> CKShare? {
-        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
-        do {
-            return try await database.record(for: id) as? CKShare
-        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
-            return nil
-        }
-    }
-
     func share(zoneID: CKRecordZone.ID) async throws -> CKShare? {
-        let database = zoneID.scope == .privateDatabase ? container.privateCloudDatabase : container.sharedCloudDatabase
-        return try await existingShare(zoneID: zoneID, in: database)
+        try await existingShare(zoneID: zoneID, in: zoneID.scope == .privateDatabase ? privateDatabase : sharedDatabase)
     }
 
     /// Stops sharing. The group stays in your private database.
     func stopSharing(zoneID: CKRecordZone.ID) async throws {
         let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
         do {
-            _ = try await container.privateCloudDatabase.deleteRecord(withID: id)
-        } catch let error as CKError where error.code == .unknownItem {
+            try await privateDatabase.deleteRecord(id)
+        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
             throw SyncError.notShared
+        }
+    }
+
+    private func existingShare(zoneID: CKRecordZone.ID, in database: any ShareDatabase) async throws -> CKShare? {
+        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
+        do {
+            return try await database.fetchRecord(id) as? CKShare
+        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
+            return nil
         }
     }
 }
