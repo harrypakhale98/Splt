@@ -23,6 +23,50 @@ final class SwiftDataPaymentRepository: PaymentRepository {
         try env.save()
     }
 
+    func recordAll(_ payments: [Payment]) throws {
+        guard !payments.isEmpty else { return }
+        do {
+            let me = try env.currentUser()?.personID
+            try insertBatch(payments)
+            let counts = Dictionary(grouping: payments.compactMap(\.groupID), by: { $0 }).mapValues(\.count)
+            for group in counts.keys.sorted() {
+                try env.log(.expensesImported(expenses: 0, payments: counts[group] ?? 0), groupID: group, actor: me)
+            }
+            try env.save()
+        } catch {
+            env.tracker.rollback()
+            throw error
+        }
+    }
+
+    /// Stores many payments without saving or logging, after checking them all with a few queries.
+    func insertBatch(_ payments: [Payment]) throws {
+        var knownGroups = Set<GroupID>()
+        var seen = Set<PaymentID>()
+        for payment in payments {
+            guard let groupID = payment.groupID else { throw DataError.missingGroup }
+            if knownGroups.insert(groupID).inserted, try env.groupRecord(groupID) == nil {
+                throw DataError.notFound("group \(groupID)")
+            }
+            do {
+                try payment.validate()
+            } catch let error as PaymentError {
+                throw DataError.invalidPayment(error)
+            }
+            guard seen.insert(payment.id).inserted else { throw DataError.alreadyExists("payment \(payment.id)") }
+        }
+        let existing = try env.existingPaymentIDs(among: payments.map(\.id.rawValue))
+        if let clash = payments.first(where: { existing.contains($0.id.rawValue) }) {
+            throw DataError.alreadyExists("payment \(clash.id)")
+        }
+        let created = env.now()
+        for payment in payments {
+            let record = PaymentRecord(payment, createdAt: created)
+            env.context.insert(record)
+            env.tracker.recordEdit(record)
+        }
+    }
+
     @discardableResult
     func settle(_ debt: Debt, in group: GroupID, date: Date, note: String) throws -> Payment {
         let payment = Payment(settling: debt, groupID: group, date: date, note: note)

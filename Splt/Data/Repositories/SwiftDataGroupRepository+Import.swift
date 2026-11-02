@@ -23,14 +23,10 @@ extension SwiftDataGroupRepository {
             }
             env.tracker.recordEdit(record)
 
-            let expenses = SwiftDataExpenseRepository(env)
-            for expense in parsed.expenses {
-                try expenses.insert(expense, extras: ExpenseExtras(), logsActivity: false)
-            }
-            let payments = SwiftDataPaymentRepository(env)
-            for payment in parsed.payments {
-                try payments.insert(payment, logsActivity: false)
-            }
+            try SwiftDataExpenseRepository(env).insertBatch(
+                parsed.expenses, createdBy: try env.currentUser()?.personID
+            )
+            try SwiftDataPaymentRepository(env).insertBatch(parsed.payments)
             try env.log(
                 .expensesImported(expenses: parsed.expenses.count, payments: parsed.payments.count), groupID: group
             )
@@ -40,7 +36,7 @@ extension SwiftDataGroupRepository {
                 peopleAdded: added, warnings: parsed.warnings
             )
         } catch {
-            env.context.rollback()
+            env.tracker.rollback()
             throw error
         }
     }
