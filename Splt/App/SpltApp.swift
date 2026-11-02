@@ -27,6 +27,7 @@ struct SpltApp: App {
                 }
             }
             .onOpenURL { router.open($0) }
+            .preferredColorScheme(LaunchAppearance.scheme())
             .task { await prepare() }
         }
     }
