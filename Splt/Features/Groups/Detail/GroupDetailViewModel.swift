@@ -198,6 +198,29 @@ final class GroupDetailViewModel {
         }
     }
 
+    /// Currencies that have payments to make, or the group's own when everyone is square.
+    var balanceCurrencies: [String] {
+        let codes = Set(transfers.map(\.amount.currencyCode))
+        guard !codes.isEmpty else { return [group?.currencyCode ?? "USD"] }
+        return codes.sorted { lhs, rhs in
+            if lhs == group?.currencyCode { return true }
+            if rhs == group?.currencyCode { return false }
+            return lhs < rhs
+        }
+    }
+
+    /// The ring for one currency: everyone in the group and the payments in that currency.
+    func orbitBoard(currency: String) -> OrbitBoard {
+        OrbitBoard(
+            members: members,
+            me: me?.id,
+            nets: balances?.netBalances[currency] ?? [:],
+            debts: transfers,
+            currencyCode: currency,
+            extraPeople: peopleByID
+        )
+    }
+
     func setSimplifiesDebts(_ value: Bool) {
         guard var group, group.simplifiesDebts != value else { return }
         group.simplifiesDebts = value

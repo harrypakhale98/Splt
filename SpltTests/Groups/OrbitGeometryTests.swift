@@ -95,22 +95,40 @@ struct OrbitGeometryTests {
         #expect(layout.arc(from: 0, to: 9, width: 6) == nil)
     }
 
-    @Test func arcsBowTowardTheMiddle() throws {
+    @Test func neighborsBowTowardTheMiddle() throws {
         let layout = OrbitLayout(size: square, count: 6)
-        let arc = try #require(layout.arc(from: 0, to: 2, width: 6))
+        let arc = try #require(layout.arc(from: 0, to: 1, width: 6))
         let straightMid = CGPoint(
-            x: (layout.positions[0].x + layout.positions[2].x) / 2,
-            y: (layout.positions[0].y + layout.positions[2].y) / 2
+            x: (layout.positions[0].x + layout.positions[1].x) / 2,
+            y: (layout.positions[0].y + layout.positions[1].y) / 2
         )
         #expect(distance(arc.middle, layout.center) < distance(straightMid, layout.center))
     }
 
-    @Test func oppositePeopleBendAroundTheCenter() throws {
+    @Test func noArcEverCrossesTheMiddle() throws {
+        for count in 2...12 {
+            let layout = OrbitLayout(size: square, count: count)
+            for from in 0..<count {
+                for to in 0..<count where from != to {
+                    let arc = try #require(layout.arc(from: from, to: to, width: 6))
+                    let reach = distance(arc.middle, layout.center)
+                    #expect(reach >= layout.ringRadius * 0.58, "\(from) to \(to) crosses the middle with \(count) people")
+                    #expect(reach <= layout.ringRadius * 1.02, "\(from) to \(to) leaves the ring with \(count) people")
+                }
+            }
+        }
+    }
+
+    @Test func oppositePeopleArchUpAndAway() throws {
         for count in [2, 4, 6, 12] {
             let layout = OrbitLayout(size: square, count: count)
             let arc = try #require(layout.arc(from: 0, to: count / 2, width: 6))
-            #expect(distance(arc.middle, layout.center) > layout.ringRadius * 0.12, "runs through the middle at \(count)")
+            let reach = distance(arc.middle, layout.center)
+            #expect(reach > layout.ringRadius * 0.62 && reach < layout.ringRadius * 1.02, "wrong reach at \(count)")
         }
+        let pair = OrbitLayout(size: square, count: 2)
+        let arc = try #require(pair.arc(from: 0, to: 1, width: 6))
+        #expect(arc.middle.y < pair.center.y)
     }
 
     @Test func curveEndpointsAndMidpointAreExact() {

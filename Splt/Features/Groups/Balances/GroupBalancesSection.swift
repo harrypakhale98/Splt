@@ -1,12 +1,58 @@
 import SpltCore
 import SwiftUI
 
-/// Who owes whom, with a switch between the fewest payments and the direct debts.
+/// Who owes whom: a ring of people with the money drawn between them, or a plain list. A switch
+/// chooses between the fewest payments and the direct debts.
 struct GroupBalancesSection: View {
+    enum Mode: String, CaseIterable, Identifiable {
+        case orbit
+        case list
+
+        var id: String { rawValue }
+    }
+
     let model: GroupDetailViewModel
     let onSettle: (Debt) -> Void
 
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverOn
+    @State private var chosenMode: Mode?
+    @State private var chosenCurrency: String?
+
+    private var mode: Mode { chosenMode ?? (voiceOverOn ? .list : .orbit) }
+
+    private var currency: String {
+        if let chosenCurrency, model.balanceCurrencies.contains(chosenCurrency) { return chosenCurrency }
+        return model.balanceCurrencies.first ?? "USD"
+    }
+
     var body: some View {
+        Section {
+            Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
+                Text("Orbit").tag(Mode.orbit)
+                Text("List").tag(Mode.list)
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+
+            if model.balanceCurrencies.count > 1 {
+                Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
+                    ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
+                }
+            }
+        }
+
+        if mode == .orbit {
+            Section {
+                BalanceOrbitView(
+                    board: model.orbitBoard(currency: currency),
+                    members: model.group?.memberIDs ?? [],
+                    onSettle: onSettle
+                )
+                .padding(.vertical, 8)
+            }
+        }
+
         Section {
             Toggle("Simplify Debts", isOn: Binding(
                 get: { model.simplifiesDebts },
@@ -20,27 +66,30 @@ struct GroupBalancesSection: View {
             }
         }
 
-        Section("Who Owes Whom") {
-            if model.transfers.isEmpty {
-                Label("Everyone is settled up", systemImage: "checkmark.circle")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.transfers, id: \.self) { debt in
-                    TransferRow(
-                        debt: debt,
-                        debtorName: model.name(of: debt.debtor),
-                        creditorName: model.name(of: debt.creditor),
-                        currentPerson: model.me?.id,
-                        onTap: { onSettle(debt) }
-                    )
+        if mode == .list {
+            Section("Who Owes Whom") {
+                if model.transfers.isEmpty {
+                    Label("Everyone is settled up", systemImage: "checkmark.circle")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(model.transfers, id: \.self) { debt in
+                        TransferRow(
+                            debt: debt,
+                            debtorName: model.name(of: debt.debtor),
+                            creditorName: model.name(of: debt.creditor),
+                            currentPerson: model.me?.id,
+                            members: model.group?.memberIDs ?? [],
+                            onTap: { onSettle(debt) }
+                        )
+                    }
                 }
             }
-        }
 
-        if model.netRows.contains(where: { !$0.isSettled }) {
-            Section("Net Balances") {
-                ForEach(model.netRows) { row in
-                    NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id)
+            if model.netRows.contains(where: { !$0.isSettled }) {
+                Section("Net Balances") {
+                    ForEach(model.netRows) { row in
+                        NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id, members: model.group?.memberIDs ?? [])
+                    }
                 }
             }
         }
@@ -52,12 +101,13 @@ private struct TransferRow: View {
     let debtorName: String
     let creditorName: String
     let currentPerson: PersonID?
+    let members: [PersonID]
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                AvatarView(name: debtorName, size: 36)
+                AvatarView(name: debtorName, id: debt.debtor, members: members, size: 36)
                 Text(sentence)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 8)
@@ -90,10 +140,11 @@ private struct TransferRow: View {
 private struct NetBalanceRowView: View {
     let row: NetBalanceRow
     let isMe: Bool
+    let members: [PersonID]
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(name: row.person.name, size: 32)
+            AvatarView(name: row.person.name, id: row.person.id, members: members, size: 32)
             Text(isMe ? String(localized: "You") : row.person.name)
             Spacer(minLength: 8)
             if row.isSettled {
@@ -124,7 +175,7 @@ private struct NetBalanceRowView: View {
 }
 
 #if DEBUG
-#Preview {
+#Preview("Orbit") {
     let services = SampleData.previewServices()
     let trip = (try? services.groups.groups(includeArchived: false).first { $0.kind == .trip }) ?? nil
     NavigationStack {

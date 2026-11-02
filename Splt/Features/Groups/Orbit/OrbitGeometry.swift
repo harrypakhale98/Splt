@@ -88,19 +88,27 @@ struct OrbitLayout: Equatable {
         )
     }
 
-    /// Arcs bow toward the middle like a chord diagram. Pairs on opposite sides would run straight
-    /// through the center, so they bend sideways instead.
+    /// Arcs bow toward the middle like a chord diagram, but never into the middle where the amount
+    /// sits. A pair whose straight line would pass through it arches out to the side instead.
     private func controlPoint(_ a: CGPoint, _ b: CGPoint) -> CGPoint {
         let mid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
         let inward = CGVector(dx: center.x - mid.x, dy: center.y - mid.y)
         let distance = hypot(inward.dx, inward.dy)
-        if distance < ringRadius * 0.2 {
-            let chord = CGVector(dx: b.x - a.x, dy: b.y - a.y)
-            let length = max(hypot(chord.dx, chord.dy), 1)
-            let side = ringRadius * 0.34
-            return CGPoint(x: mid.x - chord.dy / length * side, y: mid.y + chord.dx / length * side)
+        let clear = ringRadius * 0.74
+        if distance < clear {
+            var direction = CGVector(dx: -inward.dx / max(distance, 0.0001), dy: -inward.dy / max(distance, 0.0001))
+            if distance < ringRadius * 0.02 {
+                // exactly opposite: arch up, or to the right of the way from a to b when that is vertical
+                let chord = CGVector(dx: b.x - a.x, dy: b.y - a.y)
+                let length = max(hypot(chord.dx, chord.dy), 1)
+                direction = CGVector(dx: -chord.dy / length, dy: chord.dx / length)
+                if direction.dy > 0 { direction = CGVector(dx: -direction.dx, dy: -direction.dy) }
+            }
+            let reach = 2 * (ringRadius * 0.86 - distance)
+            return CGPoint(x: mid.x + direction.dx * reach, y: mid.y + direction.dy * reach)
         }
-        return CGPoint(x: mid.x + inward.dx * 0.7, y: mid.y + inward.dy * 0.7)
+        let pull = min(0.7, 2 * (1 - clear / distance))
+        return CGPoint(x: mid.x + inward.dx * pull, y: mid.y + inward.dy * pull)
     }
 }
 

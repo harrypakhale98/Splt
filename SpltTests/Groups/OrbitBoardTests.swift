@@ -51,7 +51,7 @@ struct OrbitBoardTests {
         let board = board(nets: [me.id: 2000, sam.id: -1500, priya.id: -500])
         let center = board.center(for: .person(sam.id))
         #expect(center.kind == .owes)
-        #expect(center.subject == "Sam Lee")
+        #expect(center.subject == "Sam")
         #expect(!center.subjectIsMe)
         #expect(center.amount == usdAmount(1500))
     }

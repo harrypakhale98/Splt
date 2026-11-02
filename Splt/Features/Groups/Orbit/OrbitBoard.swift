@@ -80,6 +80,11 @@ struct OrbitBoard: Equatable {
         nets[id] ?? .zero(currencyCode: currencyCode)
     }
 
+    private func shortName(of id: PersonID) -> String {
+        guard let node = node(id) else { return String(localized: "Someone") }
+        return node.isMe ? String(localized: "You") : node.firstName
+    }
+
     func center(for focus: OrbitFocus) -> OrbitCenter {
         let zero = Money.zero(currencyCode: currencyCode)
         let subjectID = focus.person ?? me
@@ -93,7 +98,7 @@ struct OrbitBoard: Equatable {
         let kind: OrbitCenter.Kind = net.minorUnits > 0 ? .owed : (net.minorUnits < 0 ? .owes : .settled)
         return OrbitCenter(
             kind: kind,
-            subject: name(of: subjectID),
+            subject: shortName(of: subjectID),
             subjectIsMe: subjectID == me,
             amount: Money(minorUnits: abs(net.minorUnits), currencyCode: currencyCode)
         )
