@@ -170,15 +170,6 @@ struct ArcGeometry: Equatable {
     /// The point at 0.5.
     var middle: CGPoint { point(at: 0.5) }
 
-    /// Where an amount pill sits: beside the middle of the arc on the side facing away from `center`.
-    func pillPoint(awayFrom center: CGPoint, gap: CGFloat = 14) -> CGPoint {
-        let mid = middle
-        let dx = mid.x - center.x, dy = mid.y - center.y
-        let length = max(hypot(dx, dy), 0.0001)
-        let offset = width / 2 + gap
-        return CGPoint(x: mid.x + dx / length * offset, y: mid.y + dy / length * offset)
-    }
-
     /// How close the curve comes to `point`.
     func closestApproach(to point: CGPoint) -> CGFloat {
         polyline(samples: 48).map { hypot($0.x - point.x, $0.y - point.y) }.min() ?? .greatestFiniteMagnitude

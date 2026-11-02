@@ -34,6 +34,11 @@ struct OrbitColors {
         assignments = PersonPalette.assignments(for: members)
     }
 
+    /// The text color to put on a person's circle, black or white, whichever reads better on that fill.
+    func ink(for person: PersonID) -> Color {
+        PersonPalette.onColor(at: assignments[person] ?? PersonPalette.index(for: person))
+    }
+
     func color(for person: PersonID) -> Color {
         assignments[person].map { PersonPalette.color(at: $0) } ?? PersonPalette.color(for: person)
     }

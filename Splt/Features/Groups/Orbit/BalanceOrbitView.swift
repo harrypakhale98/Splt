@@ -87,20 +87,32 @@ struct BalanceOrbitView: View {
 
     @ViewBuilder
     private func amountLabels(scene: OrbitScene) -> some View {
-        let showsAll = board.transfers.count == 1 && focus == .none
-        let highlighted = scene.arcs.filter { scene.emphasis(of: $0.transfer, focus: focus) == .highlighted }.count
-        ForEach(scene.arcs, id: \.transfer.id) { transfer, geometry in
-            let emphasis = scene.emphasis(of: transfer, focus: focus)
-            if pairs.isEmpty, showsAll || (emphasis == .highlighted && highlighted <= 4) {
-                Text(MoneyFormatting.string(transfer.amount, locale: locale))
-                    .font(.caption.weight(.semibold).monospacedDigit())
-                    .fontDesign(.rounded)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(.regularMaterial, in: .capsule)
-                    .position(scene.pillPoint(for: geometry))
-                    .transition(.opacity)
-                    .allowsHitTesting(false)
+        let visible = scene.arcs.filter { arc in
+            let emphasis = scene.emphasis(of: arc.transfer, focus: focus)
+            return board.transfers.count == 1 && focus == .none || emphasis == .highlighted
+        }
+        if pairs.isEmpty, !visible.isEmpty, visible.count <= 4 {
+            let requests = visible.map {
+                OrbitPills.Request(
+                    id: $0.transfer.id, geometry: $0.geometry,
+                    full: MoneyFormatting.string($0.transfer.amount, locale: locale),
+                    compact: OrbitPills.compactText($0.transfer.amount, locale: locale)
+                )
+            }
+            let placements = OrbitPills.place(requests, in: scene.layout)
+            ForEach(requests, id: \.id) { request in
+                if let placement = placements[request.id] {
+                    Text(placement.isCompact ? request.compact : request.full)
+                        .font((placement.isCompact ? Font.caption2 : Font.caption).weight(.semibold).monospacedDigit())
+                        .fontDesign(.rounded)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .frame(width: placement.rect.width, height: placement.rect.height)
+                        .background(.regularMaterial, in: .capsule)
+                        .position(placement.center)
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
             }
         }
     }
@@ -115,7 +127,7 @@ struct BalanceOrbitView: View {
                     .fill(colors.color(for: node.id))
                 Text(AvatarStyle.initials(for: node.name))
                     .font(.system(size: layout.nodeRadius * 0.8, weight: .semibold, design: .rounded))
-                    .foregroundStyle(PersonPalette.onColor)
+                    .foregroundStyle(colors.ink(for: node.id))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 if focus.person == node.id {

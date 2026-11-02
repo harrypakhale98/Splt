@@ -134,17 +134,6 @@ struct OrbitGeometryTests {
         #expect(arc.middle.y < pair.center.y)
     }
 
-    @Test func pillsSitOutsideTheArcAwayFromTheMiddle() throws {
-        for count in [2, 3, 6, 12] {
-            let layout = OrbitLayout(size: square, count: count)
-            let arc = try #require(layout.arc(from: 0, to: count - 1, width: 8))
-            let pill = arc.pillPoint(awayFrom: layout.center)
-            #expect(distance(pill, layout.center) > distance(arc.middle, layout.center))
-            #expect(distance(pill, arc.middle) >= 8 / 2 + 13.9)
-            #expect(distance(pill, layout.center) > layout.centerRadius + 10)
-        }
-    }
-
     @Test func labelsSitUnderPeopleAndAboveTheTopOne() {
         let layout = OrbitLayout(size: square, count: 6)
         #expect(layout.labelPosition(0).y < layout.positions[0].y)
@@ -250,20 +239,50 @@ struct OrbitSceneTests {
         #expect(scene.hit(at: CGPoint(x: 2, y: 2)) == .nothing)
     }
 
-    @Test func pillsOfAFewArcsNeverSitOnAnAvatar() throws {
-        for count in [3, 5, 6, 9, 12] {
-            let people = Array(ids.prefix(1)) + (1..<count).map { _ in PersonID() }
-            let transfers = people.dropFirst().map { OrbitTransfer(debtor: $0, creditor: people[0], amount: usdAmount(1000)) }
-            let scene = OrbitScene(size: CGSize(width: 340, height: 340), people: people, transfers: Array(transfers.prefix(4)))
-            var crowded = 0
-            for (_, geometry) in scene.arcs {
-                let pill = scene.pillPoint(for: geometry)
-                let nearest = scene.layout.positions.map { hypot($0.x - pill.x, $0.y - pill.y) }.min() ?? 0
-                if nearest < scene.layout.nodeRadius + 6 { crowded += 1 }
-                #expect(hypot(pill.x - scene.layout.center.x, pill.y - scene.layout.center.y) > scene.layout.centerRadius)
+    @Test func pillsNeverOverlapEachOtherOrThePeople() throws {
+        for count in [2, 5, 12] {
+            let people = (0..<count).map { _ in PersonID() }
+            let arcsCount = min(count - 1, 4)
+            let transfers = (1...arcsCount).map {
+                OrbitTransfer(debtor: people[$0], creditor: people[0], amount: usdAmount(Int64(15_623 - $0 * 2_900)))
             }
-            #expect(crowded == 0, "\(crowded) pills crowd the people with \(count)")
+            let scene = OrbitScene(size: CGSize(width: 340, height: 340), people: people, transfers: transfers)
+            let requests = scene.arcs.map {
+                OrbitPills.Request(
+                    id: $0.transfer.id, geometry: $0.geometry,
+                    full: MoneyFormatting.string($0.transfer.amount, locale: GroupsTestCalendar.english),
+                    compact: OrbitPills.compactText($0.transfer.amount, locale: GroupsTestCalendar.english)
+                )
+            }
+            let placements = OrbitPills.place(requests, in: scene.layout)
+            #expect(placements.count == requests.count, "a pill is missing with \(count) people")
+            let rects = placements.values.map(\.rect)
+            for (index, rect) in rects.enumerated() {
+                for other in rects.dropFirst(index + 1) {
+                    #expect(!rect.intersects(other), "pills overlap with \(count) people")
+                }
+                for position in scene.layout.positions {
+                    #expect(
+                        !OrbitPills.intersects(rect, position, scene.layout.nodeRadius),
+                        "a pill covers a person with \(count) people"
+                    )
+                }
+                #expect(!OrbitPills.intersects(rect, scene.layout.center, scene.layout.centerRadius))
+            }
         }
+    }
+
+    @Test func aCrowdedPillFallsBackToWholeUnits() {
+        let usd = usdAmount(31_573)
+        #expect(OrbitPills.compactText(usd, locale: GroupsTestCalendar.english) == "$316")
+        let wide = OrbitPills.size(of: "$315.73")
+        let short = OrbitPills.size(of: "$316", compact: true)
+        #expect(short.width < wide.width && short.height < wide.height)
+    }
+
+    @Test func pillsForNoArcsAreNoPills() {
+        let layout = OrbitLayout(size: CGSize(width: 340, height: 340), count: 5)
+        #expect(OrbitPills.place([], in: layout).isEmpty)
     }
 
     @Test func targetsAreAtLeastFortyFourPointsAcross() {

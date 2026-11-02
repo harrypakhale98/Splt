@@ -101,32 +101,6 @@ struct OrbitScene {
             .sorted { $0.geometry.width > $1.geometry.width }
     }
 
-    /// Where the amount pill of an arc goes: beside the arc, clear of the people and of the middle.
-    /// It tries the middle of the arc first, then points either side of it, and when every spot is
-    /// crowded it takes the one that sits farthest from the people.
-    func pillPoint(for geometry: ArcGeometry) -> CGPoint {
-        let clearOfPeople = layout.nodeRadius + 38
-        var best: (point: CGPoint, room: CGFloat)?
-        for t in [0.5, 0.42, 0.58, 0.34, 0.66, 0.27, 0.73] as [CGFloat] {
-            let point = geometry.point(at: t)
-            let dx = point.x - layout.center.x, dy = point.y - layout.center.y
-            let length = max(hypot(dx, dy), 0.0001)
-            for extra in [0, 16] as [CGFloat] {
-                let offset = geometry.width / 2 + 14 + extra
-                let candidate = CGPoint(x: point.x + dx / length * offset, y: point.y + dy / length * offset)
-                let awayFromMiddle = hypot(candidate.x - layout.center.x, candidate.y - layout.center.y) >= layout.centerRadius + 14
-                guard awayFromMiddle else { continue }
-                let roomToPeople = layout.positions.map { hypot($0.x - candidate.x, $0.y - candidate.y) }.min() ?? .greatestFiniteMagnitude
-                let labels = layout.labelStyle == .hidden ? [] : (0..<layout.count).map { layout.labelPosition($0) }
-                let roomToLabels = labels.map { hypot($0.x - candidate.x, $0.y - candidate.y) + clearOfPeople - 30 }.min() ?? .greatestFiniteMagnitude
-                let room = min(roomToPeople, roomToLabels)
-                if room >= clearOfPeople { return candidate }
-                if room > (best?.room ?? -1) { best = (candidate, room) }
-            }
-        }
-        return best?.point ?? geometry.pillPoint(awayFrom: layout.center)
-    }
-
     // MARK: Focus
 
     func emphasis(of transfer: OrbitTransfer, focus: OrbitFocus) -> OrbitEmphasis {
