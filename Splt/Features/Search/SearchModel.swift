@@ -27,6 +27,13 @@ final class SearchModel {
 
     static let resultLimit = 40
 
+    /// Questions that show what the search understands.
+    static let examples = [
+        String(localized: "dinners paid last month"),
+        String(localized: "rent over 500"),
+        String(localized: "coffee this week")
+    ]
+
     init(
         services: DataServices,
         recentStore: RecentSearchesStore = RecentSearchesStore(),
