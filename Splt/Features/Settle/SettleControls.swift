@@ -7,6 +7,7 @@ struct SettleControls: View {
     let onPayWith: (URL) -> Void
 
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         if model.isBatch {
@@ -112,12 +113,17 @@ struct SettleControls: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 ForEach(model.route.debts, id: \.self) { debt in
-                    HStack(spacing: 12) {
-                        AvatarView(name: model.name(of: debt.debtor), id: debt.debtor, members: model.participants.map(\.id), size: 32)
+                    let layout = typeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                        : AnyLayout(HStackLayout(spacing: 12))
+                    layout {
+                        AvatarView(name: model.avatarName(of: debt.debtor), id: debt.debtor, members: model.participants.map(\.id), size: 32)
                         Text(model.sentence(payer: debt.debtor, receiver: debt.creditor))
-                        Spacer(minLength: 8)
+                        if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
                         MoneyLabel(money: debt.amount)
                             .font(.body.weight(.semibold))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
                     .accessibilityElement(children: .combine)
                 }

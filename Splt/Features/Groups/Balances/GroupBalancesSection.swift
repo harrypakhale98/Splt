@@ -80,6 +80,7 @@ struct GroupBalancesSection: View {
                         TransferRow(
                             debt: debt,
                             debtorName: model.name(of: debt.debtor),
+                            avatarName: model.peopleByID[debt.debtor]?.name ?? model.name(of: debt.debtor),
                             creditorName: model.name(of: debt.creditor),
                             currentPerson: model.me?.id,
                             members: model.group?.memberIDs ?? [],
@@ -103,6 +104,8 @@ struct GroupBalancesSection: View {
 private struct TransferRow: View {
     let debt: Debt
     let debtorName: String
+    /// The stored name, so the avatar shows real initials even when the sentence says "You".
+    let avatarName: String
     let creditorName: String
     let currentPerson: PersonID?
     let members: [PersonID]
@@ -111,7 +114,7 @@ private struct TransferRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                AvatarView(name: debtorName, id: debt.debtor, members: members, size: 36)
+                AvatarView(name: avatarName, id: debt.debtor, members: members, size: 36)
                 Text(sentence)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 8)

@@ -174,6 +174,11 @@ final class SettleModel {
         return peopleByID[id]?.name ?? String(localized: "Someone")
     }
 
+    /// The stored name, for initials: `name(of:)` says "You" for you.
+    func avatarName(of id: PersonID) -> String {
+        peopleByID[id]?.name ?? name(of: id)
+    }
+
     /// "You pay Sam", "Sam pays you" or "Sam pays Priya".
     func sentence(payer: PersonID, receiver: PersonID) -> String {
         let to = name(of: receiver)
