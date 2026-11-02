@@ -3,7 +3,7 @@ import Testing
 
 @Suite("Smoke")
 struct SmokeTests {
-    @Test func rootViewBuilds() {
+    @Test @MainActor func rootViewBuilds() {
         _ = RootView()
     }
 }

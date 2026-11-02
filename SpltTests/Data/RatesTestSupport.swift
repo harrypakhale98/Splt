@@ -11,8 +11,8 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         var error: URLError?
     }
 
-    nonisolated(unsafe) private static let handlers = Mutex<[String: @Sendable (URLRequest) -> Reply]>([:])
-    nonisolated(unsafe) private static let seen = Mutex<[String: [URL]]>([:])
+    private static let handlers = Mutex<[String: @Sendable (URLRequest) -> Reply]>([:])
+    private static let seen = Mutex<[String: [URL]]>([:])
 
     static func register(host: String, _ handler: @escaping @Sendable (URLRequest) -> Reply) {
         handlers.withLock { $0[host] = handler }
