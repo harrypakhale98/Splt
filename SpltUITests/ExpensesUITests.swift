@@ -127,12 +127,16 @@ final class ExpenseDesignShotsUITests: XCTestCase {
             let bar = element("Split bar", in: app)
             if bar.exists {
                 let start = bar.coordinate(withNormalizedOffset: CGVector(dx: 0.33, dy: 0.5))
-                let end = bar.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.5))
+                let end = bar.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5))
                 start.press(forDuration: 0.1, thenDragTo: end)
                 shot("4-dragged")
             }
             segments.buttons["Shares"].tap()
             shot("5-shares")
+            segments.buttons["Exact"].tap()
+            shot("5b-exact")
+            segments.buttons["Adjust"].tap()
+            shot("5c-adjust")
             segments.buttons["Items"].tap()
             shot("6-items")
         }

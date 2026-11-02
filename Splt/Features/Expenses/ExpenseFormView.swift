@@ -221,13 +221,7 @@ private struct TitleField: View {
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 8))
         layout {
-            TextField("Title", text: $model.title, prompt: Text("What was it for?"))
-                .font(.title3.weight(.medium))
-                .multilineTextAlignment(model.suggestedCategory == nil && !typeSize.isAccessibilitySize ? .center : .leading)
-                .submitLabel(.done)
-                .focused(focus, equals: .title)
-                .onChange(of: model.title) { model.titleDidChange() }
-                .accessibilityIdentifier("expense-title")
+            titleField
             if let suggestion = model.suggestedCategory, suggestion != model.category {
                 Button {
                     model.acceptSuggestedCategory()
@@ -245,6 +239,30 @@ private struct TitleField: View {
         .padding(.horizontal, 16)
         .frame(minHeight: 48)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    /// One line normally; at accessibility sizes it wraps so a long title never truncates.
+    @ViewBuilder
+    private var titleField: some View {
+        let prompt = Text("What was it for?")
+        let alignment: TextAlignment = model.suggestedCategory == nil && !typeSize.isAccessibilitySize ? .center : .leading
+        if typeSize.isAccessibilitySize {
+            TextField("Title", text: $model.title, prompt: prompt, axis: .vertical)
+                .lineLimit(1...4)
+                .font(.title3.weight(.medium))
+                .multilineTextAlignment(alignment)
+                .focused(focus, equals: .title)
+                .onChange(of: model.title) { model.titleDidChange() }
+                .accessibilityIdentifier("expense-title")
+        } else {
+            TextField("Title", text: $model.title, prompt: prompt)
+                .font(.title3.weight(.medium))
+                .multilineTextAlignment(alignment)
+                .submitLabel(.done)
+                .focused(focus, equals: .title)
+                .onChange(of: model.title) { model.titleDidChange() }
+                .accessibilityIdentifier("expense-title")
+        }
     }
 }
 
