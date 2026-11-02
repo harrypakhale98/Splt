@@ -20,13 +20,16 @@ extension ChangeTracker {
         }
     }
 
+    // payload, markSynced and applyRemoteDeletion are @inline(never) to avoid an optimizer crash in release builds.
     /// The current state of a record, or nil if it is gone.
+    @inline(never)
     func payload(recordType: SyncRecordType, recordName: String) throws -> SyncPayload? {
         try recordType.modelType.find(recordName: recordName, in: context)?.syncPayload
     }
 
     /// Call when the server accepted an upload. `sentModifiedAt` is the modified date of the
     /// payload that was sent: if the record changed again meanwhile it stays dirty.
+    @inline(never)
     func markSynced(
         recordType: SyncRecordType, recordName: String, sentModifiedAt: Date, systemFields: Data?
     ) throws {
@@ -56,6 +59,7 @@ extension ChangeTracker {
 
     /// Applies a record the server deleted outright. The local copy becomes a tombstone that is not dirty.
     @discardableResult
+    @inline(never)
     func applyRemoteDeletion(
         recordType: SyncRecordType, recordName: String, at date: Date? = nil
     ) throws -> RemoteApplyOutcome? {
