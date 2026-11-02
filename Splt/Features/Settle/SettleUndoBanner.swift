@@ -9,6 +9,7 @@ extension View {
 
 private struct SettleUndoBannerModifier: ViewModifier {
     @State private var center = SettleUndoCenter()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
@@ -20,7 +21,7 @@ private struct SettleUndoBannerModifier: ViewModifier {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
-            .animation(.snappy, value: center.banner)
+            .animation(reduceMotion ? nil : .snappy, value: center.banner)
     }
 }
 

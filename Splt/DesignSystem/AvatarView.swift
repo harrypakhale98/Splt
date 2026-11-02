@@ -3,12 +3,16 @@ import SwiftUI
 /// A circle with a person's initials on a system color that depends only on the name.
 struct AvatarView: View {
     let name: String
-    @ScaledMetric private var diameter: CGFloat
+    @ScaledMetric private var scaledDiameter: CGFloat
+    private let baseDiameter: CGFloat
 
     init(name: String, size: CGFloat = 40) {
         self.name = name
-        _diameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
+        baseDiameter = size
+        _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
+
+    private var diameter: CGFloat { min(scaledDiameter, baseDiameter * 1.5) }
 
     var body: some View {
         Circle()

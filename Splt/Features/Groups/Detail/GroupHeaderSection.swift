@@ -12,16 +12,7 @@ struct GroupHeaderSection: View {
     var body: some View {
         Section {
             VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 12) {
-                    GroupIconView(symbol: group.symbol, color: GroupAppearance.color(for: group.id), size: 52)
-                    VStack(alignment: .leading) {
-                        Text(group.name)
-                            .font(.title2.bold())
-                        Text("^[\(memberCount) member](inflect: true)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                identity
                 balance
                 Button(action: onSettleUp) {
                     Text("Settle Up")
@@ -31,6 +22,28 @@ struct GroupHeaderSection: View {
                 .disabled(!canSettle)
             }
             .padding(.vertical, 4)
+        }
+    }
+
+    /// The icon beside the name, or above it when the name needs the whole width.
+    private var identity: some View {
+        let icon = GroupIconView(symbol: group.symbol, color: GroupAppearance.color(for: group.id), size: 52)
+        let text = VStack(alignment: .leading) {
+            Text(group.name)
+                .font(.title2.bold())
+            Text("^[\(memberCount) member](inflect: true)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                icon
+                text
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                icon
+                text
+            }
         }
     }
 

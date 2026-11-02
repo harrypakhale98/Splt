@@ -12,13 +12,18 @@ enum GroupAppearance {
 struct GroupIconView: View {
     let symbol: String
     let color: Color
-    @ScaledMetric private var side: CGFloat
+    @ScaledMetric private var scaledSide: CGFloat
+    private let baseSide: CGFloat
 
     init(symbol: String, color: Color, size: CGFloat = 44) {
         self.symbol = symbol
         self.color = color
-        _side = ScaledMetric(wrappedValue: size, relativeTo: .body)
+        baseSide = size
+        _scaledSide = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
+
+    /// Grows with text, but never so far that it crowds the name out of the row.
+    private var side: CGFloat { min(scaledSide, baseSide * 1.5) }
 
     var body: some View {
         Image(systemName: symbol)

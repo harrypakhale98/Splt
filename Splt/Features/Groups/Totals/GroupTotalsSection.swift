@@ -92,6 +92,11 @@ private struct SpendingBarChart: View {
         }
         .chartXScale(domain: 0...(largest * 1.45))
         .chartXAxis(.hidden)
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisValueLabel()
+            }
+        }
         .frame(height: max(CGFloat(bars.count) * rowHeight, rowHeight * 1.5))
         .padding(.vertical, 4)
     }

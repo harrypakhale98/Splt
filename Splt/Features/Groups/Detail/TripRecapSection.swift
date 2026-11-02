@@ -19,8 +19,13 @@ struct TripRecapSection: View {
                 }
             }
             if let title = recap.biggestExpenseTitle, let amount = recap.biggestExpense {
-                LabeledContent(title) {
-                    MoneyLabel(money: amount)
+                LabeledContent("Biggest Expense") {
+                    VStack(alignment: .trailing) {
+                        Text(title)
+                        MoneyLabel(money: amount)
+                            .foregroundStyle(.secondary)
+                    }
+                    .multilineTextAlignment(.trailing)
                 }
             }
         } header: {

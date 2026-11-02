@@ -65,12 +65,9 @@ struct ExpenseRowView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(expense.title)
                 .font(.headline)
-            HStack(spacing: 4) {
-                Text(summary.paidBy)
-                MoneyLabel(money: expense.total)
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            Text("\(summary.paidBy) \(MoneyFormatting.magnitudeString(expense.total, locale: locale))")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             Text(expense.date, format: .dateTime.day().month(.abbreviated).year())
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -124,7 +121,9 @@ struct ExpenseRowView: View {
 /// A category symbol on a tinted rounded square.
 struct CategoryBadge: View {
     let category: ExpenseCategory
-    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 40
+    @ScaledMetric(relativeTo: .body) private var scaledSide: CGFloat = 40
+
+    private var side: CGFloat { min(scaledSide, 60) }
 
     var body: some View {
         Image(systemName: category.symbolName)
