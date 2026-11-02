@@ -46,9 +46,6 @@ struct ParsedReceipt: Equatable, Sendable {
     var issues: [ReceiptIssue] = []
 
     var isConsistent: Bool { issues.isEmpty }
-
-    /// Sum of the line items, in minor units.
-    var itemsTotal: Int64 { items.reduce(0) { $0 + $1.total.minorUnits } }
 }
 
 enum ReceiptConsistency {

@@ -5,9 +5,4 @@ import SpltCore
 /// A pinned rate on the group always wins; a cached table can be added behind the same closure.
 struct ExpenseRates: Sendable {
     var rates: @Sendable (SplitGroup) -> ExchangeRates?
-
-    static let pinnedOnly = ExpenseRates { group in
-        guard let pinned = group.pinnedRate else { return nil }
-        return ExchangeRates(baseCurrency: pinned.from, rates: [pinned.to: pinned.rate], pinned: [pinned])
-    }
 }

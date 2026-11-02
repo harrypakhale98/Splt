@@ -38,16 +38,6 @@ final class Router {
         self.sheet = sheet
     }
 
-    func popToRoot(in tab: AppTab) {
-        switch tab {
-        case .friends: friendsPath = []
-        case .groups: groupsPath = []
-        case .activity: activityPath = []
-        case .account: accountPath = []
-        case .search: break
-        }
-    }
-
     @discardableResult
     func open(_ url: URL) -> Bool {
         guard let link = DeepLink(url: url) else { return false }

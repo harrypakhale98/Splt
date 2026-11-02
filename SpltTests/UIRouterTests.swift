@@ -28,15 +28,6 @@ struct UIRouterTests {
         #expect(router.friendsPath == [.friend(id)])
     }
 
-    @Test func popToRootClearsOnlyThatTab() {
-        let router = Router()
-        router.push(.group(id), in: .groups)
-        router.push(.friend(id), in: .friends)
-        router.popToRoot(in: .groups)
-        #expect(router.groupsPath.isEmpty)
-        #expect(router.friendsPath == [.friend(id)])
-    }
-
     @Test func groupSettingsRouteIsPushedOnTheGroupsTab() {
         let router = Router(selectedTab: .friends)
         router.push(.groupSettings(id), in: .groups)

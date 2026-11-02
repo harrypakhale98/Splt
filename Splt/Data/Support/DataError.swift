@@ -8,7 +8,6 @@ enum DataError: Error, Equatable, Sendable {
     /// A stored blob could not be decoded, for example data written by a newer app version.
     case corruptRecord(String)
     case memberStillHasBalance(PersonID)
-    case missingCurrentUser
     /// Every expense and payment belongs to a group; friends without a shared group use a hidden friend group.
     case missingGroup
     case alreadyExists(String)

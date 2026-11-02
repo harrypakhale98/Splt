@@ -42,8 +42,6 @@ extension SyncTracked {
         set { pendingOperationRaw = newValue?.rawValue }
     }
 
-    var isTombstone: Bool { deletedAt != nil }
-
     var syncPayload: SyncPayload {
         SyncPayload(
             recordType: Self.syncRecordType, recordName: recordName, zoneName: zoneName,

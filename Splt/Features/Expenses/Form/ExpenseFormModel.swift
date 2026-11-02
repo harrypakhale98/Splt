@@ -192,11 +192,6 @@ final class ExpenseFormModel {
 
     var blockingReason: String? { issue?.message(locale: locale) }
 
-    var payerIssue: ExpenseFormIssue? {
-        guard let total, !total.isZero, case .issue(let issue) = payer.payers(total: total, locale: locale) else { return nil }
-        return issue
-    }
-
     var splitIssue: ExpenseFormIssue? {
         guard let total, !total.isZero else { return nil }
         switch splitResult(total: total) {
@@ -307,10 +302,6 @@ final class ExpenseFormModel {
         } else {
             participants.insert(id)
         }
-    }
-
-    func selectEveryone() {
-        participants = Set(members.map(\.id))
     }
 
     func addItem() {
