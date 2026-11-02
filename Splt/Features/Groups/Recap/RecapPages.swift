@@ -348,7 +348,7 @@ struct RecapShareCard: View {
         .frame(width: 340, height: 440, alignment: .topLeading)
         .background(Color.white)
         .overlay(alignment: .top) {
-            GroupGradient(members: group.memberIDs).frame(height: 8)
+            GroupHeroBackground(group: group).frame(height: 8)
         }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }

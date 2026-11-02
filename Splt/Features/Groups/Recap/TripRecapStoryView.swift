@@ -30,7 +30,7 @@ struct TripRecapStoryView: View {
         let pages = pages
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
-            GroupGradient(members: members)
+            GroupHeroBackground(group: group)
                 .ignoresSafeArea()
             Color(.systemBackground).opacity(0.28).ignoresSafeArea()
             TabView(selection: $page) {
