@@ -33,6 +33,7 @@ private struct GroupsListContent: View {
     @Environment(Router.self) private var router
     @State private var model: GroupsListViewModel
     @State private var pendingDelete: SplitGroup?
+    @State private var showsImport = false
 
     init(services: DataServices) {
         _model = State(initialValue: GroupsListViewModel(services: services))
@@ -70,6 +71,14 @@ private struct GroupsListContent: View {
                     router.present(.newGroup)
                 }
             }
+            ToolbarItem(placement: .secondaryAction) {
+                Button("Import from Splitwise", systemImage: "square.and.arrow.down") {
+                    showsImport = true
+                }
+            }
+        }
+        .sheet(isPresented: $showsImport) {
+            SplitwiseImportSheet()
         }
         .onAppear { model.refresh() }
         .confirmationDialog(
