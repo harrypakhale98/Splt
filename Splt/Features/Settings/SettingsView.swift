@@ -3,6 +3,7 @@ import SwiftUI
 /// The preference, sync, import and about sections. They sit on the Account screen, and
 /// `SettingsView` shows the same sections on their own when a route asks for settings.
 struct SettingsSections: View {
+    @Environment(Router.self) private var router
     private let preferences = Preferences()
 
     var body: some View {
@@ -45,6 +46,10 @@ struct SettingsSections: View {
         }
 
         Section("About") {
+            Button("Show Welcome Tour", systemImage: "sparkles") {
+                router.showsOnboarding = true
+            }
+            .accessibilityIdentifier("account.welcomeTour")
             LabeledContent("Version", value: AppInfo.versionDescription)
             LabeledContent("License") {
                 Text("MIT")
@@ -93,9 +98,11 @@ struct SettingsView: View {
 
 #Preview {
     NavigationStack { SettingsView() }
+        .environment(Router())
 }
 
 #Preview("Large text") {
     NavigationStack { SettingsView() }
+        .environment(Router())
         .dynamicTypeSize(.accessibility2)
 }

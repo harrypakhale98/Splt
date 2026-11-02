@@ -1,3 +1,4 @@
+import SpltCore
 import SwiftUI
 
 /// Your name and the payment details that go into reminders you send.
@@ -6,12 +7,13 @@ struct ProfileEditorView: View {
     @Bindable var profile: AccountProfile
 
     @State private var errorMessage: String?
+    @State private var meID: PersonID?
     @FocusState private var nameFocused: Bool
 
     var body: some View {
         Form {
             Section {
-                AvatarView(name: profile.effectiveName, size: 96)
+                avatar
                     .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
             }
@@ -42,10 +44,20 @@ struct ProfileEditorView: View {
         .navigationTitle("Your Profile")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear(perform: commit)
+        .task { meID = (try? services?.people.me())?.id }
         .alert("Couldn't Save Name", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+    }
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let meID {
+            AvatarView(name: profile.effectiveName, id: meID, size: 96)
+        } else {
+            AvatarView(name: profile.effectiveName, size: 96)
         }
     }
 
