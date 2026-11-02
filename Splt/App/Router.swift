@@ -8,6 +8,8 @@ import Observation
 final class Router {
     var selectedTab: AppTab = .groups
     var sheet: AppSheet?
+    /// The welcome tour, shown on first launch and from Account.
+    var showsOnboarding = false
     /// An invite that was opened from a link or a scan, waiting for the add friend sheet to confirm it.
     var pendingInvite: FriendInvite?
     /// A friend whose settle up sheet should open as soon as their screen appears.

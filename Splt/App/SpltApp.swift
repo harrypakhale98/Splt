@@ -22,6 +22,8 @@ struct SpltApp: App {
                         .groupSpotlight(services: services, router: router)
                         .friendSpotlight(services: services, router: router)
                         .notificationRouting(router: router)
+                .onboardingTour(router: router)
+                .tint(Color("AccentColor"))
                 } else {
                     Color(.systemBackground).ignoresSafeArea()
                 }

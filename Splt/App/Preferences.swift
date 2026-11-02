@@ -7,16 +7,19 @@ struct Preferences: DynamicProperty {
         static let defaultCurrency = "preferences.defaultCurrency"
         static let hapticsEnabled = "preferences.hapticsEnabled"
         static let notificationsEnabled = "preferences.notificationsEnabled"
+        static let onboardingCompleted = "preferences.onboardingCompleted"
     }
 
     @AppStorage var defaultCurrencyCode: String
     @AppStorage var hapticsEnabled: Bool
     @AppStorage var notificationsEnabled: Bool
+    @AppStorage var onboardingCompleted: Bool
 
     init(store: UserDefaults = .standard) {
         _defaultCurrencyCode = AppStorage(wrappedValue: Self.systemCurrencyCode, Key.defaultCurrency, store: store)
         _hapticsEnabled = AppStorage(wrappedValue: true, Key.hapticsEnabled, store: store)
         _notificationsEnabled = AppStorage(wrappedValue: false, Key.notificationsEnabled, store: store)
+        _onboardingCompleted = AppStorage(wrappedValue: false, Key.onboardingCompleted, store: store)
     }
 
     static var systemCurrencyCode: String {
