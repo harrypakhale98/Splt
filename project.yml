@@ -48,7 +48,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Dictate expenses by voice.
-        INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts to split them.
+        INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts and invite codes.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         SWIFT_EMIT_LOC_STRINGS: YES
