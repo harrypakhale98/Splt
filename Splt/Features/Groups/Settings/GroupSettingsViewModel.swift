@@ -255,7 +255,7 @@ final class GroupSettingsViewModel {
             expenses: try expenses.expenses(in: groupID, includeDeleted: false),
             payments: try payments.payments(in: groupID),
             balances: try groups.balances(for: groupID),
-            generatedAt: now()
+            exportedAt: now()
         )
     }
 

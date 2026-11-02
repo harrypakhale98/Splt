@@ -52,7 +52,7 @@ struct GroupReport: Equatable, Sendable {
 
     var groupName: String
     var currencyCode: String
-    var generatedAt: Date
+    var exportedAt: Date
     var members: [MemberBalance]
     var transfers: [TransferLine]
     var expenses: [ExpenseLine]
@@ -65,12 +65,12 @@ struct GroupReport: Equatable, Sendable {
         expenses: [Expense],
         payments: [Payment],
         balances: GroupBalances,
-        generatedAt: Date
+        exportedAt: Date
     ) {
         func name(_ id: PersonID) -> String { people[id]?.name ?? String(localized: "Someone") }
         groupName = group.name
         currencyCode = group.currencyCode
-        self.generatedAt = generatedAt
+        self.exportedAt = exportedAt
         members = group.memberIDs.map { id in
             MemberBalance(name: name(id), amounts: BalanceLine.lines(for: balances.net(for: id)).map(\.money))
         }
@@ -95,7 +95,7 @@ struct GroupReport: Equatable, Sendable {
 
         var rows: [ReportRow] = [
             ReportRow(.title, groupName),
-            ReportRow(.caption, String(localized: "Exported \(day(generatedAt)). Currency: \(currencyCode)")),
+            ReportRow(.caption, String(localized: "Exported \(day(exportedAt)). Currency: \(currencyCode)")),
             ReportRow(.spacer)
         ]
         if !totals.isEmpty {

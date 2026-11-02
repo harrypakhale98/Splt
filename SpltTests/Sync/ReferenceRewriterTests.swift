@@ -52,7 +52,7 @@ struct ReferenceRewriterTests {
             groupID: populated.group.id, expenseID: dinner.id, authorID: hana.id, text: "Thanks", createdAt: created
         )
         try services.comments.add(comment)
-        try services.comments.toggleReaction("👍", by: hana.id, on: comment.id)
+        try services.comments.toggleReaction("like", by: hana.id, on: comment.id)
         try services.recurring.add(RecurringExpense(
             groupID: populated.group.id, title: "Rent", total: usdAmount(90_000), category: .rent,
             payers: [hana.id: usdAmount(90_000)], split: .equal(participants: [populated.me.id, hana.id]),

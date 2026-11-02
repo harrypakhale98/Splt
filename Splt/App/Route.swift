@@ -1,7 +1,7 @@
 import Foundation
 
 /// Screens that can be pushed onto a tab's navigation stack.
-/// Later features add cases here and a matching branch in `RouteDestinationView`.
+/// A new case needs a matching branch in `RouteDestinationView`.
 enum Route: Hashable, Sendable {
     case group(UUID)
     case friend(UUID)

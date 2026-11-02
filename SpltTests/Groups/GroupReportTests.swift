@@ -40,7 +40,7 @@ struct GroupReportTests {
         return GroupReport(
             group: group, people: people, expenses: expenses, payments: payments,
             balances: GroupBalances(groupID: group.id, ledger: ledger, simplifiesDebts: simplifies),
-            generatedAt: utcDate(2026, 5, 20)
+            exportedAt: utcDate(2026, 5, 20)
         )
     }
 
@@ -88,7 +88,7 @@ struct GroupReportTests {
         let report = GroupReport(
             group: group, people: people, expenses: expenses, payments: [undone],
             balances: GroupBalances(groupID: group.id, ledger: Ledger(expenses: expenses), simplifiesDebts: true),
-            generatedAt: utcDate(2026, 5, 20)
+            exportedAt: utcDate(2026, 5, 20)
         )
         #expect(report.expenses.first?.paidBy == "Someone")
         #expect(report.payments.isEmpty)
@@ -117,7 +117,7 @@ struct GroupReportTests {
     @Test func aSquareGroupSaysEveryoneIsSettled() {
         let balances = GroupBalances(groupID: group.id, ledger: Ledger(), simplifiesDebts: true)
         let empty = GroupReport(
-            group: group, people: people, expenses: [], payments: [], balances: balances, generatedAt: utcDate(2026, 5, 20)
+            group: group, people: people, expenses: [], payments: [], balances: balances, exportedAt: utcDate(2026, 5, 20)
         )
         let text = empty.plainText(locale: english)
         #expect(text.contains("Everyone is settled up"))
@@ -152,7 +152,7 @@ struct GroupReportTests {
     @Test func aReportWithoutExpensesStillMakesAPage() throws {
         let balances = GroupBalances(groupID: group.id, ledger: Ledger(), simplifiesDebts: true)
         let empty = GroupReport(
-            group: group, people: people, expenses: [], payments: [], balances: balances, generatedAt: utcDate(2026, 5, 20)
+            group: group, people: people, expenses: [], payments: [], balances: balances, exportedAt: utcDate(2026, 5, 20)
         )
         let document = try document(empty)
         #expect(document.pageCount == 1)
@@ -165,7 +165,7 @@ struct GroupReportTests {
         }
         let balances = GroupBalances(groupID: group.id, ledger: Ledger(expenses: many), simplifiesDebts: true)
         let long = GroupReport(
-            group: group, people: people, expenses: many, payments: [], balances: balances, generatedAt: utcDate(2026, 5, 20)
+            group: group, people: people, expenses: many, payments: [], balances: balances, exportedAt: utcDate(2026, 5, 20)
         )
         let document = try document(long)
         #expect(document.pageCount > 2)
@@ -182,7 +182,7 @@ struct GroupReportTests {
         let balances = GroupBalances(groupID: group.id, ledger: Ledger(), simplifiesDebts: true)
         let odd = GroupReport(
             group: SplitGroup(name: name, currencyCode: "USD", memberIDs: [me.id]), people: people,
-            expenses: [], payments: [], balances: balances, generatedAt: utcDate(2026, 5, 20)
+            expenses: [], payments: [], balances: balances, exportedAt: utcDate(2026, 5, 20)
         )
         let document = try document(odd)
         #expect(document.pageCount >= 1)
