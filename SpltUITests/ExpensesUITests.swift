@@ -7,26 +7,8 @@ final class ExpensesUITests: XCTestCase {
 
     @MainActor
     private func launchInGroup(named name: String, member: String) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-uitesting"]
-        app.launch()
-
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
-        tabBar.buttons["Groups"].tap()
-        app.buttons["Create Group"].firstMatch.tap()
-
-        let groupName = app.textFields["Group Name"]
-        XCTAssertTrue(groupName.waitForExistence(timeout: 5))
-        groupName.tap()
-        groupName.typeText(name)
-
-        let memberField = app.textFields["Add by name"]
-        memberField.tap()
-        memberField.typeText("\(member)\n")
-        XCTAssertTrue(app.staticTexts[member].waitForExistence(timeout: 5))
-        app.buttons["Create"].tap()
-        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+        let app = launchApp()
+        createGroup(named: name, members: [member], in: app)
         return app
     }
 
@@ -59,7 +41,7 @@ final class ExpensesUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Road Trip"].waitForExistence(timeout: 10))
 
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Gas'")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        reveal(row, in: app)
         row.tap()
 
         XCTAssertTrue(app.navigationBars["Gas"].waitForExistence(timeout: 5))

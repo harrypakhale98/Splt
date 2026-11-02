@@ -7,13 +7,8 @@ final class GroupsUITests: XCTestCase {
 
     @MainActor
     func testCreatesAGroupWithAMember() {
-        let app = XCUIApplication()
-        app.launchArguments = ["-uitesting"]
-        app.launch()
-
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
-        tabBar.buttons["Groups"].tap()
+        let app = launchApp()
+        openTab("Groups", in: app)
         XCTAssertTrue(app.navigationBars["Groups"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["No Groups Yet"].exists)
 
@@ -26,8 +21,11 @@ final class GroupsUITests: XCTestCase {
         name.tap()
         name.typeText("Weekend Away")
         XCTAssertTrue(app.buttons["Create"].isEnabled)
+        let keyboardDone = app.keyboards.buttons["Done"]
+        if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
 
         let member = app.textFields["Add by name"]
+        reveal(member, in: app)
         member.tap()
         member.typeText("Alex\n")
         XCTAssertTrue(app.staticTexts["Alex"].waitForExistence(timeout: 5))

@@ -7,17 +7,12 @@ final class SettleUITests: XCTestCase {
 
     @MainActor
     func testSettlesUpWithAFriendAndUndoesIt() {
-        let app = XCUIApplication()
-        app.launchArguments = ["-sampledata", "-slowfeedback"]
-        app.launch()
-
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
-        tabBar.buttons["Friends"].tap()
+        let app = launchApp("-sampledata", extra: ["-slowfeedback"])
+        openTab("Friends", in: app)
         XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 5))
 
         let row = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Jonas Weber'")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        reveal(row, in: app)
         row.tap()
 
         let settle = app.buttons["Settle Up"].firstMatch

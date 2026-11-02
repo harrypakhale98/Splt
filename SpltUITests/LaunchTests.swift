@@ -7,11 +7,8 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testSwitchesThroughTabsAndOpensSettings() {
-        let app = XCUIApplication()
-        app.launch()
-
+        let app = launchApp()
         let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
 
         for name in ["Friends", "Groups", "Activity"] {
             tabBar.buttons[name].tap()
@@ -31,9 +28,7 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testPlaceholderActionOpensSheet() {
-        let app = XCUIApplication()
-        app.launch()
-
+        let app = launchApp()
         app.tabBars.firstMatch.buttons["Activity"].tap()
         app.buttons["Add Expense"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
