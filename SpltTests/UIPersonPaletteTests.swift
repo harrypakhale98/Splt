@@ -160,3 +160,25 @@ struct UIAccountSummaryTests {
         #expect(AccountSummary.load(from: nil) == AccountSummary())
     }
 }
+
+@Suite("Person color contrast")
+struct UIPersonColorContrastTests {
+    @Test(arguments: [false, true])
+    func textOnEveryHueReaches4Point5(dark: Bool) {
+        for index in 0..<PersonPalette.count {
+            let pair = PersonPalette.hexPair(at: index, dark: dark)
+            let ratio = PersonPalette.contrastRatio(pair.fill, pair.text)
+            #expect(ratio >= 4.5, "hue \(index) \(dark ? "dark" : "light") has contrast \(ratio)")
+        }
+    }
+
+    @Test func contrastRatioMatchesTheDefinition() {
+        #expect(abs(PersonPalette.contrastRatio(0xFFFFFF, 0x000000) - 21) < 0.001)
+        #expect(abs(PersonPalette.contrastRatio(0x777777, 0x777777) - 1) < 0.001)
+    }
+
+    @Test func pickingTheBetterOfBlackAndWhite() {
+        #expect(PersonPalette.foregroundHex(onFill: 0xFFFFFF) == 0x0E0E12)
+        #expect(PersonPalette.foregroundHex(onFill: 0x101010) == 0xFFFFFF)
+    }
+}

@@ -18,12 +18,15 @@ final class LaunchTests: XCTestCase {
         tabBar.buttons["Account"].tap()
         XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 5))
 
-        XCTAssertTrue(element("account.editProfile", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Edit Profile"].waitForExistence(timeout: 5))
+        let currencyRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Default Currency'")).firstMatch
+        XCTAssertTrue(currencyRow.waitForExistence(timeout: 5))
+
         app.swipeUp()
         XCTAssertTrue(app.switches["Haptics"].waitForExistence(timeout: 5))
+        app.swipeDown()
 
-        let currencyRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Default Currency'")).firstMatch
-        XCTAssertTrue(currencyRow.exists)
+        XCTAssertTrue(currencyRow.waitForExistence(timeout: 5))
         currencyRow.tap()
         XCTAssertTrue(app.navigationBars["Default Currency"].waitForExistence(timeout: 5))
     }

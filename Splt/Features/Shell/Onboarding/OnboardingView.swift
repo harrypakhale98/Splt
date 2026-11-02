@@ -151,7 +151,7 @@ private struct SetupBeat: View {
                         if !profile.hasName {
                             Image(systemName: "person.fill")
                                 .font(.system(size: 36))
-                                .foregroundStyle(PersonPalette.onColor)
+                                .foregroundStyle(PersonPalette.onColor(at: PersonPalette.meIndex))
                                 .accessibilityHidden(true)
                         }
                     }

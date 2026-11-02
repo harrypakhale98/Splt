@@ -1,4 +1,5 @@
 import SpltCore
+import Foundation
 import SwiftUI
 import UIKit
 
@@ -53,8 +54,49 @@ enum PersonPalette {
         return dynamic(light: pair.light, dark: pair.dark)
     }
 
-    /// The text color to put on a person color.
+    /// The text color to put on a person color when you do not know which one. Prefer `onColor(at:)`,
+    /// which picks black or white for the actual fill.
     static let onColor = dynamic(light: 0xFFFFFF, dark: 0x0E0E12)
+
+    private static let white: UInt32 = 0xFFFFFF
+    private static let nearBlack: UInt32 = 0x0E0E12
+
+    /// The text color for hue `index`: white or near black, whichever reads better on that fill in
+    /// the current appearance. Every pair reaches a 4.5 to 1 contrast ratio.
+    static func onColor(at index: Int) -> Color {
+        let pair = fills[((index % count) + count) % count]
+        return dynamic(light: foregroundHex(onFill: pair.light), dark: foregroundHex(onFill: pair.dark))
+    }
+
+    /// The text color for a person, matching `color(for:)`.
+    static func onColor(for person: PersonID) -> Color {
+        onColor(at: index(for: person))
+    }
+
+    /// The fill and text colors of a hue as hex values, for checking contrast.
+    static func hexPair(at index: Int, dark: Bool) -> (fill: UInt32, text: UInt32) {
+        let pair = fills[((index % count) + count) % count]
+        let fill = dark ? pair.dark : pair.light
+        return (fill, foregroundHex(onFill: fill))
+    }
+
+    static func foregroundHex(onFill fill: UInt32) -> UInt32 {
+        contrastRatio(white, fill) >= contrastRatio(nearBlack, fill) ? white : nearBlack
+    }
+
+    /// The WCAG contrast ratio of two sRGB colors.
+    static func contrastRatio(_ first: UInt32, _ second: UInt32) -> Double {
+        let a = luminance(first), b = luminance(second)
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
+    private static func luminance(_ hex: UInt32) -> Double {
+        func channel(_ shift: UInt32) -> Double {
+            let value = Double((hex >> shift) & 0xFF) / 255
+            return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+    }
 
     // MARK: Assignment
 

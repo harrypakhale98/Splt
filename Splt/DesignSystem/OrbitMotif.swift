@@ -61,7 +61,7 @@ struct OrbitMotif<Center: View>: View {
             .overlay {
                 Text(AvatarStyle.initials(for: name))
                     .font(.system(size: dot * 0.4, weight: .semibold, design: .rounded))
-                    .foregroundStyle(PersonPalette.onColor)
+                    .foregroundStyle(PersonPalette.onColor(at: hue))
             }
             .offset(
                 x: isOut ? radius * cos(angle.radians) : 0,
