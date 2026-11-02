@@ -17,7 +17,7 @@ struct ExpenseCurrencyPicker: View {
 
         List {
             if !pinned.isEmpty {
-                Section("Group Currency") {
+                Section(header: Text("Group Currency").foregroundStyle(.legible)) {
                     ForEach(pinned) { row($0) }
                 }
             }
@@ -43,7 +43,7 @@ struct ExpenseCurrencyPicker: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text(option.name).foregroundStyle(.primary)
-                    Text(option.code).font(.subheadline).foregroundStyle(.secondary)
+                    Text(option.code).font(.subheadline).foregroundStyle(.legible)
                 }
                 Spacer()
                 if option.code == selection {

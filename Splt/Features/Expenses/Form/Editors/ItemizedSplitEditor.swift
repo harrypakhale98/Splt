@@ -9,7 +9,7 @@ struct ItemizedSplitEditor: View {
             if let notice = model.scanNotice {
                 Label(notice, systemImage: "doc.text.viewfinder")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
             }
             ForEach($model.split.items) { $item in
                 ItemRow(model: model, item: $item)
@@ -21,7 +21,7 @@ struct ItemizedSplitEditor: View {
                 Label("Add Item", systemImage: "plus.circle")
             }
         } header: {
-            Text("Items")
+            Text("Items").foregroundStyle(.legible)
         }
 
         Section {
@@ -35,9 +35,9 @@ struct ItemizedSplitEditor: View {
                 }
             }
         } header: {
-            Text("Tax, Tip and Discount")
+            Text("Tax, Tip and Discount").foregroundStyle(.legible)
         } footer: {
-            Text("These are shared in proportion to what each person ordered.")
+            Text("These are shared in proportion to what each person ordered.").foregroundStyle(.legible)
         }
     }
 

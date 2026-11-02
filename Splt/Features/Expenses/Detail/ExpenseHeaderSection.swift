@@ -21,7 +21,7 @@ struct ExpenseHeaderSection: View {
                 HeroAmount(expense.total, showsSign: false)
                 Text(expense.date, format: .dateTime.weekday(.wide).day().month(.wide).year())
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                 if !model.payerLines.isEmpty {
                     HStack(spacing: 8) {
                         if model.payerLines.count == 1, let only = model.payerLines.first {
@@ -42,7 +42,7 @@ struct ExpenseHeaderSection: View {
                     }
                 }
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
@@ -65,7 +65,7 @@ struct PaidBySection: View {
     @Environment(\.locale) private var locale
 
     var body: some View {
-        Section("Paid By") {
+        Section(header: Text("Paid By").foregroundStyle(.legible)) {
             ForEach(model.payerLines, id: \.person.id) { line in
                 HStack {
                     AvatarView(person: line.person, members: model.memberIDs, size: 32)

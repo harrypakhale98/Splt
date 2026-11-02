@@ -47,12 +47,12 @@ struct PayerSection: View {
                 }
             }
         } header: {
-            Text("Paid By")
+            Text("Paid By").foregroundStyle(.legible)
         }
     }
 }
 
-/// Shows how much is left to assign: orange while something remains, red when over, green when exact.
+/// Shows how much is left to assign. The icon carries the color, the text stays readable.
 struct RemainingRow: View {
     let remaining: Money
     var title: LocalizedStringKey = "Left to assign"
@@ -60,11 +60,18 @@ struct RemainingRow: View {
     var body: some View {
         LabeledContent(title) {
             if remaining.isZero {
-                Label("All assigned", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                Label {
+                    Text("All assigned")
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                }
             } else {
-                MoneyLabel(money: remaining)
-                    .foregroundStyle(remaining.isNegative ? .red : .orange)
+                Label {
+                    MoneyLabel(money: remaining)
+                } icon: {
+                    Image(systemName: remaining.isNegative ? "minus.circle.fill" : "exclamationmark.circle.fill")
+                        .foregroundStyle(remaining.isNegative ? .red : .orange)
+                }
             }
         }
         .accessibilityElement(children: .combine)

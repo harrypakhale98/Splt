@@ -36,9 +36,9 @@ struct ShareBreakdownSection: View {
                 }
             }
         } header: {
-            Text("Split")
+            Text("Split").foregroundStyle(.legible)
         } footer: {
-            Text(SplitMethod(expense.split).title)
+            Text(SplitMethod(expense.split).title).foregroundStyle(.legible)
         }
     }
 

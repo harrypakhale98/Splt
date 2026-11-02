@@ -67,10 +67,10 @@ struct ExpenseRowView: View {
                 .font(.headline)
             Text("\(summary.paidBy) \(MoneyFormatting.magnitudeString(expense.total, locale: locale))")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
             Text(expense.date, format: .dateTime.day().month(.abbreviated).year())
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         }
     }
 
@@ -79,19 +79,19 @@ struct ExpenseRowView: View {
         if expense.isDeleted {
             Text("Deleted")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         } else if let share = summary.myShare {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                 MoneyLabel(money: share)
                     .font(.body.weight(.semibold))
                 Text("Your share")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
             }
         } else {
             Text("Not involved")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         }
     }
 

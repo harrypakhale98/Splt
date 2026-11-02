@@ -11,13 +11,21 @@ struct SaveBar: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            Text(reason ?? summary)
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(reason == nil ? Color.secondary : Color.orange)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.updatesFrequently)
-                .accessibilityIdentifier("expense-summary")
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if reason != nil {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(.orange)
+                        .accessibilityHidden(true)
+                }
+                Text(reason ?? summary)
+                    .foregroundStyle(reason == nil ? Color.legible : Color.primary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .font(.footnote.weight(.medium))
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.updatesFrequently)
+            .accessibilityIdentifier("expense-summary")
             Button {
                 tapped += 1
                 onSave()

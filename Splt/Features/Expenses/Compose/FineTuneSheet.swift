@@ -21,7 +21,7 @@ struct FineTuneSheet: View {
                     }
                     Text(percentText(segment, scale: data.scale))
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
                         .monospacedDigit()
 
                     if data.canDrag {
@@ -31,7 +31,7 @@ struct FineTuneSheet: View {
                         }
                         Text(model.barStepDescription + " per tap. The difference comes from or goes to the next person.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.legible)
                             .multilineTextAlignment(.center)
                     }
                     if model.split.method != .itemized {

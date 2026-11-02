@@ -16,11 +16,11 @@ struct AmountHero: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(symbol)
                         .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
                     Text(shown.isEmpty ? "0" : shown)
                         .font(.system(size: min(size, 96), weight: .bold, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(shown.isEmpty ? Color(.tertiaryLabel) : Color.primary)
+                        .foregroundStyle(shown.isEmpty ? Color.legible : Color.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.4)
                         .contentTransition(.numericText())
@@ -77,17 +77,17 @@ struct AmountHero: View {
                 if let rate = model.rateText { Text("(\(rate))") }
             }
             .font(.footnote)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.legible)
             .accessibilityElement(children: .combine)
         } else if model.isFindingRate {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)
-                Text("Finding the exchange rate").font(.footnote).foregroundStyle(.secondary)
+                Text("Finding the exchange rate").font(.footnote).foregroundStyle(.legible)
             }
         } else if model.lacksRate {
             Text("No exchange rate for \(model.currencyCode) yet. The amount stays in \(model.currencyCode).")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
                 .multilineTextAlignment(.center)
         }
     }

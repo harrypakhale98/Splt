@@ -16,25 +16,32 @@ struct PercentSplitEditor: View {
                         .multilineTextAlignment(.trailing)
                         .monospacedDigit()
                         .accessibilityLabel("Percent owed by \(model.displayName(for: person.id))")
-                        Text("%").foregroundStyle(.secondary).accessibilityHidden(true)
+                        Text("%").foregroundStyle(.legible).accessibilityHidden(true)
                     }
                 }
             }
             if let remaining = model.percentRemaining {
                 LabeledContent("Left to assign") {
                     if remaining == 0 {
-                        Label("All assigned", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                        Label {
+                            Text("All assigned")
+                        } icon: {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                        }
                     } else {
-                        Text(AmountInput.hundredthsText(remaining, locale: model.locale) + "%")
-                            .monospacedDigit()
-                            .foregroundStyle(remaining < 0 ? .red : .orange)
+                        Label {
+                            Text(AmountInput.hundredthsText(remaining, locale: model.locale) + "%").monospacedDigit()
+                        } icon: {
+                            Image(systemName: remaining < 0 ? "minus.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundStyle(remaining < 0 ? .red : .orange)
+                        }
                     }
                 }
                 .accessibilityElement(children: .combine)
             }
             Button("Split Percentages Evenly") { model.fillPercentagesEvenly() }
         } header: {
-            Text("Percentages")
+            Text("Percentages").foregroundStyle(.legible)
         }
     }
 }

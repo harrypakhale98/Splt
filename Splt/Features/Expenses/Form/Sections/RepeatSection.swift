@@ -27,7 +27,7 @@ struct RepeatSection: View {
                 }
             }
         } header: {
-            Text("Repeat")
+            Text("Repeat").foregroundStyle(.legible)
         } footer: {
             if let frequency = model.repeatChoice.frequency, !model.isEditingRecurring {
                 Text("A new expense is added automatically \(frequency.footerPhrase), starting after this one.")

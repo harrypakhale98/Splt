@@ -181,7 +181,7 @@ private struct SegmentView: View {
                                 .monospacedDigit()
                                 .minimumScaleFactor(0.6)
                                 .lineLimit(1)
-                                .foregroundStyle(ink.opacity(0.85))
+                                .foregroundStyle(ink)
                         }
                     }
                 }

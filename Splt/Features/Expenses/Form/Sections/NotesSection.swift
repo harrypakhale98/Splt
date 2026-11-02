@@ -5,7 +5,7 @@ struct NotesSection: View {
     @Bindable var model: ExpenseFormModel
 
     var body: some View {
-        Section("Notes and Receipt") {
+        Section(header: Text("Notes and Receipt").foregroundStyle(.legible)) {
             TextField("Notes", text: $model.note, prompt: Text("Add a note"), axis: .vertical)
                 .lineLimit(1...6)
 

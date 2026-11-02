@@ -18,7 +18,7 @@ struct ReceiptThumbnail: View {
                     .scaledToFill()
             } else {
                 Image(systemName: "doc.text.image")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
             }
         }
         .frame(width: side, height: side)

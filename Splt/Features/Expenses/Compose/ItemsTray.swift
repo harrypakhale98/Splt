@@ -21,7 +21,7 @@ struct ItemsTray: View {
             if let notice = model.scanNotice {
                 Label(notice, systemImage: "doc.text.viewfinder")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
             }
             if model.split.items.isEmpty {
                 Button {
@@ -56,7 +56,7 @@ struct ItemsTray: View {
                         Text(MoneyFormatting.magnitudeString(money, locale: model.locale))
                             .font(.caption)
                             .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.legible)
                     }
                 }
                 if people.isEmpty {

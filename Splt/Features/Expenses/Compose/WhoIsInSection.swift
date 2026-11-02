@@ -16,7 +16,7 @@ struct WhoIsInSection: View {
                 if model.split.method != .itemized, !typeSize.isAccessibilitySize {
                     Text("Hold a person for who paid")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
                         .lineLimit(1)
                 }
                 Spacer()

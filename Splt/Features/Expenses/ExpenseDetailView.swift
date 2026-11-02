@@ -89,7 +89,7 @@ private struct ExpenseDetailScreen: View {
             PaidBySection(model: model)
             ReceiptSection(model: model)
             if !expense.note.isEmpty {
-                Section("Notes") { Text(expense.note) }
+                Section(header: Text("Notes").foregroundStyle(.legible)) { Text(expense.note) }
             }
             if model.details?.extras.recurringExpenseID != nil, let groupID = expense.groupID {
                 Section {

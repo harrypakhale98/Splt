@@ -65,7 +65,7 @@ struct SplitShareList: View {
             }
             Text(percent.formatted(.number.precision(.fractionLength(0))) + "%")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
                 .monospacedDigit()
         }
     }

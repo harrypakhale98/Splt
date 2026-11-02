@@ -63,7 +63,7 @@ struct SplitBarSection: View {
                      ? "Assign items to people and the bar fills in."
                      : "Choose at least one person to split with.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .frame(maxWidth: .infinity, minHeight: 76)
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
@@ -79,15 +79,15 @@ struct SplitBarSection: View {
         if data.method == .itemized {
             Text("Assign each item to people and the bar fills in.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         } else if data.total == nil {
             Text("Enter an amount to see what everyone pays.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         } else {
             Text("Drag the dividers. Tap a person to fine tune.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         }
     }
 }

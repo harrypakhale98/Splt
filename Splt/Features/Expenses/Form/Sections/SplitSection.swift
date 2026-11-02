@@ -16,7 +16,7 @@ struct SplitSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Split with")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
                     PeopleChips(
                         people: model.members, selected: model.participants,
                         currentPerson: model.me?.id, toggle: model.toggleParticipant
@@ -24,9 +24,9 @@ struct SplitSection: View {
                 }
             }
         } header: {
-            Text("Split")
+            Text("Split").foregroundStyle(.legible)
         } footer: {
-            Text(model.split.method.explanation)
+            Text(model.split.method.explanation).foregroundStyle(.legible)
         }
 
         editor
@@ -59,7 +59,7 @@ struct SharePreviewSection: View {
     var body: some View {
         let rows = model.sharePreview
         if !rows.isEmpty {
-            Section("Each Person Pays") {
+            Section(header: Text("Each Person Pays").foregroundStyle(.legible)) {
                 ForEach(rows, id: \.person.id) { row in
                     HStack {
                         AvatarView(person: row.person, members: model.members.map(\.id), size: 28)

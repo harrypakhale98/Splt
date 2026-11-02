@@ -21,7 +21,7 @@ struct ExactSplitEditor: View {
                 RemainingRow(remaining: remaining)
             }
         } header: {
-            Text("Amounts")
+            Text("Amounts").foregroundStyle(.legible)
         }
     }
 }

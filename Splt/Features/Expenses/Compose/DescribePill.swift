@@ -33,7 +33,7 @@ struct DescribePill: View {
             if let notice = model.filledNotice {
                 Label(notice, systemImage: "checkmark.circle")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
@@ -41,7 +41,7 @@ struct DescribePill: View {
                 let names = model.unmatchedNames.formatted(.list(type: .and))
                 Label("\(names) is not in this group, so they were left out.", systemImage: "person.fill.questionmark")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
