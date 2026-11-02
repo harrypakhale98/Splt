@@ -126,25 +126,6 @@ struct NetPositionHero: View {
     }
 }
 
-extension View {
-    /// Fades and shrinks a hero slightly as it scrolls away. Only a fade with Reduce Motion.
-    func heroScrollTransition() -> some View {
-        modifier(HeroScrollTransition())
-    }
-}
-
-private struct HeroScrollTransition: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    func body(content: Content) -> some View {
-        content.scrollTransition(.animated(.smooth)) { view, phase in
-            view
-                .opacity(phase.isIdentity ? 1 : 0.35)
-                .scaleEffect(reduceMotion || phase.isIdentity ? 1 : 0.95)
-        }
-    }
-}
-
 #if DEBUG
 #Preview {
     let people = ["Sam Rivera", "Priya Nair", "Alex Chen", "Jo Park"].map { Person(name: $0) }

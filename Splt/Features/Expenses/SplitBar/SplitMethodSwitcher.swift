@@ -5,7 +5,7 @@ import SwiftUI
 /// a scrolling row of glass buttons that never truncate.
 struct SplitMethodSwitcher: View {
     let selection: SplitMethod
-    var onSelect: (SplitMethod) -> Void
+    var onSelect: @MainActor @Sendable (SplitMethod) -> Void
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
