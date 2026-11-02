@@ -27,12 +27,18 @@ struct ExpenseFormView: View {
 private struct ExpenseFormScreen: View {
     @State private var model: ExpenseFormModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
     @FocusState private var focus: ExpenseFormField?
+    @State private var keypadOpen: Bool
+    @State private var sheet: FormSheet?
+    @State private var fineTune: PersonSelection?
     @State private var confirmsDiscard = false
     @State private var confirmsDuplicate = false
 
     init(mode: ExpenseFormMode, services: DataServices) {
-        _model = State(initialValue: ExpenseFormModel(mode: mode, services: services))
+        let model = ExpenseFormModel(mode: mode, services: services)
+        _model = State(initialValue: model)
+        _keypadOpen = State(initialValue: !model.isEditing && model.total == nil)
     }
 
     var body: some View {
@@ -45,10 +51,12 @@ private struct ExpenseFormScreen: View {
                         description: "The group or expense may have been removed."
                     )
                 } else {
-                    form
+                    content
                 }
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(navigationTitle)
+            .navigationSubtitle(model.group?.name ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
         }
@@ -68,59 +76,113 @@ private struct ExpenseFormScreen: View {
         } message: {
             Text(model.saveError ?? "")
         }
-        .haptic(.success, trigger: model.saveCount)
-        .task(id: model.rateKey) { await model.refreshRate() }
-        .task {
-            guard !model.isEditing, model.total == nil else { return }
-            try? await Task.sleep(for: .milliseconds(350))
-            focus = .amount
+        .sheet(item: $sheet) { sheet in
+            FormSheetContent(model: model, sheet: sheet) { self.sheet = nil }
+                .presentationDetents(FormSheetContent.detents(for: sheet))
+                .presentationDragIndicator(.visible)
         }
+        .sheet(item: $fineTune) { selection in
+            FineTuneSheet(model: model, personID: selection.id) { fineTune = nil }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .haptics(.success, trigger: model.saveCount)
+        .task(id: model.rateKey) { await model.refreshRate() }
     }
 
-    private var form: some View {
-        Form {
-            if case .add = model.mode {
-                DescribeSection(model: model)
+    // MARK: Content
+
+    private var content: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                if case .add = model.mode {
+                    DescribePill(model: model, focus: $focus)
+                }
+                if !model.possibleDuplicates.isEmpty {
+                    DuplicateBanner(model: model)
+                }
+                VStack(spacing: 12) {
+                    AmountHero(model: model, keypadOpen: keypadOpen && !typeSize.isAccessibilitySize) {
+                        withAnimation(Motion.snappy) { keypadOpen.toggle() }
+                        focus = nil
+                    }
+                    TitleField(model: model, focus: $focus)
+                }
+                WhoIsInSection(model: model) { keypadOpen = false }
+                if model.split.method == .itemized {
+                    ItemsTray(model: model) { sheet = .more }
+                }
+                SplitBarSection(model: model, onFineTune: { fineTune = PersonSelection(id: $0) }) {
+                    keypadOpen = false
+                    focus = nil
+                }
+                FormChipsRow(model: model) { opened in
+                    keypadOpen = false
+                    focus = nil
+                    sheet = opened
+                }
+                .padding(.horizontal, -20)
             }
-            if !model.possibleDuplicates.isEmpty {
-                DuplicateWarningSection(model: model)
-            }
-            AmountSection(model: model, focus: $focus)
-            DetailsSection(model: model, focus: $focus)
-            PayerSection(model: model)
-            SplitSection(model: model)
-            if case .add = model.mode {
-                RepeatSection(model: model)
-            } else if model.isEditingRecurring {
-                RepeatSection(model: model)
-            }
-            NotesSection(model: model)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 16)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: model.refreshKey) { model.refreshDuplicates() }
+        .onChange(of: model.amountText) { model.refollowPayments() }
+        .onChange(of: focus) { _, new in if new != nil { keypadOpen = false } }
         .safeAreaBar(edge: .bottom) {
-            StatusBar(text: model.statusText, isBlocking: model.blockingReason != nil)
+            VStack(spacing: 8) {
+                if keypadOpen && !typeSize.isAccessibilitySize {
+                    NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode)) { key in
+                        model.amountText = AmountKeypad.apply(
+                            key, to: model.amountText, exponent: Currency.minorUnitExponent(for: model.currencyCode),
+                            locale: model.locale
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                SaveBar(summary: model.summaryLine, reason: model.blockingReason, canSave: model.canSave) {
+                    if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
+                }
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { keypadOpen && typeSize.isAccessibilitySize }, set: { if !$0 { keypadOpen = false } }
+        )) {
+            NavigationStack {
+                VStack(spacing: 16) {
+                    Text(AmountKeypad.display(model.amountText, locale: model.locale).isEmpty ? "0" : AmountKeypad.display(model.amountText, locale: model.locale))
+                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        .monospacedDigit()
+                    NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode)) { key in
+                        model.amountText = AmountKeypad.apply(
+                            key, to: model.amountText, exponent: Currency.minorUnitExponent(for: model.currencyCode),
+                            locale: model.locale
+                        )
+                    }
+                }
+                .padding(20)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) { Button("Done", role: .confirm) { keypadOpen = false } }
+                }
+            }
+            .presentationDetents([.large])
         }
     }
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItemGroup(placement: .keyboard) {
-            Spacer()
-            Button(focus == .amount ? "Next" : "Done") {
-                focus = focus == .amount ? .title : nil
-            }
-        }
         ToolbarItem(placement: .cancellationAction) {
             Button("Close", role: .close) {
                 if model.isDirty { confirmsDiscard = true } else { dismiss() }
             }
         }
-        ToolbarItem(placement: .confirmationAction) {
-            Button("Save", role: .confirm) {
-                if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
-            }
-            .disabled(!model.canSave)
+        ToolbarItemGroup(placement: .keyboard) {
+            Spacer()
+            Button("Done") { focus = nil }
         }
     }
 
@@ -148,36 +210,56 @@ private struct ExpenseFormScreen: View {
     }
 }
 
-private struct StatusBar: View {
-    let text: String
-    let isBlocking: Bool
+/// The title, centered under the amount, with the category suggestion when there is one.
+private struct TitleField: View {
+    @Bindable var model: ExpenseFormModel
+    var focus: FocusState<ExpenseFormField?>.Binding
 
     var body: some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundStyle(isBlocking ? Color.orange : Color.secondary)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .accessibilityAddTraits(.updatesFrequently)
+        HStack(spacing: 8) {
+            TextField("Title", text: $model.title, prompt: Text("What was it for?"))
+                .font(.title3.weight(.medium))
+                .multilineTextAlignment(model.suggestedCategory == nil ? .center : .leading)
+                .submitLabel(.done)
+                .focused(focus, equals: .title)
+                .onChange(of: model.title) { model.titleDidChange() }
+                .accessibilityIdentifier("expense-title")
+            if let suggestion = model.suggestedCategory, suggestion != model.category {
+                Button {
+                    model.acceptSuggestedCategory()
+                } label: {
+                    Label(suggestion.title, systemImage: suggestion.symbolName)
+                        .font(.footnote.weight(.semibold))
+                        .lineLimit(1)
+                }
+                .buttonStyle(.glass)
+                .buttonBorderShape(.capsule)
+                .accessibilityLabel("Use \(suggestion.title)")
+                .accessibilityHint("Suggested category for this title")
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 48)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 
-private struct DuplicateWarningSection: View {
+private struct DuplicateBanner: View {
     let model: ExpenseFormModel
 
     var body: some View {
-        Section {
-            ForEach(model.possibleDuplicates) { match in
-                Label {
-                    Text("\(match.title) for the same amount was added on \(match.date.formatted(date: .abbreviated, time: .omitted)).")
-                } icon: {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
-                }
+        if let match = model.possibleDuplicates.first {
+            Label {
+                Text("\(match.title) for the same amount was added on \(match.date.formatted(date: .abbreviated, time: .omitted)).")
+                    .font(.footnote)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             }
-        } header: {
-            Text("Possible Duplicate")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .accessibilityElement(children: .combine)
         }
     }
 }

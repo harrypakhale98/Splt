@@ -59,4 +59,5 @@ struct AmountSection: View {
 enum ExpenseFormField: Hashable {
     case amount
     case title
+    case describe
 }

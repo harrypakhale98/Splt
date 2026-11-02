@@ -15,29 +15,23 @@ final class JourneyUITests: XCTestCase {
         app.buttons["Add Expense"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5), "form did not open")
 
-        let amountField = element("expense-amount", in: app)
-        XCTAssertTrue(amountField.waitForExistence(timeout: 5), "amount field missing")
-        amountField.tap()
-        amountField.typeText(amount)
-        app.buttons["Next"].tap()
+        typeAmount(amount, in: app)
 
         let titleField = element("expense-title", in: app)
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field missing")
+        titleField.tap()
         titleField.typeText(title)
-        app.buttons.matching(identifier: "Done").firstMatch.tap()
+        titleField.typeText("\n")
         XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5), "keyboard stayed open")
 
         if let split {
-            let picker = app.buttons.matching(NSPredicate(format: "label == 'Split' OR label BEGINSWITH 'Split,'")).firstMatch
-            reveal(picker, in: app)
-            picker.tap()
-            let option = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", split)).firstMatch
-            XCTAssertTrue(option.waitForExistence(timeout: 5), "\(split) missing from the split menu")
-            option.tap()
+            let segment = app.segmentedControls["split-method"].buttons[split]
+            XCTAssertTrue(segment.waitForExistence(timeout: 5), "\(split) missing from the split control")
+            segment.tap()
             prepare?()
         }
 
-        let save = app.buttons["Save"]
+        let save = element("expense-save", in: app)
         XCTAssertTrue(save.isEnabled, "\(title) should be ready to save")
         save.tap()
         XCTAssertTrue(app.navigationBars["Split Lab"].waitForExistence(timeout: 10), "form did not close after saving \(title)")
@@ -52,20 +46,10 @@ final class JourneyUITests: XCTestCase {
         createGroup(named: "Split Lab", members: ["Alex", "Sam"], in: app)
 
         addExpense(app, amount: "30", title: "Equal")
-        addExpense(app, amount: "60", title: "Percent", split: "Percentages") {
-            self.tapButton("Split Percentages Evenly", in: app)
-        }
+        addExpense(app, amount: "60", title: "Percent", split: "Percent")
         addExpense(app, amount: "90", title: "Shared", split: "Shares")
-        addExpense(app, amount: "120", title: "Adjusted", split: "Adjustments")
-        addExpense(app, amount: "30", title: "Exact", split: "Exact amounts") {
-            let fields = app.textFields.matching(NSPredicate(format: "label BEGINSWITH 'Amount owed by'"))
-            XCTAssertEqual(fields.count, 3)
-            for index in 0..<fields.count {
-                let field = fields.element(boundBy: index)
-                field.tap()
-                field.typeText("10")
-            }
-        }
+        addExpense(app, amount: "120", title: "Adjusted", split: "Adjust")
+        addExpense(app, amount: "30", title: "Exact", split: "Exact")
 
         // alex and sam each owe 10 + 20 + 30 + 40 + 10, so you are owed 110 by each of them
         selectSegment("Balances", in: app)
