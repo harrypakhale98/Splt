@@ -15,7 +15,12 @@ struct TripRecapSection: View {
             }
             if let top = recap.topCategory {
                 LabeledContent("Biggest Category") {
-                    Label(top.category.title, systemImage: top.category.symbolName)
+                    HStack(spacing: 6) {
+                        Image(systemName: top.category.symbolName)
+                            .foregroundStyle(.tint)
+                            .accessibilityHidden(true)
+                        Text(top.category.title)
+                    }
                 }
             }
             if let title = recap.biggestExpenseTitle, let amount = recap.biggestExpense {

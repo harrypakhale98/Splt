@@ -9,18 +9,22 @@ struct GroupRowView: View {
 
     var body: some View {
         let lines = BalanceLine.lines(for: summary.myBalance)
-        HStack(spacing: 12) {
-            GroupIconView(symbol: summary.group.symbol, color: GroupAppearance.color(for: summary.group.id))
+        let icon = GroupIconView(symbol: summary.group.symbol, color: GroupAppearance.color(for: summary.group.id))
+        Group {
             if typeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
+                    icon
                     details
                     balance(lines)
                 }
             } else {
-                details
-                Spacer(minLength: 8)
-                balance(lines)
-                    .multilineTextAlignment(.trailing)
+                HStack(spacing: 12) {
+                    icon
+                    details
+                    Spacer(minLength: 8)
+                    balance(lines)
+                        .multilineTextAlignment(.trailing)
+                }
             }
         }
         .accessibilityElement(children: .combine)
