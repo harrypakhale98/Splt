@@ -1,3 +1,4 @@
+import Foundation
 import SpltCore
 import Testing
 @testable import Splt
@@ -96,5 +97,48 @@ struct FriendDetailModelTests {
         let model = FriendDetailModel(friendID: PersonID(), services: fixture.services)
         #expect(model.friend == nil)
         #expect(model.didLoad)
+    }
+
+    @Test func listsSharedGroupsButNotHiddenDirectOnes() throws {
+        let fixture = try Fixture()
+        let model = FriendDetailModel(friendID: fixture.sam.id, services: fixture.services)
+        _ = model.expenseGroup()
+        let archived = SplitGroup(name: "Old", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id], isArchived: true)
+        try fixture.services.groups.create(archived)
+        let other = SplitGroup(name: "Without Sam", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.priya.id])
+        try fixture.services.groups.create(other)
+        model.refresh()
+        #expect(model.sharedGroups.map(\.name) == ["Flat"])
+    }
+
+    @Test func worksOutWhatYouLentOrOweOnAnExpense() throws {
+        let fixture = try Fixture()
+        let dinner = try fixture.addExpense("Dinner", cents: 3000)
+        let taxi = try fixture.addExpense("Taxi", cents: 600, paidBy: fixture.priya, splitBetween: [fixture.priya.id, fixture.sam.id])
+        let model = FriendDetailModel(friendID: fixture.sam.id, services: fixture.services)
+        #expect(model.myNet(in: dinner) == usdAmount(2000))
+        #expect(model.myNet(in: taxi) == nil)
+        #expect(model.payerText(for: dinner) == "You")
+        #expect(model.payerText(for: taxi) == "Priya")
+    }
+
+    @Test func groupsTheTimelineByMonthNewestFirst() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        func expense(_ title: String, _ month: Int, _ day: Int) -> Expense {
+            Expense(
+                title: title, total: usdAmount(100),
+                date: calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: 12))!,
+                paidBy: PersonID(), split: .equal(participants: [PersonID()])
+            )
+        }
+        let months = FriendTimeline.months(
+            [expense("a", 3, 4), expense("b", 5, 1), expense("c", 3, 20), expense("d", 5, 28)], calendar: calendar
+        )
+        #expect(months.count == 2)
+        #expect(months[0].expenses.map(\.title) == ["d", "b"])
+        #expect(months[1].expenses.map(\.title) == ["c", "a"])
+        #expect(months[0].start > months[1].start)
+        #expect(FriendTimeline.months([], calendar: calendar).isEmpty)
     }
 }

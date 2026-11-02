@@ -6,6 +6,12 @@ struct FriendRow: View {
     let summary: FriendSummary
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.locale) private var locale
+
+    /// What they owe you wears their own color. What you owe stays plain, with the sign written out.
+    private var owedColor: Color {
+        PersonPalette.textColor(at: PersonPalette.preferredIndex(for: summary.person.id))
+    }
 
     var body: some View {
         let lines = BalanceLine.lines(for: summary.balance)
@@ -47,8 +53,11 @@ struct FriendRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 ForEach(lines) { line in
                     VStack(alignment: .trailing, spacing: 0) {
-                        MoneyLabel(money: line.money, style: .balance)
-                            .font(.body.weight(.semibold))
+                        Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
+                            .font(.system(.body, design: .rounded, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(line.direction == .owed ? owedColor : Color.primary)
+                            .accessibilityLabel(spoken(line))
                         Text(caption(for: line.direction))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -56,6 +65,12 @@ struct FriendRow: View {
                 }
             }
         }
+    }
+
+    private func spoken(_ line: BalanceLine) -> String {
+        let amount = MoneyFormatting.magnitudeString(line.money, locale: locale)
+        return line.direction == .owed
+            ? String(localized: "owes you \(amount)") : String(localized: "you owe \(amount)")
     }
 
     private func caption(for direction: BalanceDirection) -> String {

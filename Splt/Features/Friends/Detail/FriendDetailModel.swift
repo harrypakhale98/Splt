@@ -28,6 +28,8 @@ final class FriendDetailModel {
     private(set) var payments: [Payment] = []
     private(set) var people: [PersonID: Person] = [:]
     private(set) var groupNames: [GroupID: String] = [:]
+    /// Groups people made that you and the friend are both in, newest first.
+    private(set) var sharedGroups: [SplitGroup] = []
     private(set) var didLoad = false
 
     @ObservationIgnored private let services: DataServices
@@ -49,6 +51,12 @@ final class FriendDetailModel {
             let allGroups = try services.groups.groups(includeArchived: true)
             let byID = Dictionary(allGroups.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             groupNames = byID.mapValues(SettleLeg.displayName(of:))
+            if let me {
+                let pair: Set<PersonID> = [me.id, friendID]
+                sharedGroups = allGroups.filter { $0.kind != .friend && !$0.isArchived && pair.isSubset(of: $0.memberIDs) }
+            } else {
+                sharedGroups = []
+            }
             let summary = try services.people.friendBalance(with: friendID)
             balance = summary.total
             groupRows = summary.byGroup.map {
@@ -88,6 +96,22 @@ final class FriendDetailModel {
     var groupNamesOwedToYou: [String] {
         var seen = Set<String>()
         return legs.filter { !$0.youOwe }.map(\.groupName).filter { seen.insert($0).inserted }
+    }
+
+    /// What you paid minus what you owe for one expense. Nil when you are not part of it.
+    func myNet(in expense: Expense) -> Money? {
+        guard let me, expense.participants.contains(me.id) else { return nil }
+        return (try? expense.netBalances())?[me.id]
+    }
+
+    /// Who paid for an expense, in words: one name, or the first two.
+    func payerText(for expense: Expense) -> String {
+        let names = expense.payers.keys.sorted().map { name(of: $0) }
+        return ListFormatter.localizedString(byJoining: Array(names.prefix(2)))
+    }
+
+    var timeline: [FriendTimeline.Month] {
+        FriendTimeline.months(expenses)
     }
 
     func name(of id: PersonID) -> String {

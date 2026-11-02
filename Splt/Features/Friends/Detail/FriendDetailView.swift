@@ -50,10 +50,9 @@ private struct FriendDetailContent: View {
         Group {
             if let friend = model.friend {
                 List {
-                    header(friend)
-                    actions(friend)
+                    hero(friend)
                     groupBreakdown
-                    sharedExpenses
+                    timeline
                     paymentHistory
                 }
                 .navigationTitle(friend.name)
@@ -96,71 +95,36 @@ private struct FriendDetailContent: View {
         }
         .onAppear(perform: openPendingSettle)
         .onChange(of: model.didLoad) { openPendingSettle() }
+        .onChange(of: router.pendingSettleFriend) { openPendingSettle() }
     }
 
     // MARK: Sections
 
-    private func header(_ friend: Person) -> some View {
-        Section {
-            VStack(spacing: 10) {
-                AvatarView(person: friend, size: 72)
-                Text(friend.name)
-                    .font(.title2.bold())
-                if friend.isPlaceholder {
-                    Text("Not on Splt yet")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                balanceSummary
-            }
-            .frame(maxWidth: .infinity)
-            .listRowBackground(Color.clear)
-            .accessibilityElement(children: .combine)
+    private func hero(_ friend: Person) -> some View {
+        let owedToYou = !model.owedToYou.isEmpty
+        let settle = FriendHero.Action(title: "Settle Up", symbol: "checkmark.circle") { settleRequest = model.settleRequest }
+        let remind = FriendHero.Action(
+            title: "Remind \(ReminderMessage.firstName(friend.name))", symbol: "bell"
+        ) { showsRemind = true }
+        let add = FriendHero.Action(title: "Add Expense", symbol: "plus.circle") {
+            expenseTarget = model.expenseGroup().map(ExpenseTarget.init)
         }
-    }
-
-    @ViewBuilder
-    private var balanceSummary: some View {
-        let lines = model.balanceLines
-        if lines.isEmpty {
-            Label("Settled up", systemImage: "checkmark.circle")
-                .foregroundStyle(.secondary)
+        let primary: FriendHero.Action
+        let secondary: FriendHero.Action?
+        if model.settleRequest == nil {
+            (primary, secondary) = (add, nil)
+        } else if owedToYou {
+            (primary, secondary) = (remind, settle)
         } else {
-            VStack(spacing: 2) {
-                ForEach(lines) { line in
-                    HStack(spacing: 6) {
-                        Text(line.direction == .owed ? "Owes you" : "You owe")
-                            .foregroundStyle(.secondary)
-                        MoneyLabel(money: line.money, style: .balance)
-                            .font(.title3.weight(.semibold))
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            }
+            (primary, secondary) = (settle, add)
         }
-    }
-
-    private func actions(_ friend: Person) -> some View {
-        Section {
-            if model.settleRequest != nil {
-                Button {
-                    settleRequest = model.settleRequest
-                } label: {
-                    Label("Settle Up", systemImage: "checkmark.circle")
-                }
-            }
-            if !model.owedToYou.isEmpty {
-                Button {
-                    showsRemind = true
-                } label: {
-                    Label("Remind \(ReminderMessage.firstName(friend.name))", systemImage: "bell")
-                }
-            }
-            Button {
-                expenseTarget = model.expenseGroup().map(ExpenseTarget.init)
-            } label: {
-                Label("Add Expense", systemImage: "plus.circle")
-            }
+        return Section {
+            FriendHero(
+                friend: friend, balance: model.balance, sharedGroups: model.sharedGroups,
+                primary: primary, secondary: secondary
+            )
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -187,16 +151,29 @@ private struct FriendDetailContent: View {
     }
 
     @ViewBuilder
-    private var sharedExpenses: some View {
-        Section("Shared Expenses") {
-            if model.expenses.isEmpty {
+    private var timeline: some View {
+        if model.expenses.isEmpty {
+            Section("Shared Expenses") {
                 Text("Nothing shared yet.")
                     .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.expenses) { expense in
-                    NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                        ExpenseRowView(expense: expense, currentPerson: model.me?.id)
+            }
+        } else {
+            let members = [model.me?.id, model.friend?.id].compactMap { $0 }
+            ForEach(model.timeline) { month in
+                Section {
+                    ForEach(Array(month.expenses.enumerated()), id: \.element.id) { index, expense in
+                        NavigationLink(value: Route.expense(expense.id.rawValue)) {
+                            FriendTimelineRow(
+                                expense: expense, payerID: expense.payers.keys.sorted().first,
+                                payerName: model.payerText(for: expense), members: members,
+                                myNet: model.myNet(in: expense),
+                                isFirst: index == 0, isLast: index == month.expenses.count - 1
+                            )
+                        }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                     }
+                } header: {
+                    Text(month.start, format: .dateTime.month(.wide).year())
                 }
             }
         }
