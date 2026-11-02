@@ -60,8 +60,15 @@ final class GroupsDesignShotsUITests: XCTestCase {
         shot("08-totals-charts")
         for _ in 0..<3 { scroll(.down, in: app) }
 
+        scroll(.down, in: app)
         let recap = app.buttons["Watch the Recap"].firstMatch
-        if recap.waitForExistence(timeout: 3) {
+        var attempts = 0
+        while !recap.exists && attempts < 6 {
+            scroll(.up, in: app)
+            attempts += 1
+        }
+        if recap.exists {
+            reveal(recap, in: app)
             recap.tap()
             shot("09-recap-1")
             app.swipeLeft()

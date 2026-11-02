@@ -22,6 +22,7 @@ struct GroupHeroSection: View {
                 Button(action: onSettleUp) {
                     Text("Settle Up")
                         .font(.headline)
+                        .foregroundStyle(PersonPalette.onColor)
                         .frame(maxWidth: .infinity, minHeight: 28)
                 }
                 .buttonStyle(.glassProminent)
@@ -29,6 +30,7 @@ struct GroupHeroSection: View {
                 .disabled(!canSettle)
             }
             .padding(20)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background { GroupGradient(members: group.memberIDs) }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -50,7 +52,9 @@ struct GroupHeroSection: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
                 Spacer()
-                AvatarStack(members, members: group.memberIDs, size: 32, limit: typeSize.isAccessibilitySize ? 3 : 5)
+                if !typeSize.isAccessibilitySize {
+                    AvatarStack(members, members: group.memberIDs, size: 32, limit: 5)
+                }
             }
             Text(group.name)
                 .font(.largeTitle.weight(.bold))
