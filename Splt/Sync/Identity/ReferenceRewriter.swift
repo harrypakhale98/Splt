@@ -17,6 +17,7 @@ struct ReferenceRewriter {
     /// Records whose amounts are keyed by person: two ids in one of them would have to be added together.
     private static let blocksMerge: Set<SyncRecordType> = [.expense, .payment, .recurringExpense]
 
+    @discardableResult
     func rewrite(from old: UUID, to new: UUID) throws -> RewriteResult {
         let oldText = old.uuidString
         let newText = new.uuidString
