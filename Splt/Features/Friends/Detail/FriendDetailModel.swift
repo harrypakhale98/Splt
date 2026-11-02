@@ -84,7 +84,6 @@ final class FriendDetailModel {
 
     // MARK: Balance
 
-    var balanceLines: [BalanceLine] { BalanceLine.lines(for: balance) }
     var isSettled: Bool { balance.isEmpty }
     var owedToYou: [Money] { balance.filter(\.isPositive) }
 

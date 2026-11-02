@@ -15,6 +15,7 @@ final class FriendsDesignShotsUITests: XCTestCase {
         let dark = env["SPLT_SHOTS_DARK"] != nil
         let large = env["SPLT_SHOTS_SIZE"] == "xxxl"
         let variant = (large ? "xxxl" : "default") + (dark ? "-dark" : "-light")
+        XCUIDevice.shared.appearance = dark ? .dark : .light
         let app = launchApp(
             "-sampledata", textSize: large ? "UICTContentSizeCategoryAccessibilityXXXL" : nil,
             extra: (dark ? ["-darkmode"] : []) + ["-slowfeedback"]
@@ -72,7 +73,11 @@ final class FriendsDesignShotsUITests: XCTestCase {
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.8))
         shot("09-undo-banner")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // back to the Friends list, where the tab bar is open again even at the largest text size
+        let back = app.navigationBars.buttons.element(boundBy: 0)
+        if back.waitForExistence(timeout: 5), !app.navigationBars["Friends"].exists { back.tap() }
+        XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 10))
+        scroll(.down, in: app)
         openTab("Activity", in: app)
         XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 10))
         shot("10-activity")
