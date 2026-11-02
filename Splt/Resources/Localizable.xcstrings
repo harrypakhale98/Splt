@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "$cashtag" : {
+
+    },
     "%" : {
 
     },
@@ -29,6 +32,9 @@
           }
         }
       }
+    },
+    "%@ (You)" : {
+
     },
     "%@ added %@" : {
       "localizations" : {
@@ -169,6 +175,16 @@
     "%@ is left to assign." : {
 
     },
+    "%@ is matched to both %@ and %@. Match each person once." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is matched to both %2$@ and %3$@. Match each person once."
+          }
+        }
+      }
+    },
     "%@ is not in this group, so they were left out." : {
 
     },
@@ -181,6 +197,9 @@
           }
         }
       }
+    },
+    "%@ isn't installed or can't be opened here. You can copy the amount to use somewhere else, or record the payment now and pay later." : {
+
     },
     "%@ left a comment" : {
 
@@ -426,6 +445,9 @@
         }
       }
     },
+    "@username" : {
+
+    },
     "A gentle reminder about %@" : {
 
     },
@@ -469,9 +491,6 @@
       }
     },
     "Add" : {
-
-    },
-    "Add ${title} for ${amount}" : {
 
     },
     "Add %@" : {
@@ -552,6 +571,9 @@
     "Add the person's real name as a friend first." : {
 
     },
+    "Add your name and payment details" : {
+
+    },
     "Added %@, %@, to %@." : {
       "localizations" : {
         "en" : {
@@ -629,18 +651,6 @@
     "Anyone" : {
 
     },
-    "Appearance" : {
-      "comment" : "Setting row for light or dark appearance",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appearance"
-          }
-        }
-      }
-    },
     "Apple Cash" : {
 
     },
@@ -686,13 +696,22 @@
     "By item" : {
 
     },
+    "CSV" : {
+
+    },
     "Can't Add Friends" : {
 
     },
     "Can't Create Groups" : {
 
     },
+    "Can't Import" : {
+
+    },
     "Can't Invite Yet" : {
+
+    },
+    "Can't Open %@" : {
 
     },
     "Can't Remove" : {
@@ -714,6 +733,15 @@
 
     },
     "Changes are saved on this device and will sync when you are back online." : {
+
+    },
+    "Choose Another File" : {
+
+    },
+    "Choose CSV File" : {
+
+    },
+    "Choose Export." : {
 
     },
     "Choose Receipt Photo" : {
@@ -752,19 +780,13 @@
     "Combines debts so the group settles with as few payments as possible." : {
 
     },
-    "Coming Soon" : {
-      "comment" : "Title of a placeholder for a feature that is not built yet",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coming Soon"
-          }
-        }
-      }
+    "Come back here and choose the file." : {
+
     },
     "Comments" : {
+
+    },
+    "Copy Amount" : {
 
     },
     "Copy Link" : {
@@ -782,6 +804,9 @@
     "Couldn't Finish" : {
 
     },
+    "Couldn't Import" : {
+
+    },
     "Couldn't Invite" : {
 
     },
@@ -792,6 +817,9 @@
 
     },
     "Couldn't Record Payment" : {
+
+    },
+    "Couldn't Save Name" : {
 
     },
     "Couldn't undo the payment" : {
@@ -963,6 +991,9 @@
     "Education" : {
 
     },
+    "Email or phone" : {
+
+    },
     "End Date" : {
 
     },
@@ -1090,10 +1121,16 @@
     "Export" : {
 
     },
+    "Export as JSON" : {
+
+    },
     "Export as PDF" : {
 
     },
     "Export as Spreadsheet (CSV)" : {
+
+    },
+    "Export from Splitwise" : {
 
     },
     "Exported %@. Currency: %@" : {
@@ -1127,19 +1164,10 @@
     "Filter" : {
 
     },
-    "Find friends, groups and expenses." : {
-      "comment" : "Empty state message on the search screen",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Find friends, groups and expenses."
-          }
-        }
-      }
-    },
     "Find friends, groups and expenses. Try \"dinners Sam paid in March\"." : {
+
+    },
+    "Finding the exchange rate" : {
 
     },
     "Finished" : {
@@ -1172,18 +1200,6 @@
     "Friend Not Found" : {
 
     },
-    "Friend details will appear here." : {
-      "comment" : "Placeholder message on a friend screen",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friend details will appear here."
-          }
-        }
-      }
-    },
     "Friends" : {
       "comment" : "Tab and screen title for the list of friends",
       "extractionState" : "manual",
@@ -1207,6 +1223,9 @@
       }
     },
     "Friends owe you %@." : {
+
+    },
+    "Friends see this name in groups and when you invite them. It stays on your devices." : {
 
     },
     "Friends, groups, expenses" : {
@@ -1274,18 +1293,6 @@
     },
     "Group Settings" : {
 
-    },
-    "Group details will appear here." : {
-      "comment" : "Placeholder message on a group screen",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Group details will appear here."
-          }
-        }
-      }
     },
     "Groups" : {
       "comment" : "Tab and screen title for the list of groups",
@@ -1361,6 +1368,15 @@
     "How much was it?" : {
 
     },
+    "Import" : {
+
+    },
+    "Import from Splitwise" : {
+
+    },
+    "Importing it again would add every expense twice, so it is turned off." : {
+
+    },
     "In %@" : {
 
     },
@@ -1400,13 +1416,13 @@
     "In a Week" : {
 
     },
+    "In the File" : {
+
+    },
     "Invitation" : {
 
     },
     "Invite" : {
-
-    },
-    "Invite with Link" : {
 
     },
     "Invite with Link or QR Code" : {
@@ -1427,10 +1443,10 @@
     "Items" : {
 
     },
-    "Join %@ on Splt" : {
+    "JSON" : {
 
     },
-    "Join %@ on Splt to split costs together." : {
+    "Join %@ on Splt" : {
 
     },
     "Join %@ on Splt." : {
@@ -1469,6 +1485,16 @@
         }
       }
     },
+    "Line %lld: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Line %1$lld: %2$@"
+          }
+        }
+      }
+    },
     "MIT" : {
       "comment" : "Name of the software license",
       "extractionState" : "manual",
@@ -1482,6 +1508,12 @@
       }
     },
     "Mark All Read" : {
+
+    },
+    "Match People" : {
+
+    },
+    "Match each Splitwise member to someone you already split with, or add them as a new person." : {
 
     },
     "Members" : {
@@ -1509,6 +1541,9 @@
 
     },
     "Name" : {
+
+    },
+    "Name and payment details" : {
 
     },
     "Needs Attention" : {
@@ -1556,17 +1591,11 @@
         }
       }
     },
-    "New groups start with this currency. Splt follows the light or dark appearance of your device." : {
-      "comment" : "Footer of the General settings section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New groups start with this currency. Splt follows the light or dark appearance of your device."
-          }
-        }
-      }
+    "New Person" : {
+
+    },
+    "New groups start with this currency." : {
+
     },
     "Next" : {
 
@@ -1650,18 +1679,6 @@
     "Not Now" : {
 
     },
-    "Not Set Up" : {
-      "comment" : "Value of the iCloud sync row",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not Set Up"
-          }
-        }
-      }
-    },
     "Not involved" : {
 
     },
@@ -1722,7 +1739,16 @@
     "Only people who haven't joined Splt can be merged." : {
 
     },
+    "Open %@ Website" : {
+
+    },
+    "Open Group" : {
+
+    },
     "Open Settings" : {
+
+    },
+    "Open your Splitwise account on the web." : {
 
     },
     "Opens %@ so you can send the money. Come back and tap Record Payment when it's done." : {
@@ -1738,6 +1764,9 @@
 
     },
     "Opens the recurring expense to edit" : {
+
+    },
+    "Optional. Added to reminders you send so friends know how to pay you. Splt never sends money." : {
 
     },
     "Options" : {
@@ -1756,6 +1785,9 @@
 
     },
     "Owes you" : {
+
+    },
+    "PDF" : {
 
     },
     "Paid By" : {
@@ -1786,6 +1818,9 @@
 
     },
     "PayPal" : {
+
+    },
+    "Payment Details" : {
 
     },
     "Payment Recorded" : {
@@ -1824,6 +1859,9 @@
     "Pets" : {
 
     },
+    "Pick CSV and save the file to Files." : {
+
+    },
     "Pin Exchange Rate" : {
 
     },
@@ -1833,7 +1871,7 @@
     "Possible Matches" : {
 
     },
-    "Preparing export" : {
+    "Preparing %@" : {
 
     },
     "Preparing invite" : {
@@ -1941,20 +1979,11 @@
     "Resume" : {
 
     },
-    "Revolut" : {
+    "Retry" : {
 
     },
-    "Same as System" : {
-      "comment" : "Value of the appearance row",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Same as System"
-          }
-        }
-      }
+    "Revolut" : {
+
     },
     "Save" : {
 
@@ -2049,9 +2078,6 @@
     "Settle up first. This person still owes or is owed money in the group." : {
 
     },
-    "Settle up with ${friend}" : {
-
-    },
     "Settled Up" : {
 
     },
@@ -2071,6 +2097,9 @@
 
     },
     "Share" : {
+
+    },
+    "Share %@" : {
 
     },
     "Share Invite Link" : {
@@ -2167,6 +2196,9 @@
     "Split with" : {
 
     },
+    "Splitwise Import" : {
+
+    },
     "Splt can't find that friend." : {
 
     },
@@ -2180,6 +2212,12 @@
 
     },
     "Splt couldn't open its storage." : {
+
+    },
+    "Splt couldn't open that file. Choose a CSV exported from Splitwise." : {
+
+    },
+    "Splt couldn't prepare the export. Try again." : {
 
     },
     "Splt couldn't save that. Please try again." : {
@@ -2213,6 +2251,9 @@
 
     },
     "Splt only sees the contacts you pick." : {
+
+    },
+    "Splt reads the file on this device. Nothing is uploaded, and your Splitwise group stays as it is." : {
 
     },
     "Standard" : {
@@ -2259,18 +2300,6 @@
     },
     "Syncing" : {
 
-    },
-    "Syncing groups with friends through iCloud is coming. For now your data stays on this device." : {
-      "comment" : "Footer of the Sync settings section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Syncing groups with friends through iCloud is coming. For now your data stays on this device."
-          }
-        }
-      }
     },
     "Tax" : {
 
@@ -2326,6 +2355,9 @@
     "The expense could not be saved. Try again." : {
 
     },
+    "The file has no expenses or payments that Splt can import." : {
+
+    },
     "The group or expense may have been removed." : {
 
     },
@@ -2347,6 +2379,9 @@
     "These are shared in proportion to what each person ordered." : {
 
     },
+    "These rows can't be imported. Everything else will be." : {
+
+    },
     "They appear in the same expense or payment, so Splt can't combine them automatically. Edit or delete that item first." : {
 
     },
@@ -2357,6 +2392,9 @@
 
     },
     "This build of Splt runs without iCloud, so your data stays on this device." : {
+
+    },
+    "This doesn't look like a Splitwise CSV export. %@" : {
 
     },
     "This expense does not add up. Check the amounts and try again." : {
@@ -2376,18 +2414,6 @@
     },
     "This looks like a duplicate" : {
 
-    },
-    "This part of Splt is on its way." : {
-      "comment" : "Message of a placeholder for a feature that is not built yet",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This part of Splt is on its way."
-          }
-        }
-      }
     },
     "This person may have been removed." : {
 
@@ -2458,6 +2484,9 @@
     "Twice a Month" : {
 
     },
+    "Two people in the group are named %@. Rename one of them first." : {
+
+    },
     "Type" : {
 
     },
@@ -2465,6 +2494,9 @@
 
     },
     "UPI" : {
+
+    },
+    "UPI ID" : {
 
     },
     "Unblock" : {
@@ -2521,9 +2553,6 @@
     "View Receipt" : {
 
     },
-    "View balance with ${friend}" : {
-
-    },
     "What For" : {
 
     },
@@ -2561,6 +2590,9 @@
       }
     },
     "You Owe" : {
+
+    },
+    "You already imported this file." : {
 
     },
     "You and %@ are settled up." : {
@@ -2603,6 +2635,9 @@
 
     },
     "You blocked this person, so Splt won't remind you about them." : {
+
+    },
+    "You can pay me with %@." : {
 
     },
     "You get a quiet notification on your device. Nothing is sent to anyone." : {
@@ -2664,17 +2699,11 @@
     "You stop seeing this group. The others keep it." : {
 
     },
-    "Your Apple Account identifies you. There is nothing to sign up for." : {
-      "comment" : "Account tab subtitle",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your Apple Account identifies you. There is nothing to sign up for."
-          }
-        }
-      }
+    "Your Name" : {
+
+    },
+    "Your Profile" : {
+
     },
     "Your friends are hidden or blocked. Bring them back from the list below." : {
 
@@ -2708,6 +2737,9 @@
       }
     },
     "^[%lld member](inflect: true)" : {
+
+    },
+    "^[%lld row](inflect: true) skipped" : {
 
     },
     "amount" : {
@@ -2776,6 +2808,9 @@
     "location" : {
 
     },
+    "name@bank" : {
+
+    },
     "notes" : {
 
     },
@@ -2828,6 +2863,9 @@
 
     },
     "twice a month" : {
+
+    },
+    "username" : {
 
     },
     "you are owed" : {
