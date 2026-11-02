@@ -16,7 +16,9 @@ struct RemindSheet: View {
     @State private var showsSettingsPrompt = false
 
     private var message: String {
-        ReminderMessage.shareText(friendName: friend.name, amounts: owed, groupNames: groupNames, locale: locale)
+        let text = ReminderMessage.shareText(friendName: friend.name, amounts: owed, groupNames: groupNames, locale: locale)
+        guard let line = AccountProfile.shared.paymentLine else { return text }
+        return text + "\n\n" + line
     }
 
     var body: some View {
