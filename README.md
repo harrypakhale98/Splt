@@ -8,21 +8,47 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your A
 
 It is built with SwiftUI and Apple frameworks only, with no third party packages.
 
+<table>
+  <tr>
+    <td><img src="docs/images/groups-dark.png" width="180" alt="The Groups tab in dark mode, with a card showing what you owe and are owed across all groups"></td>
+    <td><img src="docs/images/balance-orbit.png" width="180" alt="The balance orbit for a trip group, with colored ribbons between six people"></td>
+    <td><img src="docs/images/split-bar.png" width="180" alt="The add expense sheet with the split bar set to percent"></td>
+    <td><img src="docs/images/settle-up.png" width="180" alt="The settle up sheet with an arc between two people for a partial payment"></td>
+  </tr>
+  <tr>
+    <td align="center">Groups</td>
+    <td align="center">Balance orbit</td>
+    <td align="center">Split bar</td>
+    <td align="center">Settle up</td>
+  </tr>
+</table>
+
 ## What it does
 
 - Groups and one to one balances with friends, with debts simplified to the fewest payments.
 - Six ways to split: equally, exact amounts, percentages, shares, adjustments and by item.
+- A balance orbit that draws who owes whom, and a split bar you drag to set the shares.
 - Any currency per expense, with reference rates when you are online or a rate you pin for the group.
 - Recurring expenses.
 - Quick add from a sentence such as "dinner 60 with Sam and Priya", by typing or by voice.
 - Receipt scanning with the document camera, then split by item.
-- Settle up, with a note of how you paid and a shortcut into your payment app. Splt never moves money.
+- Settle up, in full or in part, with a note of how you paid and a shortcut into your payment app. Splt never moves money.
 - Gentle reminders for friends who owe you, as local notifications you turn on yourself.
 - Comments on expenses, with system translation.
 - An activity feed, search in plain language, Spotlight, Siri and Shortcuts.
 - Invite people with a link or a QR code.
 - Export a group as a spreadsheet (CSV), PDF or JSON.
-- Totals, charts and a trip recap for each group.
+- Totals, charts and a story style trip recap of up to six pages for each group.
+
+When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
+
+## Design
+
+- Every person has one color that follows them across groups, balances, splits and recaps. Text on a color picks black or white for contrast.
+- The balance orbit puts people on a ring with ribbons for payments. Tap a person to see only their payments.
+- The split bar shows each share as a block in that person's color. Drag a divider, or tap a person to fine tune.
+- Settling up draws an arc between two people and closes a ring when you are square. A short haptic marks it, and you can turn haptics off in Settings.
+- It works in light and dark, with Dynamic Type up to the largest accessibility sizes, VoiceOver labels and Reduce Motion.
 
 When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
 
