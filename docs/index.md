@@ -4,14 +4,22 @@ Split costs with friends and groups on iPhone.
 
 Splt is free forever. No ads, no accounts, no limits and no subscription. Your data stays on your device and in your own iCloud, and the smart features run on the device.
 
+| | | | |
+| --- | --- | --- | --- |
+| ![The Groups tab in dark mode](images/groups-dark.png){: width="180"} | ![The balance orbit for a trip group](images/balance-orbit.png){: width="180"} | ![The add expense sheet with the split bar](images/split-bar.png){: width="180"} | ![The settle up sheet with a partial payment arc](images/settle-up.png){: width="180"} |
+| Groups | Balance orbit | Split bar | Settle up |
+
 ## What you get
 
 - Groups and one to one balances, with debts simplified to the fewest payments
-- Equal, exact, percentage, share, adjustment and item splits
+- Equal, exact, percentage, share, adjustment and item splits, with a split bar you drag
+- A balance orbit that shows who owes whom, and a settle up that closes the ring
 - Any currency, with reference rates or a rate you set for the trip
 - Quick add from a sentence or your voice, and receipt scanning
 - Invites by link or QR code, synced through iCloud
 - Export to a spreadsheet or PDF
+- A trip recap for each group
+- Dark mode, large text, VoiceOver and Reduce Motion
 
 ## Links
 
