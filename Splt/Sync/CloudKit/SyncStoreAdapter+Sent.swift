@@ -107,10 +107,10 @@ extension SyncStoreAdapter {
         return outcome
     }
 
-    /// A delete that finds nothing to delete has done its job.
+    /// A delete that finds nothing to delete, or no zone to delete it from, has done its job.
     func deleteFailed(id: CKRecord.ID, error: CKError) throws -> SyncFailure {
         let failure = SyncFailure(error)
-        if failure == .itemMissing {
+        if failure == .itemMissing || failure == .zoneMissing {
             try didSend(saved: [], deleted: [id])
         }
         return failure

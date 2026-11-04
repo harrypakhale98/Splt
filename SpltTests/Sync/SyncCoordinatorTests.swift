@@ -263,6 +263,24 @@ struct SyncCoordinatorTests {
         try rig.coordinator.sentRecords(saved: sending, failedSaves: [], deleted: [], failedDeletes: [:], scope: .privateDatabase)
         #expect(rig.privateQueue.plans.flatMap(\.deletes) == [inFlight.recordID])
     }
+
+    @Test func aDeleteInAZoneThatIsGoneIsDone() throws {
+        let rig = try rig()
+        let device = rig.device
+        let expense = try #require(try device.services.expenses.expenses(in: rig.populated.group.id).first)
+        let comment = ExpenseComment(
+            groupID: rig.populated.group.id, expenseID: expense.id, authorID: rig.populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        try FakeCloud().upload(from: device)
+        try device.services.comments.delete(id: comment.id)
+        let id = try #require(try device.adapter.collectOutgoing().deletes.first)
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [id: CKError(.zoneNotFound)], scope: .privateDatabase
+        )
+        #expect(try device.tracker.pendingChanges().isEmpty)
+    }
 }
 
 @MainActor
