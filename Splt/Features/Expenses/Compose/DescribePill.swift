@@ -81,7 +81,9 @@ struct DescribePill: View {
             .imageScale(.large)
             .accessibilityLabel("Stop dictating")
         } else if !model.describeText.trimmingCharacters(in: .whitespaces).isEmpty {
-            Button("Fill In", action: fill)
+            Button(action: fill) {
+                Text("Fill In").foregroundStyle(PersonPalette.onColor)
+            }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .controlSize(.small)

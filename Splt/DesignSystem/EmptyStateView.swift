@@ -28,9 +28,11 @@ struct EmptyStateView: View {
                             .multilineTextAlignment(.center)
                     }
                     if let actionTitle, let action {
-                        Button(actionTitle, action: action)
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
+                        Button(action: action) {
+                            Text(actionTitle).foregroundStyle(PersonPalette.onColor)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
                 }
                 .padding(.horizontal, 32)
@@ -47,8 +49,10 @@ struct EmptyStateView: View {
                 Text(description)
             } actions: {
                 if let actionTitle, let action {
-                    Button(actionTitle, action: action)
-                        .buttonStyle(.borderedProminent)
+                    Button(action: action) {
+                        Text(actionTitle).foregroundStyle(PersonPalette.onColor)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }

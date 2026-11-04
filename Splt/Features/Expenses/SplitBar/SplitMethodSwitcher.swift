@@ -51,7 +51,7 @@ struct SplitMethodSwitcher: View {
         let action = { onSelect(method) }
         Group {
             if isSelected {
-                Button(action: action) { Text(method.shortTitle) }.buttonStyle(.glassProminent)
+                Button(action: action) { Text(method.shortTitle).foregroundStyle(PersonPalette.onColor) }.buttonStyle(.glassProminent)
             } else {
                 Button(action: action) { Text(method.shortTitle) }.buttonStyle(.glass)
             }

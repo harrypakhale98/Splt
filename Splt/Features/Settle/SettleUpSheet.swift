@@ -107,6 +107,7 @@ private struct SettleUpContent: View {
         } label: {
             Text("Record Payment")
                 .font(.headline)
+                .foregroundStyle(PersonPalette.onColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity)

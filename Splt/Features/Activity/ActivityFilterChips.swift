@@ -37,6 +37,7 @@ struct ActivityFilterChips: View {
         } label: {
             Text(filter.shortTitle)
                 .font(.subheadline.weight(.semibold))
+                .foregroundStyle(selected ? PersonPalette.onColor : Color.primary)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(minHeight: 32)
@@ -65,6 +66,7 @@ struct ActivityFilterChips: View {
                     .font(.caption2.weight(.bold))
                     .accessibilityHidden(true)
             }
+            .foregroundStyle(selected != nil ? PersonPalette.onColor : Color.primary)
             .frame(minHeight: 32)
         }
         .chipStyle(selected: selected != nil)

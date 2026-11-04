@@ -138,7 +138,9 @@ private struct DeletedBanner: View {
         HStack {
             Label("Expense deleted", systemImage: "trash")
             Spacer(minLength: 8)
-            Button("Undo", action: undo)
+            Button(action: undo) {
+                Text("Undo").foregroundStyle(PersonPalette.onColor)
+            }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
         }

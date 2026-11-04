@@ -52,11 +52,12 @@ struct ItemsTray: View {
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(model.itemName(item)).font(.subheadline.weight(.semibold)).lineLimit(1)
+                        .foregroundStyle(selected ? PersonPalette.onColor : Color.primary)
                     if let money {
                         Text(MoneyFormatting.magnitudeString(money, locale: model.locale))
                             .font(.caption)
                             .monospacedDigit()
-                            .foregroundStyle(.legible)
+                            .foregroundStyle(selected ? PersonPalette.onColor : Color.legible)
                     }
                 }
                 if people.isEmpty {
