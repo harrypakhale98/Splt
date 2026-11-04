@@ -26,6 +26,22 @@ struct CloudIdentityTests {
         #expect(CloudIdentity.personID(forUserRecordName: "_known").rawValue.uuidString == CloudIdentity.personID(forUserRecordName: "_known").rawValue.uuidString)
     }
 
+    @Test func aDeviceWithoutAProfileRecognizesItselfWhenItsPersonArrives() throws {
+        let device = try SyncDevice()
+        let mine = CloudIdentity.personID(forUserRecordName: "_me")
+        var fields = SyncFields()
+        fields.set("name", "Sam")
+        fields.set("kind", PersonKind.friend.rawValue)
+        try device.tracker.applyRemote(SyncPayload(
+            recordType: .person, recordName: mine.description, modifiedAt: device.clock.start, fields: fields
+        ))
+        #expect(try IdentityAdopter(tracker: device.tracker).adopt(userRecordName: "_me") == .adopted(mine))
+        #expect(try device.services.people.me()?.id == mine)
+        #expect(try device.services.people.me()?.name == "Sam")
+        #expect(try device.services.people.friends().isEmpty)
+        #expect(try device.tracker.pendingChanges().isEmpty)
+    }
+
     @Test func adoptingRewritesTheProfileAndEveryReference() throws {
         let populated = try PopulatedDevice()
         let expense = try populated.addExpense()
