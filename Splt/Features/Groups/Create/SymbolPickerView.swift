@@ -27,7 +27,7 @@ struct SymbolPickerView: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(symbol.replacingOccurrences(of: ".fill", with: "").replacingOccurrences(of: ".", with: " "))
+                    .accessibilityLabel(GroupSymbols.spokenName(for: symbol))
                     .accessibilityAddTraits(symbol == selection ? .isSelected : [])
                 }
             }

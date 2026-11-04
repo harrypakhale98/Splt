@@ -142,6 +142,8 @@ private struct GroupSettingsForm: View {
                             .foregroundStyle(.tint)
                             .accessibilityHidden(true)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityValue(GroupSymbols.spokenName(for: model.symbol))
                 }
                 NavigationLink {
                     GroupCurrencyPickerView(selection: $model.currencyCode)

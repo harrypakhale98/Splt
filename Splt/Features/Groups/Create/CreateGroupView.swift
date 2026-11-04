@@ -72,6 +72,8 @@ private struct CreateGroupForm: View {
                             .foregroundStyle(.tint)
                             .accessibilityHidden(true)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityValue(GroupSymbols.spokenName(for: model.symbol))
                 }
             }
 
