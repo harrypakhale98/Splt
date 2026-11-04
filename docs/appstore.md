@@ -37,7 +37,7 @@ Settling up
 - Send a gentle reminder to a friend who owes you
 
 Together
-- Invite people to a group with a link or a QR code
+- Invite people to a group through iCloud
 - Comments on expenses, with translation
 - An activity feed shows what changed
 

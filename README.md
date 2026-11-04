@@ -36,7 +36,7 @@ It is built with SwiftUI and Apple frameworks only, with no third party packages
 - Gentle reminders for friends who owe you, as local notifications you turn on yourself.
 - Comments on expenses, with system translation.
 - An activity feed, search in plain language, Spotlight, Siri and Shortcuts.
-- Invite people with a link or a QR code.
+- Invite people to a group through iCloud with the system invite sheet.
 - Export a group as a spreadsheet (CSV), PDF or JSON.
 - Totals, charts and a story style trip recap of up to six pages for each group.
 
