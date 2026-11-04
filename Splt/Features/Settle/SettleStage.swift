@@ -34,6 +34,7 @@ struct SettleStage: View {
 
     @ScaledMetric(relativeTo: .body) private var scaledDiameter: CGFloat = 64
     @State private var lastDetent: Int?
+    @Environment(\.layoutDirection) private var layoutDirection
 
     private let baseDiameter: CGFloat = 64
     private let inset: CGFloat = 14
@@ -88,18 +89,11 @@ struct SettleStage: View {
             avatar(receiver, at: end)
         }
         .contentShape(Rectangle())
-        .gesture(isAdjustable && contraction == 0 ? drag(geometry) : nil)
+        .gesture(isAdjustable && contraction == 0 ? drag(geometry, width: width) : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(payer.name) pays \(receiver.name)"))
         .accessibilityValue(isAdjustable ? Text("\(Int((fraction * 100).rounded())) percent of what is owed") : Text(""))
-        .accessibilityAdjustableAction { direction in
-            guard isAdjustable else { return }
-            switch direction {
-            case .increment: onStep(1)
-            case .decrement: onStep(-1)
-            @unknown default: break
-            }
-        }
+        .adjustable(when: isAdjustable) { increase in onStep(increase ? 1 : -1) }
     }
 
     private func knob(at point: CGPoint) -> some View {
@@ -113,11 +107,13 @@ struct SettleStage: View {
             .position(point)
     }
 
-    private func drag(_ geometry: SettleArcGeometry) -> some Gesture {
+    private func drag(_ geometry: SettleArcGeometry, width: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 let span = max(geometry.end.x - geometry.start.x, 1)
-                let value = Double((value.location.x - geometry.start.x) / span)
+                // a gesture's x runs from the left even where the layout is mirrored
+                let x = layoutDirection == .rightToLeft ? width - value.location.x : value.location.x
+                let value = Double((x - geometry.start.x) / span)
                 let share = min(max(value, 0), 1)
                 onFraction(share)
                 let detent = Int((share * 4).rounded())

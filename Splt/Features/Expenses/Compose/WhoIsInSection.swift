@@ -96,8 +96,14 @@ struct WhoIsInSection: View {
         }
         .accessibilityLabel(person.name)
         .accessibilityValue(model.isPayer(person.id) ? String(localized: "Paid") : "")
-        .accessibilityAction(named: Text("Paid by \(model.displayName(for: person.id))")) { model.makeSolePayer(person.id) }
-        .accessibilityAction(named: Text("Also paid")) { model.toggleAlsoPaid(person.id) }
+        .accessibilityAction(named: Text("Paid by \(model.displayName(for: person.id))")) {
+            model.makeSolePayer(person.id)
+            onChange()
+        }
+        .accessibilityAction(named: Text(model.isPayer(person.id) && model.payer.isMultiple ? "Did not pay" : "Also paid")) {
+            model.toggleAlsoPaid(person.id)
+            onChange()
+        }
     }
 
     private func isHighlighted(_ id: PersonID) -> Bool {

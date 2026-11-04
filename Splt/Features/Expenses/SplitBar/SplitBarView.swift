@@ -15,6 +15,7 @@ struct SplitBarView: View {
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 76
     @Environment(\.locale) private var locale
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.layoutDirection) private var layoutDirection
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draggingDivider: Int?
     @State private var detentCount = 0
@@ -31,7 +32,7 @@ struct SplitBarView: View {
                 segmentsRow(layout: layout)
                 if data.canDrag {
                     ForEach(0..<max(data.segments.count - 1, 0), id: \.self) { divider in
-                        handle(divider: divider, layout: layout)
+                        handle(divider: divider, layout: layout, width: width)
                     }
                 }
                 if let divider = draggingDivider, divider + 1 < layout.visual.count {
@@ -63,13 +64,7 @@ struct SplitBarView: View {
                 .accessibilityLabel(segment.id == currentPerson ? String(localized: "You") : segment.person.name)
                 .accessibilityValue(spokenValue(for: segment))
                 .accessibilityHint(data.canDrag ? String(localized: "Swipe up or down to change. \(stepHint) at a time.") : "")
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: onStep(segment.id, true)
-                    case .decrement: onStep(segment.id, false)
-                    @unknown default: break
-                    }
-                }
+                .adjustable(when: data.canDrag) { increase in onStep(segment.id, increase) }
                 .accessibilityAction(named: Text("Fine tune")) { onTap(segment.id) }
             }
         }
@@ -86,7 +81,7 @@ struct SplitBarView: View {
 
     // MARK: Dividers
 
-    private func handle(divider: Int, layout: SplitBarLayout) -> some View {
+    private func handle(divider: Int, layout: SplitBarLayout, width: CGFloat) -> some View {
         let position = layout.visual.indices.contains(divider + 1) ? layout.visual[divider + 1] : 0
         return Capsule()
             .fill(.white)
@@ -100,7 +95,9 @@ struct SplitBarView: View {
                 DragGesture(minimumDistance: 0, coordinateSpace: .named(barSpace))
                     .onChanged { value in
                         draggingDivider = divider
-                        let fraction = layout.fraction(forX: value.location.x)
+                        // a gesture's x runs from the left even where the bar is mirrored
+                        let x = layoutDirection == .rightToLeft ? width - value.location.x : value.location.x
+                        let fraction = layout.fraction(forX: x)
                         if let result = onDrag(divider, fraction) {
                             if let snap = result.snappedTo, lastSnap != snap { detentCount += 1 }
                             lastSnap = result.snappedTo
@@ -144,6 +141,24 @@ struct SplitBarView: View {
 
     private func firstName(of person: Person) -> String {
         person.name.split(separator: " ").first.map(String.init) ?? person.name
+    }
+}
+
+extension View {
+    /// VoiceOver announces any element with an adjustable action as adjustable, so only add it when swiping changes something.
+    @ViewBuilder
+    func adjustable(when isAdjustable: Bool, _ step: @escaping (_ increase: Bool) -> Void) -> some View {
+        if isAdjustable {
+            accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: step(true)
+                case .decrement: step(false)
+                @unknown default: break
+                }
+            }
+        } else {
+            self
+        }
     }
 }
 
