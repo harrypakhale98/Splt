@@ -119,6 +119,15 @@ final class SyncCoordinator {
         }
     }
 
+    /// Remembers whether a group in your own iCloud is shared, for when the server cannot be asked.
+    func noteOwnShare(zoneName: String, exists: Bool) {
+        adapter.updateMetadata { metadata in
+            var owned = metadata.ownedShares ?? []
+            if exists { owned.insert(zoneName) } else { owned.remove(zoneName) }
+            metadata.ownedShares = owned
+        }
+    }
+
     func updateStatus(_ change: (inout SyncStatusMachine) -> Void) {
         let before = machine.status
         change(&machine)
@@ -152,6 +161,8 @@ final class SyncCoordinator {
         let importer = ParticipantImporter(services: services)
         var suggestions: [ClaimSuggestion] = []
         for share in report.shares {
+            let zone = share.recordID.zoneID
+            if zone.scope == .privateDatabase { noteOwnShare(zoneName: zone.zoneName, exists: true) }
             suggestions += try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
         }
         for zone in report.touchedZones where adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {

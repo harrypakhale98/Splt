@@ -285,6 +285,33 @@ struct GroupSettingsViewModelTests {
         #expect(!group.memberIDs.contains(fixture.me.id))
     }
 
+    private struct OwnerSharing: GroupSharing {
+        func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL { URL(string: "splt://group")! }
+        func leave(groupID: GroupID) async throws { Issue.record("An owner must not reach leave") }
+        func isSharedByMe(groupID: GroupID) async -> Bool { true }
+    }
+
+    @Test func theOwnerOfASharedGroupCannotLeaveAndIsToldWhatToDo() async throws {
+        let fixture = try Fixture()
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        #expect(model.leaveBlock == nil)
+        await model.loadSharing(using: OwnerSharing())
+        let block = try #require(model.leaveBlock)
+        #expect(block.contains("Stop sharing"))
+        #expect(block.contains("delete"))
+        #expect(await model.leave(using: OwnerSharing()) == false)
+        #expect(model.blockedMessage == block)
+        #expect(!leftGroups.contains(fixture.group.id))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
+    }
+
+    @Test func aShareMadeSinceTheScreenOpenedStillBlocksLeaving() async throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        #expect(await model.leave(using: OwnerSharing()) == false)
+    }
+
     @Test func youCannotLeaveWithABalance() async throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)

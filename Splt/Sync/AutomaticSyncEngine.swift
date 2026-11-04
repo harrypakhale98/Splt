@@ -101,6 +101,13 @@ final class AutomaticSyncEngine: SyncEngine {
         try await current.leave(group: group)
     }
 
+    func isSharedByMe(group: GroupID) async -> Bool {
+        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+            return stateStore.loadMetadata().ownedShares?.contains(group.description) == true
+        }
+        return await current.isSharedByMe(group: group)
+    }
+
     /// Looks at the environment and account again and swaps the engine if the answer changed.
     /// One look at a time: a change that arrives during a swap is looked at right after it.
     func reevaluate() async {

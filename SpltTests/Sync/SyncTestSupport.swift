@@ -47,6 +47,9 @@ final class FakeSyncEngine: SyncEngine {
     func leave(group: GroupID) async throws {
         left.append(group)
     }
+
+    var sharedByMe = false
+    func isSharedByMe(group: GroupID) async -> Bool { sharedByMe }
 }
 
 final class FakeAccountProbe: AccountProbe {

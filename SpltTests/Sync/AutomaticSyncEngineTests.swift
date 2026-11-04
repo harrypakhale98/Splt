@@ -186,6 +186,22 @@ struct AutomaticSyncEngineTests {
         #expect(await eventually { engine.choice == .cloudKit(containerIdentifier: "iCloud.com.example.app") })
         await engine.stop()
     }
+
+    @Test func anOwnerIsRecognizedWhileTheAccountIsOutOfReach() async {
+        let store = InMemorySyncStateStore()
+        let group = GroupID()
+        var metadata = store.loadMetadata()
+        metadata.ownedShares = [group.description]
+        store.saveMetadata(metadata)
+        let engine = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        #expect(await engine.isSharedByMe(group: group))
+        #expect(await !engine.isSharedByMe(group: GroupID()))
+        await engine.stop()
+    }
 }
 
 @MainActor

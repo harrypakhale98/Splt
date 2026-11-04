@@ -200,9 +200,15 @@ final class GroupSettingsViewModel {
 
     var myRow: MemberRow? { memberRows.first(where: \.isMe) }
 
+    /// Set by `loadSharing`.
+    private(set) var isSharedByMe = false
+
     /// Leaving needs you to be square and someone else to stay behind.
     var leaveBlock: String? {
         guard let myRow else { return String(localized: "You are not a member of this group.") }
+        if isSharedByMe {
+            return String(localized: "You shared this group, so you can't leave it. Stop sharing in Invite with iCloud to keep it just for you, or delete it to remove it for everyone.")
+        }
         if memberRows.count < 2 { return String(localized: "You are the only member. Delete the group instead.") }
         if !myRow.balance.isEmpty {
             let amounts = myRow.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
@@ -216,8 +222,14 @@ final class GroupSettingsViewModel {
         return nil
     }
 
+    /// Finds out whether this person shared the group, which rules out leaving it.
+    func loadSharing(using sharing: any GroupSharing) async {
+        isSharedByMe = await sharing.isSharedByMe(groupID: groupID)
+    }
+
     /// Returns true when you left.
     func leave(using sharing: any GroupSharing) async -> Bool {
+        await loadSharing(using: sharing)
         guard leaveBlock == nil, let myRow else {
             blockedMessage = leaveBlock
             return false

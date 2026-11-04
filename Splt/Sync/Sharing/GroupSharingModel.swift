@@ -41,15 +41,6 @@ final class GroupSharingModel {
         }
     }
 
-    func leave(group: GroupID) async {
-        do {
-            try await engine.leave(group: group)
-            prepared = nil
-        } catch {
-            phase = .failed(error.localizedDescription)
-        }
-    }
-
     func dismissError() {
         if case .failed = phase { phase = .idle }
     }

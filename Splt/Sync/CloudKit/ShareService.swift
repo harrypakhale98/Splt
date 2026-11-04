@@ -51,16 +51,6 @@ struct ShareService {
         try await existingShare(zoneID: zoneID, in: zoneID.scope == .privateDatabase ? privateDatabase : sharedDatabase)
     }
 
-    /// Stops sharing. The group stays in your private database.
-    func stopSharing(zoneID: CKRecordZone.ID) async throws {
-        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
-        do {
-            try await privateDatabase.deleteRecord(id)
-        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
-            throw SyncError.notShared
-        }
-    }
-
     private func existingShare(zoneID: CKRecordZone.ID, in database: any ShareDatabase) async throws -> CKShare? {
         let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
         do {

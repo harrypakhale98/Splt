@@ -91,13 +91,4 @@ struct GroupSharingModelTests {
         model.dismissError()
         #expect(model.phase == .idle)
     }
-
-    @Test func leavingForwardsToTheEngine() async {
-        let engine = FakeSyncEngine()
-        let model = GroupSharingModel(engine: engine)
-        let group = GroupID()
-        await model.leave(group: group)
-        #expect(engine.left == [group])
-        #expect(model.phase == .idle)
-    }
 }

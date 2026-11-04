@@ -180,6 +180,7 @@ final class CloudKitSyncEngine: SyncEngine {
         try coordinator.reconcile()
         try await privateSyncer.sendChanges()
         let share = try await service.prepare(zoneID: zoneID, title: value.name)
+        coordinator.noteOwnShare(zoneName: zoneID.zoneName, exists: true)
         return try backend.groupShare(share, groupName: value.name)
     }
 
@@ -192,13 +193,22 @@ final class CloudKitSyncEngine: SyncEngine {
         try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)
     }
 
+    func isSharedByMe(group: GroupID) async -> Bool {
+        let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
+        guard zoneID.scope == .privateDatabase else { return false }
+        do {
+            let shared = try await backend.shareService.share(zoneID: zoneID) != nil
+            coordinator.noteOwnShare(zoneName: zoneID.zoneName, exists: shared)
+            return shared
+        } catch {
+            return adapter.metadata.ownedShares?.contains(zoneID.zoneName) == true
+        }
+    }
+
     func leave(group: GroupID) async throws {
         guard try services.groups.group(id: group) != nil else { throw SyncError.groupNotFound }
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
-        if zoneID.scope == .privateDatabase {
-            try await backend.shareService.stopSharing(zoneID: zoneID)
-            return
-        }
+        guard zoneID.scope == .sharedDatabase else { return }
         coordinator.requestLeave(zoneName: zoneID.zoneName)
         // before sync has started the request just waits: it is stored, and the first reconcile picks it up
         guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { return }

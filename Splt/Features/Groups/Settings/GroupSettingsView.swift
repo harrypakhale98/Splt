@@ -82,6 +82,7 @@ private struct GroupSettingsForm: View {
             }
         }
         .onAppear { model.locale = locale }
+        .task { await model.loadSharing(using: sharing) }
         .sheet(isPresented: $showsContacts) {
             ContactPicker { drafts in
                 for draft in drafts { model.addMember(named: draft.name, contactHint: draft.contactHint) }

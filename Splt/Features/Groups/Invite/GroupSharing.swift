@@ -9,6 +9,9 @@ protocol GroupSharing: Sendable {
     func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL
     /// Tells sync this device is leaving the group. Local membership is changed by the caller.
     func leave(groupID: GroupID) async throws
+    /// True when this person shared the group with others. Leaving is not possible then, because
+    /// the group lives in their iCloud and CloudKit cannot hand it to someone else.
+    func isSharedByMe(groupID: GroupID) async -> Bool
 }
 
 /// Used until sync provides sharing: the link is the app's own address for the group, which only
@@ -19,6 +22,8 @@ struct LocalGroupSharing: GroupSharing {
     }
 
     func leave(groupID: GroupID) async throws {}
+
+    func isSharedByMe(groupID: GroupID) async -> Bool { false }
 }
 
 extension EnvironmentValues {

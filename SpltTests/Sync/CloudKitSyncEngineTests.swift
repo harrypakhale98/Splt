@@ -116,17 +116,36 @@ struct CloudKitSyncEngineTests {
 
     // MARK: Leaving
 
-    @Test func theOwnerLeavingStopsSharingAndKeepsTheGroup() async throws {
+    @Test func leavingAGroupInYourOwnICloudChangesNothingOnTheServer() async throws {
         let rig = try Rig()
         await rig.engine.start()
         let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
         let shareID = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zone)
         rig.backend.privateDatabase.put(CKShare(recordZoneID: zone))
         try await rig.engine.leave(group: rig.populated.group.id)
-        #expect(!rig.backend.privateDatabase.contains(shareID))
-        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
-        await #expect(throws: SyncError.notShared) { try await rig.engine.leave(group: rig.populated.group.id) }
+        #expect(rig.backend.privateDatabase.contains(shareID))
+        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
         await rig.engine.stop()
+    }
+
+    @Test func theOwnerOfASharedGroupIsToldSoAndTheAnswerLastsOffline() async throws {
+        let rig = try Rig()
+        await rig.engine.start()
+        let group = rig.populated.group.id
+        #expect(await !rig.engine.isSharedByMe(group: group))
+        let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
+        rig.backend.privateDatabase.put(CKShare(recordZoneID: zone))
+        #expect(await rig.engine.isSharedByMe(group: group))
+        rig.backend.privateDatabase.fetchError = CKError(.networkUnavailable)
+        #expect(await rig.engine.isSharedByMe(group: group))
+        await rig.engine.stop()
+    }
+
+    @Test func aGroupSomeoneElseSharedIsNotSharedByMe() async throws {
+        let (rig, engine, _) = try sharedRig()
+        await engine.start()
+        #expect(await !engine.isSharedByMe(group: rig.populated.group.id))
+        await engine.stop()
     }
 
     @Test func leavingAnUnknownGroupFails() async throws {

@@ -39,6 +39,8 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     /// Shared groups this person left, waiting for their last changes to reach the others.
     /// Optional for the same reason.
     var pendingLeaves: Set<String>?
+    /// Groups in your own iCloud last known to be shared with others. Optional for the same reason.
+    var ownedShares: Set<String>?
 
     func isDetached(zoneName: String) -> Bool {
         detachedZones?.contains(zoneName) == true
@@ -89,5 +91,6 @@ struct SyncMetadata: Codable, Equatable, Sendable {
         personCopies[zoneName] = nil
         personQueue = personQueue.filter { $0.zoneName != zoneName }
         pendingLeaves?.remove(zoneName)
+        ownedShares?.remove(zoneName)
     }
 }

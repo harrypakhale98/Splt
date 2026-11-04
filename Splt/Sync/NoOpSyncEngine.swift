@@ -33,4 +33,6 @@ final class NoOpSyncEngine: SyncEngine {
     func leave(group: GroupID) async throws {
         throw SyncError.unavailable
     }
+
+    func isSharedByMe(group: GroupID) async -> Bool { false }
 }
