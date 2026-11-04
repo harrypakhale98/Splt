@@ -41,7 +41,7 @@ extension SyncStoreAdapter {
                 payload.zoneName = nil
                 payload.systemFields = nil
                 if let local = try PersonRecord.find(recordName: payload.recordName, in: tracker.context),
-                   local.modifiedAt > payload.modifiedAt {
+                   local.modifiedAt.isLaterEdit(than: payload.modifiedAt) {
                     queueAdds.insert(key)
                     report.requeue.append(record.recordID)
                     continue

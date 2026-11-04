@@ -32,7 +32,7 @@ struct ChangeTracker {
         self.now = now
     }
 
-    /// Call after creating or changing a record. The modified date never moves backwards.
+    /// Call after creating or changing a record. The modified date always moves forwards.
     func recordEdit(_ record: some SyncTracked) {
         noteBalanceChange(record)
         record.modifiedAt = stampedDate(after: record.modifiedAt)
@@ -85,8 +85,12 @@ struct ChangeTracker {
         flushUnsavedGroups()
     }
 
+    /// Always later than `previous`, even when the clock is behind it, so an edit made during an upload
+    /// is told apart from what was sent. See `Date.isLaterEdit(than:)` for why the step is two milliseconds.
     private func stampedDate(after previous: Date) -> Date {
-        max(now(), previous)
+        let current = (now().timeIntervalSinceReferenceDate * 1000).rounded(.down)
+        let next = (previous.timeIntervalSinceReferenceDate * 1000).rounded() + 2
+        return Date(timeIntervalSinceReferenceDate: max(current, next) / 1000)
     }
 
     /// Drops the cached ledger of the group a record belongs to, when the record can change balances.

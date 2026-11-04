@@ -37,7 +37,7 @@ extension ChangeTracker {
         if let systemFields {
             record.systemFields = systemFields
         }
-        if record.modifiedAt <= sentModifiedAt {
+        if !record.modifiedAt.isLaterEdit(than: sentModifiedAt) {
             record.isDirty = false
             record.pendingOperation = nil
         }

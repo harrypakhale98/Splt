@@ -233,6 +233,21 @@ struct SyncStoreAdapterTests {
         ])
     }
 
+    @Test func uploadsThatComeBackCutToMillisecondsAreNotSentAgain() throws {
+        let device = try SyncDevice(start: 1_750_000_000.123_456_7)
+        let me = try device.services.people.ensureMe(name: "Me")
+        try device.services.groups.create(SplitGroup(name: "Flat", currencyCode: "USD", memberIDs: [me.id]))
+        let (_, records) = try device.outgoing()
+        for record in records {
+            let sent = try #require(record[RecordSchema.modifiedAtKey] as? Date)
+            let cut = (sent.timeIntervalSince1970 * 1000).rounded(.down) / 1000
+            record[RecordSchema.modifiedAtKey] = Date(timeIntervalSince1970: cut) as NSDate
+        }
+        try device.adapter.didSend(saved: records, deleted: [])
+        #expect(try device.adapter.collectOutgoing().isEmpty)
+        #expect(try device.tracker.pendingChanges().isEmpty)
+    }
+
     @Test func aNewerServerVersionWinsTheConflictAndIsNotSentAgain() throws {
         let populated = try PopulatedDevice()
         let expense = try populated.addExpense()

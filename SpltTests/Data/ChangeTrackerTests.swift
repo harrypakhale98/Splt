@@ -51,7 +51,29 @@ struct ChangeTrackerTests {
         let record = try makePerson()
         record.modifiedAt = clock.start.addingTimeInterval(1_000_000)
         tracker.recordEdit(record)
-        #expect(record.modifiedAt == clock.start.addingTimeInterval(1_000_000))
+        #expect(record.modifiedAt > clock.start.addingTimeInterval(1_000_000))
+    }
+
+    @Test func anEditDuringAnUploadStaysDirtyWhenTheClockIsBehindTheRecord() throws {
+        let record = try makePerson()
+        record.modifiedAt = clock.start.addingTimeInterval(1_000_000)
+        tracker.recordEdit(record)
+        let sent = record.modifiedAt
+        tracker.recordEdit(record)
+        try tracker.markSynced(recordType: .person, recordName: record.recordName, sentModifiedAt: sent, systemFields: nil)
+        #expect(record.isDirty)
+    }
+
+    @Test func anUploadThatComesBackCutToMillisecondsStillCountsAsSent() throws {
+        let record = try makePerson()
+        record.modifiedAt = clock.start.addingTimeInterval(0.123_456_7)
+        tracker.recordEdit(record)
+        let cut = (record.modifiedAt.timeIntervalSinceReferenceDate * 1000).rounded(.down) - 1
+        try tracker.markSynced(
+            recordType: .person, recordName: record.recordName,
+            sentModifiedAt: Date(timeIntervalSinceReferenceDate: cut / 1000), systemFields: nil
+        )
+        #expect(!record.isDirty)
     }
 
     @Test func softDeleteIsADirtySaveWithATombstone() throws {
