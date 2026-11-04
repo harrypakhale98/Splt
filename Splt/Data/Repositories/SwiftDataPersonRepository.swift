@@ -88,7 +88,7 @@ final class SwiftDataPersonRepository: PersonRepository {
         var amounts: [PersonID: [GroupID: [Money]]] = [:]
         for group in try env.allGroups() {
             let ledger = try env.ledger(forGroup: group.id)
-            for (friend, owed) in ledger.balances(with: me) {
+            for (friend, owed) in ledger.balances(with: me, simplified: group.simplifiesDebts) {
                 amounts[friend, default: [:]][group.id, default: []] += owed
             }
         }

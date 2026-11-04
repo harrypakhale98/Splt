@@ -232,4 +232,21 @@ struct LedgerTests {
         #expect(ledger.issues.count == 1)
         #expect(ledger.simplifiedDebts.count == 1)
     }
+
+    @Test func simplifiedBalancesLeaveNoDebtsOnceTheShortcutIsPaid() {
+        let a = person(1), b = person(2), c = person(3)
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let expenses = [
+            Expense(title: "x", total: usd(1000), date: date, paidBy: b, split: .exact(amounts: [a: usd(1000)])),
+            Expense(title: "y", total: usd(1000), date: date, paidBy: c, split: .exact(amounts: [b: usd(1000)]))
+        ]
+        let before = Ledger(expenses: expenses)
+        #expect(before.balances(with: a) == [b: [usd(-1000)]])
+        #expect(before.balances(with: a, simplified: true) == [c: [usd(-1000)]])
+
+        let after = Ledger(expenses: expenses, payments: before.simplifiedDebts.map { Payment(settling: $0, date: date) })
+        #expect(after.isSettled)
+        #expect(after.balances(with: a, simplified: true).isEmpty)
+        #expect(after.balances(with: a).count == 2)
+    }
 }

@@ -159,6 +159,36 @@ struct GroupRepositoryTests {
         return second.id
     }
 
+    /// You owe Sam 10.00 and Sam owes Priya 10.00, so simplifying has you pay Priya.
+    private func addChainOfDebts(_ fixture: Fixture) throws {
+        try fixture.addExpense(cents: 1000, paidBy: fixture.sam, splitBetween: [fixture.me.id])
+        try fixture.addExpense(cents: 1000, paidBy: fixture.priya, splitBetween: [fixture.sam.id])
+    }
+
+    @Test func friendBalancesFollowASimplifiedGroup() throws {
+        let fixture = try Fixture(simplifies: true)
+        try addChainOfDebts(fixture)
+        #expect(try fixture.services.people.friendBalance(with: fixture.sam.id).isSettled)
+        #expect(try fixture.services.people.friendBalance(with: fixture.priya.id).total == [usdAmount(-1000)])
+    }
+
+    @Test func friendBalancesKeepDirectDebtsWithoutSimplifying() throws {
+        let fixture = try Fixture(simplifies: false)
+        try addChainOfDebts(fixture)
+        #expect(try fixture.services.people.friendBalance(with: fixture.sam.id).total == [usdAmount(-1000)])
+        #expect(try fixture.services.people.friendBalance(with: fixture.priya.id).isSettled)
+    }
+
+    @Test func nobodyOwesAnybodyAfterASimplifiedSettle() throws {
+        let fixture = try Fixture(simplifies: true)
+        try addChainOfDebts(fixture)
+        let debts = try fixture.services.groups.balances(for: fixture.group.id).suggestedSettlements
+        #expect(debts.count == 1)
+        for debt in debts { try fixture.services.payments.settle(debt, in: fixture.group.id, date: fixture.clock.start, note: "") }
+        #expect(try fixture.services.groups.balances(for: fixture.group.id).isSettled)
+        #expect(try fixture.services.people.friendBalances().allSatisfy(\.isSettled))
+    }
+
     @Test func friendBalanceIsNegativeWhenYouOwe() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000, paidBy: fixture.sam, splitBetween: [fixture.me.id, fixture.sam.id])

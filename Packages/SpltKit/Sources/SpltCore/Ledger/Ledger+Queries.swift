@@ -18,11 +18,14 @@ extension Ledger {
     }
 
     /// What each other person owes `me` (positive) or is owed by `me` (negative), per currency.
-    /// Built from the direct debts between the two of you, so it ignores how the group as a
-    /// whole could settle. People you are square with are left out.
-    public func balances(with me: PersonID) -> [PersonID: [Money]] {
+    /// Built from the direct debts between the two of you, or from `simplifiedDebts` when the group
+    /// settles that way. People you are square with are left out.
+    ///
+    /// Simplified balances are what a simplified group has to use: once its shortcuts are paid its
+    /// direct debts remain, as a cycle nobody really owes.
+    public func balances(with me: PersonID, simplified: Bool = false) -> [PersonID: [Money]] {
         var result: [PersonID: [Money]] = [:]
-        for debt in debts {
+        for debt in simplified ? simplifiedDebts : debts {
             if debt.creditor == me {
                 result[debt.debtor, default: []].append(debt.amount)
             } else if debt.debtor == me {
