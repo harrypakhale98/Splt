@@ -126,4 +126,19 @@ struct RecapStatsTests {
         #expect(result.average == usdAmount(1500))
         #expect(result.dayCount == 1)
     }
+
+    @Test func daysAfterAClockChangeAtMidnightKeepTheirSpending() throws {
+        var havana = Calendar(identifier: .gregorian)
+        havana.timeZone = TimeZone(identifier: "America/Havana")!
+        let day = { (day: Int) in havana.date(from: DateComponents(year: 2026, month: 3, day: day, hour: 12))! }
+        let group = SplitGroup(name: "Cuba", currencyCode: "USD", kind: .trip, memberIDs: [ana, ben], tripStart: day(6), tripEnd: day(12))
+        let expense = Expense(
+            title: "Dinner", total: Money(minorUnits: 5000, currencyCode: "USD"), date: day(10),
+            paidBy: ana, split: .equal(participants: [ana, ben])
+        )
+        let stats = try #require(RecapStats(group: group, expenses: [expense], names: names, now: day(20), calendar: havana))
+        #expect(stats.slices.count == 7)
+        #expect(stats.slices.reduce(0) { $0 + $1.total.minorUnits } == 5000)
+        #expect(stats.busiest.map { havana.component(.day, from: $0.start) } == 10)
+    }
 }

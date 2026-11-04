@@ -88,7 +88,8 @@ struct RecapStats: Equatable, Sendable {
         let limit = calendar.dateInterval(of: component, for: end)?.start ?? end
         while cursor <= limit, built.count < 400 {
             built.append(Slice(start: cursor, total: Money(minorUnits: totals[cursor] ?? 0, currencyCode: code)))
-            guard let next = calendar.date(byAdding: component, value: 1, to: cursor) else { break }
+            // Not by adding a day: after a clock change at midnight that lands an hour off the next day's start.
+            guard let next = calendar.dateInterval(of: component, for: cursor)?.end else { break }
             cursor = next
         }
         slices = built
