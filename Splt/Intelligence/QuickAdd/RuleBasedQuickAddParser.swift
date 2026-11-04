@@ -280,7 +280,8 @@ private struct Pass {
     private static let notMoneyAfter: Set<String> = [
         "people", "person", "persons", "ppl", "friends", "guests", "pax", "items", "item", "days", "day",
         "nights", "night", "hours", "hrs", "hr", "mins", "min", "minutes", "kids", "adults", "x", "am",
-        "pm", "st", "nd", "rd", "th", "km", "kg", "miles", "percent", "of"
+        "pm", "st", "nd", "rd", "th", "km", "kg", "kgs", "g", "gm", "gms", "gram", "grams", "mg", "ml", "l", "litre",
+        "litres", "liter", "liters", "cm", "mm", "m", "lb", "lbs", "oz", "gb", "mb", "tb", "pcs", "miles", "percent", "of"
     ]
     private static let notMoneyBefore: Set<String> = [
         "table", "room", "seat", "no", "number", "order", "flight", "gate", "route", "bus"
@@ -303,7 +304,9 @@ private struct Pass {
             let previousWord = String(preceding.prefix { $0.isLetter }.reversed()).lowercased()
             let hasMarker = match.group(named: "sym", in: text) != nil || match.group(named: "pre", in: text) != nil
                 || match.group(named: "word", in: text) != nil
-            let isUnlikely = Self.notMoneyBefore.contains(previousWord) && !hasMarker
+            // letters stuck to a number make it a measure or a code, unless they name a currency
+            let isGlued = !hasMarker && text[whole.upperBound...].first?.isLetter == true
+            let isUnlikely = (Self.notMoneyBefore.contains(previousWord) && !hasMarker) || isGlued
 
             let marker = match.group(named: "sym", in: text)
                 ?? match.group(named: "pre", in: text)

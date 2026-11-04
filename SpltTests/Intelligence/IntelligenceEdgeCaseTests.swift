@@ -138,4 +138,17 @@ struct IntelligenceEdgeCaseTests {
         #expect(MinorUnitParser.minorUnits(from: "0.125", fractionDigits: 2) == nil)
         #expect(MinorUnitParser.minorUnits(from: "0.125", fractionDigits: 3) == 125)
     }
+
+    @Test func measuresAreNotPrices() {
+        #expect(parse("flour 500g 3").amount == money(300))
+        #expect(parse("juice 500ml 3").amount == money(300))
+        #expect(parse("rope 300cm 8").amount == money(800))
+        #expect(parse("milk 2 l 3").amount == money(300))
+        #expect(parse("usb 64gb 12").amount == money(1200))
+        #expect(parse("dinner 50usd").amount == money(5000))
+        #expect(parse("dinner 50bucks").amount == money(5000))
+        #expect(parse("rice 5kg").amount == nil)
+        // nothing else fits, so the odd number is still offered rather than nothing
+        #expect(parse("toll 50xyz").amount == money(5000))
+    }
 }
