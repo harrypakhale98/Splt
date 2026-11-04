@@ -138,7 +138,7 @@ extension SyncStoreAdapter {
     func zoneDeleteConfirmed(_ id: CKRecordZone.ID) throws {
         try tracker.markZoneSynced(zone: id.zoneName)
         updateMetadata { $0.forget(zoneName: id.zoneName) }
-        try tracker.purgeConfirmedTombstones(olderThan: tracker.now().addingTimeInterval(1))
+        try tracker.purgeTombstones(inZone: id.zoneName)
     }
 
     /// Removes tombstones the server has long known about.

@@ -555,4 +555,32 @@ struct SyncStoreAdapterTests {
         let metadata = try JSONDecoder().decode(SyncMetadata.self, from: Data(old.utf8))
         #expect(!metadata.isDetached(zoneName: "zone"))
     }
+
+    @Test func deletingAZoneLeavesTheTombstonesOfOtherZones() throws {
+        let populated = try PopulatedDevice()
+        let device = populated.device
+        let expense = try populated.addExpense()
+        let comment = ExpenseComment(
+            groupID: populated.group.id, expenseID: expense.id, authorID: populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        let other = SplitGroup(name: "Other", currencyCode: "USD", memberIDs: [populated.me.id])
+        try device.services.groups.create(other)
+        let otherExpense = Expense(
+            groupID: other.id, title: "Lunch", total: usdAmount(100), date: device.clock.start,
+            paidBy: populated.me.id, split: .equal(participants: [populated.me.id])
+        )
+        try device.services.expenses.add(otherExpense)
+        let cloud = FakeCloud()
+        try cloud.upload(from: device)
+        try device.services.comments.delete(id: comment.id)
+        try cloud.upload(from: device)
+        try device.services.groups.delete(id: other.id)
+        try cloud.upload(from: device)
+        let context = device.tracker.context
+        #expect(try CommentRecord.find(recordName: comment.id.uuidString, in: context)?.deletedAt != nil)
+        #expect(try GroupRecord.find(recordName: other.id.description, in: context) == nil)
+        #expect(try ExpenseRecord.find(recordName: otherExpense.id.description, in: context) == nil)
+    }
 }

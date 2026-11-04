@@ -45,6 +45,14 @@ extension ChangeTracker {
         try save()
     }
 
+    /// Drops the tombstones of a zone that no longer exists on the server.
+    func purgeTombstones(inZone zone: String) throws {
+        for record in try records(inZone: zone) where record.deletedAt != nil && !record.isDirty {
+            context.delete(record)
+        }
+        try save()
+    }
+
     private func retire(_ record: some SyncTracked, at date: Date) {
         if record.deletedAt == nil {
             record.deletedAt = max(date, record.modifiedAt)
