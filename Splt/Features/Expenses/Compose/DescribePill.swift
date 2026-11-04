@@ -88,18 +88,20 @@ struct DescribePill: View {
                 .buttonBorderShape(.capsule)
                 .controlSize(.small)
         } else {
-            HStack(spacing: 14) {
+            HStack(spacing: 0) {
                 if DictationController.isSupported {
                     Button(action: toggleDictation) {
-                        Image(systemName: "mic")
+                        Label("Dictate", systemImage: "mic")
                     }
                     .accessibilityLabel("Dictate")
                 }
                 ReceiptActions(model: model)
-                    .labelStyle(.iconOnly)
             }
+            .labelStyle(PillIconLabelStyle())
             .buttonStyle(.borderless)
             .imageScale(.large)
+            // the icons keep a full tap target without making the pill taller
+            .padding(.vertical, -8)
         }
     }
 
@@ -110,5 +112,14 @@ struct DescribePill: View {
 
     private func toggleDictation() {
         dictation.toggle(locale: locale, update: { model.describeText = $0 }, finished: { fill() })
+    }
+}
+
+/// An icon with a 44 point tap target, for the small icon buttons inside the pill.
+private struct PillIconLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.icon
+            .frame(width: 44, height: 44)
+            .contentShape(.rect)
     }
 }
