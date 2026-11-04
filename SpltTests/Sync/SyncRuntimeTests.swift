@@ -43,6 +43,24 @@ struct SyncRuntimeTests {
         #expect(runtime.status == .syncing)
     }
 
+    @Test func aPushThatLaunchedTheAppStartsSync() async throws {
+        let services = try DataServices.inMemory()
+        var asked = 0
+        let runtime = SyncRuntime(liveServices: {
+            asked += 1
+            return services
+        })
+        let push: [AnyHashable: Any] = [
+            "aps": ["content-available": 1],
+            "ck": ["ce": 2, "cid": "iCloud.com.example.app", "nid": UUID().uuidString, "fet": ["zid": "zone", "dbs": 1, "zoid": "_owner", "sid": "sub"]],
+        ]
+        #expect(await runtime.handleRemoteNotification(push))
+        #expect(asked == 1)
+        #expect(runtime.engine is AutomaticSyncEngine)
+        #expect(await runtime.handleRemoteNotification(push))
+        #expect(asked == 1)
+    }
+
     @Test func pushesThatAreNotFromCloudKitAreIgnored() async {
         let runtime = SyncRuntime()
         #expect(await runtime.handleRemoteNotification(["aps": ["alert": "hello"]]) == false)
