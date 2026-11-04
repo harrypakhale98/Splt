@@ -17,7 +17,16 @@ enum LaunchServices {
             return try? DataServices.inMemory()
         }
         #endif
-        return IntentServices.shared.live()
+        let services = IntentServices.shared.live()
+        if let services { removeLeftovers(services) }
+        return services
+    }
+
+    /// Files that outlived what they belong to: photos of deleted groups, and exports already sent.
+    @MainActor
+    private static func removeLeftovers(_ services: DataServices) {
+        try? ReceiptStore.standard.removeUnreferenced(in: services.environment.context)
+        try? FileManager.default.removeItem(at: GroupExportFile.defaultDirectory)
     }
 
     /// Debug builds accept `-tab friends` (or groups, activity, account, search) to start on that tab.

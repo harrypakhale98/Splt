@@ -1,5 +1,6 @@
 import Foundation
 import ImageIO
+import SwiftData
 import UniformTypeIdentifiers
 
 /// Keeps receipt photos as files in Application Support, never inside the database. An expense
@@ -58,6 +59,23 @@ struct ReceiptStore: Sendable {
     func delete(_ fileName: String) {
         try? FileManager.default.removeItem(at: url(for: fileName))
         try? FileManager.default.removeItem(at: thumbnailURL(for: fileName))
+    }
+
+    /// Removes the photos no expense can show again, because the expense or its whole group is gone.
+    /// A deleted expense in a live group keeps its photo, as an undo can bring it back.
+    @MainActor
+    func removeUnreferenced(in context: ModelContext) throws {
+        let groups = Set(try context.fetch(FetchDescriptor<GroupRecord>(predicate: #Predicate { $0.deletedAt == nil })).map(\.id))
+        let expenses = try context.fetch(FetchDescriptor<ExpenseRecord>(predicate: #Predicate { $0.receiptFileName != nil }))
+        let kept = Set(expenses
+            .filter { $0.deletedAt == nil || $0.groupID.map(groups.contains) == true }
+            .compactMap(\.receiptFileName))
+        for folder in [directory, thumbnails] {
+            let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+            for file in files where file.pathExtension == "jpg" && !kept.contains(file.lastPathComponent) {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
     }
 
     /// The name comes from a synced record, so it can be anything. A last path component can still be `..`,

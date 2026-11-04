@@ -1,4 +1,5 @@
 import Foundation
+import SpltCore
 import Testing
 import UIKit
 @testable import Splt
@@ -63,6 +64,50 @@ struct ReceiptStoreTests {
         #expect(FileManager.default.fileExists(atPath: beside.path))
         #expect(FileManager.default.fileExists(atPath: store.directory.appending(path: "secret.sqlite").path))
         try FileManager.default.removeItem(at: base)
+    }
+
+    @MainActor
+    @Test func photosOfGroupsThatAreGoneAreRemoved() throws {
+        let fixture = try Fixture()
+        let store = store()
+        let kept = try store.save(photo(side: 50))
+        let softDeleted = try store.save(photo(side: 50))
+        let inGoneGroup = try store.save(photo(side: 50))
+        let unknown = try store.save(photo(side: 50))
+
+        let live = fixture.expense("Live")
+        try fixture.services.expenses.add(live, extras: ExpenseExtras(receiptFileName: kept))
+        let removed = fixture.expense("Removed")
+        try fixture.services.expenses.add(removed, extras: ExpenseExtras(receiptFileName: softDeleted))
+        try fixture.services.expenses.delete(id: removed.id)
+
+        let other = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [fixture.me.id])
+        try fixture.services.groups.create(other)
+        let gone = Expense(
+            groupID: other.id, title: "Gone", total: usdAmount(100), date: fixture.clock.start,
+            paidBy: fixture.me.id, split: .equal(participants: [fixture.me.id])
+        )
+        try fixture.services.expenses.add(gone, extras: ExpenseExtras(receiptFileName: inGoneGroup))
+        // the way a delete that has reached the server looks: a tombstone, not a removed row
+        let context = fixture.services.environment.context
+        try #require(try GroupRecord.find(recordName: other.id.description, in: context)).deletedAt = fixture.clock.start
+        try #require(try ExpenseRecord.find(recordName: gone.id.description, in: context)).deletedAt = fixture.clock.start
+        try context.save()
+
+        try store.removeUnreferenced(in: context)
+
+        #expect(store.exists(kept))
+        #expect(store.exists(softDeleted), "an undo can still bring it back")
+        #expect(!store.exists(inGoneGroup))
+        #expect(!store.exists(unknown))
+        #expect(!FileManager.default.fileExists(atPath: store.thumbnailURL(for: unknown).path))
+        #expect(FileManager.default.fileExists(atPath: store.thumbnailURL(for: kept).path))
+    }
+
+    @MainActor
+    @Test func cleaningUpWithNoFolderDoesNothing() throws {
+        let fixture = try Fixture()
+        try store().removeUnreferenced(in: fixture.services.environment.context)
     }
 
     @Test func thumbnailsFallBackToThePhoto() throws {
