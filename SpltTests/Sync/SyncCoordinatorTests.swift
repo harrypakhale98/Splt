@@ -15,8 +15,13 @@ final class FakeQueue: EngineQueue {
     func queue(_ plan: OutgoingPlan) { plans.append(plan) }
     func queue(saves: [CKRecord.ID]) { savedAgain += saves }
     func queue(zonesToSave: [CKRecordZone.ID]) { zonesRequested += zonesToSave }
+    private(set) var fetchCount = 0
+    var onFetch: (() throws -> Void)?
     func sendChanges() async throws {}
-    func fetchChanges() async throws {}
+    func fetchChanges() async throws {
+        fetchCount += 1
+        try onFetch?()
+    }
 }
 
 /// A thread safe list that closures can append to.
@@ -163,7 +168,7 @@ struct SyncCoordinatorTests {
         #expect(rig.delays.values == [15, 30, 60])
     }
 
-    @Test func aMissingZoneIsRequestedAgain() throws {
+    @Test func aMissingZoneIsRequestedAgain() async throws {
         let rig = try rig()
         rig.coordinator.markReady()
         let cloud = FakeCloud()
@@ -173,8 +178,55 @@ struct SyncCoordinatorTests {
         try rig.coordinator.sentRecords(
             saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
         )
+        #expect(await eventually { rig.privateQueue.zonesRequested.map(\.zoneName) == [rig.populated.zone] })
+        #expect(rig.privateQueue.savedAgain == [sent.recordID])
+    }
+
+    /// An edit that the server refuses because the zone it belongs to is gone.
+    private func failWithMissingZone(_ rig: Rig) throws -> CKRecordZone.ID {
+        rig.coordinator.markReady()
+        try FakeCloud().upload(from: rig.device)
+        try rig.populated.addExpense("Edited offline")
+        let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
+        return sent.recordID.zoneID
+    }
+
+    @Test func aGroupDeletedOnAnotherDeviceIsNotBroughtBackByAnOfflineEdit() async throws {
+        let rig = try rig()
+        let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
+        rig.privateQueue.onFetch = { try rig.coordinator.fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
+        _ = try failWithMissingZone(rig)
+        #expect(await eventually { rig.privateQueue.fetchCount == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(rig.privateQueue.zonesRequested.isEmpty)
+        #expect(rig.privateQueue.savedAgain.isEmpty)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
+        #expect(try rig.device.tracker.pendingChanges().allSatisfy { $0.recordType == .person })
+    }
+
+    @Test func aMissingZoneWaitsWhenTheFetchFails() async throws {
+        let rig = try rig()
+        rig.privateQueue.onFetch = { throw CKError(.networkUnavailable) }
+        _ = try failWithMissingZone(rig)
+        #expect(await eventually { rig.privateQueue.fetchCount == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(rig.privateQueue.zonesRequested.isEmpty)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
+    }
+
+    @Test func aZoneTheServerNeverConfirmedIsRequestedWithoutAFetch() throws {
+        let rig = try rig()
+        rig.coordinator.markReady()
+        let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
         #expect(rig.privateQueue.zonesRequested.map(\.zoneName) == [rig.populated.zone])
         #expect(rig.privateQueue.savedAgain == [sent.recordID])
+        #expect(rig.privateQueue.fetchCount == 0)
     }
 
     @Test func remoteChangesAreReportedToTheNotifier() throws {

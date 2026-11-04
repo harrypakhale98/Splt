@@ -325,7 +325,7 @@ struct SyncStoreAdapterTests {
         #expect(record.isDirty)
     }
 
-    @Test func aMissingZoneIsRecreatedForPrivateGroups() throws {
+    @Test func aKnownPrivateZoneThatIsMissingWaitsForTheServerToExplain() throws {
         let populated = try PopulatedDevice()
         try populated.addExpense()
         let cloud = FakeCloud()
@@ -333,9 +333,10 @@ struct SyncStoreAdapterTests {
         try populated.addExpense("Another")
         let sent = try #require(try populated.device.outgoing().records.first { $0.recordType == "Expense" })
         let outcome = try populated.device.adapter.saveFailed(record: sent, error: CKError(.zoneNotFound))
-        #expect(outcome.recreateZone?.zoneName == populated.zone)
-        #expect(outcome.requeue)
-        #expect(populated.device.adapter.metadata.zones[populated.zone] == nil)
+        #expect(outcome.askServerAbout?.zoneName == populated.zone)
+        #expect(outcome.recreateZone == nil)
+        #expect(!outcome.requeue)
+        #expect(populated.device.adapter.metadata.zones[populated.zone] != nil)
     }
 
     @Test func otherFailuresKeepTheChangesAndReportWhy() throws {

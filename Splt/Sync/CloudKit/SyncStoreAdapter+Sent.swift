@@ -7,6 +7,9 @@ struct SaveFailureOutcome: Equatable {
     /// The change should be queued again, for example after a conflict the local version won.
     var requeue = false
     var recreateZone: CKRecordZone.ID?
+    /// A zone the server once confirmed is now missing. A fetch has to tell why before it may come back:
+    /// another device may have deleted the group.
+    var askServerAbout: CKRecordZone.ID?
     /// A shared zone that is gone, treated like a zone the owner deleted.
     var goneZone: CKRecordZone.ID?
 }
@@ -94,8 +97,9 @@ extension SyncStoreAdapter {
             outcome.requeue = true
         case .zoneMissing:
             let zone = record.recordID.zoneID
-            if zone.scope == .privateDatabase {
-                updateMetadata { $0.zones[zone.zoneName] = nil }
+            if zone.scope == .privateDatabase, metadata.isKnown(zoneName: zone.zoneName) {
+                outcome.askServerAbout = zone
+            } else if zone.scope == .privateDatabase {
                 outcome.recreateZone = zone
                 outcome.requeue = true
             } else {
