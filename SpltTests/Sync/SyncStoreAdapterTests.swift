@@ -503,4 +503,15 @@ struct SyncStoreAdapterTests {
         #expect(report.requeue.isEmpty)
         #expect(try owner.device.services.people.person(id: joined)?.name == "Jane")
     }
+
+    @Test func mergingAPlaceholderDoesNotBringBackADeletedZone() throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        try populated.device.adapter.zoneDeleted(zone, reason: .deleted)
+        try ReferenceRewriter(tracker: populated.device.tracker).rewrite(from: populated.sam.id.rawValue, to: UUID())
+        #expect(try populated.device.adapter.collectOutgoing().isEmpty)
+        #expect(try populated.device.tracker.pendingChanges().isEmpty)
+    }
 }

@@ -40,6 +40,10 @@ struct ReferenceRewriter {
         for change in changes {
             change.record.applySyncFields(change.fields)
             if change.record.deletedAt != nil && change.record.pendingOperation == .delete { continue }
+            // a deleted or left group is history on this device: uploading it would bring its zone back
+            if let zone = change.record.zoneName, try GroupRecord.find(recordName: zone, in: tracker.context)?.deletedAt != nil {
+                continue
+            }
             tracker.recordEdit(change.record)
         }
         try tracker.save()
