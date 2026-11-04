@@ -59,6 +59,9 @@
     "%@ archived the group" : {
 
     },
+    "%@ are not in this group, so they were left out." : {
+
+    },
     "%@ changed the %@" : {
       "localizations" : {
         "en" : {
@@ -1790,6 +1793,9 @@
 
     },
     "More for %@" : {
+
+    },
+    "More than one person here is called %@. Choose who you mean below." : {
 
     },
     "Name" : {

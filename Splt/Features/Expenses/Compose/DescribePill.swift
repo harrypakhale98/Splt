@@ -39,7 +39,20 @@ struct DescribePill: View {
             }
             if !model.unmatchedNames.isEmpty {
                 let names = model.unmatchedNames.formatted(.list(type: .and))
-                Label("\(names) is not in this group, so they were left out.", systemImage: "person.fill.questionmark")
+                Label(
+                    model.unmatchedNames.count == 1
+                        ? "\(names) is not in this group, so they were left out."
+                        : "\(names) are not in this group, so they were left out.",
+                    systemImage: "person.fill.questionmark"
+                )
+                .font(.footnote)
+                .foregroundStyle(.legible)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 6)
+            }
+            if !model.ambiguousNames.isEmpty {
+                let names = model.ambiguousNames.formatted(.list(type: .and))
+                Label("More than one person here is called \(names). Choose who you mean below.", systemImage: "person.2.fill")
                     .font(.footnote)
                     .foregroundStyle(.legible)
                     .frame(maxWidth: .infinity, alignment: .leading)

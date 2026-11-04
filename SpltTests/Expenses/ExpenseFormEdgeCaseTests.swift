@@ -20,4 +20,26 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.currencyCode == "EUR")
         #expect(model.split.exact[harness.sam] == "20.00")
     }
+
+    @Test func onlyUnknownNamesGiveNoEmptyNotice() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        var draft = QuickAddDraft()
+        draft.participantNames = ["Zed"]
+        model.apply(quickAdd: draft)
+        #expect(model.filledNotice == nil)
+        #expect(model.unmatchedNames == ["Zed"])
+    }
+
+    @Test func aSharedFirstNameIsNotReportedAsMissing() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        model.members = [harness.fixture.me, Person(name: "Sam Lee", avatarSeed: 7), Person(name: "Sam Roy", avatarSeed: 8)]
+        var draft = QuickAddDraft()
+        draft.title = "Dinner"
+        draft.participantNames = ["Sam", "Zed"]
+        model.apply(quickAdd: draft)
+        #expect(model.ambiguousNames == ["Sam"])
+        #expect(model.unmatchedNames == ["Zed"])
+    }
 }

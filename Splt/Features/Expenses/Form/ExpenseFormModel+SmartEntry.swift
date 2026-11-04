@@ -23,6 +23,7 @@ extension ExpenseFormModel {
         guard !draft.isEmpty else {
             filledNotice = String(localized: "Nothing to fill in. Try adding an amount and what it was for.")
             unmatchedNames = []
+            ambiguousNames = []
             return
         }
         var filled: [String] = []
@@ -59,8 +60,12 @@ extension ExpenseFormModel {
         applyPayer(draft.payer, member: member, unmatched: &unmatched, filled: &filled)
         applySplitHint(draft.splitHint, member: member, unmatched: &unmatched, filled: &filled)
 
-        unmatchedNames = unmatched
-        filledNotice = String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it below.")
+        func fitsSeveral(_ name: String) -> Bool {
+            members.filter { $0.name.foldedWords.first == name.foldedWords.first }.count > 1
+        }
+        unmatchedNames = unmatched.filter { !fitsSeveral($0) }
+        ambiguousNames = unmatched.filter(fitsSeveral)
+        filledNotice = filled.isEmpty ? nil : String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it below.")
     }
 
     private func applyPayer(

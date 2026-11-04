@@ -72,6 +72,8 @@ final class ExpenseFormModel {
     var isReading = false
     var filledNotice: String?
     var unmatchedNames: [String] = []
+    /// Names in a note that fit more than one person in the group.
+    var ambiguousNames: [String] = []
     var suggestedCategory: ExpenseCategory?
     var possibleDuplicates: [Expense] = []
     var isScanning = false
