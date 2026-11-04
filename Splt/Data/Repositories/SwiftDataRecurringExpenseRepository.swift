@@ -74,8 +74,11 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
                     created.append(expense)
                 }
             }
-            record.lastCreatedOccurrence = latest
-            env.tracker.recordBookkeeping(record)
+            // the date comes back from CloudKit cut to milliseconds, which is not a new occurrence
+            if record.lastCreatedOccurrence.map({ latest.isLaterEdit(than: $0) }) ?? true {
+                record.lastCreatedOccurrence = latest
+                env.tracker.recordBookkeeping(record)
+            }
             try env.save()
         }
         return created

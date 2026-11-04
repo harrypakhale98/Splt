@@ -89,6 +89,25 @@ struct RecurringExpenseRepositoryTests {
         #expect(try fixture.services.recurring.createDueExpenses(through: fixture.clock.start).count == 1)
     }
 
+    @Test func anOccurrenceDateCutToMillisecondsIsNotRewrittenEveryTime() throws {
+        let fixture = try Fixture()
+        var value = template(fixture)
+        value.rule.startDate = fixture.clock.start.addingTimeInterval(0.123_456_7)
+        try fixture.services.recurring.add(value)
+        let through = fixture.clock.start.addingTimeInterval(10)
+        _ = try fixture.services.recurring.createDueExpenses(through: through)
+        let tracker = fixture.services.makeChangeTracker()
+        let record = try #require(try RecurringExpenseRecord.find(recordName: value.id.uuidString, in: tracker.context))
+        let last = try #require(record.lastCreatedOccurrence)
+        record.lastCreatedOccurrence = Date(timeIntervalSince1970: (last.timeIntervalSince1970 * 1000).rounded(.down) / 1000)
+        record.isDirty = false
+        record.pendingOperation = nil
+        try tracker.save()
+
+        #expect(try fixture.services.recurring.createDueExpenses(through: through).isEmpty)
+        #expect(!record.isDirty)
+    }
+
     @Test func twoDevicesMakeTheSameExpenseIDForTheSameOccurrence() {
         let templateID = UUID()
         let date = Date(timeIntervalSince1970: 1_750_000_000)
