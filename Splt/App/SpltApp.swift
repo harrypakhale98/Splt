@@ -14,7 +14,9 @@ struct SpltApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if isReady {
+                if isReady, services == nil {
+                    StoreUnavailableView { services = LaunchServices.make() }
+                } else if isReady {
                     RootView()
                         .environment(router)
                         .environment(\.dataServices, services)
@@ -41,5 +43,22 @@ struct SpltApp: App {
         await Task.yield()
         services = LaunchServices.make()
         isReady = true
+    }
+}
+
+/// Shown when the store cannot be opened. Without it the app looks empty, as if the data were gone,
+/// and deleting the app is what would then really lose it.
+private struct StoreUnavailableView: View {
+    let retry: () -> Void
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Can't Open Your Data", systemImage: "exclamationmark.triangle")
+        } description: {
+            Text("Your groups and expenses could not be opened. Restart your iPhone and try again. Don't delete Splt, because that would remove them.")
+        } actions: {
+            Button("Try Again", action: retry)
+                .buttonStyle(.borderedProminent)
+        }
     }
 }

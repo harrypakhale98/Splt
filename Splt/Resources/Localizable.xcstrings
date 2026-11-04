@@ -885,6 +885,15 @@
     "Can't Open %@" : {
 
     },
+    "Can't Open Your Data" : {
+
+    },
+    "Try Again" : {
+
+    },
+    "Your groups and expenses could not be opened. Restart your iPhone and try again. Don't delete Splt, because that would remove them." : {
+
+    },
     "Can't Remove" : {
 
     },
