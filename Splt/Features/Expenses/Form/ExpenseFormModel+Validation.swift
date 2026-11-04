@@ -4,7 +4,8 @@ import SpltCore
 extension ExpenseFormModel {
     /// The first thing keeping Save off, or nil when the expense can be saved.
     var issue: ExpenseFormIssue? {
-        guard let total, !total.isZero else { return .missingAmount }
+        guard let total else { return AmountInput.isBlank(amountText) ? .missingAmount : .invalidAmount }
+        guard !total.isZero else { return .missingAmount }
         if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return .missingTitle }
         if case .issue(let issue) = payer.payers(total: total, locale: locale) { return issue }
         return splitIssue

@@ -78,4 +78,16 @@ struct ExpenseFormEdgeCaseTests {
         model.title = "Dinner"
         #expect(try model.save().title == "Dinner")
     }
+
+    @Test func decimalsAYenAmountCannotHaveAreExplained() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "12.50"
+        model.changeCurrency(to: "JPY")
+        #expect(model.issue == .invalidAmount)
+        model.amountText = "1250"
+        #expect(model.issue == nil)
+        model.amountText = ""
+        #expect(model.issue == .missingAmount)
+    }
 }

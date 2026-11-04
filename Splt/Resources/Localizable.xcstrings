@@ -2810,6 +2810,9 @@
     "They don't need the app yet. Splt keeps their name until they join." : {
 
     },
+    "This amount does not fit the currency. Check the decimals." : {
+
+    },
     "This Month" : {
 
     },

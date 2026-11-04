@@ -4,6 +4,7 @@ import SpltCore
 /// Why the form cannot be saved yet. `message` is shown next to the disabled Save button.
 enum ExpenseFormIssue: Error, Equatable {
     case missingAmount
+    case invalidAmount
     case missingTitle
     case noPayer
     case payersShort(Money)
@@ -26,6 +27,7 @@ enum ExpenseFormIssue: Error, Equatable {
         func percent(_ basisPoints: Int64) -> String { AmountInput.hundredthsText(basisPoints, locale: locale) + "%" }
         switch self {
         case .missingAmount: return String(localized: "Enter an amount to save.")
+        case .invalidAmount: return String(localized: "This amount does not fit the currency. Check the decimals.")
         case .missingTitle: return String(localized: "Add a title to save.")
         case .noPayer: return String(localized: "Choose who paid.")
         case .payersShort(let money): return String(localized: "\(amount(money)) of the payments is still missing.")
