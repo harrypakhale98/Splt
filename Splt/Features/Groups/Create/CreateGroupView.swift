@@ -186,6 +186,7 @@ private struct CreateGroupForm: View {
     }
 
     private func create() {
+        guard !model.hasCreated else { return }
         do {
             onCreated(try model.create())
         } catch {

@@ -19,6 +19,10 @@ final class CreateGroupViewModel {
     @ObservationIgnored private let groups: any GroupRepository
     @ObservationIgnored private let people: any PersonRepository
     @ObservationIgnored private var symbolWasChosen = false
+    /// The group this form made. A second tap on Create hands it back and stores nothing.
+    @ObservationIgnored private var createdID: GroupID?
+
+    var hasCreated: Bool { createdID != nil }
 
     init(
         services: DataServices,
@@ -111,6 +115,7 @@ final class CreateGroupViewModel {
 
     /// Creates the group with you and the listed people in it. People without the app become placeholders.
     func create() throws -> GroupID {
+        if let createdID { return createdID }
         let me = try people.me() ?? people.ensureMe(name: String(localized: "You"))
         var memberIDs = [me.id]
         for draft in members {
@@ -136,6 +141,7 @@ final class CreateGroupViewModel {
             tripEnd: isTrip ? tripEnd : nil
         )
         try groups.create(group)
+        createdID = group.id
         return group.id
     }
 }
