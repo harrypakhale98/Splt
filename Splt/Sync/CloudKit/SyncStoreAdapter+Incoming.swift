@@ -41,11 +41,18 @@ extension SyncStoreAdapter {
                 copyUpdates.append((key, PersonCopy(systemFields: payload.systemFields, sentModifiedAt: payload.modifiedAt)))
                 payload.zoneName = nil
                 payload.systemFields = nil
-                if let local = try PersonRecord.find(recordName: payload.recordName, in: tracker.context),
-                   local.modifiedAt.isLaterEdit(than: payload.modifiedAt) || (local.kind == .me && !isFromMe(record)) {
-                    queueAdds.insert(key)
-                    report.requeue.append(record.recordID)
-                    continue
+                if let local = try PersonRecord.find(recordName: payload.recordName, in: tracker.context) {
+                    let isForgedMe = local.kind == .me && !isFromMe(record)
+                    // other devices keep a forged copy for its date and send it back, so my answer has to be later still
+                    if isForgedMe, payload.modifiedAt > local.modifiedAt {
+                        local.modifiedAt = payload.modifiedAt
+                        tracker.recordEdit(local)
+                    }
+                    if isForgedMe || local.modifiedAt.isLaterEdit(than: payload.modifiedAt) {
+                        queueAdds.insert(key)
+                        report.requeue.append(record.recordID)
+                        continue
+                    }
                 }
             }
             payloads.append(payload)

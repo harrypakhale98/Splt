@@ -37,11 +37,13 @@ struct UntrustedRecordTests {
             try populated.device.adapter.applyFetched(modifications: [record], deletions: [])
         }
 
-        func crafted(_ type: SyncRecordType, name: String, in zone: CKRecordZone.ID, deletedAt: Date? = nil, fields: SyncFields) -> CKRecord {
+        func crafted(
+            _ type: SyncRecordType, name: String, in zone: CKRecordZone.ID, at date: Date? = nil, deletedAt: Date? = nil, fields: SyncFields
+        ) -> CKRecord {
             RecordMapper.record(
                 for: SyncPayload(
                     recordType: type, recordName: name, zoneName: zone.zoneName,
-                    modifiedAt: later, deletedAt: deletedAt, fields: fields
+                    modifiedAt: date ?? later, deletedAt: deletedAt, fields: fields
                 ), in: zone
             )
         }
@@ -231,14 +233,47 @@ struct UntrustedRecordTests {
         #expect(try victim.device.services.people.me()?.name == "Me")
 
         author = "_me"
-        let mine = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Mia"))
+        let mine = victim.crafted(
+            .person, name: me.id.description, in: victim.sharedZone, at: victim.later.addingTimeInterval(60), fields: personFields(me, name: "Mia")
+        )
         try victim.adapter.applyFetched(modifications: [mine], deletions: [])
         #expect(try victim.device.services.people.me()?.name == "Mia")
 
         author = CKCurrentUserDefaultName
-        let again = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Max"))
+        let again = victim.crafted(
+            .person, name: me.id.description, in: victim.sharedZone, at: victim.later.addingTimeInterval(120), fields: personFields(me, name: "Max")
+        )
         try victim.adapter.applyFetched(modifications: [again], deletions: [])
         #expect(try victim.device.services.people.me()?.name == "Max")
+    }
+
+    /// Refusing the rename must not leave the two devices sending their own version back and forth for good.
+    @Test func aForgedFutureRenameOfYouEndsAfterOneUpload() throws {
+        let victim = try Victim()
+        let me = victim.populated.me
+        victim.adapter.updateMetadata { $0.userRecordName = "_me" }
+        victim.adapter.lastModifier = { _ in "_mallory" }
+        let sams = try SyncDevice()
+        let forged = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Clown"))
+        try sams.adapter.applyFetched(modifications: [forged], deletions: [])
+        #expect(try sams.services.people.person(id: me.id)?.name == "Clown")
+
+        try victim.adapter.applyFetched(modifications: [forged], deletions: [])
+        #expect(try victim.device.services.people.me()?.name == "Me")
+
+        let upload = try #require(try victim.adapter.outgoingRecord(for: forged.recordID))
+        #expect(upload["name"] as? String == "Me")
+        let answer = try sams.adapter.applyFetched(modifications: [upload], deletions: [])
+        #expect(answer.requeue.isEmpty)
+        #expect(try sams.services.people.person(id: me.id)?.name == "Me")
+        #expect(try sams.adapter.outgoingRecord(for: forged.recordID) == nil)
+
+        // and your other devices take the answer as yours
+        let myOtherDevice = try SyncDevice()
+        myOtherDevice.adapter.updateMetadata { $0.userRecordName = "_me" }
+        try myOtherDevice.adapter.applyFetched(modifications: [forged], deletions: [])
+        try myOtherDevice.adapter.applyFetched(modifications: [upload], deletions: [])
+        #expect(try myOtherDevice.services.people.person(id: me.id)?.name == "Me")
     }
 
     @Test func aPersonCopyDeletedInASharedZoneStaysOnThisDevice() throws {
