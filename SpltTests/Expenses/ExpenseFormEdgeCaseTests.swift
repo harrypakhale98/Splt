@@ -117,4 +117,12 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.split.method == .equal)
         #expect(model.scanNotice != nil)
     }
+
+    @Test func onlyRealGroupsAreOfferedWhenMoving() throws {
+        let harness = try ExpenseFormHarness()
+        let direct = SplitGroup(name: "Direct", currencyCode: "USD", kind: .friend, memberIDs: [harness.me, harness.sam])
+        try harness.fixture.services.groups.create(direct)
+        let model = harness.newExpense()
+        #expect(model.availableGroups.map(\.id) == [harness.fixture.group.id])
+    }
 }

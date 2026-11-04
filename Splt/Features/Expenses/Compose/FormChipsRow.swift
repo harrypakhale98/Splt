@@ -16,6 +16,7 @@ struct FormChipsRow: View {
         ScrollView(.horizontal) {
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
+                    groupChip
                     chip(.category, model.category.title, model.category.symbolName)
                     if !model.isEditingRecurring {
                         chip(.date, dateText, "calendar")
@@ -37,6 +38,35 @@ struct FormChipsRow: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+    }
+
+    /// Where a new expense goes. A direct expense with a friend stays with that friend.
+    @ViewBuilder
+    private var groupChip: some View {
+        let groups = model.availableGroups
+        if model.group?.kind != .friend, groups.count > 1, let current = model.group {
+            Menu {
+                ForEach(groups) { group in
+                    Button {
+                        model.switchGroup(to: group.id)
+                    } label: {
+                        if group.id == current.id {
+                            Label(group.name, systemImage: "checkmark")
+                        } else {
+                            Text(group.name)
+                        }
+                    }
+                }
+            } label: {
+                Label(current.name, systemImage: "person.3")
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(1)
+            }
+            .buttonStyle(.glass)
+            .accessibilityLabel("Group")
+            .accessibilityValue(current.name)
+            .accessibilityIdentifier("chip-group")
+        }
     }
 
     private var showsRepeat: Bool {

@@ -90,7 +90,8 @@ extension ExpenseFormModel {
     /// Groups the expense can be added to, newest first. Empty unless adding.
     var availableGroups: [SplitGroup] {
         guard case .add = mode else { return [] }
-        return (try? services.groups.groups(includeArchived: false)) ?? []
+        let groups = (try? services.groups.groups(includeArchived: false)) ?? []
+        return groups.filter { $0.kind != .friend }
     }
 
     /// Moves a new expense to another group, resetting the people-based fields to that group's members.
