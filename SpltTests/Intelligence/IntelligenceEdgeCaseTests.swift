@@ -105,4 +105,12 @@ struct IntelligenceEdgeCaseTests {
     @Test func insightPercentagesSurviveHugeTotals() {
         #expect(InsightSummarizer.percent(.max / 2, of: .max) == 50)
     }
+
+    @Test func absurdReceiptPricesAreIgnored() {
+        let quantity = receipt(["CAFE", "Tea", "99 x 999999999999999.99", "TOTAL 3.00"])
+        #expect(quantity.items.isEmpty)
+        let many = receipt(["CAFE"] + Array(repeating: "Tea 999999999999999.99", count: 100) + ["TOTAL 3.00"])
+        #expect(many.items.isEmpty)
+        #expect(many.total == money(300))
+    }
 }
