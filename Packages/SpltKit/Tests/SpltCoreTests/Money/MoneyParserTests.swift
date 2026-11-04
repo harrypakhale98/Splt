@@ -141,6 +141,25 @@ struct MoneyParserTests {
         #expect(throws: Never.self) { try parse("92233720368547758.07") }
     }
 
+    @Test func directionMarksAreIgnored() throws {
+        #expect(try parse("\u{200F}-12.50", "USD", Locale(identifier: "he_IL")) == -1250)
+        #expect(try parse("\u{061C}-12.50", "USD", Locale(identifier: "ar_SA")) == -1250)
+        #expect(try parse("12.50\u{200E}") == 1250)
+    }
+
+    @Test func plainStringRoundTripsInEveryLocale() throws {
+        for identifier in Locale.availableIdentifiers {
+            let locale = Locale(identifier: identifier)
+            for code in ["USD", "JPY", "KWD"] {
+                for units: Int64 in [-123_456, -1, 1_500, 123_456] {
+                    let money = Money(minorUnits: units, currencyCode: code)
+                    let parsed = try? MoneyParser.parse(money.plainString(locale: locale), currencyCode: code, locale: locale)
+                    #expect(parsed == money, "\(identifier) \(code) \(units)")
+                }
+            }
+        }
+    }
+
     @Test func moneyInitialiserParses() throws {
         let money = try Money(parsing: "1,234.50", currencyCode: "usd", locale: us)
         #expect(money == Money(minorUnits: 123_450, currencyCode: "USD"))

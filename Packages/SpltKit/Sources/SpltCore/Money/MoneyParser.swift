@@ -47,7 +47,8 @@ public enum MoneyParser {
     }
 
     private static func normalize(_ text: String) -> [Character] {
-        text.map { ch -> Character in
+        // Bidi marks are invisible, and locales such as Arabic and Hebrew put them around a minus sign.
+        String(String.UnicodeScalarView(text.unicodeScalars.filter { !$0.properties.isBidiControl })).map { ch -> Character in
             switch ch {
             case "\u{2212}", "\u{2013}", "\u{2014}": return "-"
             case "\u{066B}": return "."
