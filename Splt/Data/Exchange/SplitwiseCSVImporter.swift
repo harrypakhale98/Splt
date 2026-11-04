@@ -45,7 +45,8 @@ enum SplitwiseCSVImporter {
             }
             let description = CSVText.restored(cell(columns.description))
             if description.isEmpty && cell(columns.cost).isEmpty { continue }
-            if description.caseInsensitiveCompare(GroupCSVExporter.totalBalanceLabel) == .orderedSame { continue }
+            if cell(columns.cost).isEmpty,
+               description.caseInsensitiveCompare(GroupCSVExporter.totalBalanceLabel) == .orderedSame { continue }
 
             func skip(_ message: String) {
                 result.warnings.append(ImportWarning(line: line, message: message))

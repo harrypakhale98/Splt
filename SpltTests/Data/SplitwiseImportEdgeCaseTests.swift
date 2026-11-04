@@ -38,4 +38,11 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(result.expenses.isEmpty)
         #expect(result.warnings.map(\.message) == ["Missing currency."])
     }
+
+    @Test func onlyTheClosingRowIsTheTotalBalance() throws {
+        #expect(try parse("2025-03-14,Total balance,General,10.00,USD,5.00,-5.00").expenses.count == 1)
+        let closing = try parse(",Total balance,,,USD,5.00,-5.00")
+        #expect(closing.expenses.isEmpty)
+        #expect(closing.warnings.isEmpty)
+    }
 }
