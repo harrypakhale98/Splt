@@ -45,4 +45,14 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(closing.expenses.isEmpty)
         #expect(closing.warnings.isEmpty)
     }
+
+    @Test func categoriesMatchWordsNotInsideThem() {
+        #expect(SplitwiseCategoryMap.category(for: "Childcare") == .general)
+        #expect(SplitwiseCategoryMap.category(for: "Gas/fuel") == .fuel)
+        #expect(SplitwiseCategoryMap.category(for: "Bus/train") == .transport)
+        #expect(SplitwiseCategoryMap.category(for: "Heat/gas") == .utilities)
+        #expect(SplitwiseCategoryMap.category(for: "TV/Phone/Internet") == .utilities)
+        #expect(SplitwiseCategoryMap.category(for: "Household supplies") == .home)
+        #expect(SplitwiseCategoryMap.category(for: "Medical expenses") == .health)
+    }
 }
