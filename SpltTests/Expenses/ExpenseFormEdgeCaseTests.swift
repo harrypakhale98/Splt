@@ -190,4 +190,11 @@ struct ExpenseFormEdgeCaseTests {
         LeftGroupsStore(defaults: harness.defaults).insert(trip.id)
         #expect(model.availableGroups.map(\.id) == [harness.fixture.group.id])
     }
+
+    @Test func aLineBreakInATitleIsNotStored() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.title = "Dinner\nat Sam's\n"
+        #expect(try model.save().title == "Dinner at Sam's")
+    }
 }

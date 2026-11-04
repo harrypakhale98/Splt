@@ -16,7 +16,7 @@ extension ExpenseFormModel {
         return Expense(
             id: original?.id ?? ExpenseID(),
             groupID: group.id,
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            title: title.split(whereSeparator: \.isNewline).joined(separator: " ").trimmingCharacters(in: .whitespaces),
             total: total,
             date: date,
             category: category,

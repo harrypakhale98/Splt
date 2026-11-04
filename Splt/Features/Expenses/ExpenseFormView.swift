@@ -274,7 +274,14 @@ private struct TitleField: View {
                 .font(.title3.weight(.medium))
                 .multilineTextAlignment(alignment)
                 .focused(focus, equals: .title)
-                .onChange(of: model.title) { model.titleDidChange() }
+                .onChange(of: model.title) {
+                    // this field wraps, so Return arrives as a line break: treat it as finishing the title
+                    if model.title.contains(where: \.isNewline) {
+                        model.title = model.title.split(whereSeparator: \.isNewline).joined(separator: " ")
+                        focus.wrappedValue = nil
+                    }
+                    model.titleDidChange()
+                }
                 .accessibilityIdentifier("expense-title")
         } else {
             TextField("Title", text: $model.title, prompt: prompt)
