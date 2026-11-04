@@ -139,6 +139,26 @@ struct GroupRepositoryTests {
         #expect(Set(balance.byGroup.map(\.groupID)) == [fixture.group.id, second.id])
     }
 
+    @Test func aFriendTotalAcrossGroupsCanAlwaysBeNegated() throws {
+        let fixture = try Fixture()
+        let huge = usdAmount(1 << 62)
+        for group in [fixture.group.id, try makeSecondGroup(fixture)] {
+            try fixture.services.expenses.add(Expense(
+                groupID: group, title: "Huge", total: huge, date: fixture.clock.start,
+                paidBy: fixture.sam.id, split: .exact(amounts: [fixture.me.id: huge])
+            ))
+        }
+        let balance = try fixture.services.people.friendBalance(with: fixture.sam.id)
+        #expect(balance.total == [usdAmount(-Int64.max)])
+        #expect(BalanceTotals(amounts: balance.total).youOwe == [usdAmount(Int64.max)])
+    }
+
+    private func makeSecondGroup(_ fixture: Fixture) throws -> GroupID {
+        let second = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id])
+        try fixture.services.groups.create(second)
+        return second.id
+    }
+
     @Test func friendBalanceIsNegativeWhenYouOwe() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000, paidBy: fixture.sam, splitBetween: [fixture.me.id, fixture.sam.id])

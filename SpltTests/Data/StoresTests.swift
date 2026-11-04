@@ -198,4 +198,12 @@ struct StoresTests {
         #expect(MoneyTotals.sum([usdAmount(500), usdAmount(-500)]).isEmpty)
         #expect(MoneyTotals.sum([usdAmount(500), usdAmount(250)]) == [usdAmount(750)])
     }
+
+    @Test func aTotalCanAlwaysBeNegated() {
+        let half = usdAmount(Int64.min / 2)
+        #expect(MoneyTotals.sum([half, half]) == [usdAmount(-Int64.max)])
+        #expect(MoneyTotals.sum([half, half, half]) == [usdAmount(-Int64.max)])
+        #expect(MoneyTotals.sum([usdAmount(Int64.max), usdAmount(1)]) == [usdAmount(Int64.max)])
+        #expect(BalanceTotals(amounts: MoneyTotals.sum([half, half])).youOwe == [usdAmount(Int64.max)])
+    }
 }
