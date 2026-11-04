@@ -19,6 +19,10 @@ enum SplitwiseFile {
 
     static func text(from data: Data) throws -> String {
         guard data.count <= maximumBytes else { throw Unreadable() }
+        if data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF]) {
+            guard let decoded = String(data: data, encoding: .utf16) else { throw Unreadable() }
+            return decoded
+        }
         let decoded = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1)
         guard let decoded, !decoded.contains("\u{0}") else { throw Unreadable() }
         return decoded

@@ -55,4 +55,11 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(SplitwiseCategoryMap.category(for: "Household supplies") == .home)
         #expect(SplitwiseCategoryMap.category(for: "Medical expenses") == .health)
     }
+
+    @Test func readsUTF16WithAByteOrderMark() throws {
+        var little = Data([0xFF, 0xFE])
+        little.append(try #require("Date,Ana\n".data(using: .utf16LittleEndian)))
+        #expect(SplitwiseFile.normalized(try SplitwiseFile.text(from: little)) == "Date,Ana")
+        #expect(throws: SplitwiseFile.Unreadable.self) { try SplitwiseFile.text(from: Data([0x41, 0x00, 0x42])) }
+    }
 }
