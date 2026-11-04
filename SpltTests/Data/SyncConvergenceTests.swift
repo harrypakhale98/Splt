@@ -250,6 +250,18 @@ struct SyncConvergenceTests {
         #expect(try a.services.recurring.templates(in: group.id).first?.title == "Rent and bills")
     }
 
+    @Test func theSameOccurrenceMadeOnBothPhonesIsAnnouncedOnce() throws {
+        _ = try rentTemplate()
+        _ = try a.services.recurring.createDueExpenses(through: a.clock.start)
+        b.clock.advance(by: 500)
+        _ = try b.services.recurring.createDueExpenses(through: a.clock.start)
+        try exchange()
+        for device in [a, b] {
+            let added = try device.services.activity.entries(in: group.id, limit: 20).filter { $0.event.kind == .expenseAdded }
+            #expect(added.count == 1)
+        }
+    }
+
     @Test func theSameOccurrenceMadeOnBothPhonesEndsUpTheSame() throws {
         _ = try rentTemplate()
         let made = try #require(try a.services.recurring.createDueExpenses(through: a.clock.start).first)

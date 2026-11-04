@@ -139,8 +139,8 @@ final class RepositoryContext {
     }
 
     /// Writes an activity row for a known actor, which saves looking the current user up again.
-    func log(_ event: ActivityEvent, groupID: GroupID?, actor: PersonID?) throws {
-        let entry = ActivityEntry(groupID: groupID, actorID: actor, event: event, createdAt: now())
+    func log(_ event: ActivityEvent, groupID: GroupID?, actor: PersonID?, id: UUID = UUID()) throws {
+        let entry = ActivityEntry(id: id, groupID: groupID, actorID: actor, event: event, createdAt: now())
         let record = ActivityRecord(entry)
         context.insert(record)
         tracker.recordEdit(record)

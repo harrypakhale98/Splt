@@ -63,7 +63,11 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
                 var expense = template.expense(on: occurrence)
                 expense.id = OccurrenceID.expenseID(template: template.id, occurrence: occurrence)
                 if try env.expenseRecord(expense.id) == nil {
-                    try expenses.insert(expense, extras: ExpenseExtras(recurringExpenseID: template.id), logsActivity: true)
+                    try expenses.insert(expense, extras: ExpenseExtras(recurringExpenseID: template.id), logsActivity: false)
+                    try env.log(
+                        .expenseAdded(SwiftDataExpenseRepository.reference(expense)), groupID: groupID,
+                        actor: try env.currentUser()?.personID, id: OccurrenceID.addedEntryID(expense: expense.id)
+                    )
                     // This can run before the first fetch, so another device may have made this occurrence
                     // and since edited or deleted it. Dated by its occurrence, this copy loses to any such change.
                     try env.expenseRecord(expense.id)?.modifiedAt = occurrence
