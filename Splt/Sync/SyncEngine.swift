@@ -7,9 +7,6 @@ struct GroupShare {
     let share: CKShare
     let container: CKContainer
     let groupName: String
-
-    /// The link people can open to join, once the share is saved.
-    var url: URL? { share.url }
 }
 
 /// An invitation a person opened, as the system hands it to the app.

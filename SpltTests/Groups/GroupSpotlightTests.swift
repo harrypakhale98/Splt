@@ -108,12 +108,6 @@ struct GroupSpotlightTests {
 
 @Suite("Invite")
 struct GroupInviteTests {
-    @Test func theLocalLinkOpensTheGroup() async throws {
-        let id = GroupID()
-        let url = try await LocalGroupSharing().inviteURL(for: id, groupName: "Trip")
-        #expect(DeepLink(url: url) == .group(id.rawValue))
-    }
-
     @Test func qrCodesAreSquareAndNotEmpty() throws {
         let image = try #require(QRCodeImage.make(from: "splt://group/\(UUID().uuidString)"))
         #expect(image.size.width > 0)

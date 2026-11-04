@@ -28,9 +28,6 @@ final class GroupSharingModel {
         self.engine = engine
     }
 
-    /// The link to send with the system share sheet, available once the group is shared.
-    var inviteURL: URL? { prepared?.groupShare.url }
-
     func prepare(group: GroupID) async {
         phase = .preparing
         do {

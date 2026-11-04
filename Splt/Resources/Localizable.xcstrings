@@ -985,9 +985,6 @@
     "Can't Import" : {
 
     },
-    "Can't Invite Yet" : {
-
-    },
     "Can't Open %@" : {
 
     },
@@ -1217,9 +1214,6 @@
 
     },
     "Copy Amount" : {
-
-    },
-    "Copy Link" : {
 
     },
     "Could Not Save" : {
@@ -1912,7 +1906,19 @@
     "Invite" : {
 
     },
-    "Invite with Link or QR Code" : {
+    "You're offline. Connect to the internet to invite people." : {
+
+    },
+    "Sign in to iCloud in the Settings app to invite people." : {
+
+    },
+    "iCloud is restricted on this device, so you can't invite people." : {
+
+    },
+    "iCloud sync needs attention before you can invite people. Open Account to see why." : {
+
+    },
+    "Inviting people needs iCloud, which this build of Splt can't use." : {
 
     },
     "Invite with iCloud" : {
@@ -1931,12 +1937,6 @@
 
     },
     "JSON" : {
-
-    },
-    "Join %@ on Splt" : {
-
-    },
-    "Join %@ on Splt." : {
 
     },
     "Keep Editing" : {
@@ -2468,9 +2468,6 @@
     "Preparing %@" : {
 
     },
-    "Preparing invite" : {
-
-    },
     "Price" : {
 
     },
@@ -2478,9 +2475,6 @@
 
     },
     "QR code that adds %@ as a friend" : {
-
-    },
-    "QR code to join %@" : {
 
     },
     "Quarterly" : {
@@ -2753,9 +2747,6 @@
 
     },
     "Share Invite Link" : {
-
-    },
-    "Share Link" : {
 
     },
     "Shared Expenses" : {
@@ -3201,9 +3192,6 @@
 
     },
     "Turn On Notifications" : {
-
-    },
-    "Turn on iCloud to invite people straight from Splt. The link only opens this group on a device that already has it." : {
 
     },
     "Twice a Month" : {

@@ -34,22 +34,22 @@ struct UISyncStatusPresentationTests {
 struct UISyncGroupSharingTests {
     private let group = GroupID()
 
-    @Test func fallsBackToTheLocalLinkWhenSyncIsNotConnected() async throws {
-        let engine = FakeSyncEngine()
-        engine.report(.noAccount)
-        let runtime = SyncRuntime()
-        runtime.use(engine)
-
-        let url = try await SyncGroupSharing(runtime: runtime).inviteURL(for: group, groupName: "Trip")
-        #expect(url == DeepLink.group(group.rawValue).url)
+    @Test func inviteExplainsEveryStateItCannotWorkIn() {
+        #expect(GroupInviteSection.note(for: .idle) == nil)
+        #expect(GroupInviteSection.note(for: .syncing) == nil)
+        for status in [SyncStatus.offline, .noAccount, .restricted, .error("Full"), .unavailable] {
+            #expect(GroupInviteSection.note(for: status)?.contains("invite") == true || GroupInviteSection.note(for: status)?.contains("Inviting") == true)
+            #expect(!status.isConnected)
+        }
     }
 
-    @Test func fallsBackWhenTheEngineCannotShare() async throws {
-        let runtime = SyncRuntime()
-        runtime.use(FakeSyncEngine())
-
-        let url = try await SyncGroupSharing(runtime: runtime).inviteURL(for: group, groupName: "Trip")
-        #expect(url == DeepLink.group(group.rawValue).url)
+    @Test func aLinkToAGroupThisDeviceDoesNotHaveOpensNothingElse() {
+        let router = Router()
+        let id = UUID()
+        #expect(router.open(URL(string: "splt://group/\(id.uuidString)")!))
+        #expect(router.groupsPath == [.group(id)])
+        #expect(router.sheet == nil)
+        #expect(router.pendingInvite == nil)
     }
 
     @Test func leavingIsForwardedWhenConnected() async throws {
