@@ -12,6 +12,8 @@ struct FineTuneSheet: View {
 
     var body: some View {
         NavigationStack {
+            // on small phones and at large text this is taller than the medium height
+            ScrollView {
             VStack(spacing: 20) {
                 if let segment = model.barData?.segments.first(where: { $0.id == personID }), let data = model.barData {
                     AvatarView(name: segment.person.name, id: segment.id, members: model.members.map(\.id), size: 72)
@@ -44,7 +46,8 @@ struct FineTuneSheet: View {
                 }
             }
             .padding(20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            }
             .navigationTitle("Fine Tune")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

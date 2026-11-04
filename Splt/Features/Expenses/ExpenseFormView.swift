@@ -83,7 +83,7 @@ private struct ExpenseFormScreen: View {
         }
         .sheet(item: $fineTune) { selection in
             FineTuneSheet(model: model, personID: selection.id) { fineTune = nil }
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .haptics(.success, trigger: model.saveCount)

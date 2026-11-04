@@ -46,9 +46,9 @@ struct FormSheetContent: View {
     static func detents(for sheet: FormSheet) -> Set<PresentationDetent> {
         switch sheet {
         case .category: [.medium, .large]
-        case .date: [.medium]
+        case .date: [.medium, .large]
         case .note: [.medium]
-        case .receipt: [.medium]
+        case .receipt: [.medium, .large]
         case .repeating: [.medium, .large]
         case .currency, .more: [.large]
         }
@@ -95,9 +95,12 @@ private struct DateSheet: View {
     @Bindable var model: ExpenseFormModel
 
     var body: some View {
-        DatePicker("Date", selection: $model.date, displayedComponents: .date)
-            .datePickerStyle(.graphical)
-            .padding(.horizontal, 20)
+        // the calendar is taller than the medium height on small phones
+        ScrollView {
+            DatePicker("Date", selection: $model.date, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding(.horizontal, 20)
+        }
     }
 }
 
@@ -120,7 +123,8 @@ private struct ReceiptSheet: View {
     var onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
+        ScrollView {
+            VStack(spacing: 20) {
             if model.receipt.isEmpty {
                 ContentUnavailableView {
                     Label("No Receipt", systemImage: "doc.text.viewfinder")
@@ -143,9 +147,10 @@ private struct ReceiptSheet: View {
             if model.isScanning {
                 HStack { ProgressView(); Text("Reading the receipt") }
             }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onChange(of: model.isScanning) { was, now in
             if was, !now { onDone() }
         }
