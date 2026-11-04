@@ -20,6 +20,8 @@ struct FriendRow: View {
                 }
             } else {
                 nameBlock
+                    // keeps a word readable: past this the amount scales down instead of taking more width
+                    .frame(minWidth: 110, alignment: .leading)
                 Spacer(minLength: 8)
                 balanceBlock(lines)
             }
