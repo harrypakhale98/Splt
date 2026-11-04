@@ -104,6 +104,49 @@ struct UIAccountProfileTests {
         #expect(try services.people.me()?.name == "Sam")
     }
 
+    /// A device that last knew you as Sam, after another device renamed you Samuel.
+    private func renamedElsewhere(_ services: DataServices) throws -> AccountProfile {
+        let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")
+        profile.displayName = "Sam"
+        try profile.applyName(to: services.people)
+        var me = try #require(try services.people.me())
+        me.name = "Samuel"
+        try services.people.update(me)
+        return profile
+    }
+
+    @Test func closingTheEditorWithoutTypingDoesNotUndoARenameFromAnotherDevice() throws {
+        let services = try DataServices.inMemory()
+        let profile = try renamedElsewhere(services)
+        profile.save()
+        try profile.applyName(to: services.people)
+        #expect(try services.people.me()?.name == "Samuel")
+    }
+
+    @Test func aRenameFromAnotherDeviceShowsHereAndCanBeChangedAgain() throws {
+        let services = try DataServices.inMemory()
+        let profile = try renamedElsewhere(services)
+        let summary = AccountSummary.load(from: services, profile: profile)
+        #expect(summary.displayName(for: profile) == "Samuel")
+        #expect(profile.displayName == "Samuel")
+
+        profile.displayName = "Sam"
+        try profile.applyName(to: services.people)
+        #expect(try services.people.me()?.name == "Sam")
+    }
+
+    @Test func goingBackToTheAccountScreenKeepsANameBeingTyped() throws {
+        let services = try DataServices.inMemory()
+        let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")
+        profile.displayName = "Sam"
+        try profile.applyName(to: services.people)
+        profile.displayName = "Sammy"
+        _ = AccountSummary.load(from: services, profile: profile)
+        #expect(profile.displayName == "Sammy")
+        try profile.applyName(to: services.people)
+        #expect(try services.people.me()?.name == "Sammy")
+    }
+
     @Test func applyNameCreatesMeWhenMissing() throws {
         let services = try DataServices.inMemory()
         let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")

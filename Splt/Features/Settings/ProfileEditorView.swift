@@ -51,7 +51,7 @@ struct ProfileEditorView: View {
         .navigationTitle("Your Profile")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear(perform: commit)
-        .task { summary = AccountSummary.load(from: services) }
+        .task { summary = AccountSummary.load(from: services, profile: profile) }
         .alert("Couldn't Save Name", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
