@@ -33,7 +33,10 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
         let template = Self.fitted(template)
         guard let record = try RecurringExpenseRecord.find(recordName: template.id.uuidString, in: env.context),
               record.deletedAt == nil else { throw DataError.notFound("recurring expense \(template.id)") }
+        let resumed = !record.isActive && template.isActive
         record.update(from: template)
+        // Occurrences missed while paused are not billed: the schedule picks up after this moment.
+        if resumed { record.lastCreatedOccurrence = max(record.lastCreatedOccurrence ?? .distantPast, env.now()) }
         env.tracker.recordEdit(record)
         try env.save()
     }
