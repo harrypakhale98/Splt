@@ -114,11 +114,14 @@ final class SettleModel {
 
     // MARK: Share of the debt
 
-    /// The step of the stepper and the drag: a whole unit of the currency, or a tenth of one for small debts.
+    /// The step of the stepper and the drag: a whole unit of the currency, a tenth of one for small
+    /// debts, or the smallest unit when the debt is no bigger than that tenth.
     var step: Int64 {
         guard let full = fullAmount else { return 1 }
         let one = Int64(pow(10, Double(full.exponent)))
-        return full.minorUnits >= 10 * one ? one : max(one / 10, 1)
+        if full.minorUnits >= 10 * one { return one }
+        let tenth = max(one / 10, 1)
+        return full.minorUnits > tenth ? tenth : 1
     }
 
     /// How much of the debt is being paid, from 0 to 1. A payment above the debt counts as all of it.

@@ -233,6 +233,16 @@ struct SettleModelTests {
         #expect(model.amount == usdAmount(1100))
     }
 
+    @Test func aDebtSmallerThanTheStepCanStillBePaidInPart() throws {
+        let fixture = try Fixture()
+        let debt = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(5))
+        let model = model(fixture, debts: [debt])
+        #expect(model.step == 1)
+        model.setFraction(0.5)
+        #expect(model.amountIssue == nil)
+        #expect(model.amount == usdAmount(3))
+    }
+
     @Test func participantsCarryDistinctColorsInPayerFirstOrder() throws {
         let (fixture, debts) = try scene()
         let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
