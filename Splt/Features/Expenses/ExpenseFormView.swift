@@ -101,6 +101,12 @@ private struct ExpenseFormScreen: View {
                 if !model.possibleDuplicates.isEmpty {
                     DuplicateBanner(model: model)
                 }
+                if model.split.method != .itemized, let notice = model.scanNotice {
+                    Label(notice, systemImage: "doc.text.viewfinder")
+                        .font(.footnote)
+                        .foregroundStyle(.legible)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 VStack(spacing: 12) {
                     AmountHero(model: model, keypadOpen: keypadOpen && !typeSize.isAccessibilitySize) {
                         Motion.perform(.snappy) { keypadOpen.toggle() }
