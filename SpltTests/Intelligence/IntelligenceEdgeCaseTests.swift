@@ -113,4 +113,12 @@ struct IntelligenceEdgeCaseTests {
         #expect(many.items.isEmpty)
         #expect(many.total == money(300))
     }
+
+    @Test func aNumberAfterFlightIsThePriceWhenItIsTheOnlyOne() {
+        #expect(parse("flight 300 with Sam").amount == money(30000))
+        #expect(parse("flight 300 with Sam").title == "Flight")
+        #expect(parse("bus 20").amount == money(2000))
+        #expect(parse("room 120 for 3 nights").amount == money(12000))
+        #expect(parse("dinner at table 12 for 85").amount == money(8500))
+    }
 }

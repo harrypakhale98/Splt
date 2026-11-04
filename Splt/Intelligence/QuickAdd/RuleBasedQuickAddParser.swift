@@ -293,6 +293,7 @@ private struct Pass {
             var hasCurrency: Bool
         }
         var candidates: [Candidate] = []
+        var unlikely: [Candidate] = []
         for match in Self.amountPattern.matches(in: text) {
             guard let whole = Range(match.range, in: text) else { continue }
             let following = text[whole.upperBound...].drop { $0 == " " }
@@ -302,7 +303,7 @@ private struct Pass {
             let previousWord = String(preceding.prefix { $0.isLetter }.reversed()).lowercased()
             let hasMarker = match.group(named: "sym", in: text) != nil || match.group(named: "pre", in: text) != nil
                 || match.group(named: "word", in: text) != nil
-            if Self.notMoneyBefore.contains(previousWord), !hasMarker { continue }
+            let isUnlikely = Self.notMoneyBefore.contains(previousWord) && !hasMarker
 
             let marker = match.group(named: "sym", in: text)
                 ?? match.group(named: "pre", in: text)
@@ -316,14 +317,15 @@ private struct Pass {
                 guard !overflow else { continue }
                 minor = scaled
             }
-            candidates.append(Candidate(
+            let candidate = Candidate(
                 range: match.range,
                 found: FoundAmount(minorUnits: minor, explicitCode: explicit),
                 hasCurrency: explicit != nil
-            ))
+            )
+            if isUnlikely { unlikely.append(candidate) } else { candidates.append(candidate) }
         }
         let marked = candidates.filter(\.hasCurrency)
-        let pool = marked.isEmpty ? candidates : marked
+        let pool = !marked.isEmpty ? marked : !candidates.isEmpty ? candidates : unlikely
         guard let chosen = pool.max(by: { $0.found.minorUnits < $1.found.minorUnits }) else { return nil }
         blank(chosen.range)
         return chosen.found
