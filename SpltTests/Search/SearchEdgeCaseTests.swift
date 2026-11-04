@@ -55,4 +55,14 @@ struct SearchEdgeCaseTests {
         #expect(parser.parse("jan 2025").period != nil)
         #expect(self.parser(fixture).parse("dinner jan").period != nil)
     }
+
+    @Test func aQuestionCanNameAnAmount() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Espresso coffee", cents: 500)
+        try fixture.addExpense("Filter coffee", cents: 700)
+        let search = model(fixture)
+        search.query = "coffee 5.00"
+        await search.search()
+        #expect(search.expenses.map(\.title) == ["Espresso coffee"])
+    }
 }
