@@ -9,6 +9,8 @@ import SpltCore
 /// non zero balance. Rows it cannot rebuild are skipped and reported as warnings.
 enum SplitwiseCSVImporter {
     private static let fixedColumns = ["date", "description", "category", "cost", "currency"]
+    /// More than any real expense, and small enough that sums of a file cannot overflow.
+    private static let largestAmount: Int64 = 1_000_000_000_000_000
 
     static func parse(
         _ text: String,
@@ -52,7 +54,7 @@ enum SplitwiseCSVImporter {
             let currency = cell(columns.currency).uppercased()
             guard currency.count == 3 else { skip("Missing currency."); continue }
             guard let cost = try? MoneyParser.parse(cell(columns.cost), currencyCode: currency, locale: GroupCSVExporter.posix),
-                  !cost.isZero else { skip("Unreadable or zero cost."); continue }
+                  !cost.isZero, abs(cost.minorUnits) <= largestAmount else { skip("Unreadable or zero cost."); continue }
 
             var nets: [PersonID: Int64] = [:]
             var readable = true
@@ -60,11 +62,12 @@ enum SplitwiseCSVImporter {
                 let text = cell(member.column)
                 if text.isEmpty { continue }
                 guard let amount = try? MoneyParser.parse(text, currencyCode: currency, locale: GroupCSVExporter.posix),
+                      abs(amount.minorUnits) <= largestAmount,
                       let id = members[member.name] else { readable = false; break }
                 if !amount.isZero { nets[id] = amount.minorUnits }
             }
             guard readable else { skip("Unreadable member amount."); continue }
-            guard nets.values.reduce(0, +) == 0 else { skip("Member amounts do not add up to zero."); continue }
+            guard nets.values.reduce(Int128(0), { $0 + Int128($1) }) == 0 else { skip("Member amounts do not add up to zero."); continue }
 
             let category = cell(columns.category)
             if category.caseInsensitiveCompare(GroupCSVExporter.paymentCategory) == .orderedSame {
