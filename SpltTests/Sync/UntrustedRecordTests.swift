@@ -289,4 +289,25 @@ struct UntrustedRecordTests {
         #expect(try ExpenseRecord.find(recordName: records[0].recordID.recordName, in: context) == nil)
         #expect(try ExpenseRecord.find(recordName: records[1].recordID.recordName, in: context) == nil)
     }
+
+    // MARK: Contact details
+
+    @Test func contactDetailsStayOnThisDevice() throws {
+        let populated = try PopulatedDevice()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        let samRecords = cloud.records.values.filter { $0.recordID.recordName == populated.sam.id.description }
+        #expect(!samRecords.isEmpty)
+        #expect(samRecords.allSatisfy { $0["contactHint"] == nil })
+    }
+
+    @Test func aRecordCannotChangeWhereAPaymentGoes() throws {
+        let victim = try Victim()
+        let sam = victim.populated.sam
+        var fields = personFields(sam, name: "Sam")
+        fields.set("contactHint", "mallory@upi")
+        let record = victim.crafted(.person, name: sam.id.description, in: victim.sharedZone, fields: fields)
+        try victim.adapter.applyFetched(modifications: [record], deletions: [])
+        #expect(try victim.device.services.people.person(id: sam.id)?.contactHint == "sam@example.com")
+    }
 }
