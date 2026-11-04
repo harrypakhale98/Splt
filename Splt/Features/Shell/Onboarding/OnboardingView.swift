@@ -189,7 +189,7 @@ private struct SetupBeat: View {
                             Text(CurrencyCatalog.name(for: preferences.defaultCurrencyCode))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.trailing)
-                            Image(systemName: "chevron.right")
+                            Image(systemName: "chevron.forward")
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.tertiary)
                                 .accessibilityHidden(true)
