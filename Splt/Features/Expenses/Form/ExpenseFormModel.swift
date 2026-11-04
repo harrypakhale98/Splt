@@ -80,6 +80,8 @@ final class ExpenseFormModel {
     var scanNotice: String?
     var saveCount = 0
     var saveError: String?
+    /// What this form stored. A second tap on Save hands this back and stores nothing.
+    @ObservationIgnored var savedExpense: Expense?
     @ObservationIgnored private var snapshot: Snapshot?
     @ObservationIgnored var categoryTask: Task<Void, Never>?
 

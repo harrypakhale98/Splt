@@ -30,6 +30,7 @@ extension ExpenseFormModel {
     /// when `canSave` is false, or the repository's error.
     @discardableResult
     func save() throws -> Expense {
+        if let savedExpense { return savedExpense }
         guard canSave, var expense = makeExpense() else { throw SaveFailure.notReady }
         switch mode {
         case .add:
@@ -41,6 +42,7 @@ extension ExpenseFormModel {
             try saveTemplate(expense)
         }
         saveCount += 1
+        savedExpense = expense
         return expense
     }
 

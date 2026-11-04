@@ -50,4 +50,32 @@ struct ExpenseFormEdgeCaseTests {
         model.date = model.date.addingTimeInterval(-3 * 86_400)
         #expect(model.isDirty)
     }
+
+    @Test func aSecondSaveStoresNothing() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        let first = try model.save()
+        let second = try model.save()
+        #expect(first.id == second.id)
+        #expect(model.saveCount == 1)
+        #expect(try harness.fixture.services.expenses.expenses(in: harness.fixture.group.id).count == 1)
+    }
+
+    @Test func aSecondSaveOfARepeatingExpenseStoresNothing() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.repeatChoice.frequency = .monthly
+        try model.save()
+        try model.save()
+        #expect(try harness.fixture.services.recurring.templates(in: harness.fixture.group.id).count == 1)
+    }
+
+    @Test func aFailedSaveCanBeTriedAgain() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        #expect(throws: ExpenseFormModel.SaveFailure.self) { try model.save() }
+        model.amountText = "60"
+        model.title = "Dinner"
+        #expect(try model.save().title == "Dinner")
+    }
 }
