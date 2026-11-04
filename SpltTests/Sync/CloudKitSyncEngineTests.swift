@@ -1,6 +1,7 @@
 import CloudKit
 import Foundation
 import SpltCore
+import SwiftData
 import Testing
 @testable import Splt
 
@@ -132,7 +133,7 @@ struct CloudKitSyncEngineTests {
         try await engine.leave(group: rig.populated.group.id)
         let zone = CKRecordZone.ID(zoneName: zoneName, ownerName: owner)
         #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
-        #expect(rig.backend.sharedHandle.sendCount == 1)
+        #expect(rig.backend.sharedHandle.sendCount == 2)
         #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
         await engine.stop()
     }
@@ -213,5 +214,35 @@ struct CloudKitSyncEngineTests {
         rig.backend.userResult = .success("_alice")
         try await Task.sleep(for: .milliseconds(200))
         #expect(rig.backend.madeEngines.isEmpty)
+    }
+
+    @Test func leavingASharedGroupRemovesYouFromItFirstAndShowsNoError() async throws {
+        let rig = try Rig(seed: { metadata in
+            var metadata = metadata
+            metadata.userRecordName = "_alice"
+            return metadata
+        })
+        let group = rig.populated.group
+        var metadata = rig.device.store.loadMetadata()
+        metadata.zones[rig.populated.zone] = ZoneInfo(ownerName: "_owner", scope: .sharedDatabase)
+        rig.device.store.saveMetadata(metadata)
+        let engine = CloudKitSyncEngine(
+            backend: rig.backend, services: rig.device.services, store: rig.device.store,
+            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10)
+        )
+        await engine.start()
+        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        let runtime = SyncRuntime()
+        runtime.use(engine)
+        let model = GroupSettingsViewModel(groupID: group.id, services: rig.device.services, leftGroups: isolatedLeftGroups())
+        let left = await model.leave(using: SyncGroupSharing(runtime: runtime))
+        #expect(left)
+        #expect(model.errorMessage == nil)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs.map(\.zoneName) == [rig.populated.zone])
+        // the note that this person left went to the server before the zone was given up
+        let notes = try rig.device.tracker.context.fetch(FetchDescriptor<ActivityRecord>())
+        let note = try #require(notes.first { $0.kindRaw == "memberRemoved" })
+        #expect(rig.backend.sharedHandle.savedRecordIDs.contains { $0.recordName == note.recordName })
+        await engine.stop()
     }
 }

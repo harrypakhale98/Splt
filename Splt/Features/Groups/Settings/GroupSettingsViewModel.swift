@@ -209,15 +209,16 @@ final class GroupSettingsViewModel {
             blockedMessage = leaveBlock
             return false
         }
-        try? await sharing.leave(groupID: groupID)
         do {
+            // first, because sync hides the group once it has left, and the others need to see this
             try groups.removeMember(myRow.person.id, from: groupID)
-            leftGroups.insert(groupID)
-            return true
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)
             return false
         }
+        leftGroups.insert(groupID)
+        try? await sharing.leave(groupID: groupID)
+        return true
     }
 
     func toggleArchived() {

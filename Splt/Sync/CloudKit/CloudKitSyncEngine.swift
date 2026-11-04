@@ -199,6 +199,9 @@ final class CloudKitSyncEngine: SyncEngine {
             return
         }
         guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { throw SyncError.notReady }
+        // what is still waiting, such as this person leaving the member list, has to go out while the zone is ours
+        try coordinator.reconcile()
+        try? await sharedSyncer.sendChanges()
         try adapter.tracker.retireLocally(zone: zoneID.zoneName)
         sharedSyncer.queue(zonesToDelete: [zoneID])
         try await sharedSyncer.sendChanges()

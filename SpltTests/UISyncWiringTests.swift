@@ -61,13 +61,19 @@ struct UISyncGroupSharingTests {
         #expect(engine.left == [group])
     }
 
-    @Test func leavingDoesNothingWhenNotConnected() async throws {
+    @Test func leavingWhileOfflineStillReachesTheEngine() async throws {
         let engine = FakeSyncEngine()
-        engine.report(.unavailable)
+        engine.report(.offline)
         let runtime = SyncRuntime()
         runtime.use(engine)
 
         try await SyncGroupSharing(runtime: runtime).leave(groupID: group)
-        #expect(engine.left.isEmpty)
+        #expect(engine.left == [group])
+    }
+
+    @Test func leavingWithoutSyncIsFine() async throws {
+        let runtime = SyncRuntime()
+        runtime.use(NoOpSyncEngine(reason: .simulator))
+        try await SyncGroupSharing(runtime: runtime).leave(groupID: group)
     }
 }

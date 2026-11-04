@@ -32,7 +32,10 @@ struct SyncGroupSharing: GroupSharing {
 
     @MainActor
     private static func leave(_ groupID: GroupID, runtime: SyncRuntime) async throws {
-        guard runtime.status.isConnected else { return }
-        try await runtime.engine.leave(group: groupID)
+        do {
+            try await runtime.engine.leave(group: groupID)
+        } catch SyncError.unavailable {
+            // nothing syncs here, so there is nothing to leave
+        }
     }
 }
