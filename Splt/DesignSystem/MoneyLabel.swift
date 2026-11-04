@@ -21,6 +21,10 @@ struct MoneyLabel: View {
         Text(MoneyFormatting.string(money, locale: locale, showsSign: style == .balance))
             .monospacedDigit()
             .foregroundStyle(color)
+            // an amount never breaks across lines: neighbors wrap first, then it shrinks a little
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .layoutPriority(1)
             .accessibilityLabel(accessibilityText)
     }
 
