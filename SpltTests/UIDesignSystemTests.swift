@@ -3,6 +3,28 @@ import SpltCore
 import Testing
 @testable import Splt
 
+@Suite("Plurals")
+struct PluralTextTests {
+    @Test func oneReadsAsOne() {
+        let name = "Sam", one = 1, none = 0, two = 2
+        #expect(String(localized: "\(one) people") == "1 person")
+        #expect(String(localized: "\(two) people") == "2 people")
+        #expect(String(localized: "\(name) imported \(one) expenses") == "Sam imported 1 expense")
+        #expect(String(localized: "\(name) imported \(one) expenses and \(none) payments") == "Sam imported 1 expense and 0 payments")
+        #expect(String(localized: "\(name) imported \(two) expenses and \(one) payments") == "Sam imported 2 expenses and 1 payment")
+    }
+}
+
+@Suite("Group symbols")
+struct GroupSymbolNameTests {
+    /// VoiceOver must never fall back to the generic word or a system name for a symbol on offer.
+    @Test func everySymbolOnOfferHasItsOwnSpokenName() {
+        let names = GroupSymbols.all.map(GroupSymbols.spokenName(for:))
+        #expect(Set(names).count == GroupSymbols.all.count)
+        #expect(!names.contains(String(localized: "Symbol")))
+    }
+}
+
 @Suite("Avatar")
 struct UIAvatarTests {
     @Test func initialsUseFirstAndLastWord() {

@@ -102,6 +102,9 @@
         }
       }
     },
+    "%@ covered most of it." : {
+
+    },
     "%@ created %@" : {
       "localizations" : {
         "en" : {
@@ -145,9 +148,21 @@
     "%@ imported %lld expenses" : {
       "localizations" : {
         "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ imported %2$lld expenses"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%@ imported %lld expense"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%@ imported %lld expenses"
+                }
+              }
+            }
           }
         }
       }
@@ -156,8 +171,50 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ imported %2$lld expenses and %3$lld payments"
+            "state" : "translated",
+            "value" : "%1$@ imported %#@expenses@ and %#@payments@"
+          },
+          "substitutions" : {
+            "expenses" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg expense"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg expenses"
+                    }
+                  }
+                }
+              }
+            },
+            "payments" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg payment"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg payments"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -301,16 +358,6 @@
         }
       }
     },
-    "%@ paid %lld%%" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ paid %2$lld%%"
-          }
-        }
-      }
-    },
     "%@ paid you" : {
 
     },
@@ -335,6 +382,9 @@
       }
     },
     "%@ pays you" : {
+
+    },
+    "%@ per tap. The difference comes from or goes to the next person." : {
 
     },
     "%@ percent" : {
@@ -412,7 +462,19 @@
     "%@ undid a payment" : {
 
     },
+    "%@ was the biggest part of this group." : {
+
+    },
+    "%@ was the biggest part of this trip." : {
+
+    },
+    "%@ was the biggest part of your shared spending." : {
+
+    },
     "%@ will still be owed" : {
+
+    },
+    "%@, %@" : {
 
     },
     "%@, %@ percent" : {
@@ -421,16 +483,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@ percent"
-          }
-        }
-      }
-    },
-    "%@, %lld%%" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@, %2$lld%%"
           }
         }
       }
@@ -491,11 +543,33 @@
     "%lld" : {
 
     },
+    "%lld expenses so far." : {
+
+    },
     "%lld new updates in your groups." : {
 
     },
     "%lld people" : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld person"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld people"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "%lld people paid" : {
 
@@ -511,9 +585,6 @@
       }
     },
     "%lld percent of what is owed" : {
-
-    },
-    "%lld%%" : {
 
     },
     "%lld, including you" : {
@@ -569,15 +640,11 @@
         }
       }
     },
-    "About %@ a %@ on average" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "About %1$@ a %2$@ on average"
-          }
-        }
-      }
+    "About %@ a day on average" : {
+
+    },
+    "About %@ a month on average" : {
+
     },
     "Account" : {
       "comment" : "Tab and screen title for the account and settings",
@@ -731,6 +798,9 @@
     "Adjustments" : {
 
     },
+    "Airplane" : {
+
+    },
     "All" : {
 
     },
@@ -827,13 +897,28 @@
     "Assign items to people and the bar fills in." : {
 
     },
+    "Bag" : {
+
+    },
     "Balance View" : {
 
     },
     "Balances" : {
 
     },
+    "Balloon" : {
+
+    },
     "Bank Transfer" : {
+
+    },
+    "Beach umbrella" : {
+
+    },
+    "Bed" : {
+
+    },
+    "Bicycle" : {
 
     },
     "Biggest: %@" : {
@@ -845,18 +930,26 @@
     "Blocked" : {
 
     },
+    "Book" : {
+
+    },
     "Both Ways" : {
 
     },
-    "Busiest %@: %@, %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Busiest %1$@: %2$@, %3$@"
-          }
-        }
-      }
+    "Briefcase" : {
+
+    },
+    "Buildings" : {
+
+    },
+    "Bus" : {
+
+    },
+    "Busiest day: %@, %@" : {
+
+    },
+    "Busiest month: %@, %@" : {
+
     },
     "By Category" : {
 
@@ -868,6 +961,9 @@
 
     },
     "CSV" : {
+
+    },
+    "Camera" : {
 
     },
     "Can't Add Friends" : {
@@ -888,7 +984,136 @@
     "Can't Open Your Data" : {
 
     },
+    "Car" : {
+
+    },
+    "Celebration" : {
+
+    },
+    "Coffee cup" : {
+
+    },
+    "Credit card" : {
+
+    },
+    "Dumbbell" : {
+
+    },
+    "Everyone has paid a similar amount." : {
+
+    },
+    "Film" : {
+
+    },
+    "Fork and knife" : {
+
+    },
+    "Fuel pump" : {
+
+    },
+    "Full" : {
+
+    },
+    "Game controller" : {
+
+    },
+    "Gift" : {
+
+    },
+    "Graduation cap" : {
+
+    },
+    "Heart" : {
+
+    },
+    "House" : {
+
+    },
+    "Laughing" : {
+
+    },
+    "Leaf" : {
+
+    },
+    "Link copied" : {
+
+    },
+    "Most of this group went to %@." : {
+
+    },
+    "Most of this trip went to %@." : {
+
+    },
+    "Most of your shared spending went to %@." : {
+
+    },
+    "Mountains" : {
+
+    },
+    "Music" : {
+
+    },
+    "One expense so far." : {
+
+    },
+    "Partial" : {
+
+    },
+    "Party popper" : {
+
+    },
+    "Paw print" : {
+
+    },
+    "Runner" : {
+
+    },
+    "Sailboat" : {
+
+    },
+    "Shopping cart" : {
+
+    },
+    "Skier" : {
+
+    },
+    "Snowflake" : {
+
+    },
+    "Spending on this group is spread across %@ and %@." : {
+
+    },
+    "Spending on this trip is spread across %@ and %@." : {
+
+    },
+    "Spending on your shared spending is spread across %@ and %@." : {
+
+    },
+    "Sports court" : {
+
+    },
+    "Sun" : {
+
+    },
+    "Surprised" : {
+
+    },
+    "Tent" : {
+
+    },
+    "Thumbs up" : {
+
+    },
+    "Ticket" : {
+
+    },
+    "Tram" : {
+
+    },
     "Try Again" : {
+
+    },
+    "Wine glass" : {
 
     },
     "Your groups and expenses could not be opened. Restart your iPhone and try again. Don't delete Splt, because that would remove them." : {
@@ -3263,15 +3488,11 @@
         }
       }
     },
-    "^[%lld expense](inflect: true) over ^[%lld %@](inflect: true)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "^[%1$lld expense](inflect: true) over ^[%2$lld %3$@](inflect: true)"
-          }
-        }
-      }
+    "^[%lld expense](inflect: true) over ^[%lld day](inflect: true)" : {
+
+    },
+    "^[%lld expense](inflect: true) over ^[%lld month](inflect: true)" : {
+
     },
     "^[%lld friend](inflect: true)" : {
 
@@ -3303,7 +3524,7 @@
     "coffee this week" : {
 
     },
-    "covered %lld%% of the bills" : {
+    "covered %@ of the bills" : {
 
     },
     "date" : {
