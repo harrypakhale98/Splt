@@ -78,10 +78,11 @@ enum NumberWords {
                 current += value
                 sawLarge = true
             } else if word == "hundred" {
-                if current == 0 && index == start { break }
+                if (current == 0 && index == start) || current >= 100 { break }
                 current = max(current, 1) * 100
                 sawLarge = true
             } else if word == "thousand" {
+                if total > 0 { break }
                 total += max(current, 1) * 1000
                 current = 0
                 sawLarge = true

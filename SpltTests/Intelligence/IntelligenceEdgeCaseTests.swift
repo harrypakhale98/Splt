@@ -64,4 +64,13 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("twenty-five dollars lunch").amount == money(2500))
         #expect(parse("Lunch Ninety-Nine").amount == money(9900))
     }
+
+    @Test func absurdNumbersDoNotCrash() {
+        let words = "two" + String(repeating: " hundred", count: 40)
+        #expect(!NumberWords.replacingSpelledNumbers(in: words).isEmpty)
+        #expect(!NumberWords.replacingSpelledNumbers(in: "two" + String(repeating: " thousand", count: 40)).isEmpty)
+        #expect(NumberWords.replacingSpelledNumbers(in: "two thousand five hundred") == "2500")
+        #expect(NumberWords.replacingSpelledNumbers(in: "twelve hundred") == "1200")
+        #expect(QuickAddValidator.writtenAmounts(in: "99999999999999999k", currencyCode: "JPY").isEmpty)
+    }
 }
