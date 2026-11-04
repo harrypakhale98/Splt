@@ -92,7 +92,8 @@ extension ExpenseFormModel {
     var availableGroups: [SplitGroup] {
         guard case .add = mode else { return [] }
         let groups = (try? services.groups.groups(includeArchived: false)) ?? []
-        return groups.filter { $0.kind != .friend }
+        let left = LeftGroupsStore(defaults: dependencies.defaults)
+        return groups.filter { $0.kind != .friend && !left.contains($0.id) }
     }
 
     /// Moves a new expense to another group, resetting the people-based fields to that group's members.

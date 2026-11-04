@@ -180,4 +180,14 @@ struct ExpenseFormEdgeCaseTests {
         await model.fillFromNote()
         #expect(model.amountText == "60.00")
     }
+
+    @Test func aGroupBeingLeftIsNotOffered() throws {
+        let harness = try ExpenseFormHarness()
+        let trip = SplitGroup(name: "Trip", currencyCode: "EUR", memberIDs: [harness.me, harness.sam])
+        try harness.fixture.services.groups.create(trip)
+        let model = harness.newExpense()
+        #expect(model.availableGroups.count == 2)
+        LeftGroupsStore(defaults: harness.defaults).insert(trip.id)
+        #expect(model.availableGroups.map(\.id) == [harness.fixture.group.id])
+    }
 }
