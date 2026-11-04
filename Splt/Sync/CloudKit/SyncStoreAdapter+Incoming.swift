@@ -93,6 +93,8 @@ extension SyncStoreAdapter {
     /// Everyone in a shared group can write any record into its zone, with any name and any fields, and
     /// not only through this app. What a record says about itself is only believed for its own zone.
     private func belongsInItsZone(_ payload: SyncPayload) throws -> Bool {
+        // this far out a Double can no longer hold the two millisecond step between edits, so no edit could follow it
+        guard payload.modifiedAt < tracker.now().addingTimeInterval(10 * 365 * 86_400) else { return false }
         // a person is deleted with a real delete, so a saved tombstone never comes from this app
         guard payload.recordType != .person else { return payload.deletedAt == nil }
         let group = payload.recordType == .group ? payload.recordName : payload.fields.uuid("groupID")?.uuidString

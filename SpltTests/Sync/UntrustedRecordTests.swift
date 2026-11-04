@@ -276,6 +276,36 @@ struct UntrustedRecordTests {
         #expect(try myOtherDevice.services.people.person(id: me.id)?.name == "Me")
     }
 
+    /// That far out, the two millisecond step between edits no longer changes the date, so a later rename of you
+    /// would look like nothing changed and never upload.
+    @Test func aDateNoClockCouldShowIsRefused() throws {
+        let victim = try Victim()
+        let me = victim.populated.me
+        victim.adapter.updateMetadata { $0.userRecordName = "_me" }
+        victim.adapter.lastModifier = { _ in "_mallory" }
+        let copy = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Me"))
+        try victim.adapter.applyFetched(modifications: [copy], deletions: [])
+        _ = try victim.adapter.collectOutgoing()
+
+        let forged = victim.crafted(
+            .person, name: me.id.description, in: victim.sharedZone, at: Date(timeIntervalSinceReferenceDate: 1e14),
+            fields: personFields(me, name: "Clown")
+        )
+        try victim.adapter.applyFetched(modifications: [forged], deletions: [])
+        let local = try #require(try PersonRecord.find(recordName: me.id.description, in: victim.device.tracker.context))
+        #expect(local.modifiedAt < victim.later.addingTimeInterval(86_400))
+
+        var renamed = me
+        renamed.name = "Mia"
+        try victim.device.services.people.update(renamed)
+        let plan = try victim.adapter.collectOutgoing()
+        #expect(plan.saves.contains(forged.recordID))
+
+        let sams = try SyncDevice()
+        try sams.adapter.applyFetched(modifications: [forged], deletions: [])
+        #expect(try sams.services.people.person(id: me.id) == nil)
+    }
+
     @Test func aPersonCopyDeletedInASharedZoneStaysOnThisDevice() throws {
         let victim = try Victim()
         let sam = victim.populated.sam
