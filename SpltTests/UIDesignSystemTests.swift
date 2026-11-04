@@ -44,6 +44,12 @@ struct UIMoneyFormattingTests {
         #expect(MoneyFormatting.string(Money(minorUnits: 1500, currencyCode: "KWD"), locale: us) == "KWD\u{00A0}1.500")
     }
 
+    @Test func amountKeepsItsScaleInCurrenciesShownWithoutDecimals() {
+        #expect(MoneyFormatting.string(Money(minorUnits: 150_000, currencyCode: "HUF"), locale: us) == "HUF\u{00A0}1,500")
+        #expect(MoneyFormatting.string(Money(minorUnits: 1_500_000, currencyCode: "IQD"), locale: us) == "IQD\u{00A0}1,500")
+        #expect(MoneyFormatting.string(Money(minorUnits: 1_550, currencyCode: "HUF"), locale: us) == "HUF\u{00A0}15.50")
+    }
+
     @Test func balanceSignIsPartOfTheText() {
         #expect(MoneyFormatting.string(Money(minorUnits: 1250, currencyCode: "USD"), locale: us, showsSign: true) == "+$12.50")
         #expect(MoneyFormatting.string(Money(minorUnits: -1250, currencyCode: "USD"), locale: us, showsSign: true) == "-$12.50")

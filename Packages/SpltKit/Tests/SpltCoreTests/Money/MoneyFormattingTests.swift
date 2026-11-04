@@ -35,6 +35,23 @@ struct MoneyFormattingTests {
         #expect(text.contains("\u{20AC}"))
     }
 
+    @Test func currenciesThatHideDecimalsKeepTheirStoredScale() {
+        #expect(Money(minorUnits: 150_000, currencyCode: "HUF").formattedMagnitude(locale: us).contains("1,500"))
+        #expect(!Money(minorUnits: 150_000, currencyCode: "HUF").formattedMagnitude(locale: us).contains("150,000"))
+        #expect(Money(minorUnits: 1_500_000, currencyCode: "IQD").formattedMagnitude(locale: us).contains("1,500"))
+    }
+
+    @Test func decimalsAreNeverRoundedAway() {
+        #expect(Money(minorUnits: 1_550, currencyCode: "LBP").formatted(locale: us).contains("15.50"))
+        #expect(Money(minorUnits: 1_500_500, currencyCode: "IQD").formatted(locale: us).contains("1,500.500"))
+        #expect(Money(minorUnits: 1_550, currencyCode: "HUF").formattedMagnitude(locale: us).contains("15.50"))
+    }
+
+    @Test func magnitudeHasNoSign() {
+        #expect(Money(minorUnits: -1_250, currencyCode: "USD").formattedMagnitude(locale: us) == "$12.50")
+        #expect(Money(minorUnits: .min, currencyCode: "USD").formattedMagnitude(locale: us).hasPrefix("$"))
+    }
+
     @Test func plusSignIsOptIn() {
         let positive = Money(minorUnits: 500, currencyCode: "USD")
         #expect(positive.formatted(locale: us, showsPlusSign: true) == "+$5.00")

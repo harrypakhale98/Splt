@@ -70,17 +70,7 @@ enum MoneyFormatting {
 
     /// The amount without any sign.
     static func magnitudeString(_ money: Money, locale: Locale = .current) -> String {
-        let digits = fractionDigits(for: money.currencyCode, locale: locale)
-        let value = Decimal(sign: .plus, exponent: -digits, significand: Decimal(money.minorUnits.magnitude))
-        return value.formatted(Decimal.FormatStyle.Currency(code: money.currencyCode, locale: locale))
-    }
-
-    static func fractionDigits(for currencyCode: String, locale: Locale = .current) -> Int {
-        let formatter = NumberFormatter()
-        formatter.locale = locale
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyCode
-        return formatter.maximumFractionDigits
+        money.formattedMagnitude(locale: locale)
     }
 }
 
