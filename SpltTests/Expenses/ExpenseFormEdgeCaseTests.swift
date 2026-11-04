@@ -42,4 +42,12 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.ambiguousNames == ["Sam"])
         #expect(model.unmatchedNames == ["Zed"])
     }
+
+    @Test func changingOnlyTheDateIsAnUnsavedChange() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        #expect(!model.isDirty)
+        model.date = model.date.addingTimeInterval(-3 * 86_400)
+        #expect(model.isDirty)
+    }
 }

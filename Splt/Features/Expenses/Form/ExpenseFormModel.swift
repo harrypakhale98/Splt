@@ -206,6 +206,8 @@ final class ExpenseFormModel {
         var title: String
         var category: ExpenseCategory
         var note: String
+        var date: Date
+        var groupID: GroupID?
         var payer: PayerState
         var participants: Set<PersonID>
         var split: SplitEditorState
@@ -218,6 +220,8 @@ final class ExpenseFormModel {
             title = model.title
             category = model.category
             note = model.note
+            date = model.date
+            groupID = model.group?.id
             payer = model.payer
             participants = model.participants
             split = model.split
