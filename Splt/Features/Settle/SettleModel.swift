@@ -132,7 +132,12 @@ final class SettleModel {
 
     /// Pays this share of the debt, rounded to the step. Everything above 98 percent means all of it.
     func setFraction(_ value: Double) {
-        guard let full = fullAmount, !isReversed else { return }
+        guard let full = fullAmount else { return }
+        // The other way there is no share of the debt to pick, only an amount to type.
+        guard !isReversed else {
+            amountMode = .partial
+            return
+        }
         let clamped = min(max(value, 0), 1)
         if clamped >= 0.98 {
             amountMode = .full

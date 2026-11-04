@@ -233,6 +233,19 @@ struct SettleModelTests {
         #expect(model.amount == usdAmount(1100))
     }
 
+    @Test func partialWorksAfterSwappingWhoPays() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        model.isReversed = true
+        model.setFraction(0.5)
+        #expect(model.amountMode == .partial)
+        #expect(model.amount == debt.amount)
+        model.amountText = "2"
+        #expect(model.amount == usdAmount(200))
+        #expect(model.canRecord)
+    }
+
     @Test func aSecondUndoChangesNothing() throws {
         let (fixture, debts) = try scene()
         let model = model(fixture, debts: debts)
