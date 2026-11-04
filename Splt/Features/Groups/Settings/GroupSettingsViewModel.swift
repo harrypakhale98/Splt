@@ -12,9 +12,11 @@ final class GroupSettingsViewModel {
         var isMe: Bool
         /// Positive means the person is owed. Empty when square.
         var balance: [Money]
+        /// A recurring expense that would keep charging the person, which has to change first.
+        var recurringExpense: String?
 
         var id: PersonID { person.id }
-        var canRemove: Bool { !isMe && balance.isEmpty }
+        var canRemove: Bool { !isMe && balance.isEmpty && recurringExpense == nil }
     }
 
     let groupID: GroupID
@@ -93,7 +95,10 @@ final class GroupSettingsViewModel {
         let me = try people.me()?.id
         let balances = try groups.balances(for: groupID)
         memberRows = try people.people(ids: current.memberIDs).map { person in
-            MemberRow(person: person, isMe: person.id == me, balance: balances.net(for: person.id))
+            MemberRow(
+                person: person, isMe: person.id == me, balance: balances.net(for: person.id),
+                recurringExpense: try groups.recurringExpenseTitle(involving: person.id, in: groupID)
+            )
         }
         let members = Set(current.memberIDs)
         friendsToAdd = try people.friends().filter { !members.contains($0.id) }
@@ -154,7 +159,12 @@ final class GroupSettingsViewModel {
     // MARK: Members
 
     func removalBlock(for row: MemberRow) -> String? {
-        guard !row.balance.isEmpty else { return nil }
+        guard !row.balance.isEmpty else {
+            let name = row.person.name
+            return row.recurringExpense.map {
+                String(localized: "\(name) is part of the recurring expense “\($0)”. Change or delete it before removing them.")
+            }
+        }
         let amounts = row.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
         let name = row.person.name
         return row.balance.contains { $0.minorUnits > 0 }
@@ -199,6 +209,9 @@ final class GroupSettingsViewModel {
             return myRow.balance.contains { $0.minorUnits > 0 }
                 ? String(localized: "You are owed \(amounts). Settle up before leaving.")
                 : String(localized: "You owe \(amounts). Settle up before leaving.")
+        }
+        if let title = myRow.recurringExpense {
+            return String(localized: "You are part of the recurring expense “\(title)”. Change or delete it before leaving.")
         }
         return nil
     }

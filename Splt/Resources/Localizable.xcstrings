@@ -261,6 +261,16 @@
         }
       }
     },
+    "%@ is part of the recurring expense “%@”. Change or delete it before removing them." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is part of the recurring expense “%2$@”. Change or delete it before removing them."
+          }
+        }
+      }
+    },
     "%@ is settled up" : {
 
     },
@@ -1114,6 +1124,9 @@
 
     },
     "Wine glass" : {
+
+    },
+    "You are part of the recurring expense “%@”. Change or delete it before leaving." : {
 
     },
     "Your groups and expenses could not be opened. Restart your iPhone and try again. Don't delete Splt, because that would remove them." : {
@@ -3110,6 +3123,9 @@
 
     },
     "This looks like a duplicate" : {
+
+    },
+    "This person is part of the recurring expense “%@”. Change or delete it first." : {
 
     },
     "This person may have been removed." : {

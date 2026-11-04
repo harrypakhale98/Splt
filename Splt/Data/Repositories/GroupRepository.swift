@@ -14,8 +14,11 @@ protocol GroupRepository {
     /// Deletes the group and everything in it.
     func delete(id: GroupID) throws
     func addMember(_ person: PersonID, to group: GroupID) throws
-    /// Throws `DataError.memberStillHasBalance` unless the person is settled up.
+    /// Throws `DataError.memberStillHasBalance` unless the person is settled up, and
+    /// `DataError.memberOnRecurringExpense` while a recurring expense would still include them.
     func removeMember(_ person: PersonID, from group: GroupID) throws
+    /// The title of a recurring expense in the group that would still include the person, if any.
+    func recurringExpenseTitle(involving person: PersonID, in group: GroupID) throws -> String?
     func balances(for group: GroupID) throws -> GroupBalances
     func export(group: GroupID, format: ExportFormat) throws -> Data
     /// Adds the expenses and settlements from a Splitwise CSV export. Members the group does not

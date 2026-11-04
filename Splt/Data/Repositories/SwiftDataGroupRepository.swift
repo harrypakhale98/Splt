@@ -88,10 +88,17 @@ final class SwiftDataGroupRepository: GroupRepository {
         guard record.memberIDs.contains(person.rawValue) else { return }
         let ledger = try env.ledger(forGroup: group)
         guard ledger.balances(of: person).isEmpty else { throw DataError.memberStillHasBalance(person) }
+        if let title = try recurringExpenseTitle(involving: person, in: group) {
+            throw DataError.memberOnRecurringExpense(title)
+        }
         record.memberIDs.removeAll { $0 == person.rawValue }
         env.tracker.recordEdit(record)
         try env.log(.memberRemoved(person), groupID: group)
         try env.save()
+    }
+
+    func recurringExpenseTitle(involving person: PersonID, in group: GroupID) throws -> String? {
+        try SwiftDataRecurringExpenseRepository(env).templates(in: group).first { $0.willInvolve(person) }?.title
     }
 
     func balances(for group: GroupID) throws -> GroupBalances {

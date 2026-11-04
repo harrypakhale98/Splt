@@ -170,6 +170,46 @@ struct GroupSettingsViewModelTests {
         #expect(try #require(model.blockedMessage).contains("owes $10.00"))
     }
 
+    private func addRent(_ fixture: Fixture) throws {
+        try fixture.services.recurring.add(RecurringExpense(
+            groupID: fixture.group.id, title: "Rent", total: usdAmount(900), payers: [fixture.me.id: usdAmount(900)],
+            split: .equal(participants: [fixture.me.id, fixture.sam.id]),
+            rule: RecurrenceRule(frequency: .monthly, startDate: fixture.clock.start)
+        ))
+    }
+
+    @Test func aMemberOnARecurringExpenseIsToldWhichOne() throws {
+        let fixture = try Fixture()
+        try addRent(fixture)
+        let model = makeModel(fixture)
+        let sam = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
+        #expect(!sam.canRemove)
+        model.remove(sam)
+        let message = try #require(model.blockedMessage)
+        #expect(message.contains("Sam"))
+        #expect(message.contains("Rent"))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.sam.id) == true)
+
+        model.blockedMessage = nil
+        let priya = try #require(model.memberRows.first { $0.person.id == fixture.priya.id })
+        #expect(priya.canRemove)
+    }
+
+    @Test func youCannotLeaveWhileOnARecurringExpense() async throws {
+        let fixture = try Fixture()
+        try addRent(fixture)
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        let block = try #require(model.leaveBlock)
+        #expect(block.contains("Rent"))
+        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(!leftGroups.contains(fixture.group.id))
+    }
+
+    @Test func theRepositoryErrorNamesTheRecurringExpense() {
+        #expect(GroupErrorMessage.text(for: DataError.memberOnRecurringExpense("Rent")).contains("Rent"))
+    }
+
     @Test func aSettledMemberCanBeRemoved() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
