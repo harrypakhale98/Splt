@@ -21,7 +21,7 @@ body:
     id: version
     attributes:
       label: Splt version
-      description: Shown in Settings, under About.
+      description: Shown in Account, under About.
   - type: input
     id: ios
     attributes:

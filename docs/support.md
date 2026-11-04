@@ -28,4 +28,4 @@ Open Account in Splt to see the sync status. Check that you are signed in to iCl
 
 ### Can I move my data out?
 
-Yes. Open a group, then Group Settings, and export it as a spreadsheet (CSV) or PDF.
+Yes. Open a group, then Group Settings, and export it as a spreadsheet (CSV), PDF or JSON.

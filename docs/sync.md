@@ -26,7 +26,7 @@ No indexes are needed: the app never queries, it only reads zone changes.
 ## How it works
 
 - Each group is one record zone. Groups you create live in your private database.
-- People are copied into every group zone that mentions them, so each group is self contained.
+- People are copied into every group zone that mentions them, so each group is self contained. Email addresses and phone numbers from Contacts stay on the device and are not in the copy.
 - Local edits mark records dirty in the data store. The sync layer turns those into uploads and clears the flag when the server accepts them, so a failed upload is never forgotten.
 - A change made on two devices at once is merged field by field by the data layer's merge policy: the later edit wins, a delete beats an older edit, and an undo beats the delete. Expenses and payments are soft deleted so history stays.
 - Your identity is derived from your iCloud account, so all your devices are the same person in every group.
@@ -38,6 +38,18 @@ No indexes are needed: the app never queries, it only reads zone changes.
 2. A friend opens the link. The system hands the app a share invitation, the app accepts it and the group appears in their list. They are added to the member list automatically.
 3. People you added by name before they joined are placeholders. When the real person joins, claim the placeholder: every expense, payment and comment that mentioned the placeholder is rewritten to the real person.
 4. A friend can leave a group from the invite sheet or the group's menu. The owner can stop sharing, which keeps the group on the owner's devices.
+
+## What a group member can do
+
+CloudKit gives everyone in a shared zone write access to the whole zone, and any app can write to it, not only Splt. So every record that arrives is treated as untrusted.
+
+- A record only counts inside its own group: its group id must be the zone it came from, and a record cannot take over or delete one from another group.
+- A zone with the name of a group on this device but another owner is ignored, so edits never go to it.
+- Amounts larger than the app itself allows are refused.
+- A person record cannot delete anyone, and only your own devices can rename you here.
+- A file name on a synced expense can only ever point at a receipt photo.
+
+Inside one group, members are trusted: anyone can edit or delete its expenses, payments and members. They can also change the name of anyone they share a group with, on the devices of everyone else in that group, because a person record has no owner. Change this only with a real test across accounts: other people's devices upload copies of a person, so the last writer is often not that person.
 
 ## Known limits
 

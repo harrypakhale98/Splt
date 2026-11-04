@@ -50,8 +50,6 @@ When the on-device language model is not available, quick add and category sugge
 - Settling up draws an arc between two people and closes a ring when you are square. A short haptic marks it, and you can turn haptics off in Settings.
 - It works in light and dark, with Dynamic Type up to the largest accessibility sizes, VoiceOver labels and Reduce Motion.
 
-When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
-
 ## Requirements
 
 - Xcode 26 or later
