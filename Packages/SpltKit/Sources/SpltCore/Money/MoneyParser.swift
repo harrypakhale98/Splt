@@ -56,7 +56,7 @@ public enum MoneyParser {
             switch ch {
             case "\u{2212}", "\u{2013}", "\u{2014}": return "-"
             case "\u{066B}": return "."
-            case "\u{066C}": return ","
+            case "\u{066C}", "\u{060C}", "\u{2E41}", "\u{07F8}": return ","
             case "\u{00A0}", "\u{202F}", "\u{2009}", "\u{3000}": return " "
             case "\u{2018}", "\u{2019}": return "'"
             default:

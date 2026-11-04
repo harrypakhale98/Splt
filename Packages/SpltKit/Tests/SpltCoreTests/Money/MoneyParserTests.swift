@@ -164,6 +164,19 @@ struct MoneyParserTests {
         }
     }
 
+    @Test func groupedAmountsParseInEveryLocale() throws {
+        // Toki Pona groups digits in twos with spaces. It is refused rather than misread, and iOS does not offer it.
+        for identifier in Locale.availableIdentifiers where !identifier.hasPrefix("tok") {
+            let locale = Locale(identifier: identifier)
+            for code in ["USD", "JPY", "KWD"] {
+                let money = Money(minorUnits: 123_456_789, currencyCode: code)
+                let text = money.decimalValue.formatted(.number.locale(locale).grouping(.automatic).precision(.fractionLength(money.exponent)))
+                let parsed = try? MoneyParser.parse(text, currencyCode: code, locale: locale)
+                #expect(parsed == money, "\(identifier) \(code) \(text)")
+            }
+        }
+    }
+
     @Test func arabicGroupingIsNotReadAsADecimal() throws {
         let arabic = Locale(identifier: "ar_SA")
         #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234_000)
