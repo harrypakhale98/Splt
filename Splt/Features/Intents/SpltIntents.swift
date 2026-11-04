@@ -4,6 +4,7 @@ import Foundation
 struct AddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Expense"
     static let description = IntentDescription("Adds an expense you paid and splits it equally.")
+    static let authenticationPolicy = IntentAuthenticationPolicy.requiresAuthentication
 
     @Parameter(title: "What For", requestValueDialog: "What was it for?")
     var title: String
@@ -59,6 +60,7 @@ struct SettleUpIntent: AppIntent {
 struct ViewBalanceIntent: AppIntent {
     static let title: LocalizedStringResource = "View Balance"
     static let description = IntentDescription("Says what you owe or are owed, overall or with one friend or group.")
+    static let authenticationPolicy = IntentAuthenticationPolicy.requiresAuthentication
 
     @Parameter(title: "Friend")
     var friend: FriendEntity?

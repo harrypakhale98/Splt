@@ -14,6 +14,11 @@ struct IntentActionsTests {
         IntentActions(services: fixture.services, now: { fixture.clock.start })
     }
 
+    @Test func anUnlockedDeviceIsNeededToReadOrChangeMoney() {
+        #expect(AddExpenseIntent.authenticationPolicy == .requiresAuthentication)
+        #expect(ViewBalanceIntent.authenticationPolicy == .requiresAuthentication)
+    }
+
     @Test func addsAnExpenseToTheNewestGroupSplitEqually() throws {
         let fixture = try Fixture()
         let added = try actions(fixture).addExpense(title: "Pizza", amount: 30, group: nil, friend: nil)
