@@ -15,7 +15,7 @@ struct RuleBasedQuickAddParser: QuickAddParsing {
     }
 
     func parseNow(_ rawText: String, context: QuickAddContext) -> QuickAddDraft {
-        let original = NumberWords.replacingSpelledNumbers(in: rawText.tidied)
+        let original = CentPhrases.normalized(NumberWords.replacingSpelledNumbers(in: rawText.tidied))
         guard !original.isEmpty else { return QuickAddDraft() }
 
         var pass = Pass(text: original, resolver: NameResolver(candidates: context.candidateNames, text: original))
@@ -355,6 +355,44 @@ private struct Pass {
     private mutating func blank(_ range: NSRange) {
         guard let swiftRange = Range(range, in: text) else { return }
         text.replaceSubrange(swiftRange, with: Self.gap)
+    }
+}
+
+/// Rewrites "12 dollars and 50 cents" to "12.50 dollars" and "50 cents" to "0.50", so the amount pass reads one price.
+private enum CentPhrases {
+    private static let withWhole = TextPattern(
+        #"(?<![\p{L}\d.,])(\d+)\s*(dollars?|bucks?|euros?|pounds?|quid|rupees?)\s+(?:and\s+)?(\d{1,2})\s*(?:cents?|pence|paise)(?![\p{L}])"#
+    )
+    private static let alone = TextPattern(#"(?<![\p{L}\d.,$€£¥₹])(\d+)\s*(cents?|pence|paise)(?![\p{L}])"#)
+
+    static func normalized(_ text: String) -> String {
+        var result = text
+        replace(withWhole, in: &result) { match, text in
+            guard let whole = match.group(1, in: text), let unit = match.group(2, in: text),
+                  let cents = match.group(3, in: text).flatMap({ Int($0) }) else { return nil }
+            return "\(whole).\(twoDigits(cents)) \(unit)"
+        }
+        replace(alone, in: &result) { match, text in
+            guard let count = match.group(1, in: text).flatMap({ Int($0) }), let unit = match.group(2, in: text)?.lowercased() else {
+                return nil
+            }
+            let word = unit == "pence" ? " pounds" : unit == "paise" ? " rupees" : ""
+            return "\(count / 100).\(twoDigits(count % 100))\(word)"
+        }
+        return result
+    }
+
+    private static func twoDigits(_ value: Int) -> String {
+        value < 10 ? "0\(value)" : String(value)
+    }
+
+    private static func replace(
+        _ pattern: TextPattern, in text: inout String, with make: (NSTextCheckingResult, String) -> String?
+    ) {
+        for match in pattern.matches(in: text).reversed() {
+            guard let range = Range(match.range, in: text), let replacement = make(match, text) else { continue }
+            text.replaceSubrange(range, with: replacement)
+        }
     }
 }
 

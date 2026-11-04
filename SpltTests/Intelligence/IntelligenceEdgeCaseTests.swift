@@ -30,4 +30,15 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("laptop $5.5k").amount == money(550_000))
         #expect(parse("hotel 1.2K with Priya").amount == money(120_000))
     }
+
+    @Test func centsAreReadAsCents() {
+        #expect(parse("coffee 50 cents").amount == money(50))
+        #expect(parse("coffee fifty cents").amount == money(50))
+        #expect(parse("five cents candy").amount == money(5))
+        #expect(parse("twelve dollars and fifty cents lunch").amount == money(1250))
+        #expect(parse("twelve dollars and fifty cents lunch").title == "Lunch")
+        #expect(parse("tea 5 dollars 5 cents").amount == money(505))
+        #expect(parse("stamp 80 pence").amount == money(80, "GBP"))
+        #expect(parse("chai 50 paise").amount == money(50, "INR"))
+    }
 }

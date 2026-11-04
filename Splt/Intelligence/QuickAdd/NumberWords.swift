@@ -15,7 +15,8 @@ enum NumberWords {
         "eighty": 80, "ninety": 90
     ]
     private static let currencyWords: Set<String> = [
-        "dollar", "dollars", "buck", "bucks", "euro", "euros", "pound", "pounds", "quid", "rupee", "rupees"
+        "dollar", "dollars", "buck", "bucks", "euro", "euros", "pound", "pounds", "quid", "rupee", "rupees",
+        "cent", "cents", "pence", "paise"
     ]
 
     static func replacingSpelledNumbers(in text: String) -> String {
