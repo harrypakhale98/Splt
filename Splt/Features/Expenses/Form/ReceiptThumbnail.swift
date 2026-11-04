@@ -24,7 +24,7 @@ struct ReceiptThumbnail: View {
         .frame(width: side, height: side)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityLabel("Receipt photo")
-        .task(id: fileName ?? "pending") {
+        .task(id: "\(fileName ?? "")-\(pendingImage?.count ?? 0)") {
             let data = pendingImage ?? fileName.flatMap { store.thumbnail(named: $0) }
             image = data.flatMap(UIImage.init(data:))
         }
