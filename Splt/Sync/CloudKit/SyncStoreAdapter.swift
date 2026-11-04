@@ -57,7 +57,7 @@ final class SyncStoreAdapter {
                 personChanges.append(change)
                 continue
             }
-            guard let zone = change.zoneName, !retired.contains(zone) else { continue }
+            guard let zone = change.zoneName, !retired.contains(zone), !metadata.isDetached(zoneName: zone) else { continue }
             let id = RecordMapper.recordID(recordName: change.recordName, zoneID: metadata.zoneID(forZoneName: zone))
             knownTypes[id] = change.recordType
             switch change.operation {

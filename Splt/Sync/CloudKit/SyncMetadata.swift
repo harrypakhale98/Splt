@@ -33,6 +33,13 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     var personCopies: [String: [String: PersonCopy]] = [:]
     /// Person copies that still have to be uploaded.
     var personQueue: Set<PersonCopyKey> = []
+    /// Groups left on the device by the previous iCloud account. They stay local and are not uploaded.
+    /// Optional so that metadata saved before this field existed still loads.
+    var detachedZones: Set<String>?
+
+    func isDetached(zoneName: String) -> Bool {
+        detachedZones?.contains(zoneName) == true
+    }
 
     func zoneID(forZoneName name: String) -> CKRecordZone.ID {
         let owner = zones[name]?.ownerName ?? CKCurrentUserDefaultName

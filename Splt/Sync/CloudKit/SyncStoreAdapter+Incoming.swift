@@ -110,8 +110,11 @@ extension SyncStoreAdapter {
 
     func registerZone(_ id: CKRecordZone.ID) {
         let info = ZoneInfo(ownerName: id.ownerName, scope: id.scope)
-        guard metadata.zones[id.zoneName] != info else { return }
-        updateMetadata { $0.zones[id.zoneName] = info }
+        guard metadata.zones[id.zoneName] != info || metadata.isDetached(zoneName: id.zoneName) else { return }
+        updateMetadata {
+            $0.zones[id.zoneName] = info
+            $0.detachedZones?.remove(id.zoneName)
+        }
     }
 
     func zonesSaved(_ zones: [CKRecordZone]) {
@@ -148,8 +151,9 @@ extension SyncStoreAdapter {
     /// on the device but is cut loose: it is not uploaded to someone else's iCloud.
     func resetForNewAccount(userRecordName: String?) throws {
         store.reset()
-        replaceMetadata(SyncMetadata(userRecordName: userRecordName))
         let context = tracker.context
+        let local = try context.fetch(FetchDescriptor<GroupRecord>()).compactMap(\.zoneName)
+        replaceMetadata(SyncMetadata(userRecordName: userRecordName, detachedZones: Set(local)))
         for type in SyncRecordType.allCases {
             for record in try type.modelType.dirtyRecords(in: context) {
                 record.isDirty = false

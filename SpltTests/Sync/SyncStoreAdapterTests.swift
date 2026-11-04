@@ -514,4 +514,45 @@ struct SyncStoreAdapterTests {
         #expect(try populated.device.adapter.collectOutgoing().isEmpty)
         #expect(try populated.device.tracker.pendingChanges().isEmpty)
     }
+
+    @Test func aGroupFromThePreviousAccountIsNotUploadedAfterAnEdit() throws {
+        let populated = try PopulatedDevice()
+        let expense = try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        var edited = expense
+        edited.title = "After the switch"
+        try populated.device.services.expenses.update(edited, extras: nil)
+        let plan = try populated.device.adapter.collectOutgoing()
+        #expect(plan.isEmpty)
+    }
+
+    @Test func aNewGroupAfterAnAccountSwitchStillUploads() throws {
+        let populated = try PopulatedDevice()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        let fresh = SplitGroup(name: "New", currencyCode: "USD", memberIDs: [populated.me.id])
+        try populated.device.services.groups.create(fresh)
+        let plan = try populated.device.adapter.collectOutgoing()
+        #expect(plan.zonesToSave.map(\.zoneName) == [fresh.id.description])
+        #expect(plan.saves.allSatisfy { $0.zoneID.zoneName == fresh.id.description })
+    }
+
+    @Test func aGroupFromThePreviousAccountReconnectsWhenItsZoneComesBack() throws {
+        let populated = try PopulatedDevice()
+        let expense = try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        var edited = expense
+        edited.title = "After the switch"
+        try populated.device.services.expenses.update(edited, extras: nil)
+        populated.device.adapter.registerZone(CKRecordZone.ID(zoneName: populated.zone, ownerName: "_owner"))
+        #expect(try populated.device.adapter.collectOutgoing().saves.contains { $0.recordName == expense.id.description })
+    }
+
+    @Test func metadataSavedBeforeDetachedZonesStillLoads() throws {
+        let old = #"{"zones":{},"personCopies":{},"personQueue":[]}"#
+        let metadata = try JSONDecoder().decode(SyncMetadata.self, from: Data(old.utf8))
+        #expect(!metadata.isDetached(zoneName: "zone"))
+    }
 }
