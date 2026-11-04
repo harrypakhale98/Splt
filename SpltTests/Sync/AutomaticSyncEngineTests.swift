@@ -160,6 +160,32 @@ struct AutomaticSyncEngineTests {
         #expect(store.loadMetadata().pendingLeaves == nil)
         await engine.stop()
     }
+
+    @Test func startingAgainAfterStoppingRestartsTheEngine() async {
+        let (engine, _, made) = make(environment: .signedDevice())
+        await engine.start()
+        await engine.stop()
+        await engine.start()
+        #expect(made.engines.reduce(0) { $0 + $1.startCount } == 2)
+        await engine.stop()
+    }
+
+    @Test func anAccountChangeDuringASwitchIsNotMissed() async throws {
+        let (engine, probe, made) = make(environment: .signedDevice())
+        await engine.start()
+        let first = try #require(made.engines.first)
+        let (gate, open) = AsyncStream<Void>.makeStream()
+        first.beforeStop = { for await _ in gate { break } }
+        probe.set(.unknown)
+        let switching = Task { await engine.reevaluate() }
+        #expect(await eventually { first.stopCount == 1 })
+        probe.set(.available)
+        await engine.reevaluate()
+        open.yield()
+        await switching.value
+        #expect(await eventually { engine.choice == .cloudKit(containerIdentifier: "iCloud.com.example.app") })
+        await engine.stop()
+    }
 }
 
 @MainActor

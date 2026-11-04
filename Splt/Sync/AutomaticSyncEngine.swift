@@ -28,6 +28,8 @@ final class AutomaticSyncEngine: SyncEngine {
     @ObservationIgnored private let recheckInterval: Duration
     @ObservationIgnored private var isRunning = false
     @ObservationIgnored private let stateStore: any SyncStateStore
+    @ObservationIgnored private var isEvaluating = false
+    @ObservationIgnored private var evaluateAgain = false
 
     init(
         environment: @escaping @Sendable () -> SyncEnvironment = { .current },
@@ -69,6 +71,7 @@ final class AutomaticSyncEngine: SyncEngine {
         forwarding?.cancel()
         forwarding = nil
         await current.stop()
+        choice = nil
     }
 
     func sendChanges() async throws {
@@ -99,7 +102,21 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     /// Looks at the environment and account again and swaps the engine if the answer changed.
+    /// One look at a time: a change that arrives during a swap is looked at right after it.
     func reevaluate() async {
+        guard !isEvaluating else {
+            evaluateAgain = true
+            return
+        }
+        isEvaluating = true
+        defer { isEvaluating = false }
+        repeat {
+            evaluateAgain = false
+            await evaluate()
+        } while evaluateAgain && isRunning
+    }
+
+    private func evaluate() async {
         let snapshot = environment()
         let account: AccountAvailability
         if let container = snapshot.entitlements.cloudKitContainers.first, SyncEngineSelector.preflight(snapshot) == nil {

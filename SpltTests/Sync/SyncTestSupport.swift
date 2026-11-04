@@ -28,7 +28,11 @@ final class FakeSyncEngine: SyncEngine {
     }
 
     func start() async { startCount += 1 }
-    func stop() async { stopCount += 1 }
+    var beforeStop: (@MainActor () async -> Void)?
+    func stop() async {
+        stopCount += 1
+        await beforeStop?()
+    }
     func sendChanges() async throws { sendCount += 1 }
     func fetchChanges() async throws { fetchCount += 1 }
 
