@@ -339,7 +339,7 @@ private struct Pass {
 
     func title() -> String {
         let pieces = text.components(separatedBy: "\u{00A6}")
-            .map { $0.trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.whitespaces).union(.symbols)) }
+            .map(Self.trimmedEdges)
             .filter { !$0.isEmpty }
         var words = pieces.joined(separator: " ").split(separator: " ").map(String.init)
         func isFiller(_ word: String) -> Bool {
@@ -348,6 +348,18 @@ private struct Pass {
         while let first = words.first, isFiller(first) { words.removeFirst() }
         while let last = words.last, isFiller(last) { words.removeLast() }
         return words.joined(separator: " ").trimmingCharacters(in: .punctuationCharacters.union(.whitespaces)).sentenceCased
+    }
+
+    /// Drops spaces, punctuation and symbols from both ends, keeping whole emoji.
+    private static func trimmedEdges(_ piece: String) -> String {
+        func isEdge(_ character: Character) -> Bool {
+            let isEmoji = !character.isASCII && character.unicodeScalars.first?.properties.isEmoji == true
+            return character.isWhitespace || character.isPunctuation || (character.isSymbol && !isEmoji)
+        }
+        var trimmed = Substring(piece)
+        while let first = trimmed.first, isEdge(first) { trimmed.removeFirst() }
+        while let last = trimmed.last, isEdge(last) { trimmed.removeLast() }
+        return String(trimmed)
     }
 
     // MARK: Helpers

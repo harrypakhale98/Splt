@@ -82,4 +82,11 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("paid by me dinner 40").payer == .me)
         #expect(parse("paid 40 for dinner").payer == .me)
     }
+
+    @Test func titlesKeepEmojiWhole() {
+        #expect(parse("\u{2708}\u{FE0F} trip 200").title == "\u{2708}\u{FE0F} trip")
+        #expect(parse("\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467} outing 20").title == "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467} outing")
+        #expect(parse("Pizza \u{1F355} 20").title == "Pizza \u{1F355}")
+        #expect(parse("= dinner + 20").title == "Dinner")
+    }
 }
