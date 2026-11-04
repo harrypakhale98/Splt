@@ -126,6 +126,7 @@ struct GroupSettingsViewModelTests {
         #expect(RateInput.parse("-1", locale: GroupsTestCalendar.english) == nil)
         #expect(RateInput.parse("x", locale: GroupsTestCalendar.english) == nil)
         #expect(RateInput.string(Decimal(string: "0.0065")!, locale: GroupsTestCalendar.english) == "0.0065")
+        #expect(RateInput.string(Decimal(string: "0.00671234")!, locale: GroupsTestCalendar.english) == "0.00671234")
     }
 
     // MARK: Members

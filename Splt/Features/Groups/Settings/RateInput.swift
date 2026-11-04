@@ -12,6 +12,6 @@ enum RateInput {
     }
 
     static func string(_ rate: Decimal, locale: Locale = .current) -> String {
-        rate.formatted(.number.locale(locale).grouping(.never).precision(.fractionLength(0...6)))
+        rate.formatted(.number.locale(locale).grouping(.never).precision(.fractionLength(0...10)))
     }
 }
