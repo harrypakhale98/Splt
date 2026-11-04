@@ -144,6 +144,16 @@ struct SplitwiseImportViewModelTests {
 
     // MARK: Importing
 
+    @Test func aSecondTapOnImportMakesNoSecondGroup() throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        model.load(text: csv, fileName: fileName)
+        let groupsBefore = try groupCount(fixture)
+        #expect(model.performImport() != nil)
+        #expect(model.performImport() == nil)
+        #expect(try groupCount(fixture) == groupsBefore + 1)
+    }
+
     @Test func importCreatesTheGroupWithEverythingInIt() throws {
         let fixture = try Fixture()
         let model = makeModel(fixture)

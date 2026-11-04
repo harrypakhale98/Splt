@@ -215,6 +215,7 @@ final class SplitwiseImportViewModel {
                 throw DataError.unreadableCSV("Nothing in the file could be imported.")
             }
             history.record(fingerprint: fingerprint, groupID: group.id)
+            existingGroupID = group.id
             return group.id
         } catch {
             if let created { try? groups.delete(id: created) }
