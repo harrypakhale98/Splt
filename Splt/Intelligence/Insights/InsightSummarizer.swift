@@ -170,13 +170,6 @@ struct InsightSummarizer: InsightSummarizing {
     // MARK: Fallback sentences
 
     static func template(for input: InsightInput) -> String {
-        let noun: String
-        switch input.kind {
-        case .trip: noun = "this trip"
-        case .household: noun = "your shared spending"
-        case .other: noun = "this group"
-        }
-
         var sentences: [String] = []
         let total = input.totalByCategory
         let ranked = input.categories.filter { $0.minorUnits > 0 }.sorted { $0.minorUnits > $1.minorUnits }
@@ -184,11 +177,11 @@ struct InsightSummarizer: InsightSummarizing {
             let share = percent(top.minorUnits, of: total)
             let name = top.name.lowercased()
             if share >= 50 {
-                sentences.append("Most of \(noun) went to \(name).")
+                sentences.append(mostWent(to: name, kind: input.kind))
             } else if share >= 30 {
-                sentences.append("\(top.name.sentenceCased) was the biggest part of \(noun).")
+                sentences.append(biggestPart(top.name.sentenceCased, kind: input.kind))
             } else if ranked.count >= 2 {
-                sentences.append("Spending on \(noun) is spread across \(name) and \(ranked[1].name.lowercased()).")
+                sentences.append(spread(name, ranked[1].name.lowercased(), kind: input.kind))
             }
         }
 
@@ -196,17 +189,44 @@ struct InsightSummarizer: InsightSummarizing {
         let paid = input.totalPaid
         if input.members.count >= 2, let lead = payers.first, paid > 0 {
             if percent(lead.paidMinorUnits, of: paid) >= 60 {
-                sentences.append("\(lead.name) covered most of it.")
+                sentences.append(String(localized: "\(lead.name) covered most of it."))
             } else if let last = payers.last, payers.count == input.members.count,
                       percent(lead.paidMinorUnits - last.paidMinorUnits, of: paid) <= 10 {
-                sentences.append("Everyone has paid a similar amount.")
+                sentences.append(String(localized: "Everyone has paid a similar amount."))
             }
         }
 
         if sentences.isEmpty {
-            sentences.append(input.expenseCount == 1 ? "One expense so far." : "\(input.expenseCount) expenses so far.")
+            let count = input.expenseCount
+            sentences.append(count == 1 ? String(localized: "One expense so far.") : String(localized: "\(count) expenses so far."))
         }
         return sentences.joined(separator: " ")
+    }
+
+    // Whole sentences for each kind of group, because other languages cannot build them from parts.
+
+    private static func mostWent(to name: String, kind: InsightInput.Kind) -> String {
+        switch kind {
+        case .trip: String(localized: "Most of this trip went to \(name).")
+        case .household: String(localized: "Most of your shared spending went to \(name).")
+        case .other: String(localized: "Most of this group went to \(name).")
+        }
+    }
+
+    private static func biggestPart(_ name: String, kind: InsightInput.Kind) -> String {
+        switch kind {
+        case .trip: String(localized: "\(name) was the biggest part of this trip.")
+        case .household: String(localized: "\(name) was the biggest part of your shared spending.")
+        case .other: String(localized: "\(name) was the biggest part of this group.")
+        }
+    }
+
+    private static func spread(_ first: String, _ second: String, kind: InsightInput.Kind) -> String {
+        switch kind {
+        case .trip: String(localized: "Spending on this trip is spread across \(first) and \(second).")
+        case .household: String(localized: "Spending on your shared spending is spread across \(first) and \(second).")
+        case .other: String(localized: "Spending on this group is spread across \(first) and \(second).")
+        }
     }
 
     /// Whole percent of `part` in `whole`, rounded to nearest, using integers only.
