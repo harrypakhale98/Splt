@@ -586,4 +586,17 @@ struct SyncStoreAdapterTests {
         #expect(try GroupRecord.find(recordName: other.id.description, in: context) == nil)
         #expect(try ExpenseRecord.find(recordName: otherExpense.id.description, in: context) == nil)
     }
+
+    @Test func aProfileWithoutAChosenNameIsNotUploadedUntilItHasOne() throws {
+        let device = try SyncDevice()
+        var me = try device.services.people.ensureMe(name: String(localized: "You"))
+        try device.services.groups.create(SplitGroup(name: "Flat", currencyCode: "USD", memberIDs: [me.id]))
+        let first = try device.adapter.collectOutgoing()
+        #expect(!first.saves.contains { $0.recordName == me.id.description })
+
+        me.name = "Sam"
+        try device.services.people.update(me)
+        let named = try device.adapter.collectOutgoing()
+        #expect(named.saves.contains { $0.recordName == me.id.description })
+    }
 }

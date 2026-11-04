@@ -82,8 +82,14 @@ struct ParticipantImporter {
         guard let groupID = UUID(uuidString: zoneName).map(GroupID.init(rawValue:)),
               let group = try services.groups.group(id: groupID) else { return }
         let me = CloudIdentity.personID(forUserRecordName: userRecordName)
-        guard try services.people.person(id: me) != nil, !group.memberIDs.contains(me) else { return }
+        guard !group.memberIDs.contains(me) else { return }
         if !afterInvitation, try wasRemoved(me, from: groupID) { return }
+        if try services.people.me() == nil {
+            // joined before choosing a name: the others know them from the share until they pick one
+            try services.people.ensureMe(name: String(localized: "You"))
+            try IdentityAdopter(tracker: services.makeChangeTracker()).adopt(userRecordName: userRecordName)
+        }
+        guard try services.people.person(id: me) != nil else { return }
         try services.groups.addMember(me, to: groupID)
     }
 

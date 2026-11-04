@@ -404,6 +404,26 @@ struct SyncCoordinatorTests {
         try joiner.coordinator.joined(zoneName: joiner.owner.zone)
         #expect(try joiner.isMember)
     }
+
+    @Test func someoneWithNoProfileYetStillBecomesAMemberWhenTheyJoin() throws {
+        let owner = try PopulatedDevice()
+        let cloud = FakeCloud()
+        try cloud.upload(from: owner.device)
+        let device = try SyncDevice()
+        let coordinator = SyncCoordinator(services: device.services, adapter: device.adapter)
+        try coordinator.begin(user: "_casey")
+        let zone = CKRecordZone.ID(zoneName: owner.zone, ownerName: "_owner")
+        try coordinator.fetchedZones(modified: [zone], deleted: [])
+        let records = try cloud.records.values.map { record -> CKRecord in
+            var payload = try RecordMapper.payload(from: record)
+            payload.systemFields = nil
+            return RecordMapper.record(for: payload, in: zone)
+        }
+        try coordinator.fetchedRecords(modifications: records, deletions: [])
+        let casey = CloudIdentity.personID(forUserRecordName: "_casey")
+        #expect(try device.services.groups.group(id: owner.group.id)?.memberIDs.contains(casey) == true)
+        #expect(try device.services.people.me()?.id == casey)
+    }
 }
 
 @MainActor

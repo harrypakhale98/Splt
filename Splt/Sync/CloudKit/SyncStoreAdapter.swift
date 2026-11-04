@@ -102,7 +102,8 @@ final class SyncStoreAdapter {
         for change in personChanges {
             switch change.operation {
             case .save:
-                let zones = metadata.zonesHoldingCopy(of: change.recordName).filter { !retired.contains($0) }
+                let zones = (metadata.zonesHoldingCopy(of: change.recordName) + (try zonesOfMe(change.recordName, people: people)))
+                    .filter { !retired.contains($0) }
                 for zone in zones where metadata.copyNeedsUpload(
                     zoneName: zone, recordName: change.recordName, modifiedAt: change.modifiedAt
                 ) {
@@ -122,6 +123,7 @@ final class SyncStoreAdapter {
 
         queue = queue.filter { key in
             !retired.contains(key.zoneName) && people[key.recordName]?.deletedAt == nil && !deleting.contains(key.recordName)
+                && people[key.recordName]?.hasNameToShare == true
         }
         for key in queue.sorted(by: { ($0.zoneName, $0.recordName) < ($1.zoneName, $1.recordName) }) {
             let id = RecordMapper.recordID(recordName: key.recordName, zoneID: metadata.zoneID(forZoneName: key.zoneName))
@@ -145,6 +147,15 @@ final class SyncStoreAdapter {
         }
     }
 
+    /// Groups you are in. A profile that stayed back until it had a name has no copies to follow yet.
+    private func zonesOfMe(_ recordName: String, people: [String: PersonRecord]) throws -> [String] {
+        guard let person = people[recordName], person.kind == .me, metadata.zonesHoldingCopy(of: recordName).isEmpty else { return [] }
+        return try tracker.context.fetch(FetchDescriptor<GroupRecord>())
+            .filter { $0.deletedAt == nil && $0.memberIDs.contains(person.id) }
+            .compactMap(\.zoneName)
+            .filter { !metadata.isDetached(zoneName: $0) }
+    }
+
     private func forgetCopies(of recordName: String, onlyIf condition: Bool) {
         guard condition else { return }
         updateMetadata { metadata in
@@ -162,7 +173,7 @@ final class SyncStoreAdapter {
         }
         let zone = id.zoneID.zoneName
         if type == .person {
-            guard model.deletedAt == nil else { return nil }
+            guard model.deletedAt == nil, (model as? PersonRecord)?.hasNameToShare != false else { return nil }
             let queued = metadata.personQueue.contains(PersonCopyKey(zoneName: zone, recordName: id.recordName))
             guard queued || metadata.copyNeedsUpload(zoneName: zone, recordName: id.recordName, modifiedAt: model.modifiedAt) else {
                 return nil
@@ -183,5 +194,13 @@ final class SyncStoreAdapter {
             }
         }
         return nil
+    }
+}
+
+extension PersonRecord {
+    /// False for a profile still called "You", which would show to friends as a person named "You"
+    /// and could replace the name this person chose on another device.
+    fileprivate var hasNameToShare: Bool {
+        kind != .me || name != String(localized: "You")
     }
 }
