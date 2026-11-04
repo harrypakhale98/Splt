@@ -86,6 +86,13 @@ struct SplitCalculatorItemizedTests {
         }
     }
 
+    @Test func hugeItemsThrowInsteadOfCrashing() {
+        let items = (0..<2).map { _ in SplitItem(name: "x", amount: usd(.max), assignees: [person(1)]) }
+        #expect(throws: SplitError.overflow) {
+            try SplitCalculator.calculate(.itemized(ItemizedSplit(items: items)), total: usd(.max))
+        }
+    }
+
     @Test func itemsNeedAssignees() {
         let split = ItemizedSplit(items: [item("ghost", 500, [a]), item("orphan", 500, [])])
         #expect(throws: SplitError.itemWithoutAssignees(itemIndex: 1)) { try calculate(split, 1000) }
