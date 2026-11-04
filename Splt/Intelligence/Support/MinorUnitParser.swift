@@ -79,6 +79,7 @@ enum MinorUnitParser {
         let paddedFraction = fractionPart.padding(toLength: fractionDigits, withPad: "0", startingAt: 0)
         let digits = integerDigits + paddedFraction
         guard !digits.isEmpty, digits.count <= 17 else { return nil }
-        return Int64(digits)
+        guard let value = Int64(digits), value <= MoneyParser.maximumMinorUnits else { return nil }
+        return value
     }
 }
