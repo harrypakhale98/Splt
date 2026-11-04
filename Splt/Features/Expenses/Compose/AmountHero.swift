@@ -31,6 +31,8 @@ struct AmountHero: View {
                             .accessibilityHidden(true)
                     }
                 }
+                // long amounts shrink rather than run under the hide button
+                .padding(.horizontal, keypadOpen ? 44 : 0)
                 .frame(maxWidth: .infinity)
                 .contentShape(.rect)
             }
