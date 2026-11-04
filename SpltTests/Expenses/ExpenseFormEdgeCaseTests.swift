@@ -172,4 +172,12 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.splitRemaining?.isZero == true)
         #expect(model.issue == nil)
     }
+
+    @Test func aPastedPageIsCutToTheLengthOfANote() async throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        model.describeText = "Dinner 60 " + String(repeating: "Sam owes 5 ", count: 20_000)
+        await model.fillFromNote()
+        #expect(model.amountText == "60.00")
+    }
 }

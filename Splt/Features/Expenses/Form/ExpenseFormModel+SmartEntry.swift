@@ -5,10 +5,12 @@ import SpltCore
 extension ExpenseFormModel {
     // MARK: Describe it
 
+    private static let longestNote = 1_000
+
     /// Reads the "Describe it" note and fills the form. The model is optional: the rules parser
     /// always answers, so this works without the on-device language model.
     func fillFromNote() async {
-        let text = describeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = String(describeText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.longestNote))
         guard !text.isEmpty else { return }
         isReading = true
         defer { isReading = false }
