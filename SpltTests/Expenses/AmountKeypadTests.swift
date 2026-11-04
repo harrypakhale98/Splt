@@ -57,6 +57,37 @@ struct AmountKeypadTests {
         #expect(AmountKeypad.display("0.", locale: us) == "0.")
     }
 
+    /// Grouping follows the locale: lakh and crore in India, not every three digits.
+    @Test func displayUsesTheLocalesGrouping() {
+        let india = Locale(identifier: "en_IN")
+        #expect(AmountKeypad.display("100000", locale: india) == "1,00,000")
+        #expect(AmountKeypad.display("12345678.5", locale: india) == "1,23,45,678.5")
+        #expect(AmountKeypad.display("-100000", locale: india) == "-1,00,000")
+        #expect(AmountKeypad.display("1234567", locale: german) == "1.234.567")
+    }
+
+    /// The numerals match the amounts on every other screen, and read back as the same money.
+    @Test func displayUsesTheLocalesDigits() {
+        let arabic = Locale(identifier: "ar_SA")
+        #expect(AmountKeypad.digit(3, locale: arabic) == "\u{0663}")
+        #expect(AmountKeypad.digit(3, locale: us) == "3")
+        let separator = AmountKeypad.decimalSeparator(arabic)
+        #expect(AmountKeypad.display("12\(separator)5", locale: arabic) == "\u{0661}\u{0662}\(separator)\u{0665}")
+        let typed = "12\(separator)5"
+        #expect(AmountInput.money(typed, currencyCode: "USD", locale: arabic)?.minorUnits == 1250)
+    }
+
+    @Test func displayKeepsTextItCannotRead() {
+        #expect(AmountKeypad.display("12a", locale: us) == "12a")
+        #expect(AmountKeypad.display(".5", locale: us) == ".5")
+    }
+
+    @Test func symbolFollowsTheNumberWhereTheLocaleSaysSo() {
+        #expect(AmountKeypad.symbolLeads(currencyCode: "USD", locale: us))
+        #expect(!AmountKeypad.symbolLeads(currencyCode: "EUR", locale: german))
+        #expect(AmountKeypad.symbolLeads(currencyCode: "INR", locale: Locale(identifier: "en_IN")))
+    }
+
     @Test func typedTextParsesBackAsMoney() {
         let text = type([.digit(1), .digit(2), .decimal, .digit(5)])
         #expect(AmountInput.money(text, currencyCode: "USD", locale: us)?.minorUnits == 1250)
