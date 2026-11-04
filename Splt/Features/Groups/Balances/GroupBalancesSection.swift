@@ -19,7 +19,8 @@ struct GroupBalancesSection: View {
     @State private var chosenMode: Mode?
     @State private var chosenCurrency: String?
 
-    private var mode: Mode { chosenMode ?? (voiceOverOn ? .list : .orbit) }
+    /// The ring's text cannot grow, so VoiceOver and the largest text sizes start with the list, as the Split Bar does.
+    private var mode: Mode { chosenMode ?? (voiceOverOn || typeSize.isAccessibilitySize ? .list : .orbit) }
 
     private var controls: some View {
         let layout = typeSize.isAccessibilitySize

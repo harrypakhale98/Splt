@@ -22,13 +22,14 @@ struct FriendTimelineRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(expense.title)
                     .font(.body.weight(.medium))
-                    .lineLimit(2)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
                 Text("Paid by \(payerText) \u{00B7} \(expense.date.formatted(.dateTime.day().month(.abbreviated)))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                if typeSize.isAccessibilitySize { amounts(alignment: .leading) }
             }
             Spacer(minLength: 8)
-            if !typeSize.isAccessibilitySize { amounts }
+            if !typeSize.isAccessibilitySize { amounts(alignment: .trailing) }
         }
         .padding(.vertical, 12)
         .background(alignment: .leading) {
@@ -56,8 +57,8 @@ struct FriendTimelineRow: View {
         .background(Color(.secondarySystemGroupedBackground), in: .circle)
     }
 
-    private var amounts: some View {
-        VStack(alignment: .trailing, spacing: 2) {
+    private func amounts(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 2) {
             MoneyLabel(money: expense.total)
                 .font(.body.weight(.semibold))
             if let myNet, !myNet.isZero {

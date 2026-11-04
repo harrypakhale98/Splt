@@ -6,12 +6,16 @@ struct DescribePill: View {
     var focus: FocusState<ExpenseFormField?>.Binding
 
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var dictation = DictationController()
 
     var body: some View {
         VStack(spacing: 8) {
             GlassPill(isInteractive: true) {
-                HStack(spacing: 10) {
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                    : AnyLayout(HStackLayout(spacing: 10))
+                layout {
                     Image(systemName: "sparkles")
                         .foregroundStyle(.tint)
                         .accessibilityHidden(true)
@@ -60,6 +64,9 @@ struct DescribePill: View {
             }
         }
         .onDisappear { dictation.stop() }
+        .onChange(of: model.filledNotice) { _, notice in
+            if let notice { AccessibilityNotification.Announcement(notice).post() }
+        }
     }
 
     @ViewBuilder
