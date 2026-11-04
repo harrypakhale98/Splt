@@ -88,6 +88,8 @@ final class AddFriendModel {
             if let id = invite.personID {
                 if id == me?.id.rawValue { throw Failure.yourself }
                 if let known = try people.person(id: PersonID(rawValue: id)) { return .existing(known) }
+            } else if let match = try people.friends().first(where: { Self.sameName($0.name, invite.name) }) {
+                return .existing(match)
             }
             let person = Person(
                 id: invite.personID.map { PersonID(rawValue: $0) } ?? PersonID(),
