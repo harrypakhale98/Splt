@@ -281,6 +281,77 @@ struct SyncCoordinatorTests {
         )
         #expect(try device.tracker.pendingChanges().isEmpty)
     }
+
+    /// A device that has joined the owner's group through a share, and the records as its zone holds them.
+    @MainActor
+    private struct Joiner {
+        let owner: PopulatedDevice
+        let cloud = FakeCloud()
+        let device: SyncDevice
+        let coordinator: SyncCoordinator
+        let me = CloudIdentity.personID(forUserRecordName: "_casey")
+
+        init() throws {
+            owner = try PopulatedDevice()
+            try cloud.upload(from: owner.device)
+            device = try SyncDevice()
+            try device.services.people.ensureMe(name: "Casey")
+            coordinator = SyncCoordinator(services: device.services, adapter: device.adapter)
+            try coordinator.begin(user: "_casey")
+            try coordinator.fetchedZones(modified: [sharedZone], deleted: [])
+            try fetch()
+        }
+
+        var sharedZone: CKRecordZone.ID { CKRecordZone.ID(zoneName: owner.zone, ownerName: "_owner") }
+
+        func fetch() throws {
+            let records = try cloud.records.values.map { record -> CKRecord in
+                var payload = try RecordMapper.payload(from: record)
+                payload.systemFields = nil
+                return RecordMapper.record(for: payload, in: sharedZone)
+            }
+            try coordinator.fetchedRecords(modifications: records, deletions: [])
+        }
+
+        var isMember: Bool {
+            get throws { try device.services.groups.group(id: owner.group.id)?.memberIDs.contains(me) == true }
+        }
+
+        func ownerRemovesMe() throws {
+            let services = owner.device.services
+            try services.people.add(Person(id: me, name: "Casey", kind: .friend))
+            try services.groups.addMember(me, to: owner.group.id)
+            owner.device.clock.advance(by: 1_000)
+            try services.groups.removeMember(me, from: owner.group.id)
+            try cloud.upload(from: owner.device)
+        }
+    }
+
+    @Test func someoneTheOwnerRemovedDoesNotAddThemselvesBack() throws {
+        let joiner = try Joiner()
+        #expect(try joiner.isMember)
+        try joiner.ownerRemovesMe()
+        try joiner.fetch()
+        #expect(try !joiner.isMember)
+    }
+
+    @Test func aJoinLostToAConflictIsRepaired() throws {
+        let joiner = try Joiner()
+        // another member's older copy of the group replaced this device's join, with no removal anywhere
+        try joiner.device.tracker.markSynced(
+            recordType: .group, recordName: joiner.owner.zone, sentModifiedAt: .distantFuture, systemFields: nil
+        )
+        try joiner.fetch()
+        #expect(try joiner.isMember)
+    }
+
+    @Test func aNewInvitationBringsBackSomeoneWhoWasRemoved() throws {
+        let joiner = try Joiner()
+        try joiner.ownerRemovesMe()
+        try joiner.fetch()
+        try joiner.coordinator.joined(zoneName: joiner.owner.zone)
+        #expect(try joiner.isMember)
+    }
 }
 
 @MainActor

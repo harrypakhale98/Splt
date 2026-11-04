@@ -189,6 +189,7 @@ final class CloudKitSyncEngine: SyncEngine {
         guard isStarted else { throw SyncError.notReady }
         try await backend.accept(metadata)
         try await fetchChanges()
+        try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)
     }
 
     func leave(group: GroupID) async throws {

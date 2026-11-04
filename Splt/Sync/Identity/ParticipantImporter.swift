@@ -75,13 +75,27 @@ struct ParticipantImporter {
         try services.environment.save()
     }
 
-    /// Adds this person to a group they joined through a share, once, so everyone sees them as a member.
-    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String) throws {
+    /// Adds this person to a group they joined through a share, so everyone sees them as a member.
+    /// It also repairs a join lost to a conflict, but it respects being removed: only a new invitation
+    /// (`afterInvitation`) brings back someone whose latest word in the group's activity is a removal.
+    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String, afterInvitation: Bool = false) throws {
         guard let groupID = UUID(uuidString: zoneName).map(GroupID.init(rawValue:)),
               let group = try services.groups.group(id: groupID) else { return }
         let me = CloudIdentity.personID(forUserRecordName: userRecordName)
         guard try services.people.person(id: me) != nil, !group.memberIDs.contains(me) else { return }
+        if !afterInvitation, try wasRemoved(me, from: groupID) { return }
         try services.groups.addMember(me, to: groupID)
+    }
+
+    private func wasRemoved(_ person: PersonID, from group: GroupID) throws -> Bool {
+        for entry in try services.activity.entries(in: group, limit: 1_000) {
+            switch entry.event {
+            case .memberRemoved(person): return true
+            case .memberAdded(person): return false
+            default: continue
+            }
+        }
+        return false
     }
 }
 

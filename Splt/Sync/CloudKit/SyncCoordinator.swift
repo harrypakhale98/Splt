@@ -53,6 +53,12 @@ final class SyncCoordinator {
         retry?.cancel()
     }
 
+    /// Accepting an invitation makes this person a member, even if they were removed or left before.
+    func joined(zoneName: String) throws {
+        guard let user = userRecordName else { return }
+        try ParticipantImporter(services: services).ensureMembership(ofMe: user, inZone: zoneName, afterInvitation: true)
+    }
+
     func attach(_ queue: any EngineQueue, for scope: DatabaseScope) {
         queues[scope] = queue
     }
