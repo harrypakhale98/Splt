@@ -236,6 +236,7 @@ private struct GroupDetailContent: View {
                     Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
+                        .accessibilityLabel(MoneyLabel.spokenBalance(line.money, locale: locale))
                 }
             }
             .opacity(condensed ? 1 : 0)

@@ -12,6 +12,7 @@ struct FriendRow: View {
         let lines = BalanceLine.lines(for: summary.balance)
         HStack(spacing: 12) {
             AvatarView(person: summary.person, size: 44)
+                .accessibilityHidden(true)
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
                     nameBlock
@@ -56,6 +57,7 @@ struct FriendRow: View {
                         Text(caption(for: line.direction))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
                 }
             }

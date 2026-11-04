@@ -46,11 +46,11 @@ struct NetPositionHero: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(scope)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
             figure
             Text(sentence)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
                 .fixedSize(horizontal: false, vertical: true)
             if !owedBy.isEmpty || !owedTo.isEmpty {
                 people
@@ -79,6 +79,7 @@ struct NetPositionHero: View {
                 Text("Also \(otherAmounts)")
                     .font(.subheadline.weight(.medium))
                     .monospacedDigit()
+                    .accessibilityLabel(Text("Also \(spokenOthers)"))
             }
         } else {
             Text("All Square")
@@ -92,6 +93,10 @@ struct NetPositionHero: View {
         ListFormatter.localizedString(
             byJoining: position.others.map { MoneyFormatting.string($0, locale: locale, showsSign: true) }
         )
+    }
+
+    private var spokenOthers: String {
+        ListFormatter.localizedString(byJoining: position.others.map { MoneyLabel.spokenBalance($0, locale: locale) })
     }
 
     private var sentence: String {
@@ -123,7 +128,7 @@ struct NetPositionHero: View {
             AvatarStack(people, size: 30, limit: 3, ring: Color(.secondarySystemGroupedBackground))
             Text(caption)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         }
     }
 }

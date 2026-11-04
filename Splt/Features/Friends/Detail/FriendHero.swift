@@ -37,7 +37,7 @@ struct FriendHero: View {
                 if friend.isPlaceholder {
                     Text("Not on Splt yet")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
                 }
             }
             figure
@@ -98,12 +98,13 @@ struct FriendHero: View {
                 HeroAmount(amount)
                 Text(sentence(for: amount))
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                 if !position.others.isEmpty {
                     Text("Also \(otherAmounts)")
                         .font(.footnote.weight(.medium))
                         .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
+                        .accessibilityLabel(Text("Also \(spokenOthers)"))
                 }
             } else {
                 Text("All Square")
@@ -112,7 +113,7 @@ struct FriendHero: View {
                     .lineLimit(1)
                 Text("Nothing owed between you and \(ReminderMessage.firstName(friend.name)).")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .multilineTextAlignment(.center)
             }
         }
@@ -130,6 +131,10 @@ struct FriendHero: View {
         ListFormatter.localizedString(
             byJoining: position.others.map { MoneyFormatting.string($0, locale: locale, showsSign: true) }
         )
+    }
+
+    private var spokenOthers: String {
+        ListFormatter.localizedString(byJoining: position.others.map { MoneyLabel.spokenBalance($0, locale: locale) })
     }
 
     // MARK: Actions

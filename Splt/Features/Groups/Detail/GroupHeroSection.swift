@@ -59,7 +59,7 @@ struct GroupHeroSection: View {
             HStack(spacing: 8) {
                 Image(systemName: group.symbol)
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .accessibilityHidden(true)
                 Text(group.name)
                     .font(.title3.weight(.bold))
@@ -110,13 +110,15 @@ struct GroupHeroSection: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(sign > 0 ? "You are owed" : "You owe")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.legible)
+                        .accessibilityHidden(true)
                     Text(MoneyFormatting.string(money, locale: locale, showsSign: true))
                         .font(.system(.title, design: .rounded, weight: .bold))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                         .contentTransition(.numericText(value: Double(money.minorUnits)))
+                        .accessibilityLabel(MoneyLabel.spokenBalance(money, locale: locale))
                 }
                 .accessibilityElement(children: .combine)
             }
@@ -128,7 +130,7 @@ struct GroupHeroSection: View {
             HStack(alignment: .center) {
                 Image(systemName: group.symbol)
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.legible)
                     .accessibilityHidden(true)
                 Spacer()
                 if !typeSize.isAccessibilitySize {
@@ -142,7 +144,7 @@ struct GroupHeroSection: View {
                 .minimumScaleFactor(0.7)
             Text(subtitle)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
         }
         .accessibilityElement(children: .combine)
     }
@@ -179,7 +181,8 @@ struct GroupHeroSection: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(caption)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.legible)
+                .accessibilityHidden(true)
             HeroAmount(Money(minorUnits: money.minorUnits * sign, currencyCode: money.currencyCode))
         }
         .accessibilityElement(children: .combine)
