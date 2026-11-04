@@ -67,7 +67,11 @@ extension EnvironmentValues {
 
 /// How long the calm moments last. UI tests pass `-slowfeedback` so a slow machine cannot miss them.
 enum SettleTiming {
+    #if DEBUG
     private static let slow = ProcessInfo.processInfo.arguments.contains("-slowfeedback")
+    #else
+    private static let slow = false
+    #endif
 
     /// The check mark, before the sheet closes by itself.
     static let confirmation: Duration = slow ? .seconds(60) : .seconds(2)

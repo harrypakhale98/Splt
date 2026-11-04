@@ -2,8 +2,8 @@ import Foundation
 import SwiftUI
 
 enum LaunchServices {
-    /// The data the app runs on. UI tests pass `-uitesting` to start on an empty in-memory store.
-    /// Debug builds also accept `-sampledata` to start on the sample trip, and `-nostore` to act as if the store failed to open.
+    /// The data the app runs on. Debug builds accept `-uitesting` to start on an empty in-memory store for
+    /// UI tests, `-sampledata` to start on the sample trip, and `-nostore` to act as if the store failed to open.
     @MainActor
     static func make(arguments: [String] = ProcessInfo.processInfo.arguments) -> DataServices? {
         #if DEBUG
@@ -13,10 +13,10 @@ enum LaunchServices {
         if arguments.contains("-nostore") {
             return nil
         }
-        #endif
         if arguments.contains("-uitesting") {
             return try? DataServices.inMemory()
         }
+        #endif
         return IntentServices.shared.live()
     }
 
