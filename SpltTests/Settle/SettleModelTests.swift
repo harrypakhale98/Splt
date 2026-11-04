@@ -246,6 +246,19 @@ struct SettleModelTests {
         #expect(model.canRecord)
     }
 
+    @Test func onlyAPaymentThatPaysTheDebtDownSaysWhatIsLeft() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        #expect(model.outcomeNote == "All square")
+        model.setFraction(0.5)
+        #expect(model.outcomeNote == "still owed")
+        model.isReversed = true
+        #expect(model.outcomeNote == nil)
+        model.amountMode = .full
+        #expect(model.outcomeNote == nil)
+    }
+
     @Test func aSecondUndoChangesNothing() throws {
         let (fixture, debts) = try scene()
         let model = model(fixture, debts: debts)

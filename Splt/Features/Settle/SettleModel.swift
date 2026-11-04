@@ -112,6 +112,12 @@ final class SettleModel {
         return Money(minorUnits: full.minorUnits - amount.minorUnits, currencyCode: full.currencyCode)
     }
 
+    /// The line under the amount once it is recorded. A payment the other way adds to the debt, so it has none.
+    var outcomeNote: String? {
+        guard !isReversed else { return nil }
+        return remaining == nil ? String(localized: "All square") : String(localized: "still owed")
+    }
+
     // MARK: Share of the debt
 
     /// The step of the stepper and the drag: a whole unit of the currency, a tenth of one for small
