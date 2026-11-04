@@ -30,6 +30,8 @@ extension ExpenseFormModel {
             currencyCode = amount.currencyCode
             amountText = AmountInput.text(for: amount, locale: locale)
             filled.append(String(localized: "amount"))
+        } else if let hint = draft.currencyHint {
+            currencyCode = hint
         }
         if !draft.title.isEmpty {
             title = draft.title
