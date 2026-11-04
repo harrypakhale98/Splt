@@ -51,7 +51,7 @@ struct ParticipantImporter {
             let id = CloudIdentity.personID(forUserRecordName: recordName)
             guard try services.people.person(id: id) == nil else { continue }
             let hints = Set(snapshot.contactHints.map { $0.lowercased() })
-            try services.people.add(Person(
+            try addStandIn(Person(
                 id: id,
                 name: snapshot.displayName ?? String(localized: "Friend"),
                 contactHint: snapshot.contactHints.first,
@@ -66,6 +66,15 @@ struct ParticipantImporter {
         return suggestions
     }
 
+    /// A person known only from the share until their own record arrives. The oldest possible date means
+    /// that record wins whenever it comes, so the name they chose is never replaced by this one.
+    private func addStandIn(_ person: Person) throws {
+        let record = PersonRecord(person)
+        record.modifiedAt = .distantStandIn
+        services.environment.context.insert(record)
+        try services.environment.save()
+    }
+
     /// Adds this person to a group they joined through a share, once, so everyone sees them as a member.
     func ensureMembership(ofMe userRecordName: String, inZone zoneName: String) throws {
         guard let groupID = UUID(uuidString: zoneName).map(GroupID.init(rawValue:)),
@@ -74,4 +83,9 @@ struct ParticipantImporter {
         guard try services.people.person(id: me) != nil, !group.memberIDs.contains(me) else { return }
         try services.groups.addMember(me, to: groupID)
     }
+}
+
+extension Date {
+    /// The modified date of a stand in. Any real edit is later, and CloudKit can store it.
+    fileprivate static let distantStandIn = Date(timeIntervalSince1970: 0)
 }

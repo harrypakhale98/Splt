@@ -481,4 +481,26 @@ struct SyncStoreAdapterTests {
         #expect(reloaded.metadata == populated.device.adapter.metadata)
         #expect(reloaded.metadata.zones[populated.zone] != nil)
     }
+
+    @Test func theNameOfSomeoneWhoJoinedIsNotReplacedByTheOneFromTheShare() throws {
+        let owner = try PopulatedDevice()
+        let joined = CloudIdentity.personID(forUserRecordName: "_jane")
+        try ParticipantImporter(services: owner.device.services).importPeople(from: [ParticipantSnapshot(
+            userRecordName: "_jane", displayName: nil, contactHints: [], isCurrentUser: false, hasJoined: true
+        )], myUserRecordName: "_owner")
+        #expect(try owner.device.services.people.person(id: joined)?.name == "Friend")
+        #expect(try owner.device.tracker.pendingChanges().allSatisfy { $0.recordName != joined.description })
+
+        var fields = SyncFields()
+        fields.set("name", "Jane")
+        fields.set("kind", PersonKind.friend.rawValue)
+        let chosenLongAgo = owner.device.clock.start.addingTimeInterval(-10_000_000)
+        let record = RecordMapper.record(
+            for: SyncPayload(recordType: .person, recordName: joined.description, modifiedAt: chosenLongAgo, fields: fields),
+            in: CKRecordZone.ID(zoneName: owner.zone, ownerName: CKCurrentUserDefaultName)
+        )
+        let report = try owner.device.adapter.applyFetched(modifications: [record], deletions: [])
+        #expect(report.requeue.isEmpty)
+        #expect(try owner.device.services.people.person(id: joined)?.name == "Jane")
+    }
 }
