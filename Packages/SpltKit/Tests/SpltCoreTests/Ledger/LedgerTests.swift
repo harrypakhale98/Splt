@@ -220,4 +220,16 @@ struct LedgerTests {
         #expect(forward.netBalances == backward.netBalances)
         #expect(forward.debts == backward.debts)
     }
+
+    @Test func aNetThatCannotBeNegatedIsSkippedInsteadOfCrashing() {
+        let a = person(1), b = person(2), c = person(3)
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let half = Int64.min / 2
+        let ledger = Ledger(expenses: [
+            Expense(title: "x", total: usd(half), date: date, paidBy: a, split: .exact(amounts: [b: usd(half)])),
+            Expense(title: "y", total: usd(half), date: date, paidBy: a, split: .exact(amounts: [c: usd(half)]))
+        ])
+        #expect(ledger.issues.count == 1)
+        #expect(ledger.simplifiedDebts.count == 1)
+    }
 }
