@@ -28,7 +28,7 @@ No indexes are needed: the app never queries, it only reads zone changes.
 - Each group is one record zone. Groups you create live in your private database.
 - People are copied into every group zone that mentions them, so each group is self contained. Email addresses and phone numbers from Contacts stay on the device and are not in the copy.
 - Local edits mark records dirty in the data store. The sync layer turns those into uploads and clears the flag when the server accepts them, so a failed upload is never forgotten.
-- A change made on two devices at once is merged field by field by the data layer's merge policy: the later edit wins, a delete beats an older edit, and an undo beats the delete. Expenses and payments are soft deleted so history stays.
+- When a record changes on two devices at once, the data layer's merge policy keeps one whole version: the later edit wins, a delete beats an older edit, and an undo beats the delete. Changes are not merged field by field, so the other edit to that record is lost. Expenses and payments are soft deleted so history stays.
 - Your identity is derived from your iCloud account, so all your devices are the same person in every group.
 - Silent pushes from CloudKit wake the app to fetch changes. With notifications turned on in Settings, a change from a friend that arrives in the background becomes a local notification such as "Sam added Dinner in Lisbon". No server is involved.
 
@@ -57,6 +57,7 @@ Inside one group, members are trusted: anyone can edit or delete its expenses, p
 - Sharing and push only work on real devices signed in to iCloud. The simulator cannot be used to test them.
 - Everyone needs an Apple ID and iCloud turned on. People without it can still be placeholders.
 - Claiming a placeholder is refused when the placeholder and the real person appear together in one expense, because their shares would need merging by hand.
+- Two people editing the same record before either has synced can lose a change, even in different fields: the later edit replaces the whole record. This also applies to a group's member list and a comment's reactions. Separate records, such as two new expenses, never conflict.
 - Receipt photos stay on the device that scanned them. Only the file name syncs.
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
 - A device that stays offline for a very long time may have to refetch everything. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
