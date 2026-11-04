@@ -160,4 +160,16 @@ struct ExpenseFormEdgeCaseTests {
         model.participants = [harness.me]
         #expect(model.summaryLine.hasSuffix("split 1 way"))
     }
+
+    @Test func aRefundWithExactAmountsHasNothingLeftToAssign() throws {
+        let harness = try ExpenseFormHarness()
+        let refund = Expense(
+            groupID: harness.fixture.group.id, title: "Refund", total: usd(-3000), date: Date(), paidBy: harness.me,
+            split: .exact(amounts: [harness.me: usd(-1000), harness.sam: usd(-2000)])
+        )
+        try harness.fixture.services.expenses.add(refund)
+        let model = harness.editor(for: refund.id)
+        #expect(model.splitRemaining?.isZero == true)
+        #expect(model.issue == nil)
+    }
 }

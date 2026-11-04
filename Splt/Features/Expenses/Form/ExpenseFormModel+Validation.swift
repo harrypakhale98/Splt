@@ -34,7 +34,7 @@ extension ExpenseFormModel {
         guard let total, !total.isZero else { return nil }
         switch split.method {
         case .exact:
-            let typed = participantList.compactMap { AmountInput.money(split.exact[$0.id, default: ""], currencyCode: currencyCode, locale: locale) }
+            let typed = participantList.compactMap { AmountInput.money(split.exact[$0.id, default: ""], currencyCode: currencyCode, locale: locale, allowNegative: total.isNegative) }
             return Money(minorUnits: total.minorUnits - typed.reduce(0) { $0 + $1.minorUnits }, currencyCode: currencyCode)
         case .itemized:
             guard let items = split.itemizedTotal(currencyCode: currencyCode, locale: locale) else { return nil }
