@@ -65,4 +65,11 @@ struct SearchEdgeCaseTests {
         await search.search()
         #expect(search.expenses.map(\.title) == ["Espresso coffee"])
     }
+
+    @Test func paidByMeMeansYou() throws {
+        let fixture = try Fixture()
+        let filter = parser(fixture).parse("dinners paid by me")
+        #expect(filter.payer == fixture.me.id)
+        #expect(filter.terms.isEmpty)
+    }
 }

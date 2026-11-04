@@ -184,6 +184,13 @@ struct NaturalSearchParser {
                 use(&tokens, index..<index + 2)
                 continue
             }
+            if word == "me", index > 0, tokens[index - 1].folded == "by", !tokens[index - 1].used,
+               let me = people.first(where: \.isMe) {
+                filter.payer = me.id
+                let paid = index > 1 && tokens[index - 2].folded == "paid" && !tokens[index - 2].used
+                use(&tokens, (paid ? index - 2 : index - 1)..<index + 1)
+                continue
+            }
             guard let (person, length) = match(at: index, in: tokens) else { continue }
             let range = index..<index + length
             let before = index > 0 && !tokens[index - 1].used ? tokens[index - 1].folded : nil
