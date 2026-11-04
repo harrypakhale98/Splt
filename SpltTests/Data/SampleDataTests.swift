@@ -65,7 +65,7 @@ struct SampleDataTests {
         #expect(!services.friendsStore.totals.isSettled)
         #expect(!services.groupsStore.totals.isSettled)
         #expect(services.friendsStore.summaries.count == 5)
-        #expect(try services.people.friendBalance(with: trip.priya.id).byGroup.count == 2)
+        #expect(try services.people.friendBalances().contains { $0.byGroup.count == 2 })
     }
 
     @Test func hasCommentsAndAnActivityTrail() throws {

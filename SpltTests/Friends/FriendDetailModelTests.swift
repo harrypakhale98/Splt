@@ -12,10 +12,11 @@ struct FriendDetailModelTests {
         try fixture.addExpense("Taxi", cents: 600, paidBy: fixture.priya, splitBetween: [fixture.priya.id, fixture.sam.id])
         let model = FriendDetailModel(friendID: fixture.sam.id, services: fixture.services)
         #expect(model.friend?.name == "Sam")
-        #expect(model.balance == [usdAmount(1000)])
+        // The group simplifies, so Sam also pays you what Sam owes Priya, and Priya owes you that much less.
+        #expect(model.balance == [usdAmount(1300)])
         #expect(model.expenses.map(\.title).sorted() == ["Dinner"])
         #expect(model.groupRows.map(\.name) == ["Flat"])
-        #expect(model.owedToYou == [usdAmount(1000)])
+        #expect(model.owedToYou == [usdAmount(1300)])
         #expect(model.settleRequest?.legs.count == 1)
         #expect(!model.isSettled)
     }

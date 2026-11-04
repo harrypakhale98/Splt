@@ -86,7 +86,8 @@ struct IntentActionsTests {
         let actions = actions(fixture)
         #expect(try actions.balanceSentence(friend: fixture.sam.id.rawValue, group: nil, locale: english) == "Sam owes you $10.00.")
         try fixture.addExpense("Taxi", cents: 5000, paidBy: fixture.sam, splitBetween: [fixture.me.id, fixture.sam.id])
-        #expect(try actions.balanceSentence(friend: fixture.sam.id.rawValue, group: nil, locale: english) == "You owe Sam $15.00.")
+        // The group simplifies: Priya now pays Sam directly, which leaves you owing Sam less.
+        #expect(try actions.balanceSentence(friend: fixture.sam.id.rawValue, group: nil, locale: english) == "You owe Sam $5.00.")
     }
 
     @Test func describesGroupAndOverallBalances() throws {
