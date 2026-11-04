@@ -90,4 +90,31 @@ struct ExpenseFormEdgeCaseTests {
         model.amountText = ""
         #expect(model.issue == .missingAmount)
     }
+
+    @Test func aCouponLineBecomesTheDiscount() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        var parsed = ParsedReceipt(currencyCode: "USD")
+        parsed.items = [item("Pasta", 2000), item("Coupon", -200)]
+        parsed.subtotal = usd(1800)
+        parsed.total = usd(1800)
+        model.apply(receipt: parsed)
+        #expect(model.split.items.map(\.name) == ["Pasta"])
+        #expect(model.split.discountText == "2.00")
+        #expect(model.amountText == "18.00")
+        model.title = "Cafe"
+        for item in model.split.items { model.assignEveryone(to: item.id) }
+        #expect(model.issue == nil)
+    }
+
+    @Test func aReceiptWithOnlyNegativeLinesHasNoItems() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        var parsed = ParsedReceipt(currencyCode: "USD")
+        parsed.items = [item("Refund", -200)]
+        model.apply(receipt: parsed)
+        #expect(model.split.items.isEmpty)
+        #expect(model.split.method == .equal)
+        #expect(model.scanNotice != nil)
+    }
 }

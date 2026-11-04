@@ -208,29 +208,32 @@ extension ExpenseFormModel {
     }
 
     func apply(receipt parsed: ParsedReceipt) {
-        guard !parsed.items.isEmpty else {
+        let charged = parsed.items.filter { !$0.total.isNegative }
+        let lineDiscounts = parsed.items.reduce(Int64(0)) { $0 + max(-$1.total.minorUnits, 0) }
+        guard !charged.isEmpty else {
             scanNotice = String(localized: "The receipt is attached, but no items could be read. Add them by hand.")
             return
         }
         if let merchant = parsed.merchant, title.trimmingCharacters(in: .whitespaces).isEmpty { title = merchant }
         if let receiptDate = parsed.date { date = receiptDate }
         currencyCode = parsed.currencyCode
-        split.items = parsed.items.map {
+        split.items = charged.map {
             ItemDraft(name: $0.name, amountText: AmountInput.text(for: $0.total, locale: locale), assignees: [])
         }
         let other = parsed.otherCharges?.minorUnits ?? 0
         let tax = (parsed.tax?.minorUnits ?? 0) + max(other, 0)
         split.taxText = tax == 0 ? "" : AmountInput.text(for: Money(minorUnits: tax, currencyCode: parsed.currencyCode), locale: locale)
         split.tipText = parsed.tip.map { AmountInput.text(for: $0, locale: locale) } ?? ""
-        split.discountText = other < 0
-            ? AmountInput.text(for: Money(minorUnits: -other, currencyCode: parsed.currencyCode), locale: locale) : ""
+        let discount = lineDiscounts + max(-other, 0)
+        split.discountText = discount > 0
+            ? AmountInput.text(for: Money(minorUnits: discount, currencyCode: parsed.currencyCode), locale: locale) : ""
         split.method = .itemized
         selectedItemID = split.items.first?.id
         let computed = split.itemizedTotal(currencyCode: parsed.currencyCode, locale: locale)
         if let amount = parsed.total ?? computed { amountText = AmountInput.text(for: amount, locale: locale) }
         scanNotice = parsed.isConsistent
-            ? String(localized: "Scanned \(parsed.items.count) items. Tap people under each item to assign it.")
-            : String(localized: "Scanned \(parsed.items.count) items. The numbers do not fully add up, so check them against the receipt.")
+            ? String(localized: "Scanned \(charged.count) items. Tap people under each item to assign it.")
+            : String(localized: "Scanned \(charged.count) items. The numbers do not fully add up, so check them against the receipt.")
     }
 
     private static func cgImage(from data: Data) -> CGImage? {
