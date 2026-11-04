@@ -107,8 +107,8 @@ struct DescribePill: View {
             .labelStyle(PillIconLabelStyle())
             .buttonStyle(.borderless)
             .imageScale(.large)
-            // the icons keep a full tap target without making the pill taller
-            .padding(.vertical, -8)
+            // the icons keep a full tap target without making the pill taller, until they outgrow it
+            .padding(.vertical, typeSize.isAccessibilitySize ? 0 : -8)
         }
     }
 
@@ -126,7 +126,7 @@ struct DescribePill: View {
 private struct PillIconLabelStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.icon
-            .frame(width: 44, height: 44)
+            .frame(minWidth: 44, minHeight: 44)
             .contentShape(.rect)
     }
 }
