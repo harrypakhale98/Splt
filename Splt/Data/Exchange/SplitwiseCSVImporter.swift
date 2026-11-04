@@ -89,10 +89,11 @@ enum SplitwiseCSVImporter {
 
     private static func payment(nets: [PersonID: Int64], cost: Money, date: Date, groupID: GroupID) -> Payment? {
         guard nets.count == 2,
-              let payer = nets.first(where: { $0.value > 0 })?.key,
-              let receiver = nets.first(where: { $0.value < 0 })?.key else { return nil }
+              let payer = nets.first(where: { $0.value > 0 }),
+              let receiver = nets.first(where: { $0.value < 0 })?.key,
+              payer.value == abs(cost.minorUnits) else { return nil }
         let amount = Money(minorUnits: abs(cost.minorUnits), currencyCode: cost.currencyCode)
-        return Payment(groupID: groupID, payer: payer, receiver: receiver, amount: amount, date: date)
+        return Payment(groupID: groupID, payer: payer.key, receiver: receiver, amount: amount, date: date)
     }
 
     private static func expense(

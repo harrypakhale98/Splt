@@ -25,4 +25,11 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(result.expenses.isEmpty)
         #expect(result.warnings.map(\.message) == ["Unreadable date."])
     }
+
+    @Test func aPaymentMustMatchItsMembers() throws {
+        let wrong = try parse("2025-03-14,X,Payment,99.00,USD,5.00,-5.00")
+        #expect(wrong.payments.isEmpty)
+        #expect(wrong.warnings.count == 1)
+        #expect(try parse("2025-03-14,X,Payment,5.00,USD,5.00,-5.00").payments.count == 1)
+    }
 }
