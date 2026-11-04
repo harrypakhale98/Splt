@@ -49,6 +49,8 @@ final class ExpenseFormModel {
     @ObservationIgnored var original: Expense?
     @ObservationIgnored var originalExtras = ExpenseExtras()
     @ObservationIgnored var template: RecurringExpense?
+    /// True when the form was filled from a refund, whose negative total must stay readable.
+    @ObservationIgnored var startedAsRefund = false
 
     var amountText = ""
     var currencyCode = "USD"
@@ -112,7 +114,7 @@ final class ExpenseFormModel {
     var groupCurrencyCode: String { group?.currencyCode ?? currencyCode }
 
     var total: Money? {
-        AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: original?.isRefund == true)
+        AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: original?.isRefund == true || startedAsRefund)
     }
 
     var isDirty: Bool { snapshot.map { $0 != Snapshot(self) } ?? false }

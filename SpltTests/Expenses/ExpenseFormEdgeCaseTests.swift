@@ -125,4 +125,22 @@ struct ExpenseFormEdgeCaseTests {
         let model = harness.newExpense()
         #expect(model.availableGroups.map(\.id) == [harness.fixture.group.id])
     }
+
+    @Test func aDuplicatedRefundKeepsItsTotal() throws {
+        let harness = try ExpenseFormHarness()
+        let refund = Expense(
+            groupID: harness.fixture.group.id, title: "Refund", total: usd(-3000), date: Date(), paidBy: harness.me,
+            split: .equal(participants: harness.fixture.everyone)
+        )
+        let model = harness.newExpense(prefill: ExpenseDraft(copying: refund))
+        #expect(model.total == usd(-3000))
+        #expect(model.issue == nil)
+    }
+
+    @Test func negativeAmountsDisplayWithoutAStrayGroupMark() {
+        let english = Locale(identifier: "en_US")
+        #expect(AmountKeypad.display("-123.00", locale: english) == "-123.00")
+        #expect(AmountKeypad.display("-1234.00", locale: english) == "-1,234.00")
+        #expect(AmountKeypad.display("1234", locale: english) == "1,234")
+    }
 }

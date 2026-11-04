@@ -70,6 +70,7 @@ extension ExpenseFormModel {
     func apply(_ draft: ExpenseDraft) {
         if !draft.title.isEmpty { title = draft.title }
         if let total = draft.total {
+            startedAsRefund = total.isNegative
             currencyCode = total.currencyCode
             amountText = AmountInput.text(for: total, locale: locale)
         }

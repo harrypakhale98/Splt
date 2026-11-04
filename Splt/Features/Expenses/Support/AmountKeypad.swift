@@ -43,12 +43,14 @@ enum AmountKeypad {
         let separator = decimalSeparator(locale)
         let grouping = locale.groupingSeparator ?? ","
         let parts = text.components(separatedBy: separator)
-        let whole = parts[0]
+        let isNegative = parts[0].hasPrefix("-")
+        let whole = isNegative ? String(parts[0].dropFirst()) : parts[0]
         var grouped = ""
         for (offset, character) in whole.reversed().enumerated() {
             if offset > 0, offset % 3 == 0 { grouped.insert(contentsOf: grouping, at: grouped.startIndex) }
             grouped.insert(character, at: grouped.startIndex)
         }
+        if isNegative { grouped.insert("-", at: grouped.startIndex) }
         return parts.count > 1 ? grouped + separator + parts[1] : grouped
     }
 }
