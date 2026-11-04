@@ -26,16 +26,16 @@ final class FriendsDesignShotsUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 10))
         shot("01-friends")
 
-        let jonas = "00000000-0000-4000-8000-000000000012"
+        let jonas = "00000000-0000-4000-8000-000000000011"
         if large {
             // the list is very long at the largest text size, so go straight to the friend
             app.open(URL(string: "splt://friend/\(jonas)")!)
         } else {
-            let friend = element(labelStartingWith: "Jonas Weber", in: app)
+            let friend = element(labelStartingWith: "Maya Chen", in: app)
             reveal(friend, in: app)
             friend.tap()
         }
-        XCTAssertTrue(app.navigationBars["Jonas Weber"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Maya Chen"].waitForExistence(timeout: 10))
         shot("02-friend-hero")
         scroll(.up, in: app)
         shot("03-friend-timeline")
@@ -118,8 +118,8 @@ final class FriendsDesignShotsUITests: XCTestCase {
             "-sampledata", textSize: large ? "UICTContentSizeCategoryAccessibilityXXXL" : nil,
             extra: dark ? ["-darkmode"] : []
         )
-        app.open(URL(string: "splt://friend/00000000-0000-4000-8000-000000000012")!)
-        XCTAssertTrue(app.navigationBars["Jonas Weber"].waitForExistence(timeout: 10))
+        app.open(URL(string: "splt://friend/00000000-0000-4000-8000-000000000011")!)
+        XCTAssertTrue(app.navigationBars["Maya Chen"].waitForExistence(timeout: 10))
         snapshot(app, "friends/\(variant)/hero")
     }
 }

@@ -88,7 +88,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 
         openTab("Friends", in: app)
         // the row, not the avatar of the same name in the hero above it
-        let friend = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Jonas Weber'")).firstMatch
+        let friend = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maya Chen'")).firstMatch
         reveal(friend, in: app)
         friend.tap()
         XCTAssertTrue(app.buttons["Settle Up"].firstMatch.waitForExistence(timeout: 5))
