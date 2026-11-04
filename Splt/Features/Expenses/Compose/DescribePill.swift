@@ -59,12 +59,20 @@ struct DescribePill: View {
                     .padding(.horizontal, 6)
             }
         }
+        .onDisappear { dictation.stop() }
     }
 
     @ViewBuilder
     private var trailing: some View {
         if model.isReading {
             ProgressView()
+        } else if dictation.isListening {
+            Button(action: toggleDictation) {
+                Image(systemName: "stop.circle.fill")
+            }
+            .buttonStyle(.borderless)
+            .imageScale(.large)
+            .accessibilityLabel("Stop dictating")
         } else if !model.describeText.trimmingCharacters(in: .whitespaces).isEmpty {
             Button("Fill In", action: fill)
                 .buttonStyle(.borderedProminent)
@@ -74,9 +82,9 @@ struct DescribePill: View {
             HStack(spacing: 14) {
                 if DictationController.isSupported {
                     Button(action: toggleDictation) {
-                        Image(systemName: dictation.isListening ? "stop.circle.fill" : "mic")
+                        Image(systemName: "mic")
                     }
-                    .accessibilityLabel(dictation.isListening ? "Stop dictating" : "Dictate")
+                    .accessibilityLabel("Dictate")
                 }
                 ReceiptActions(model: model)
                     .labelStyle(.iconOnly)
