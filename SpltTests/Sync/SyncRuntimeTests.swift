@@ -43,6 +43,18 @@ struct SyncRuntimeTests {
         #expect(runtime.status == .syncing)
     }
 
+    @Test func joiningAGroupYouLeftBringsItBackToYourList() {
+        let left = isolatedLeftGroups()
+        let group = GroupID()
+        left.insert(group)
+        let runtime = SyncRuntime(leftGroups: left)
+        var opened: [GroupID] = []
+        runtime.onGroupJoined = { opened.append($0) }
+        runtime.groupJoined(group)
+        #expect(!left.contains(group))
+        #expect(opened == [group])
+    }
+
     @Test func aPushThatLaunchedTheAppStartsSync() async throws {
         let services = try DataServices.inMemory()
         var asked = 0
