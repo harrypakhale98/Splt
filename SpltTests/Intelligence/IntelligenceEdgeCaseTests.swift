@@ -73,4 +73,13 @@ struct IntelligenceEdgeCaseTests {
         #expect(NumberWords.replacingSpelledNumbers(in: "twelve hundred") == "1200")
         #expect(QuickAddValidator.writtenAmounts(in: "99999999999999999k", currencyCode: "JPY").isEmpty)
     }
+
+    @Test func aNoteMayStartWithPaidBy() {
+        let draft = parse("paid by Sam dinner 40")
+        #expect(draft.payer == .person("Sam"))
+        #expect(draft.amount == money(4000))
+        #expect(draft.title == "Dinner")
+        #expect(parse("paid by me dinner 40").payer == .me)
+        #expect(parse("paid 40 for dinner").payer == .me)
+    }
 }

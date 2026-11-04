@@ -104,7 +104,7 @@ private struct Pass {
     private static let mePatterns: [TextPattern] = [
         TextPattern(#"\b(?:i|i'll|i’ll)\s+(?:both\s+)?"#.appending(meVerbs).appending(#"\b"#)),
         TextPattern(#"\bpaid\s+by\s+me\b|\bmy\s+treat\b|\bon\s+me\b"#),
-        TextPattern(#"^\s*(?:i\s+)?(?:paid|spent)\b"#)
+        TextPattern(#"^\s*(?:i\s+)?(?:paid|spent)\b(?!\s+by\b)"#)
     ]
     private static let paidByPattern = TextPattern(#"\bpaid\s+by\s+(?<name>NAME)"#.replacingPlaceholders())
     private static let namedPayerPattern = TextPattern(
