@@ -123,6 +123,11 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     private let coordinator: SyncCoordinator
     private let store: any SyncStateStore
     private(set) var engine: (any SyncEngineHandle)?
+    /// Lets tests make applying an event fail, which needs a failing disk otherwise.
+    var applyFault: ((SyncEngineInput) throws -> Void)?
+    /// A fetched batch could not be stored. The engine has moved past it, so no state is kept from here on
+    /// and the next launch fetches everything again.
+    private var lostFetchedChanges = false
 
     init(scope: DatabaseScope, coordinator: SyncCoordinator, store: any SyncStateStore) {
         self.scope = scope
@@ -221,13 +226,22 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         do {
             try apply(input)
         } catch {
+            switch input {
+            case .fetchedRecords, .fetchedZones:
+                lostFetchedChanges = true
+                store.saveEngineState(nil, scope: scope)
+            default:
+                break
+            }
             coordinator.updateStatus { $0.failed(SyncFailure(error), source: .init(scope: scope, isSending: false)) }
         }
     }
 
     private func apply(_ input: SyncEngineInput) throws {
+        try applyFault?(input)
         switch input {
         case .stateUpdate(let data):
+            guard !lostFetchedChanges else { return }
             store.saveEngineState(data, scope: scope)
         case .account(let change):
             try coordinator.accountChanged(change)
