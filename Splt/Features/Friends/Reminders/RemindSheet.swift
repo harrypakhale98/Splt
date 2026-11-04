@@ -79,6 +79,10 @@ struct RemindSheet: View {
         Task {
             let result = await scheduler.schedule(for: friend, owed: owed, after: delay)
             outcome = result
+            if case .scheduled(let date) = result {
+                let time = date.formatted(date: .abbreviated, time: .shortened)
+                AccessibilityNotification.Announcement(String(localized: "Reminder set for \(time)")).post()
+            }
             if result == .turnedOffInSettings { showsSettingsPrompt = true }
         }
     }
