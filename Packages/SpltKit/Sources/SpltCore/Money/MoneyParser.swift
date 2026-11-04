@@ -7,6 +7,10 @@ import Foundation
 /// grouping. Currency symbols, currency codes and spaces around the number are ignored.
 /// A minus sign, a trailing minus or parentheses make the amount negative.
 public enum MoneyParser {
+    /// The largest amount that can be typed, in minor units: ten trillion dollars. Far below what
+    /// fits in 64 bits, so adding up thousands of typed amounts can never overflow.
+    public static let maximumMinorUnits: Int64 = 1_000_000_000_000_000
+
     public static func parse(
         _ text: String,
         currencyCode: String,
@@ -137,7 +141,9 @@ public enum MoneyParser {
         }
         fraction += Array(repeating: "0", count: exponent - fraction.count)
 
-        guard let value = Int64(String(integerDigits + fraction)) else { throw MoneyParseError.outOfRange }
+        guard let value = Int64(String(integerDigits + fraction)), value <= maximumMinorUnits else {
+            throw MoneyParseError.outOfRange
+        }
         return value
     }
 

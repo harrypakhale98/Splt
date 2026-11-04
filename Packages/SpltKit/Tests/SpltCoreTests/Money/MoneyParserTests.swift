@@ -138,7 +138,11 @@ struct MoneyParserTests {
     @Test func rejectsHugeAmounts() {
         #expect(throws: MoneyParseError.outOfRange) { try parse("99999999999999999999") }
         #expect(throws: MoneyParseError.outOfRange) { try parse("92233720368547758.08") }
-        #expect(throws: Never.self) { try parse("92233720368547758.07") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("92233720368547758.07") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("10000000000000.01") }
+        #expect(throws: Never.self) { try parse("10000000000000") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("1000000000000001", "JPY") }
+        #expect(throws: Never.self) { try parse("1000000000000000", "JPY") }
     }
 
     @Test func directionMarksAreIgnored() throws {
