@@ -62,6 +62,17 @@ struct GroupExportTests {
         #expect(CSVText.rows(text)[1][1].hasPrefix("'="))
     }
 
+    @Test func csvNeutralizesACurrencyFromAnotherDevice() throws {
+        let fixture = try Fixture()
+        let expense = try fixture.addExpense("Dinner")
+        let context = fixture.services.environment.context
+        try #require(try ExpenseRecord.find(recordName: expense.id.description, in: context)).currencyCode = "=1+"
+        try context.save()
+        let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)
+        let rows = CSVText.rows(text)
+        #expect(!rows.contains { row in row.contains { $0.hasPrefix("=") } })
+    }
+
     @Test func exportedCSVImportsBackToTheSameBalances() throws {
         let source = try populated()
         let csv = String(decoding: try source.services.groups.export(group: source.group.id, format: .csv), as: UTF8.self)
