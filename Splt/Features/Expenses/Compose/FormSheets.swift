@@ -72,7 +72,7 @@ private struct CategorySheet: View {
                         onDone()
                     } label: {
                         VStack(spacing: 6) {
-                            Image(systemName: category.symbolName).font(.title2)
+                            Image(systemName: selected ? "checkmark.circle.fill" : category.symbolName).font(.title2)
                             Text(category.title).font(.caption.weight(.medium)).lineLimit(2).multilineTextAlignment(.center)
                             if category == model.suggestedCategory, !selected {
                                 Text("Suggested").font(.caption2).foregroundStyle(.tint)

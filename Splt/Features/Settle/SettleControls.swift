@@ -57,10 +57,10 @@ struct SettleControls: View {
     @ViewBuilder
     private var amountChips: some View {
         if model.fullAmount != nil {
-            SettleChip(title: "Full", symbol: "circle.fill", selected: model.amountMode == .full) {
+            SettleChip(title: String(localized: "Full"), symbol: "circle.fill", selected: model.amountMode == .full) {
                 model.amountMode = .full
             }
-            SettleChip(title: "Partial", symbol: "circle.lefthalf.filled", selected: model.amountMode == .partial) {
+            SettleChip(title: String(localized: "Partial"), symbol: "circle.lefthalf.filled", selected: model.amountMode == .partial) {
                 model.setFraction(0.5)
             }
             Spacer(minLength: 0)
@@ -216,10 +216,18 @@ struct SettleChip: View {
     var body: some View {
         Button(action: action) {
             GlassPill(tint: selected ? .accentColor : nil, isInteractive: true) {
-                Label(title, systemImage: symbol)
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+                HStack(spacing: 6) {
+                    Label(title, systemImage: symbol)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                    // color is not the only sign of the choice, as on `PersonChip`
+                    if selected {
+                        Image(systemName: "checkmark")
+                            .font(.caption.weight(.bold))
+                            .accessibilityHidden(true)
+                    }
+                }
+                .font(.subheadline.weight(.medium))
             }
         }
         .buttonStyle(.plain)
