@@ -150,8 +150,11 @@ private struct ExpenseFormScreen: View {
                     .padding(.horizontal, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                SaveBar(summary: model.summaryLine, reason: model.blockingReason, canSave: model.canSave) {
-                    if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
+                // at the largest sizes the keyboard and this bar would leave almost nothing of the field being typed in
+                if focus == nil || !typeSize.isAccessibilitySize {
+                    SaveBar(summary: model.summaryLine, reason: model.blockingReason, canSave: model.canSave) {
+                        if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
+                    }
                 }
             }
         }

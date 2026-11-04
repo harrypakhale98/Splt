@@ -59,7 +59,12 @@ private struct CategorySheet: View {
     let model: ExpenseFormModel
     var onDone: () -> Void
 
-    private let columns = [GridItem(.adaptive(minimum: 96), spacing: 10)]
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// At accessibility sizes each category gets the full width, so its name does not break mid word.
+    private var columns: [GridItem] {
+        [typeSize.isAccessibilitySize ? GridItem(.flexible()) : GridItem(.adaptive(minimum: 96), spacing: 10)]
+    }
 
     var body: some View {
         ScrollView {
@@ -73,7 +78,7 @@ private struct CategorySheet: View {
                     } label: {
                         VStack(spacing: 6) {
                             Image(systemName: selected ? "checkmark.circle.fill" : category.symbolName).font(.title2)
-                            Text(category.title).font(.caption.weight(.medium)).lineLimit(2).multilineTextAlignment(.center)
+                            Text(category.title).font(.caption.weight(.medium)).lineLimit(typeSize.isAccessibilitySize ? nil : 2).multilineTextAlignment(.center)
                             if category == model.suggestedCategory, !selected {
                                 Text("Suggested").font(.caption2).foregroundStyle(.tint)
                             }
