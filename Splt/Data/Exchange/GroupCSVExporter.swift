@@ -28,7 +28,8 @@ enum GroupCSVExporter {
                 expense.category.rawValue, amountText(expense.total), CSVText.neutralized(expense.total.currencyCode)
             ] + cells)))
         }
-        for payment in snapshot.payments {
+        // Skipped like the ledger skips them, so the rows still add up to the total balance.
+        for payment in snapshot.payments where (try? payment.validate()) != nil {
             let payer = people.first { $0.id == payment.payer }?.name ?? "?"
             let receiver = people.first { $0.id == payment.receiver }?.name ?? "?"
             let cells = people.map { person -> String in

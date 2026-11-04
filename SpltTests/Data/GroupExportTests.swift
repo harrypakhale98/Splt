@@ -17,6 +17,15 @@ struct GroupExportTests {
         return fixture
     }
 
+    @Test func csvSkipsAPaymentTheLedgerWouldSkip() throws {
+        let fixture = try populated()
+        let bad = Payment(payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(.min), date: fixture.clock.start)
+        let snapshot = GroupExportSnapshot(
+            group: fixture.group, people: [], expenses: [], payments: [bad], exportedAt: fixture.clock.start
+        )
+        #expect(!GroupCSVExporter.text(for: snapshot, timeZone: utc).contains(GroupCSVExporter.paymentCategory + ","))
+    }
+
     @Test func csvStartsWithTheSplitwiseHeader() throws {
         let fixture = try populated()
         let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)
