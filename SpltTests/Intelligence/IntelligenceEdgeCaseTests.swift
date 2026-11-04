@@ -59,4 +59,9 @@ struct IntelligenceEdgeCaseTests {
         #expect(receipt(["CAFE", "Chai Rs. 30.00", "TOTAL Rs. 30.00"]).currencyCode == "INR")
         #expect(receipt(["CAFE", "Tea £3.00", "TOTAL £3.00"]).currencyCode == "GBP")
     }
+
+    @Test func hyphenatedNumbersAreRead() {
+        #expect(parse("twenty-five dollars lunch").amount == money(2500))
+        #expect(parse("Lunch Ninety-Nine").amount == money(9900))
+    }
 }

@@ -20,7 +20,12 @@ enum NumberWords {
     ]
 
     static func replacingSpelledNumbers(in text: String) -> String {
-        let pieces = text.components(separatedBy: " ")
+        let spaced = text.replacingOccurrences(
+            of: #"(?i)\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b"#,
+            with: "$1 $2",
+            options: .regularExpression
+        )
+        let pieces = spaced.components(separatedBy: " ")
         var output: [String] = []
         var index = 0
         while index < pieces.count {
