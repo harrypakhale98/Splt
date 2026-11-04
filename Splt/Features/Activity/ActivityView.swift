@@ -68,12 +68,19 @@ private struct ActivityContent: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color(.label).opacity(0.72))
                         .textCase(nil)
+                        // a pinned plain header has no backing of its own, so rows would draw through the date
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(Color(.systemBackground))
+                        .listRowInsets(EdgeInsets())
                 }
             }
         }
         .listStyle(.plain)
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !model.entries.isEmpty { ActivityFilterChips(model: model) }
+            // solid, so rows do not draw through the chips; a safe area bar dims the large title instead
+            if !model.entries.isEmpty { ActivityFilterChips(model: model).background(Color(.systemBackground), ignoresSafeAreaEdges: []) }
         }
         .overlay { emptyState }
         .toolbar { toolbar }
