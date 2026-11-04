@@ -4,6 +4,8 @@ import SwiftUI
 /// Flat tonal keys on a system material, with large rounded digits that read clearly in both appearances.
 struct NumberPad: View {
     let exponent: Int
+    /// Tighter keys for short screens, so the title field above stays in view.
+    var compact = false
     var onKey: (AmountKey) -> Void
 
     @Environment(\.locale) private var locale
@@ -51,6 +53,7 @@ struct NumberPad: View {
             .frame(maxWidth: .infinity, minHeight: keyHeight)
         }
         .buttonStyle(.bordered)
+        .controlSize(compact ? .small : .regular)
         .buttonBorderShape(.roundedRectangle(radius: 14))
         .tint(.primary)
         .accessibilityLabel(label ?? title ?? "")
