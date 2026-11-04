@@ -75,8 +75,9 @@ extension PersonRecord: SyncTracked {
     func applySyncFields(_ fields: SyncFields) {
         name = fields.string("name") ?? name
         contactHint = fields.string("contactHint")
-        if kind != .me {
-            kindRaw = fields.string("kind") ?? kindRaw
+        // `me` is this device's own fact, so it never comes from a record and never goes away because of one
+        if kind != .me, let remote = fields.string("kind"), remote != PersonKind.me.rawValue {
+            kindRaw = remote
         }
         claimedByCloudUserID = fields.string("claimedByCloudUserID")
         avatarSeed = Int(fields.int("avatarSeed") ?? Int64(avatarSeed))

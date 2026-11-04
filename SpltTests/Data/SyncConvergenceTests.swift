@@ -188,6 +188,18 @@ struct SyncConvergenceTests {
         #expect(try b.services.activity.unreadCount() > 0)
     }
 
+    @Test func aRecordCannotMakeSomeoneTheLocalMe() throws {
+        var fields = SyncFields()
+        fields.set("name", "Sam")
+        fields.set("kind", PersonKind.me.rawValue)
+        try a.tracker.applyRemote(SyncPayload(
+            recordType: .person, recordName: sam.id.description,
+            modifiedAt: a.clock.start.addingTimeInterval(1_000), fields: fields
+        ))
+        #expect(try a.services.people.person(id: sam.id)?.kind == .friend)
+        #expect(try a.services.people.me()?.id == me.id)
+    }
+
     // MARK: Recurring expenses made before the first fetch
 
     private func rentTemplate() throws -> RecurringExpense {
