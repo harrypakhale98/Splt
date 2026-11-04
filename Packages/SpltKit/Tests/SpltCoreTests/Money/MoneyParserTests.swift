@@ -167,6 +167,12 @@ struct MoneyParserTests {
         #expect(try parse("\u{0661}\u{066B}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234)
     }
 
+    @Test func theLastThousandsGroupHasThreeDigits() {
+        #expect(throws: MoneyParseError.self) { try parse("1,234,56") }
+        #expect(throws: MoneyParseError.self) { try parse("12,34,56") }
+        #expect(throws: MoneyParseError.self) { try parse("1.234.56", "EUR", germany) }
+    }
+
     @Test func moneyInitialiserParses() throws {
         let money = try Money(parsing: "1,234.50", currencyCode: "usd", locale: us)
         #expect(money == Money(minorUnits: 123_450, currencyCode: "USD"))

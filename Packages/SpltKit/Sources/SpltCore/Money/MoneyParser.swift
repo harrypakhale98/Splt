@@ -171,7 +171,7 @@ public enum MoneyParser {
         return joined
     }
 
-    /// Checks thousands groups (one to three digits, then groups of two or three) and drops the separators.
+    /// Checks thousands groups (one to three digits, then groups of two or three, ending in three) and drops the separators.
     private static func joinGroups(_ region: [Character], separator: Character) throws -> [Character] {
         let groups = region.split(separator: separator, omittingEmptySubsequences: false)
         guard groups.count >= 2, groups.allSatisfy({ !$0.isEmpty && $0.allSatisfy(isDigit) }) else {
@@ -180,7 +180,9 @@ public enum MoneyParser {
         guard (1...3).contains(groups[0].count), groups[0][groups[0].startIndex] != "0" else {
             throw MoneyParseError.invalidFormat
         }
-        guard groups.dropFirst().allSatisfy({ (2...3).contains($0.count) }) else { throw MoneyParseError.invalidFormat }
+        guard groups.dropFirst().allSatisfy({ (2...3).contains($0.count) }), groups.last?.count == 3 else {
+            throw MoneyParseError.invalidFormat
+        }
         return groups.flatMap { $0 }
     }
 }
