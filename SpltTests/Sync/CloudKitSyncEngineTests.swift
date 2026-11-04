@@ -182,4 +182,36 @@ struct CloudKitSyncEngineTests {
         await #expect(throws: SyncError.invalidInvitation) { try await rig.engine.accept(ShareInvitation(groupName: "x")) }
         await rig.engine.stop()
     }
+
+    @Test func aFailedStartTriesAgainUntilItWorks() async throws {
+        let rig = try Rig()
+        rig.backend.userResult = .failure(CKError(.networkUnavailable))
+        let engine = CloudKitSyncEngine(
+            backend: rig.backend, services: rig.device.services, store: rig.device.store,
+            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10),
+            retryPolicy: BackoffPolicy(base: 0.01, cap: 0.01)
+        )
+        await engine.start()
+        #expect(engine.status == .offline)
+        #expect(rig.backend.madeEngines.isEmpty)
+        rig.backend.userResult = .success("_alice")
+        #expect(await eventually { rig.backend.madeEngines.count == 2 })
+        #expect(await eventually { engine.status != .offline })
+        await engine.stop()
+    }
+
+    @Test func stoppingEndsTheAttemptsToStart() async throws {
+        let rig = try Rig()
+        rig.backend.userResult = .failure(CKError(.networkUnavailable))
+        let engine = CloudKitSyncEngine(
+            backend: rig.backend, services: rig.device.services, store: rig.device.store,
+            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10),
+            retryPolicy: BackoffPolicy(base: 0.05, cap: 0.05)
+        )
+        await engine.start()
+        await engine.stop()
+        rig.backend.userResult = .success("_alice")
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(rig.backend.madeEngines.isEmpty)
+    }
 }

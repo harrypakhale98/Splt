@@ -44,6 +44,15 @@ final class SyncCoordinator {
         retry = scheduler
     }
 
+    /// Plans another attempt to start after `begin` failed.
+    func startFailed(_ error: any Error) {
+        retry?.failed(SyncFailure(error))
+    }
+
+    func cancelRetry() {
+        retry?.cancel()
+    }
+
     func attach(_ queue: any EngineQueue, for scope: DatabaseScope) {
         queues[scope] = queue
     }

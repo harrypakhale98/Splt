@@ -41,7 +41,8 @@ final class CloudKitSyncEngine: SyncEngine {
         backend: any CloudKitBackend, services: DataServices, store: any SyncStateStore,
         notifier: RemoteChangeNotifier? = nil,
         connectivity: @escaping @Sendable () -> AsyncStream<Bool> = { ConnectivityMonitor().updates() },
-        reconcileDelay: Duration = .milliseconds(400)
+        reconcileDelay: Duration = .milliseconds(400),
+        retryPolicy: BackoffPolicy = BackoffPolicy()
     ) {
         self.backend = backend
         self.services = services
@@ -51,7 +52,7 @@ final class CloudKitSyncEngine: SyncEngine {
         self.reconcileDelay = reconcileDelay
         self.adapter = SyncStoreAdapter(tracker: services.makeChangeTracker(), store: store)
         self.coordinator = SyncCoordinator(services: services, adapter: adapter)
-        coordinator.setRetry(RetryScheduler { [weak self] in await self?.retryNow() })
+        coordinator.setRetry(RetryScheduler(policy: retryPolicy) { [weak self] in await self?.retryNow() })
         coordinator.onStatusChange = { [weak self] in self?.publish($0) }
         coordinator.onRemoteChanges = { [weak self] report in self?.notifier?.notify(for: report, services: self?.services) }
     }
@@ -68,8 +69,10 @@ final class CloudKitSyncEngine: SyncEngine {
         } catch {
             isStarted = false
             publish(SyncFailure(error).status ?? .error(SyncFailure.genericMessage))
+            coordinator.startFailed(error)
             return
         }
+        publish(coordinator.status)
 
         let privateSyncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: store)
         let sharedSyncer = DatabaseSyncer(scope: .sharedDatabase, coordinator: coordinator, store: store)
@@ -91,6 +94,7 @@ final class CloudKitSyncEngine: SyncEngine {
 
     func stop() async {
         isStarted = false
+        coordinator.cancelRetry()
         tasks.forEach { $0.cancel() }
         tasks = []
         reconcileTask?.cancel()
@@ -140,6 +144,10 @@ final class CloudKitSyncEngine: SyncEngine {
     }
 
     private func retryNow() async {
+        guard isStarted else {
+            await start()
+            return
+        }
         try? coordinator.reconcile()
         try? await sendChanges()
         try? await fetchChanges()
