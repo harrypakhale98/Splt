@@ -41,7 +41,7 @@ extension SyncStoreAdapter {
                 payload.zoneName = nil
                 payload.systemFields = nil
                 if let local = try PersonRecord.find(recordName: payload.recordName, in: tracker.context),
-                   local.modifiedAt.isLaterEdit(than: payload.modifiedAt) {
+                   local.modifiedAt.isLaterEdit(than: payload.modifiedAt) || (local.kind == .me && !isFromMe(record)) {
                     queueAdds.insert(key)
                     report.requeue.append(record.recordID)
                     continue
@@ -85,8 +85,8 @@ extension SyncStoreAdapter {
     /// Everyone in a shared group can write any record into its zone, with any name and any fields, and
     /// not only through this app. What a record says about itself is only believed for its own zone.
     private func belongsInItsZone(_ payload: SyncPayload) throws -> Bool {
-        // a person is one record shared by every zone, so it has no zone to check
-        guard payload.recordType != .person else { return true }
+        // a person is deleted with a real delete, so a saved tombstone never comes from this app
+        guard payload.recordType != .person else { return payload.deletedAt == nil }
         let group = payload.recordType == .group ? payload.recordName : payload.fields.uuid("groupID")?.uuidString
         guard group == payload.zoneName else { return false }
         guard let local = try payload.recordType.modelType.find(recordName: payload.recordName, in: tracker.context) else {
@@ -103,6 +103,12 @@ extension SyncStoreAdapter {
         return known.ownerName != id.ownerName || known.scope != id.scope
     }
 
+    /// The server says who last saved a record. Your own devices show up under either of these names.
+    private func isFromMe(_ record: CKRecord) -> Bool {
+        guard let author = lastModifier(record) else { return true }
+        return author == CKCurrentUserDefaultName || author == metadata.userRecordName
+    }
+
     // MARK: Deletions
 
     private func applyDeletion(id: CKRecord.ID, recordType: String) throws {
@@ -117,7 +123,8 @@ extension SyncStoreAdapter {
             $0.setCopy(nil, zoneName: zone, recordName: id.recordName)
             $0.personQueue.remove(PersonCopyKey(zoneName: zone, recordName: id.recordName))
         }
-        guard metadata.zonesHoldingCopy(of: id.recordName).isEmpty,
+        // someone else removing their copy from a shared group does not remove the person from this device
+        guard id.zoneID.scope == .privateDatabase, metadata.zonesHoldingCopy(of: id.recordName).isEmpty,
               let local = try PersonRecord.find(recordName: id.recordName, in: tracker.context),
               local.kind != .me else { return }
         try applyServerDeletion(type: .person, recordName: id.recordName)

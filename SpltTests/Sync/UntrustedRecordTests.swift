@@ -189,4 +189,65 @@ struct UntrustedRecordTests {
         try victim.adapter.applyFetched(modifications: [record], deletions: [])
         #expect(try ExpenseRecord.find(recordName: name, in: victim.device.tracker.context) != nil)
     }
+
+    // MARK: People
+
+    private func personFields(_ person: Person, name: String) -> SyncFields {
+        var fields = PersonRecord(person).syncFields
+        fields.set("name", name)
+        return fields
+    }
+
+    @Test func aRecordCannotDeleteAPerson() throws {
+        let victim = try Victim()
+        let sam = victim.populated.sam
+        let record = victim.crafted(
+            .person, name: sam.id.description, in: victim.sharedZone, deletedAt: victim.later,
+            fields: personFields(sam, name: "Sam")
+        )
+        try victim.adapter.applyFetched(modifications: [record], deletions: [])
+        #expect(try victim.device.services.people.person(id: sam.id) != nil)
+    }
+
+    @Test func aRecordCannotDeleteYourOwnProfile() throws {
+        let victim = try Victim()
+        let me = victim.populated.me
+        let record = victim.crafted(
+            .person, name: me.id.description, in: victim.sharedZone, deletedAt: victim.later,
+            fields: personFields(me, name: "Me")
+        )
+        try victim.adapter.applyFetched(modifications: [record], deletions: [])
+        #expect(try victim.device.services.people.me()?.id == me.id)
+    }
+
+    @Test func onlyYourOwnDevicesCanRenameYou() throws {
+        let victim = try Victim()
+        let me = victim.populated.me
+        victim.adapter.updateMetadata { $0.userRecordName = "_me" }
+        var author = "_mallory"
+        victim.adapter.lastModifier = { _ in author }
+        let renamed = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Clown"))
+        try victim.adapter.applyFetched(modifications: [renamed], deletions: [])
+        #expect(try victim.device.services.people.me()?.name == "Me")
+
+        author = "_me"
+        let mine = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Mia"))
+        try victim.adapter.applyFetched(modifications: [mine], deletions: [])
+        #expect(try victim.device.services.people.me()?.name == "Mia")
+
+        author = CKCurrentUserDefaultName
+        let again = victim.crafted(.person, name: me.id.description, in: victim.sharedZone, fields: personFields(me, name: "Max"))
+        try victim.adapter.applyFetched(modifications: [again], deletions: [])
+        #expect(try victim.device.services.people.me()?.name == "Max")
+    }
+
+    @Test func aPersonCopyDeletedInASharedZoneStaysOnThisDevice() throws {
+        let victim = try Victim()
+        let sam = victim.populated.sam
+        let copy = victim.crafted(.person, name: sam.id.description, in: victim.sharedZone, fields: personFields(sam, name: "Sam"))
+        try victim.adapter.applyFetched(modifications: [copy], deletions: [])
+        victim.adapter.updateMetadata { $0.setCopy(nil, zoneName: victim.privateZone, recordName: sam.id.description) }
+        try victim.adapter.applyFetched(modifications: [], deletions: [(copy.recordID, "Person")])
+        #expect(try victim.device.services.people.person(id: sam.id) != nil)
+    }
 }

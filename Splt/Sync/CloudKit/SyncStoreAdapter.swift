@@ -11,6 +11,8 @@ final class SyncStoreAdapter {
     private(set) var metadata: SyncMetadata
     let store: any SyncStateStore
     private var knownTypes: [CKRecord.ID: SyncRecordType] = [:]
+    /// Who last saved a record, as the server reports it. A seam for tests: a record built on the device has no author.
+    var lastModifier: (CKRecord) -> String? = { $0.lastModifiedUserRecordID?.recordName }
 
     init(tracker: ChangeTracker, store: any SyncStateStore) {
         self.tracker = tracker
