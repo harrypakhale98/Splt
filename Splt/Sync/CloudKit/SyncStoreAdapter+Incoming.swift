@@ -27,12 +27,12 @@ extension SyncStoreAdapter {
         var copyUpdates: [(PersonCopyKey, PersonCopy)] = []
         var queueAdds: Set<PersonCopyKey> = []
 
-        for record in modifications {
+        for record in modifications where !isImpostor(record.recordID.zoneID) {
             if let share = record as? CKShare {
                 report.shares.append(share)
                 continue
             }
-            guard var payload = try? RecordMapper.payload(from: record) else { continue }
+            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload) else { continue }
             registerZone(record.recordID.zoneID)
             report.touchedZones.insert(record.recordID.zoneID.zoneName)
             if payload.recordType == .person {
@@ -66,7 +66,7 @@ extension SyncStoreAdapter {
             }
         }
 
-        for deletion in deletions {
+        for deletion in deletions where !isImpostor(deletion.id.zoneID) {
             try applyDeletion(id: deletion.id, recordType: deletion.recordType)
         }
         if !copyUpdates.isEmpty || !queueAdds.isEmpty {
@@ -80,9 +80,35 @@ extension SyncStoreAdapter {
         return report
     }
 
+    // MARK: Untrusted records
+
+    /// Everyone in a shared group can write any record into its zone, with any name and any fields, and
+    /// not only through this app. What a record says about itself is only believed for its own zone.
+    private func belongsInItsZone(_ payload: SyncPayload) throws -> Bool {
+        // a person is one record shared by every zone, so it has no zone to check
+        guard payload.recordType != .person else { return true }
+        let group = payload.recordType == .group ? payload.recordName : payload.fields.uuid("groupID")?.uuidString
+        guard group == payload.zoneName else { return false }
+        guard let local = try payload.recordType.modelType.find(recordName: payload.recordName, in: tracker.context) else {
+            return true
+        }
+        // records never move between groups, so the same name in another zone is someone else's
+        return local.zoneName == payload.zoneName
+    }
+
+    /// Zones are looked up by name alone, and anyone can create a zone with any name and share it.
+    /// One with the name of a known group but another owner is not that group.
+    func isImpostor(_ id: CKRecordZone.ID) -> Bool {
+        guard let known = metadata.zones[id.zoneName] else { return false }
+        return known.ownerName != id.ownerName || known.scope != id.scope
+    }
+
+    // MARK: Deletions
+
     private func applyDeletion(id: CKRecord.ID, recordType: String) throws {
         guard let type = SyncRecordType(rawValue: recordType) else { return }
         guard type == .person else {
+            guard try type.modelType.find(recordName: id.recordName, in: tracker.context)?.zoneName == id.zoneID.zoneName else { return }
             try applyServerDeletion(type: type, recordName: id.recordName)
             return
         }
@@ -109,6 +135,7 @@ extension SyncStoreAdapter {
     // MARK: Zones
 
     func registerZone(_ id: CKRecordZone.ID) {
+        guard !isImpostor(id) else { return }
         let info = ZoneInfo(ownerName: id.ownerName, scope: id.scope)
         guard metadata.zones[id.zoneName] != info || metadata.isDetached(zoneName: id.zoneName) else { return }
         updateMetadata {
@@ -124,6 +151,7 @@ extension SyncStoreAdapter {
     /// The server removed a zone. Returns true when records were marked for upload and a send should follow.
     @discardableResult
     func zoneDeleted(_ id: CKRecordZone.ID, reason: ZoneDeletionReason) throws -> Bool {
+        guard !isImpostor(id) else { return false }
         let zone = id.zoneName
         defer { updateMetadata { $0.forget(zoneName: zone) } }
         if reason != .deleted, id.scope == .privateDatabase {

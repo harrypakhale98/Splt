@@ -432,6 +432,8 @@ struct SyncStoreAdapterTests {
         let cloud = FakeCloud()
         try cloud.upload(from: populated.device)
         let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: "_owner")
+        // the upload above made it a private zone; here it is one the device knows as someone else's
+        populated.device.adapter.updateMetadata { $0.zones[populated.zone] = ZoneInfo(ownerName: "_owner", scope: .sharedDatabase) }
         let needsSend = try populated.device.adapter.zoneDeleted(zone, reason: .deleted)
         #expect(!needsSend)
         #expect(try populated.device.services.groups.group(id: populated.group.id) == nil)

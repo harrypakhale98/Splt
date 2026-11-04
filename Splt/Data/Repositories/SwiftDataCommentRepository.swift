@@ -16,7 +16,9 @@ final class SwiftDataCommentRepository: CommentRepository {
             predicate: #Predicate { $0.expenseID == eid && $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        return try env.context.fetch(descriptor).map(ExpenseComment.init)
+        // a comment from another group's zone can name this expense, but it does not belong on it
+        let group = try env.expenseRecord(expense)?.groupID
+        return try env.context.fetch(descriptor).filter { $0.groupID == group }.map(ExpenseComment.init)
     }
 
     func comments(in group: GroupID) throws -> [ExpenseComment] {
