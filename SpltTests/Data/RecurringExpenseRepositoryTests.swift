@@ -80,6 +80,15 @@ struct RecurringExpenseRepositoryTests {
         #expect(try fixture.services.recurring.templates(in: fixture.group.id).first?.title == "Rent and bills")
     }
 
+    @Test func aTemplateThatCannotMakeAValidExpenseDoesNotStopTheOthers() throws {
+        let fixture = try Fixture()
+        var bad = template(fixture)
+        bad.split = .equal(participants: [])
+        try fixture.services.recurring.add(bad)
+        try fixture.services.recurring.add(template(fixture))
+        #expect(try fixture.services.recurring.createDueExpenses(through: fixture.clock.start).count == 1)
+    }
+
     @Test func twoDevicesMakeTheSameExpenseIDForTheSameOccurrence() {
         let templateID = UUID()
         let date = Date(timeIntervalSince1970: 1_750_000_000)

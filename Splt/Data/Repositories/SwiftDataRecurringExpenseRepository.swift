@@ -57,6 +57,8 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
                   try env.groupRecord(groupID) != nil else { continue }
             let due = template.rule.dueOccurrences(after: template.lastCreatedOccurrence, through: now)
             guard let latest = due.last else { continue }
+            // a template that cannot make a valid expense must not stop the others
+            guard (try? template.expense(on: latest).validate()) != nil else { continue }
             for occurrence in due {
                 var expense = template.expense(on: occurrence)
                 expense.id = OccurrenceID.expenseID(template: template.id, occurrence: occurrence)
