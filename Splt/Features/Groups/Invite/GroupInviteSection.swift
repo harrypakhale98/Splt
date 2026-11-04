@@ -21,6 +21,8 @@ struct GroupInviteSection: View {
                     }
                 }
             }
+            // the row otherwise keeps full-strength text and reads as tappable while it is off
+            .foregroundStyle(runtime.status.isConnected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
             .disabled(!runtime.status.isConnected || sharing?.phase == .preparing)
         } header: {
             Text("Invite")
