@@ -160,6 +160,13 @@ struct MoneyParserTests {
         }
     }
 
+    @Test func arabicGroupingIsNotReadAsADecimal() throws {
+        let arabic = Locale(identifier: "ar_SA")
+        #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234_000)
+        #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "USD", arabic) == 123_400)
+        #expect(try parse("\u{0661}\u{066B}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234)
+    }
+
     @Test func moneyInitialiserParses() throws {
         let money = try Money(parsing: "1,234.50", currencyCode: "usd", locale: us)
         #expect(money == Money(minorUnits: 123_450, currencyCode: "USD"))

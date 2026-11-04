@@ -147,9 +147,9 @@ public enum MoneyParser {
         let after = body.count - index - 1
         guard (1...3).contains(index), body[0] != "0", after == 3 else { return false }
         if exponent == 0 { return true }
-        let character = String(body[index])
-        if character == locale.decimalSeparator { return false }
-        return character == locale.groupingSeparator
+        // The body is already normalized, so the locale's separators have to be as well.
+        if normalize(locale.decimalSeparator ?? "").first == body[index] { return false }
+        return normalize(locale.groupingSeparator ?? "").first == body[index]
     }
 
     /// Joins chunks split by spaces or apostrophes, as in "1 234,56" or "1'234.50".
