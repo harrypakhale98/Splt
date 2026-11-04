@@ -52,7 +52,7 @@ enum SplitwiseCSVImporter {
             }
             guard let date = date(cell(columns.date), calendar: calendar) else { skip("Unreadable date."); continue }
             let currency = cell(columns.currency).uppercased()
-            guard currency.count == 3 else { skip("Missing currency."); continue }
+            guard currency.count == 3, currency.allSatisfy({ $0.isASCII && $0.isLetter }) else { skip("Missing currency."); continue }
             guard let cost = try? MoneyParser.parse(cell(columns.cost), currencyCode: currency, locale: GroupCSVExporter.posix),
                   !cost.isZero, abs(cost.minorUnits) <= largestAmount else { skip("Unreadable or zero cost."); continue }
 

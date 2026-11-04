@@ -32,4 +32,10 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(wrong.warnings.count == 1)
         #expect(try parse("2025-03-14,X,Payment,5.00,USD,5.00,-5.00").payments.count == 1)
     }
+
+    @Test func aCurrencyMustBeLetters() throws {
+        let result = try parse("2025-03-14,X,General,10.00,=1+,5.00,-5.00")
+        #expect(result.expenses.isEmpty)
+        #expect(result.warnings.map(\.message) == ["Missing currency."])
+    }
 }
