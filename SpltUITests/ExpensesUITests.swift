@@ -50,6 +50,48 @@ final class ExpensesUITests: XCTestCase {
     }
 
     @MainActor
+    func testADoubleTapOnSaveAddsOneExpense() {
+        let app = launchInGroup(named: "Road Trip", member: "Alex")
+
+        app.buttons["Add Expense"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
+        typeAmount("42", in: app)
+        let title = field("expense-title", in: app)
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText("Gas")
+        title.typeText("\n")
+
+        field("expense-save", in: app).doubleTap()
+        XCTAssertTrue(app.navigationBars["Road Trip"].waitForExistence(timeout: 10))
+        let rows = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Gas'"))
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertEqual(rows.count, 1)
+    }
+
+    @MainActor
+    func testTheAddFormCanMoveToAnotherGroup() {
+        let app = launchApp("-sampledata")
+        openTab("Groups", in: app)
+        let group = element(labelStartingWith: "Lisbon Trip", in: app)
+        reveal(group, in: app)
+        group.tap()
+        XCTAssertTrue(app.buttons["Add Expense"].firstMatch.waitForExistence(timeout: 10))
+        app.buttons["Add Expense"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
+
+        let chip = field("chip-group", in: app)
+        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        reveal(chip, in: app)
+        chip.tap()
+        let other = app.buttons["Flat 4B"].firstMatch
+        XCTAssertTrue(other.waitForExistence(timeout: 5), visibleControls(in: app))
+        other.tap()
+        XCTAssertTrue(element(labelContaining: "Flat 4B", in: app).waitForExistence(timeout: 5))
+        XCTAssertEqual(chip.value as? String, "Flat 4B")
+    }
+
+    @MainActor
     func testDescribeItFillsTheForm() {
         let app = launchInGroup(named: "Lunch Crew", member: "Alex")
 
