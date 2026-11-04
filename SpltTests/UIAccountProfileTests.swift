@@ -87,6 +87,23 @@ struct UIAccountProfileTests {
         #expect(try services.people.me()?.name == "Sam")
     }
 
+    @Test func launchDoesNotUndoARenameMadeOnAnotherDevice() throws {
+        let services = try DataServices.inMemory()
+        try services.people.ensureMe(name: "Samuel, renamed elsewhere")
+        let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")
+        profile.displayName = "Sam"
+        try profile.applyNameIfNoProfile(to: services.people)
+        #expect(try services.people.me()?.name == "Samuel, renamed elsewhere")
+    }
+
+    @Test func launchCreatesTheProfileWhenThereIsNone() throws {
+        let services = try DataServices.inMemory()
+        let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")
+        profile.displayName = "Sam"
+        try profile.applyNameIfNoProfile(to: services.people)
+        #expect(try services.people.me()?.name == "Sam")
+    }
+
     @Test func applyNameCreatesMeWhenMissing() throws {
         let services = try DataServices.inMemory()
         let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")

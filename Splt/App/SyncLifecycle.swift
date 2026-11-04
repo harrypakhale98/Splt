@@ -23,7 +23,7 @@ private struct SyncLifecycle: ViewModifier {
                 runtime.onGroupJoined = { router.open(.group($0.rawValue)) }
                 runtime.onInvitationFailed = { failure = $0 }
                 if let services {
-                    try? AccountProfile.shared.applyName(to: services.people)
+                    try? AccountProfile.shared.applyNameIfNoProfile(to: services.people)
                     await runtime.start(services: services)
                 }
             }

@@ -91,6 +91,13 @@ final class AccountProfile {
         try people.update(me)
     }
 
+    /// For launch. The name is stored per device, so applying it every launch would undo a rename made on
+    /// another device. Once a profile exists, only saving in the editor changes its name.
+    func applyNameIfNoProfile(to people: any PersonRepository) throws {
+        guard try people.me() == nil else { return }
+        try applyName(to: people)
+    }
+
     // MARK: Messages
 
     /// "You can pay me with Venmo @sam and Cash App $sam." Nil when no handle is set.
