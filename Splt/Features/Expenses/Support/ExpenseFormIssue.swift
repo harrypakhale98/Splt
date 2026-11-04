@@ -24,7 +24,9 @@ enum ExpenseFormIssue: Error, Equatable {
 
     func message(locale: Locale = .current) -> String {
         func amount(_ money: Money) -> String { MoneyFormatting.magnitudeString(money, locale: locale) }
-        func percent(_ basisPoints: Int64) -> String { AmountInput.hundredthsText(basisPoints, locale: locale) + "%" }
+        func percent(_ basisPoints: Int64) -> String {
+            (Double(basisPoints) / 10_000).formatted(.percent.locale(locale).precision(.fractionLength(0...2)))
+        }
         switch self {
         case .missingAmount: return String(localized: "Enter an amount to save.")
         case .invalidAmount: return String(localized: "This amount does not fit the currency. Check the decimals.")

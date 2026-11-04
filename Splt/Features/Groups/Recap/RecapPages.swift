@@ -57,7 +57,7 @@ struct RecapTotalPage: View {
                 .minimumScaleFactor(0.6)
             RecapTitle(text: "You spent together")
             RecapNumber(money: stats.total, hidden: hidesAmounts, active: active, size: 68)
-            Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
+            Text(recapSpan(stats))
                 .font(.headline)
                 .foregroundStyle(Color.primary.opacity(0.7))
         }
@@ -97,10 +97,10 @@ struct RecapDaysPage: View {
             .frame(height: 220)
             .animation(reduceMotion ? nil : .smooth(duration: 0.9), value: active)
             if let busiest = stats.busiest {
-                Text("Busiest \(stats.bucket == .day ? "day" : "month"): \(busiest.start.formatted(stats.bucket == .day ? .dateTime.weekday(.abbreviated).month(.abbreviated).day() : .dateTime.month(.wide))), \(recapAmount(busiest.total, hidden: hidesAmounts, locale: locale))")
+                Text(busiestText(busiest))
                     .font(.headline)
             }
-            Text("About \(recapAmount(stats.average, hidden: hidesAmounts, locale: locale)) a \(stats.bucket == .day ? "day" : "month") on average")
+            Text(averageText)
                 .font(.subheadline)
                 .foregroundStyle(Color.primary.opacity(0.7))
         }
@@ -110,6 +110,27 @@ struct RecapDaysPage: View {
     private func chartValue(_ money: Money) -> Double {
         NSDecimalNumber(decimal: money.decimalValue).doubleValue
     }
+
+    private func busiestText(_ busiest: RecapStats.Slice) -> LocalizedStringKey {
+        let amount = recapAmount(busiest.total, hidden: hidesAmounts, locale: locale)
+        if stats.bucket == .day {
+            let date = busiest.start.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+            return "Busiest day: \(date), \(amount)"
+        }
+        return "Busiest month: \(busiest.start.formatted(.dateTime.month(.wide))), \(amount)"
+    }
+
+    private var averageText: LocalizedStringKey {
+        let amount = recapAmount(stats.average, hidden: hidesAmounts, locale: locale)
+        return stats.bucket == .day ? "About \(amount) a day on average" : "About \(amount) a month on average"
+    }
+}
+
+/// "12 expenses over 5 days", in the words of the recap's bucket.
+private func recapSpan(_ stats: RecapStats) -> LocalizedStringKey {
+    stats.bucket == .day
+        ? "^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) day](inflect: true)"
+        : "^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) month](inflect: true)"
 }
 
 struct RecapBiggestPage: View {
@@ -179,7 +200,7 @@ struct RecapPayerPage: View {
                 Text(payer.name)
                     .font(.largeTitle.weight(.bold))
                     .fontDesign(.serif)
-                Text("covered \(payer.percent)% of the bills")
+                Text("covered \(payer.percent.formatted(.percent)) of the bills")
                     .font(.title3)
                     .foregroundStyle(Color.primary.opacity(0.7))
                 Text(recapAmount(payer.paid, hidden: hidesAmounts, locale: locale))
@@ -216,7 +237,7 @@ struct RecapCategoriesPage: View {
                 .cornerRadius(6)
                 .foregroundStyle(color(at: index))
                 .accessibilityLabel(share.category.title)
-                .accessibilityValue("\(share.percent)%")
+                .accessibilityValue(share.percent.formatted(.percent))
             }
             .frame(height: 210)
             .animation(reduceMotion ? nil : .smooth(duration: 0.9), value: active)
@@ -226,7 +247,7 @@ struct RecapCategoriesPage: View {
                         Circle().fill(color(at: index)).frame(width: 12, height: 12)
                         Label(share.category.title, systemImage: share.category.symbolName)
                             .font(.body)
-                                    Text("\(share.percent)%")
+                                    Text(share.percent.formatted(.percent))
                             .font(.body.weight(.semibold))
                             .monospacedDigit()
                         if !hidesAmounts {
@@ -288,7 +309,7 @@ struct RecapShareCard: View {
             Text(recapAmount(stats.total, hidden: hidesAmounts))
                 .font(.system(size: 54, weight: .bold, design: .rounded))
                 .monospacedDigit()
-            Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
+            Text(recapSpan(stats))
                 .font(.subheadline)
                 .foregroundStyle(Color.primary.opacity(0.7))
             Chart(stats.slices) { slice in
@@ -304,10 +325,10 @@ struct RecapShareCard: View {
             .frame(height: 90)
             VStack(alignment: .leading, spacing: 6) {
                 if let top = stats.categories.first {
-                    Label("\(top.category.title), \(top.percent)%", systemImage: top.category.symbolName)
+                    Label("\(top.category.title), \(top.percent.formatted(.percent))", systemImage: top.category.symbolName)
                 }
                 if let payer = stats.topPayer {
-                    Label("\(payer.name) paid \(payer.percent)%", systemImage: "creditcard")
+                    Label("\(payer.name) paid \(payer.percent.formatted(.percent))", systemImage: "creditcard")
                 }
                 if let biggest = stats.biggest {
                     Label("Biggest: \(biggest.title)", systemImage: "star")

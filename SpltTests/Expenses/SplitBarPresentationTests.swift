@@ -68,6 +68,13 @@ struct SplitBarPresentationTests {
         #expect(label.secondary == "$21.01")
     }
 
+    /// The percent sign goes where the locale puts it, not always straight after the digits.
+    @Test func percentagesFollowTheLocale() {
+        let segment = segment("Maya", weight: 5_000, cents: 2_101)
+        #expect(SplitBarLabels.percent(segment, scale: 10_000, locale: Locale(identifier: "de_DE")) == "50\u{00A0}%")
+        #expect(SplitBarLabels.percent(segment, scale: 10_000, locale: Locale(identifier: "ar_SA")).contains("\u{0665}\u{0660}"))
+    }
+
     @Test func shareSegmentsShowCountsWithMoneyUnderneath() {
         let wide = SplitBarLabels.make(method: .shares, segment: segment("Maya", weight: 2, cents: 3_000), scale: 4, wide: true, locale: us)
         #expect(wide.primary == "2 shares")

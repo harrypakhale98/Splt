@@ -63,7 +63,7 @@ struct SplitShareList: View {
             if let amount = segment.amount {
                 MoneyLabel(money: amount).font(.system(.body, design: .rounded, weight: .semibold))
             }
-            Text(percent.formatted(.number.precision(.fractionLength(0))) + "%")
+            Text((percent / 100).formatted(.percent.locale(locale).precision(.fractionLength(0))))
                 .font(.caption)
                 .foregroundStyle(.legible)
                 .monospacedDigit()

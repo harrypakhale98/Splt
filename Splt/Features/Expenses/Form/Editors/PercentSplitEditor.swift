@@ -30,7 +30,7 @@ struct PercentSplitEditor: View {
                         }
                     } else {
                         Label {
-                            Text(AmountInput.hundredthsText(remaining, locale: model.locale) + "%").monospacedDigit()
+                            Text((Double(remaining) / 10_000).formatted(.percent.locale(model.locale).precision(.fractionLength(0...2)))).monospacedDigit()
                         } icon: {
                             Image(systemName: remaining < 0 ? "minus.circle.fill" : "exclamationmark.circle.fill")
                                 .foregroundStyle(remaining < 0 ? .red : .orange)

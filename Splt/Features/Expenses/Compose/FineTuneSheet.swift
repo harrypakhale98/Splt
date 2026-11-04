@@ -29,7 +29,7 @@ struct FineTuneSheet: View {
                             stepButton(systemImage: "minus", label: "Less", increase: false)
                             stepButton(systemImage: "plus", label: "More", increase: true)
                         }
-                        Text(model.barStepDescription + " per tap. The difference comes from or goes to the next person.")
+                        Text("\(model.barStepDescription) per tap. The difference comes from or goes to the next person.")
                             .font(.footnote)
                             .foregroundStyle(.legible)
                             .multilineTextAlignment(.center)
@@ -70,6 +70,6 @@ struct FineTuneSheet: View {
     private func percentText(_ segment: SplitBarSegment, scale: Int64) -> String {
         guard scale > 0 else { return "" }
         let percent = Double(segment.weight) / Double(scale) * 100
-        return percent.formatted(.number.precision(.fractionLength(0...1))) + "%"
+        return (percent / 100).formatted(.percent.locale(locale).precision(.fractionLength(0...1)))
     }
 }
