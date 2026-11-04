@@ -43,4 +43,16 @@ struct SearchEdgeCaseTests {
         #expect(search.expenses.isEmpty)
         #expect(!search.understood.isEmpty)
     }
+
+    @Test func aFriendNamedLikeAMonthIsTheFriend() throws {
+        let fixture = try Fixture()
+        let jan = Person(name: "Jan", avatarSeed: 3)
+        let parser = parser(fixture, extra: [jan])
+        let paid = parser.parse("jan paid")
+        #expect(paid.payer == jan.id)
+        #expect(paid.period == nil)
+        #expect(parser.parse("in jan").period != nil)
+        #expect(parser.parse("jan 2025").period != nil)
+        #expect(self.parser(fixture).parse("dinner jan").period != nil)
+    }
 }
