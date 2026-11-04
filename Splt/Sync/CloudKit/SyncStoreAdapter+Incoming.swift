@@ -1,5 +1,6 @@
 import CloudKit
 import Foundation
+import SpltCore
 import SwiftData
 
 /// What applying a batch from the server turned up.
@@ -88,7 +89,7 @@ extension SyncStoreAdapter {
         // a person is deleted with a real delete, so a saved tombstone never comes from this app
         guard payload.recordType != .person else { return payload.deletedAt == nil }
         let group = payload.recordType == .group ? payload.recordName : payload.fields.uuid("groupID")?.uuidString
-        guard group == payload.zoneName else { return false }
+        guard group == payload.zoneName, payload.amountsAreEnterable else { return false }
         guard let local = try payload.recordType.modelType.find(recordName: payload.recordName, in: tracker.context) else {
             return true
         }
@@ -211,6 +212,38 @@ extension SyncStoreAdapter {
         case .comment: try context.fetch(FetchDescriptor<CommentRecord>()).forEach { $0.systemFields = nil }
         case .activity: try context.fetch(FetchDescriptor<ActivityRecord>()).forEach { $0.systemFields = nil }
         case .recurringExpense: try context.fetch(FetchDescriptor<RecurringExpenseRecord>()).forEach { $0.systemFields = nil }
+        }
+    }
+}
+
+extension SyncPayload {
+    /// Larger amounts cannot be typed or imported, so one that arrives was made to overflow the sums on some screen.
+    fileprivate var amountsAreEnterable: Bool {
+        let limit = UInt64(MoneyParser.maximumMinorUnits)
+        switch recordType {
+        case .expense, .recurringExpense:
+            guard (fields.int("totalMinorUnits")?.magnitude ?? 0) <= limit else { return false }
+            return ["payers", "split"].allSatisfy { key in
+                fields.data(key).flatMap { try? JSONSerialization.jsonObject(with: $0) }.map(Self.moneyIsEnterable) ?? true
+            }
+        case .payment:
+            return (fields.int("amountMinorUnits")?.magnitude ?? 0) <= limit
+        case .person, .group, .comment, .activity:
+            return true
+        }
+    }
+
+    private static func moneyIsEnterable(in json: Any) -> Bool {
+        switch json {
+        case let list as [Any]:
+            return list.allSatisfy(moneyIsEnterable)
+        case let object as [String: Any]:
+            if let units = object["minorUnits"] as? NSNumber, abs(units.doubleValue) > Double(MoneyParser.maximumMinorUnits) {
+                return false
+            }
+            return object.values.allSatisfy(moneyIsEnterable)
+        default:
+            return true
         }
     }
 }

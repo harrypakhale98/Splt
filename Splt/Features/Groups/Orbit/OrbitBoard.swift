@@ -89,7 +89,7 @@ struct OrbitBoard: Equatable {
         let zero = Money.zero(currencyCode: currencyCode)
         let subjectID = focus.person ?? me
         guard let subjectID else {
-            let total = transfers.reduce(zero) { Money(minorUnits: $0.minorUnits + $1.amount.minorUnits, currencyCode: currencyCode) }
+            let total = transfers.reduce(zero) { Money(minorUnits: $0.minorUnits &+ $1.amount.minorUnits, currencyCode: currencyCode) }
             return OrbitCenter(
                 kind: total.isZero ? .settled : .toSettle, subject: "", subjectIsMe: false, amount: total
             )

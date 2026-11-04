@@ -107,7 +107,7 @@ struct RecapStats: Equatable, Sendable {
             )
         }
 
-        let paidTotal = summary.byPerson.reduce(Int64(0)) { $0 + max($1.paid.minorUnits, 0) }
+        let paidTotal = summary.byPerson.reduce(Int64(0)) { $0 &+ max($1.paid.minorUnits, 0) }
         topPayer = summary.byPerson.first.flatMap { person in
             guard person.paid.minorUnits > 0, paidTotal > 0 else { return nil }
             return TopPayer(
@@ -117,7 +117,7 @@ struct RecapStats: Equatable, Sendable {
         }
 
         let positive = summary.byCategory.filter { $0.amount.minorUnits > 0 }
-        let categoryTotal = positive.reduce(Int64(0)) { $0 + $1.amount.minorUnits }
+        let categoryTotal = positive.reduce(Int64(0)) { $0 &+ $1.amount.minorUnits }
         var shares = positive.prefix(4).map {
             CategoryShare(
                 category: $0.category, amount: $0.amount,
@@ -126,7 +126,7 @@ struct RecapStats: Equatable, Sendable {
         }
         let rest = positive.dropFirst(4)
         if !rest.isEmpty {
-            let units = rest.reduce(Int64(0)) { $0 + $1.amount.minorUnits }
+            let units = rest.reduce(Int64(0)) { $0 &+ $1.amount.minorUnits }
             shares.append(CategoryShare(
                 category: .other, amount: Money(minorUnits: units, currencyCode: code),
                 percent: InsightSummarizer.percent(units, of: categoryTotal)

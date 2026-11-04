@@ -250,4 +250,43 @@ struct UntrustedRecordTests {
         try victim.adapter.applyFetched(modifications: [], deletions: [(copy.recordID, "Person")])
         #expect(try victim.device.services.people.person(id: sam.id) != nil)
     }
+
+    // MARK: Amounts
+
+    @Test(arguments: [Int64.max, Int64.min, MoneyParser.maximumMinorUnits + 1])
+    func anAmountNobodyCanEnterIsRefused(amount: Int64) throws {
+        let victim = try Victim()
+        var expense = try victim.expenseFields(title: "Big", groupID: victim.shared.id.rawValue)
+        expense.set("totalMinorUnits", amount)
+        var payment = SyncFields()
+        payment.set("groupID", victim.shared.id.rawValue)
+        payment.set("amountMinorUnits", amount)
+        payment.set("currencyCode", "USD")
+        let records = [
+            victim.crafted(.expense, name: UUID().uuidString, in: victim.sharedZone, fields: expense),
+            victim.crafted(.payment, name: UUID().uuidString, in: victim.sharedZone, fields: payment),
+        ]
+        try victim.adapter.applyFetched(modifications: records, deletions: [])
+        let context = victim.device.tracker.context
+        #expect(try ExpenseRecord.find(recordName: records[0].recordID.recordName, in: context) == nil)
+        #expect(try PaymentRecord.find(recordName: records[1].recordID.recordName, in: context) == nil)
+    }
+
+    @Test func aHugeAmountInsideTheSplitOrThePayersIsRefused() throws {
+        let victim = try Victim()
+        let huge = Money(minorUnits: .max, currencyCode: "USD")
+        let me = victim.populated.me.id
+        var payers = try victim.expenseFields(title: "Payers", groupID: victim.shared.id.rawValue)
+        payers.set("payers", RecordCoding.encode([me: huge]))
+        var split = try victim.expenseFields(title: "Split", groupID: victim.shared.id.rawValue)
+        split.set("split", RecordCoding.encode(SplitDefinition.exact(amounts: [me: huge])))
+        let records = [
+            victim.crafted(.expense, name: UUID().uuidString, in: victim.sharedZone, fields: payers),
+            victim.crafted(.expense, name: UUID().uuidString, in: victim.sharedZone, fields: split),
+        ]
+        try victim.adapter.applyFetched(modifications: records, deletions: [])
+        let context = victim.device.tracker.context
+        #expect(try ExpenseRecord.find(recordName: records[0].recordID.recordName, in: context) == nil)
+        #expect(try ExpenseRecord.find(recordName: records[1].recordID.recordName, in: context) == nil)
+    }
 }
