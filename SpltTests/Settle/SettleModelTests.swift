@@ -233,6 +233,30 @@ struct SettleModelTests {
         #expect(model.amount == usdAmount(1100))
     }
 
+    @Test func aSecondUndoChangesNothing() throws {
+        let (fixture, debts) = try scene()
+        let model = model(fixture, debts: debts)
+        let receipt = try #require(model.record())
+        let center = SettleUndoCenter(visibleFor: .seconds(60))
+        center.show(receipt)
+        #expect(center.undo(using: fixture.services.payments))
+        let logged = try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count
+        #expect(!center.undo(using: fixture.services.payments))
+        model.undo()
+        model.undo()
+        #expect(try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count == logged)
+        #expect(try fixture.services.payments.payments(in: fixture.group.id).isEmpty)
+    }
+
+    @Test func steppingUpFromTheLargestDebtDoesNotCrash() throws {
+        let fixture = try Fixture()
+        let debt = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(.max))
+        let model = model(fixture, debts: [debt])
+        model.nudge(by: 1)
+        #expect(model.amount == debt.amount)
+        #expect(model.amountMode == .full)
+    }
+
     @Test func aDebtSmallerThanTheStepCanStillBePaidInPart() throws {
         let fixture = try Fixture()
         let debt = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(5))

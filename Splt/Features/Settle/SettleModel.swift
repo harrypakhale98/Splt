@@ -146,8 +146,8 @@ final class SettleModel {
     /// Moves the amount by whole steps, for the stepper and for VoiceOver. Never below one step.
     func nudge(by steps: Int) {
         guard let full = fullAmount, let current = amount else { return }
-        var units = current.minorUnits + Int64(steps) * step
-        units = max(units, step)
+        let (moved, overflow) = current.minorUnits.addingReportingOverflow(Int64(steps) * step)
+        let units = max(overflow ? Int64.max : moved, step)
         if !isReversed, units >= full.minorUnits {
             amountMode = .full
             return
