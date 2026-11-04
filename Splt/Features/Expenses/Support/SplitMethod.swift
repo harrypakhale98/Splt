@@ -38,11 +38,16 @@ enum SplitMethod: String, CaseIterable, Identifiable, Hashable, Sendable {
         switch self {
         case .equal: String(localized: "Equal")
         case .exact: String(localized: "Exact")
-        case .percentage: String(localized: "Percent")
+        case .percentage: String(localized: "%")
         case .shares: String(localized: "Shares")
         case .adjustment: String(localized: "Adjust")
         case .itemized: String(localized: "Items")
         }
+    }
+
+    /// What VoiceOver says for `shortTitle`, since a bare "%" is not a word.
+    var spokenShortTitle: String {
+        self == .percentage ? String(localized: "Percent") : shortTitle
     }
 
     var symbolName: String {
