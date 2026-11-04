@@ -50,8 +50,16 @@ struct InsightInput: Equatable, Sendable {
         self.members = members
     }
 
-    var totalByCategory: Int64 { categories.reduce(0) { $0 + max($1.minorUnits, 0) } }
-    var totalPaid: Int64 { members.reduce(0) { $0 + max($1.paidMinorUnits, 0) } }
+    var totalByCategory: Int64 { Self.sumOfPositives(categories.map(\.minorUnits)) }
+    var totalPaid: Int64 { Self.sumOfPositives(members.map(\.paidMinorUnits)) }
+
+    /// Stops at the largest value rather than overflow: totals of stored amounts have no upper limit.
+    private static func sumOfPositives(_ values: [Int64]) -> Int64 {
+        values.reduce(0) { sum, value in
+            let (next, overflow) = sum.addingReportingOverflow(max(value, 0))
+            return overflow ? .max : next
+        }
+    }
 
     fileprivate var allowedNames: Set<String> {
         var names: Set<String> = [groupName.folded]
@@ -232,6 +240,6 @@ struct InsightSummarizer: InsightSummarizing {
     /// Whole percent of `part` in `whole`, rounded to nearest, using integers only.
     static func percent(_ part: Int64, of whole: Int64) -> Int {
         guard whole > 0 else { return 0 }
-        return Int((Int128(part) * 100 + Int128(whole) / 2) / Int128(whole))
+        return Int(clamping: (Int128(part) * 100 + Int128(whole) / 2) / Int128(whole))
     }
 }

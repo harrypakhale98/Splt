@@ -88,4 +88,21 @@ struct InsightSummarizerTests {
         #expect(InsightSummarizer.percent(2, of: 3) == 67)
         #expect(InsightSummarizer.percent(5, of: 0) == 0)
     }
+
+    @Test func hugeStoredAmountsNeitherOverflowNorBreakThePercent() {
+        let input = InsightInput(
+            groupName: "Trip", kind: .trip, expenseCount: 3,
+            categories: [
+                InsightInput.CategoryAmount(name: "Food", minorUnits: .max),
+                InsightInput.CategoryAmount(name: "Taxi", minorUnits: .max)
+            ],
+            members: [
+                InsightInput.MemberAmount(name: "Sam", paidMinorUnits: .max),
+                InsightInput.MemberAmount(name: "Ana", paidMinorUnits: .max)
+            ]
+        )
+        #expect(input.totalByCategory == .max)
+        #expect(input.totalPaid == .max)
+        #expect(InsightSummarizer.percent(.max, of: 1) == Int.max)
+    }
 }
