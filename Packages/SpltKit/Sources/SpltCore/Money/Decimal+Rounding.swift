@@ -9,7 +9,7 @@ extension Decimal {
 
     /// The value as a 64 bit integer, or nil if it is fractional or out of range.
     var exactInt64: Int64? {
-        guard self == flooredToWhole else { return nil }
+        guard !isNaN, self == flooredToWhole else { return nil }
         let number = NSDecimalNumber(decimal: self)
         guard abs(self) < Decimal(Int64.max) else { return nil }
         return number.int64Value
