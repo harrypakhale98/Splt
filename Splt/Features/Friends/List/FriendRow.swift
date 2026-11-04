@@ -53,6 +53,9 @@ struct FriendRow: View {
                             .font(.system(.body, design: .rounded, weight: .semibold))
                             .monospacedDigit()
                             .foregroundStyle(MoneyLabel.balanceTint(for: line.money))
+                            // an amount never breaks across lines, as in MoneyLabel: the name wraps first
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                             .accessibilityLabel(spoken(line))
                         Text(caption(for: line.direction))
                             .font(.caption2)
@@ -61,6 +64,7 @@ struct FriendRow: View {
                     }
                 }
             }
+            .layoutPriority(1)
         }
     }
 
