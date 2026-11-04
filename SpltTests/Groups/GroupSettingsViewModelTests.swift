@@ -260,6 +260,28 @@ struct GroupSettingsViewModelTests {
         #expect(model.memberRows.count == 4)
     }
 
+    @Test func typingANameAlreadyInTheGroupAddsNobody() throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        let everyone = try fixture.services.people.allPeople().count
+        model.addMember(named: " SAM ")
+        #expect(model.memberRows.count == 3)
+        #expect(try fixture.services.people.allPeople().count == everyone)
+        #expect(model.errorMessage == "Sam is already in this group.")
+    }
+
+    @Test func typingTheNameOfAFriendAddsThatFriend() throws {
+        let fixture = try Fixture()
+        let outsider = Person(name: "Dee")
+        try fixture.services.people.add(outsider)
+        let model = makeModel(fixture)
+        let everyone = try fixture.services.people.allPeople().count
+        model.addMember(named: "dee")
+        #expect(model.memberRows.map(\.person.id).contains(outsider.id))
+        #expect(try fixture.services.people.allPeople().count == everyone)
+        #expect(model.errorMessage == nil)
+    }
+
     @Test func addingAFriendReusesThePerson() throws {
         let fixture = try Fixture()
         let outsider = Person(name: "Dee")

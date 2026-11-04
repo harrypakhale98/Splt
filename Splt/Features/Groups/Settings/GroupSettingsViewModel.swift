@@ -185,6 +185,18 @@ final class GroupSettingsViewModel {
     func addMember(named rawName: String, contactHint: String? = nil) {
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        let same = { (person: Person) in
+            person.name.compare(trimmed, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }
+        if let member = memberRows.first(where: { same($0.person) }) {
+            errorMessage = String(localized: "\(member.person.name) is already in this group.")
+            return
+        }
+        // the same name as a friend is that friend, as everywhere else people are added
+        if let friend = friendsToAdd.first(where: same) {
+            addMember(friend)
+            return
+        }
         perform {
             let person = Person(name: trimmed, contactHint: contactHint, kind: .placeholder)
             try people.add(person)

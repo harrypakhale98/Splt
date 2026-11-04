@@ -1921,6 +1921,9 @@
     "Inviting people needs iCloud, which this build of Splt can't use." : {
 
     },
+    "%@ is already in this group." : {
+
+    },
     "Invite with iCloud" : {
 
     },
