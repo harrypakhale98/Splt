@@ -121,4 +121,12 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("room 120 for 3 nights").amount == money(12000))
         #expect(parse("dinner at table 12 for 85").amount == money(8500))
     }
+
+    @Test func notesAndTheEngineAgreeOnEveryCurrency() {
+        for code in Locale.commonISOCurrencyCodes {
+            #expect(MinorUnitParser.fractionDigits(for: code) == Currency.minorUnitExponent(for: code), "\(code)")
+        }
+        #expect(parse("dinner 1500", code: "HUF").amount == money(150_000, "HUF"))
+        #expect(parse("dinner 5000", code: "IQD").amount == money(5_000_000, "IQD"))
+    }
 }

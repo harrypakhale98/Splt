@@ -1,4 +1,5 @@
 import Foundation
+import SpltCore
 
 /// Turns typed or recognised amounts such as "1,234.50" or "12,5" into integer minor units.
 ///
@@ -7,11 +8,7 @@ import Foundation
 enum MinorUnitParser {
     /// Number of digits after the decimal point for an ISO 4217 code (2 for USD, 0 for JPY).
     static func fractionDigits(for currencyCode: String) -> Int {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyCode.uppercased()
-        return formatter.maximumFractionDigits
+        Currency.minorUnitExponent(for: currencyCode)
     }
 
     static func minorUnits(from text: String, currencyCode: String) -> Int64? {
