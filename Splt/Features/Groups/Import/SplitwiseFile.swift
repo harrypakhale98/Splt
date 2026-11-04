@@ -13,6 +13,8 @@ enum SplitwiseFile {
     static func read(_ url: URL) throws -> String {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        // a file in the cloud is read whole into memory, so look at its size first
+        if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > maximumBytes { throw Unreadable() }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
         return try text(from: data)
     }

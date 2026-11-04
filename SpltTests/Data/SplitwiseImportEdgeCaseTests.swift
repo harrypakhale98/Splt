@@ -62,4 +62,14 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(SplitwiseFile.normalized(try SplitwiseFile.text(from: little)) == "Date,Ana")
         #expect(throws: SplitwiseFile.Unreadable.self) { try SplitwiseFile.text(from: Data([0x41, 0x00, 0x42])) }
     }
+
+    @Test func aHugeFileIsRefusedBeforeItIsRead() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "huge-\(UUID().uuidString).csv")
+        #expect(FileManager.default.createFile(atPath: url.path, contents: nil))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.truncate(atOffset: 20_000_001)
+        try handle.close()
+        #expect(throws: SplitwiseFile.Unreadable.self) { try SplitwiseFile.read(url) }
+    }
 }
