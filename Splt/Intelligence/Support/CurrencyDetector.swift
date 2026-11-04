@@ -64,8 +64,49 @@ enum CurrencyDetector {
         }
         let pattern = TextPattern("(?<![\\p{L}])(\(wordAlternation))(?![\\p{L}])")
         for match in pattern.matches(in: text) {
-            add(code(forToken: match.group(1, in: text) ?? "", defaultCode: defaultCode))
+            guard let token = match.group(1, in: text), let range = Range(match.range, in: text) else { continue }
+            let counts = writtenCodes.contains(token) || touchesAmount(range, in: text) || followsIn(range, in: text)
+            if counts { add(code(forToken: token, defaultCode: defaultCode)) }
         }
         return found
+    }
+
+    /// Currency words that are also product names on a receipt (a quarter pound burger, a dollar store) never count.
+    private static let printedWords: Set<String> = ["euro", "euros", "rupee", "rupees", "rs", "yen"]
+
+    /// What a printed receipt says its currency is: symbols, codes in capitals, and a few words right beside a number.
+    static func printedCodes(in text: String, defaultCode: String) -> [String] {
+        var found: [String] = []
+        func add(_ code: String?) {
+            if let code, !found.contains(code) { found.append(code) }
+        }
+        for character in text where symbols[character] != nil {
+            add(code(forToken: String(character), defaultCode: defaultCode))
+        }
+        let pattern = TextPattern("(?<![\\p{L}])(\(wordAlternation))(?![\\p{L}])")
+        for match in pattern.matches(in: text) {
+            guard let token = match.group(1, in: text), let range = Range(match.range, in: text) else { continue }
+            let isCode = writtenCodes.contains(token.uppercased())
+            let counts = writtenCodes.contains(token)
+                || ((isCode || printedWords.contains(token.lowercased())) && touchesAmount(range, in: text))
+            if counts { add(code(forToken: token, defaultCode: defaultCode)) }
+        }
+        return found
+    }
+
+    /// True when a number sits right before or after the word on the same line.
+    private static func touchesAmount(_ range: Range<String.Index>, in text: String) -> Bool {
+        var before = text[..<range.lowerBound].reversed().drop { $0 == " " }
+        if before.first == "k" || before.first == "K" { before = before.dropFirst() }
+        if before.first?.isNumber == true { return true }
+        let after = text[range.upperBound...].drop { $0 == " " || $0 == "." }
+        return after.first?.isNumber == true
+    }
+
+    /// True for "in euros".
+    private static func followsIn(_ range: Range<String.Index>, in text: String) -> Bool {
+        let before = text[..<range.lowerBound].reversed().drop { $0 == " " }
+        let word = String(before.prefix { $0.isLetter }.reversed())
+        return word.lowercased() == "in"
     }
 }

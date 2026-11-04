@@ -22,7 +22,7 @@ enum ReceiptRowParser {
     static func parse(pages: [[ReceiptTextLine]], options: ReceiptParsingOptions = ReceiptParsingOptions()) -> ParsedReceipt {
         let rows = pages.flatMap { ReceiptRowBuilder.rows(from: $0) }
         let allText = rows.map(\.text).joined(separator: "\n")
-        let currency = CurrencyDetector.codes(in: allText, defaultCode: options.defaultCurrencyCode).first
+        let currency = CurrencyDetector.printedCodes(in: allText, defaultCode: options.defaultCurrencyCode).first
             ?? options.defaultCurrencyCode.uppercased()
         let digits = MinorUnitParser.fractionDigits(for: currency)
 

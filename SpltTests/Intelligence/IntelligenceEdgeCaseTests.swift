@@ -41,4 +41,22 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("stamp 80 pence").amount == money(80, "GBP"))
         #expect(parse("chai 50 paise").amount == money(50, "INR"))
     }
+
+    @Test func currencyWordsAwayFromAnAmountAreNotCurrency() {
+        #expect(parse("pound cake 5").amount == money(500))
+        #expect(parse("euro trip 300").amount == money(30000))
+        #expect(parse("dollar store 200", code: "INR").amount == money(20000, "INR"))
+        #expect(parse("dinner 30 in euros").amount == money(3000, "EUR"))
+        #expect(parse("coffee 4.80 euros").amount == money(480, "EUR"))
+        #expect(parse("dinner euro 30").amount == money(3000, "EUR"))
+    }
+
+    @Test func productNamesOnAReceiptAreNotItsCurrency() {
+        #expect(receipt(["BURGER SHOP", "QUARTER POUND BURGER 5.99", "TOTAL 5.99"]).currencyCode == "USD")
+        #expect(receipt(["DOLLAR STORE", "SOAP 150.00", "TOTAL 150.00"], code: "INR").currencyCode == "INR")
+        #expect(receipt(["CAFE", "Tea 3.00", "TOTAL EUR 3.00"]).currencyCode == "EUR")
+        #expect(receipt(["CAFE", "Tea 3.00", "TOTAL EURO 3.00"]).currencyCode == "EUR")
+        #expect(receipt(["CAFE", "Chai Rs. 30.00", "TOTAL Rs. 30.00"]).currencyCode == "INR")
+        #expect(receipt(["CAFE", "Tea £3.00", "TOTAL £3.00"]).currencyCode == "GBP")
+    }
 }
