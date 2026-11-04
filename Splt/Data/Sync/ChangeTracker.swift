@@ -40,6 +40,12 @@ struct ChangeTracker {
         record.pendingOperation = .save
     }
 
+    /// Queues a change every device works out for itself. The modified date stays, so it never beats a real edit.
+    func recordBookkeeping(_ record: some SyncTracked) {
+        record.isDirty = true
+        record.pendingOperation = .save
+    }
+
     /// Marks an expense or payment as deleted but keeps it, so history survives. It uploads as a save.
     func softDelete(_ record: some SyncTracked) {
         noteBalanceChange(record)

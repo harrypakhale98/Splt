@@ -188,6 +188,68 @@ struct SyncConvergenceTests {
         #expect(try b.services.activity.unreadCount() > 0)
     }
 
+    // MARK: Recurring expenses made before the first fetch
+
+    private func rentTemplate() throws -> RecurringExpense {
+        let template = RecurringExpense(
+            groupID: group.id, title: "Rent", total: usdAmount(90_000), category: .rent,
+            payers: [me.id: usdAmount(90_000)], split: .equal(participants: [me.id, sam.id]),
+            rule: RecurrenceRule(frequency: .monthly, startDate: a.clock.start, timeZone: TimeZone(identifier: "UTC")!),
+            createdAt: a.clock.start
+        )
+        try a.services.recurring.add(template)
+        try exchange()
+        return template
+    }
+
+    @Test func anOccurrenceMadeLateDoesNotUndoAnEditMadeElsewhere() throws {
+        _ = try rentTemplate()
+        var made = try #require(try a.services.recurring.createDueExpenses(through: a.clock.start).first)
+        made.title = "Rent and bills"
+        made.note = "Edited on the first phone"
+        try a.services.expenses.update(made, extras: nil)
+        // the second phone opens days later and makes its own copy before it has fetched anything
+        b.clock.advance(by: 86_400 * 3)
+        #expect(try b.services.recurring.createDueExpenses(through: a.clock.start).count == 1)
+        try exchange()
+        #expect(try a.services.expenses.expense(id: made.id)?.title == "Rent and bills")
+        #expect(try b.services.expenses.expense(id: made.id)?.title == "Rent and bills")
+    }
+
+    @Test func anOccurrenceMadeLateDoesNotBringBackADeleteMadeElsewhere() throws {
+        _ = try rentTemplate()
+        let made = try #require(try a.services.recurring.createDueExpenses(through: a.clock.start).first)
+        try a.services.expenses.delete(id: made.id)
+        b.clock.advance(by: 86_400 * 3)
+        _ = try b.services.recurring.createDueExpenses(through: a.clock.start)
+        try exchange()
+        #expect(try a.services.expenses.expense(id: made.id)?.deletedAt != nil)
+        #expect(try b.services.expenses.expense(id: made.id)?.deletedAt != nil)
+    }
+
+    @Test func makingOccurrencesDoesNotUndoATemplateEditMadeElsewhere() throws {
+        var template = try rentTemplate()
+        template.title = "Rent and bills"
+        try a.services.recurring.update(template)
+        b.clock.advance(by: 86_400 * 3)
+        _ = try b.services.recurring.createDueExpenses(through: a.clock.start)
+        try exchange()
+        #expect(try b.services.recurring.templates(in: group.id).first?.title == "Rent and bills")
+        #expect(try a.services.recurring.templates(in: group.id).first?.title == "Rent and bills")
+    }
+
+    @Test func theSameOccurrenceMadeOnBothPhonesEndsUpTheSame() throws {
+        _ = try rentTemplate()
+        let made = try #require(try a.services.recurring.createDueExpenses(through: a.clock.start).first)
+        b.clock.advance(by: 500)
+        _ = try b.services.recurring.createDueExpenses(through: a.clock.start)
+        try exchange()
+        let first = try a.tracker.payload(recordType: .expense, recordName: made.id.description)
+        let second = try b.tracker.payload(recordType: .expense, recordName: made.id.description)
+        #expect(first?.fields == second?.fields)
+        #expect(first?.modifiedAt == second?.modifiedAt)
+    }
+
     @Test func theOwnersProfileArrivesAsAFriendNotAsMe() throws {
         let received = try #require(try b.services.people.person(id: me.id))
         #expect(received.kind == .friend)
