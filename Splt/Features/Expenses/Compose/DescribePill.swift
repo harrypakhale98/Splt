@@ -125,8 +125,13 @@ struct DescribePill: View {
 /// An icon with a 44 point tap target, for the small icon buttons inside the pill.
 private struct PillIconLabelStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.icon
-            .frame(minWidth: 44, minHeight: 44)
-            .contentShape(.rect)
+        Label {
+            configuration.title
+        } icon: {
+            configuration.icon
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .labelStyle(.iconOnly)
     }
 }

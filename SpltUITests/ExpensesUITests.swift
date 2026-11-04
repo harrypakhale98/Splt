@@ -17,6 +17,17 @@ final class ExpensesUITests: XCTestCase {
     }
 
     @MainActor
+    func testDescribePillIconButtonsHaveNames() {
+        let app = launchInGroup(named: "Road Trip", member: "Alex")
+
+        app.buttons["Add Expense"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
+
+        XCTAssertTrue(app.buttons["Scan Receipt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Choose Receipt Photo"].exists)
+    }
+
+    @MainActor
     func testAddsAnExpenseAndOpensItsDetail() {
         let app = launchInGroup(named: "Road Trip", member: "Alex")
 
