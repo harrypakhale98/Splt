@@ -32,7 +32,7 @@ struct AmountHero: View {
                     }
                 }
                 // long amounts shrink rather than run under the hide button
-                .padding(.horizontal, keypadOpen ? 44 : 0)
+                .padding(.horizontal, keypadOpen ? 56 : 0)
                 .frame(maxWidth: .infinity)
                 .contentShape(.rect)
             }
