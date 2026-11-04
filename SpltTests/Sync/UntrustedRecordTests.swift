@@ -306,6 +306,26 @@ struct UntrustedRecordTests {
         #expect(try sams.services.people.person(id: me.id) == nil)
     }
 
+    /// Every member's device makes these itself, so one record would otherwise hang each of them on every launch.
+    @Test func aTemplateFromLongAgoMakesOnlyAFewAtATime() throws {
+        let victim = try Victim()
+        let me = victim.populated.me
+        let template = RecurringExpense(
+            groupID: victim.shared.id, title: "Rent", total: usdAmount(100), category: .rent,
+            payers: [me.id: usdAmount(100)], split: .equal(participants: [me.id]),
+            rule: RecurrenceRule(
+                frequency: .daily, startDate: victim.device.clock.start.addingTimeInterval(-86_400 * 9_000),
+                timeZone: TimeZone(identifier: "UTC")!
+            )
+        )
+        let record = victim.crafted(
+            .recurringExpense, name: template.id.uuidString, in: victim.sharedZone, fields: RecurringExpenseRecord(template).syncFields
+        )
+        try victim.adapter.applyFetched(modifications: [record], deletions: [])
+        let made = try victim.device.services.recurring.createDueExpenses(through: victim.device.clock.start)
+        #expect(made.count <= 100)
+    }
+
     @Test func aPersonCopyDeletedInASharedZoneStaysOnThisDevice() throws {
         let victim = try Victim()
         let sam = victim.populated.sam

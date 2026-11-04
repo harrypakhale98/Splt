@@ -67,7 +67,12 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
             guard let template = try? RecurringExpense(record),
                   let groupID = template.groupID,
                   try env.groupRecord(groupID) != nil else { continue }
-            let due = template.rule.dueOccurrences(after: template.lastCreatedOccurrence, through: now)
+            // Anyone in a group can sync a template that started decades ago, and every member's device makes
+            // its expenses. Older occurrences are not billed, and a backlog goes a little on each run.
+            let oldest = now.addingTimeInterval(-366 * 86_400)
+            let due = template.rule.dueOccurrences(
+                after: max(template.lastCreatedOccurrence ?? .distantPast, oldest), through: now, limit: 100
+            )
             guard let latest = due.last else { continue }
             // a template that cannot make a valid expense must not stop the others
             guard (try? template.expense(on: latest).validate()) != nil else { continue }

@@ -42,6 +42,28 @@ struct RecurringExpenseRepositoryTests {
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 4)
     }
 
+    @Test func catchingUpStopsAYearBackAndGoesInSteps() throws {
+        let fixture = try Fixture()
+        try fixture.services.recurring.add(template(fixture, frequency: .daily, startingDaysAgo: 3_000))
+        let now = fixture.clock.start
+        var all: [Expense] = []
+        for run in 1...5 {
+            let made = try fixture.services.recurring.createDueExpenses(through: now)
+            #expect(made.count <= 100, "run \(run)")
+            all += made
+        }
+        #expect((365...367).contains(all.count))
+        #expect(all.allSatisfy { now.timeIntervalSince($0.date) <= 366 * 86_400 })
+        #expect(try fixture.services.recurring.createDueExpenses(through: now).isEmpty)
+    }
+
+    @Test func aMonthlyTemplateCatchesUpOnEveryMonthOfTheLastYear() throws {
+        let fixture = try Fixture()
+        try fixture.services.recurring.add(template(fixture, frequency: .monthly, startingDaysAgo: 330))
+        let made = try fixture.services.recurring.createDueExpenses(through: fixture.clock.start)
+        #expect(made.count == 11)
+    }
+
     @Test func laterRunsOnlyAddWhatBecameDue() throws {
         let fixture = try Fixture()
         try fixture.services.recurring.add(template(fixture, frequency: .daily))

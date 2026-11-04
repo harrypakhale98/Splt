@@ -46,7 +46,8 @@ CloudKit gives everyone in a shared zone write access to the whole zone, and any
 
 - A record only counts inside its own group: its group id must be the zone it came from, and a record cannot take over or delete one from another group.
 - A zone with the name of a group on this device but another owner is ignored, so edits never go to it.
-- Amounts larger than the app itself allows are refused.
+- Amounts larger than the app itself allows, and modified dates more than ten years ahead, are refused.
+- Each device makes a recurring expense's occurrences itself, so a template only catches up on the last year, at most 100 expenses each time the app opens.
 - A person record cannot delete anyone, and only your own devices can rename you here.
 - A file name on a synced expense can only ever point at a receipt photo.
 
