@@ -141,19 +141,21 @@ struct FriendHero: View {
 
     private var actions: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { buttons }
-            VStack(spacing: 10) { buttons }
+            HStack(spacing: 10) { buttons(oneLine: true) }
+            VStack(spacing: 10) { buttons(oneLine: true) }
+            // a very long first name wraps rather than widening the card
+            VStack(spacing: 10) { buttons(oneLine: false) }
         }
         .controlSize(.large)
         .padding(.top, 4)
     }
 
     @ViewBuilder
-    private var buttons: some View {
+    private func buttons(oneLine: Bool) -> some View {
         Button(action: primary.run) {
             HStack(spacing: 8) {
                 Image(systemName: primary.symbol)
-                Text(primary.title).fixedSize(horizontal: true, vertical: false)
+                Text(primary.title).fixedSize(horizontal: oneLine, vertical: false)
             }
             .font(.headline)
             .foregroundStyle(PersonPalette.onColor)
@@ -164,7 +166,7 @@ struct FriendHero: View {
             Button(action: secondary.run) {
                 HStack(spacing: 8) {
                     Image(systemName: secondary.symbol)
-                    Text(secondary.title).fixedSize(horizontal: true, vertical: false)
+                    Text(secondary.title).fixedSize(horizontal: oneLine, vertical: false)
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
