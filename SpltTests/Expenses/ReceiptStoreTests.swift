@@ -47,6 +47,24 @@ struct ReceiptStoreTests {
         #expect(url.deletingLastPathComponent().lastPathComponent == store.directory.lastPathComponent)
     }
 
+    @Test(arguments: ["..", ".", "", "/", "../..", "Thumbnails", "../Thumbnails", "secret.sqlite"])
+    func aNameFromAnotherDeviceCannotReachOtherFiles(name: String) throws {
+        let base = FileManager.default.temporaryDirectory.appending(path: "splt-base-\(UUID().uuidString)")
+        let store = ReceiptStore(directory: base.appending(path: "Receipts"))
+        let kept = try store.save(photo(side: 50))
+        let beside = base.appending(path: "default.store")
+        try Data("store".utf8).write(to: beside)
+        try Data("other".utf8).write(to: store.directory.appending(path: "secret.sqlite"))
+
+        #expect(store.image(named: name) == nil)
+        store.delete(name)
+        #expect(store.exists(kept))
+        #expect(FileManager.default.fileExists(atPath: store.thumbnailURL(for: kept).path))
+        #expect(FileManager.default.fileExists(atPath: beside.path))
+        #expect(FileManager.default.fileExists(atPath: store.directory.appending(path: "secret.sqlite").path))
+        try FileManager.default.removeItem(at: base)
+    }
+
     @Test func thumbnailsFallBackToThePhoto() throws {
         let store = store()
         let name = try store.save(photo(side: 200))

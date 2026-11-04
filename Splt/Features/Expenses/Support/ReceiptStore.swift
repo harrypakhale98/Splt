@@ -60,9 +60,11 @@ struct ReceiptStore: Sendable {
         try? FileManager.default.removeItem(at: thumbnailURL(for: fileName))
     }
 
-    /// Strips any folder part so a stored name can never point outside the receipt folder.
+    /// The name comes from a synced record, so it can be anything. A last path component can still be `..`,
+    /// which is Application Support with the store in it, so only a photo's name gets through.
     private static func safeName(_ fileName: String) -> String {
-        (fileName as NSString).lastPathComponent
+        let name = (fileName as NSString).lastPathComponent
+        return name.hasSuffix(".jpg") ? name : "missing.jpg"
     }
 
     private static func jpeg(from data: Data, maximumPixels: Int, quality: Double) -> Data? {
