@@ -12,11 +12,18 @@ struct SaveFailureOutcome: Equatable {
 }
 
 extension SyncStoreAdapter {
-    /// Records the server accepted and records it deleted.
-    func didSend(saved: [CKRecord], deleted: [CKRecord.ID]) throws {
+    /// Records the server accepted and records it deleted. Returns the accepted records that no longer
+    /// exist here: they were deleted during their first upload, so the server must delete them too.
+    @discardableResult
+    func didSend(saved: [CKRecord], deleted: [CKRecord.ID]) throws -> [CKRecord.ID] {
         var copies: [(PersonCopyKey, PersonCopy)] = []
+        var orphans: [CKRecord.ID] = []
         for record in saved {
             guard let type = SyncRecordType(rawValue: record.recordType) else { continue }
+            guard try type.modelType.find(recordName: record.recordID.recordName, in: tracker.context) != nil else {
+                orphans.append(record.recordID)
+                continue
+            }
             let sentAt = (record[RecordSchema.modifiedAtKey] as? Date) ?? .distantPast
             let systemFields = RecordMapper.encodeSystemFields(record)
             if type == .person {
@@ -47,6 +54,7 @@ extension SyncStoreAdapter {
         for id in deleted {
             try didDelete(id)
         }
+        return orphans
     }
 
     private func didDelete(_ id: CKRecord.ID) throws {

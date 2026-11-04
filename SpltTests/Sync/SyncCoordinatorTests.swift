@@ -244,6 +244,25 @@ struct SyncCoordinatorTests {
         #expect(try rig.device.services.people.me()?.id == CloudIdentity.personID(forUserRecordName: "_bob"))
         #expect(rig.device.adapter.metadata.userRecordName == "_bob")
     }
+
+    @Test func aRecordDeletedDuringItsFirstUploadIsDeletedOnTheServer() throws {
+        let rig = try rig()
+        let device = rig.device
+        let cloud = FakeCloud()
+        try cloud.upload(from: device)
+        let expense = try #require(try device.services.expenses.expenses(in: rig.populated.group.id).first)
+        let comment = ExpenseComment(
+            groupID: rig.populated.group.id, expenseID: expense.id, authorID: rig.populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        let (_, sending) = try device.outgoing()
+        let inFlight = try #require(sending.first { $0.recordID.recordName == comment.id.uuidString })
+
+        try device.services.comments.delete(id: comment.id)
+        try rig.coordinator.sentRecords(saved: sending, failedSaves: [], deleted: [], failedDeletes: [:], scope: .privateDatabase)
+        #expect(rig.privateQueue.plans.flatMap(\.deletes) == [inFlight.recordID])
+    }
 }
 
 @MainActor

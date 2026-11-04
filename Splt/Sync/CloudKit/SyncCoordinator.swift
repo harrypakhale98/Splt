@@ -153,7 +153,8 @@ final class SyncCoordinator {
         saved: [CKRecord], failedSaves: [(record: CKRecord, error: CKError)],
         deleted: [CKRecord.ID], failedDeletes: [CKRecord.ID: CKError], scope: DatabaseScope
     ) throws {
-        try adapter.didSend(saved: saved, deleted: deleted)
+        let orphans = try adapter.didSend(saved: saved, deleted: deleted)
+        if !orphans.isEmpty { queues[scope]?.queue(OutgoingPlan(deletes: orphans)) }
         var failures: [SyncFailure] = []
         for failed in failedSaves {
             let outcome = try adapter.saveFailed(record: failed.record, error: failed.error)
