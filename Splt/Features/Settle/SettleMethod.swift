@@ -56,6 +56,7 @@ enum SettleMethod: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// The address to open for a payment of `amount`, or nil when there is none for this method.
+    /// Venmo and Cash App read a bare number as dollars, so other currencies leave the amount for the person to enter.
     /// `recipient` is whatever the receiver shared, such as a username or a UPI address; it is
     /// only passed on when it fits the method.
     func paymentURL(amount: Money, note: String, recipient: String?) -> URL? {
@@ -70,7 +71,7 @@ enum SettleMethod: String, CaseIterable, Identifiable, Sendable {
         case .venmo:
             var items = [URLQueryItem(name: "txn", value: "pay")]
             if let handle, !handle.isEmpty { items.append(URLQueryItem(name: "recipients", value: handle.trimmingCharacters(in: CharacterSet(charactersIn: "@")))) }
-            items.append(URLQueryItem(name: "amount", value: figure))
+            if amount.currencyCode == "USD" { items.append(URLQueryItem(name: "amount", value: figure)) }
             if !note.isEmpty { items.append(URLQueryItem(name: "note", value: note)) }
             return Self.url("venmo://paycharge", items)
         case .paypal:
@@ -80,7 +81,8 @@ enum SettleMethod: String, CaseIterable, Identifiable, Sendable {
             return URL(string: "https://www.paypal.com/myaccount/transfer/homepage/send")
         case .cashApp:
             if let handle, handle.hasPrefix("$"), Self.looksLikeUsername(String(handle.dropFirst())) {
-                return URL(string: "https://cash.app/\(Self.pathSafe(handle))/\(figure)")
+                let path = amount.currencyCode == "USD" ? "/\(figure)" : ""
+                return URL(string: "https://cash.app/\(Self.pathSafe(handle))\(path)")
             }
             return URL(string: "https://cash.app")
         case .zelle:
