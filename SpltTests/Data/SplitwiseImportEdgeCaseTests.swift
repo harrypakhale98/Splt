@@ -19,4 +19,10 @@ struct SplitwiseImportEdgeCaseTests {
         #expect(cost.expenses.isEmpty)
         #expect(cost.warnings.count == 1)
     }
+
+    @Test func aShortYearIsNotADate() throws {
+        let result = try parse("25-03-14,X,General,10.00,USD,5.00,-5.00")
+        #expect(result.expenses.isEmpty)
+        #expect(result.warnings.map(\.message) == ["Unreadable date."])
+    }
 }

@@ -177,7 +177,8 @@ enum SplitwiseCSVImporter {
     /// A date such as 2025-03-14, placed at noon so a shifted time zone does not change the day.
     private static func date(_ text: String, calendar: Calendar) -> Date? {
         let parts = text.split(separator: "-").map { Int($0) }
-        guard parts.count == 3, let year = parts[0], let month = parts[1], let day = parts[2] else { return nil }
+        guard parts.count == 3, let year = parts[0], let month = parts[1], let day = parts[2],
+              (1900...2200).contains(year) else { return nil }
         let components = DateComponents(year: year, month: month, day: day, hour: 12)
         guard let date = calendar.date(from: components),
               calendar.dateComponents([.year, .month, .day], from: date) == DateComponents(year: year, month: month, day: day)
