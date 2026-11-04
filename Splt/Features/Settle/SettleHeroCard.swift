@@ -31,12 +31,12 @@ struct SettleHeroCard: View {
             if ceremony.finished {
                 Text(model.remaining == nil ? String(localized: "All square") : String(localized: "still owed"))
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(.legibleOnTint)
                     .transition(.opacity)
             } else if !ceremony.rolled, let remaining = model.remaining {
                 Text("\(MoneyFormatting.magnitudeString(remaining, locale: locale)) will still be owed")
                     .font(.footnote)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(.legibleOnTint)
             }
         }
         .padding(.vertical, 16)
@@ -56,7 +56,7 @@ struct SettleHeroCard: View {
     private var caption: some View {
         Text(model.headline)
             .font(.headline)
-            .foregroundStyle(ceremony.finished ? Color.legible : Color.primary)
+            .foregroundStyle(ceremony.finished ? Color.legibleOnTint : Color.primary)
     }
 
     private var stageLayout: SettleStage.Layout {

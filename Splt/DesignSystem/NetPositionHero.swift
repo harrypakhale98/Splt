@@ -46,11 +46,11 @@ struct NetPositionHero: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(scope)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.legible)
+                .foregroundStyle(.legibleOnTint)
             figure
             Text(sentence)
                 .font(.subheadline)
-                .foregroundStyle(.legible)
+                .foregroundStyle(.legibleOnTint)
                 .fixedSize(horizontal: false, vertical: true)
             if !owedBy.isEmpty || !owedTo.isEmpty {
                 people
@@ -128,7 +128,7 @@ struct NetPositionHero: View {
             AvatarStack(people, size: 30, limit: 3, ring: Color(.secondarySystemGroupedBackground))
             Text(caption)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.legible)
+                .foregroundStyle(.legibleOnTint)
         }
     }
 }

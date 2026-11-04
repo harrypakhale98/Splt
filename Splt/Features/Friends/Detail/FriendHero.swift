@@ -37,7 +37,7 @@ struct FriendHero: View {
                 if friend.isPlaceholder {
                     Text("Not on Splt yet")
                         .font(.footnote)
-                        .foregroundStyle(.legible)
+                        .foregroundStyle(.legibleOnTint)
                 }
             }
             figure
@@ -98,12 +98,12 @@ struct FriendHero: View {
                 HeroAmount(amount)
                 Text(sentence(for: amount))
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(.legibleOnTint)
                 if !position.others.isEmpty {
                     Text("Also \(otherAmounts)")
                         .font(.footnote.weight(.medium))
                         .monospacedDigit()
-                        .foregroundStyle(.legible)
+                        .foregroundStyle(.legibleOnTint)
                         .accessibilityLabel(Text("Also \(spokenOthers)"))
                 }
             } else {
@@ -113,7 +113,7 @@ struct FriendHero: View {
                     .lineLimit(1)
                 Text("Nothing owed between you and \(ReminderMessage.firstName(friend.name)).")
                     .font(.subheadline)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(.legibleOnTint)
                     .multilineTextAlignment(.center)
             }
         }
@@ -156,6 +156,7 @@ struct FriendHero: View {
                 Text(primary.title).fixedSize(horizontal: true, vertical: false)
             }
             .font(.headline)
+            .foregroundStyle(PersonPalette.onColor)
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.glassProminent)

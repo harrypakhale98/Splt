@@ -18,7 +18,7 @@ struct RecapEntryCard: View {
                 HStack {
                     Label(group.kind == .trip ? "Trip Recap" : "Recap", systemImage: "sparkles.rectangle.stack")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.primary.opacity(0.7))
+                        .foregroundStyle(Color.legibleOnTint)
                     Spacer()
                     if !typeSize.isAccessibilitySize {
                         AvatarStack(members, members: group.memberIDs, size: 24, limit: 4)
@@ -60,7 +60,7 @@ struct RecapEntryCard: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(Color.primary.opacity(0.7))
+                .foregroundStyle(Color.legibleOnTint)
             Text(MoneyFormatting.string(money, locale: locale))
                 .font(.system(size, design: .rounded, weight: .bold))
                 .monospacedDigit()

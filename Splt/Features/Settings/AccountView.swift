@@ -58,7 +58,7 @@ struct AccountHero: View {
                 if !profile.hasName, summary.meName == nil || summary.meName == String(localized: "You") {
                     Text("Add your name so friends know it is you")
                         .font(.subheadline)
-                        .foregroundStyle(.legible)
+                        .foregroundStyle(.legibleOnTint)
                         .multilineTextAlignment(.center)
                 }
             }
