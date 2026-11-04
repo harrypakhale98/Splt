@@ -22,8 +22,12 @@ enum RateInput {
         guard !digits.isEmpty else { return nil }
 
         var plain = digits
-        if let separator, let offset = separatorOffset, digits.count - offset != 3 || String(separator) != locale.groupingSeparator {
-            plain.insert(".", at: plain.index(plain.startIndex, offsetBy: offset))
+        if let separator, let offset = separatorOffset {
+            let isGrouping = String(separator) == locale.groupingSeparator
+                && (1...3).contains(offset) && digits.count - offset == 3 && digits.first != "0"
+            if !isGrouping {
+                plain.insert(".", at: plain.index(plain.startIndex, offsetBy: offset))
+            }
         }
         guard let value = Decimal(string: plain, locale: Locale(identifier: "en_US_POSIX")), value > 0 else { return nil }
         return value
