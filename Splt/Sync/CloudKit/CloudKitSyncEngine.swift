@@ -199,12 +199,12 @@ final class CloudKitSyncEngine: SyncEngine {
             try await backend.shareService.stopSharing(zoneID: zoneID)
             return
         }
-        guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { throw SyncError.notReady }
-        // what is still waiting, such as this person leaving the member list, has to go out while the zone is ours
+        coordinator.requestLeave(zoneName: zoneID.zoneName)
+        // before sync has started the request just waits: it is stored, and the first reconcile picks it up
+        guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { return }
         try coordinator.reconcile()
         try? await sharedSyncer.sendChanges()
-        try adapter.tracker.retireLocally(zone: zoneID.zoneName)
-        sharedSyncer.queue(zonesToDelete: [zoneID])
+        try coordinator.reconcile()
         try await sharedSyncer.sendChanges()
     }
 }

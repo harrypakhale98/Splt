@@ -116,28 +116,6 @@ struct CloudKitSyncEngineTests {
 
     // MARK: Leaving
 
-    @Test func leavingASharedGroupHidesItAndLeavesTheZone() async throws {
-        let owner = "_owner"
-        let rig = try Rig()
-        let zoneName = rig.populated.zone
-        rig.device.store.saveMetadata({
-            var metadata = rig.device.store.loadMetadata()
-            metadata.zones[zoneName] = ZoneInfo(ownerName: owner, scope: .sharedDatabase)
-            return metadata
-        }())
-        let engine = CloudKitSyncEngine(
-            backend: rig.backend, services: rig.device.services, store: rig.device.store,
-            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10)
-        )
-        await engine.start()
-        try await engine.leave(group: rig.populated.group.id)
-        let zone = CKRecordZone.ID(zoneName: zoneName, ownerName: owner)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
-        #expect(rig.backend.sharedHandle.sendCount == 2)
-        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
-        await engine.stop()
-    }
-
     @Test func theOwnerLeavingStopsSharingAndKeepsTheGroup() async throws {
         let rig = try Rig()
         await rig.engine.start()
@@ -216,33 +194,136 @@ struct CloudKitSyncEngineTests {
         #expect(rig.backend.madeEngines.isEmpty)
     }
 
-    @Test func leavingASharedGroupRemovesYouFromItFirstAndShowsNoError() async throws {
-        let rig = try Rig(seed: { metadata in
-            var metadata = metadata
-            metadata.userRecordName = "_alice"
-            return metadata
-        })
-        let group = rig.populated.group
+    /// A group someone else shared with this device, on an engine that has not started yet.
+    private func sharedRig(retry: BackoffPolicy = BackoffPolicy()) throws -> (rig: Rig, engine: CloudKitSyncEngine, zone: CKRecordZone.ID) {
+        let rig = try Rig()
         var metadata = rig.device.store.loadMetadata()
         metadata.zones[rig.populated.zone] = ZoneInfo(ownerName: "_owner", scope: .sharedDatabase)
         rig.device.store.saveMetadata(metadata)
         let engine = CloudKitSyncEngine(
             backend: rig.backend, services: rig.device.services, store: rig.device.store,
-            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10)
+            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10), retryPolicy: retry
         )
-        await engine.start()
-        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        return (rig, engine, CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: "_owner"))
+    }
+
+    /// Tells the engine the server accepted everything the group's zone has waiting.
+    private func confirmUploads(_ rig: Rig, _ engine: CloudKitSyncEngine, zone: CKRecordZone.ID) throws {
+        let tracker = rig.device.tracker
+        let records = try tracker.pendingChanges().filter { $0.zoneName == zone.zoneName }.compactMap { change -> CKRecord? in
+            try tracker.payload(recordType: change.recordType, recordName: change.recordName).map {
+                RecordMapper.record(for: $0, in: zone)
+            }
+        }
+        let syncer = try #require(engine.syncers.first { $0.scope == .sharedDatabase })
+        syncer.handle(.sentRecords(saved: records, failedSaves: [], deleted: [], failedDeletes: [:]))
+    }
+
+    private func leaveThroughTheScreen(_ rig: Rig, _ engine: CloudKitSyncEngine) async -> (left: Bool, error: String?) {
         let runtime = SyncRuntime()
         runtime.use(engine)
-        let model = GroupSettingsViewModel(groupID: group.id, services: rig.device.services, leftGroups: isolatedLeftGroups())
+        let model = GroupSettingsViewModel(groupID: rig.populated.group.id, services: rig.device.services, leftGroups: isolatedLeftGroups())
         let left = await model.leave(using: SyncGroupSharing(runtime: runtime))
-        #expect(left)
-        #expect(model.errorMessage == nil)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs.map(\.zoneName) == [rig.populated.zone])
-        // the note that this person left went to the server before the zone was given up
-        let notes = try rig.device.tracker.context.fetch(FetchDescriptor<ActivityRecord>())
-        let note = try #require(notes.first { $0.kindRaw == "memberRemoved" })
+        return (left, model.errorMessage)
+    }
+
+    private func removalNote(_ rig: Rig) throws -> ActivityRecord? {
+        try rig.device.tracker.context.fetch(FetchDescriptor<ActivityRecord>()).first { $0.kindRaw == "memberRemoved" }
+    }
+
+    @Test func leavingGivesUpTheZoneOnlyAfterTheRemovalWasSent() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        await engine.start()
+        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        let result = await leaveThroughTheScreen(rig, engine)
+        #expect(result.left)
+        #expect(result.error == nil)
+        let note = try #require(try removalNote(rig))
         #expect(rig.backend.sharedHandle.savedRecordIDs.contains { $0.recordName == note.recordName })
+        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
+
+        try confirmUploads(rig, engine, zone: zone)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
+        await engine.stop()
+    }
+
+    @Test func leavingWhileOfflineKeepsTheRemovalAndFinishesWhenItIsSent() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        await engine.start()
+        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        rig.backend.sharedHandle.sendError = CKError(.networkUnavailable)
+        let result = await leaveThroughTheScreen(rig, engine)
+        #expect(result.left)
+        let note = try #require(try removalNote(rig))
+        #expect(note.isDirty)
+        #expect(note.deletedAt == nil)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(rig.device.store.loadMetadata().pendingLeaves == [zone.zoneName])
+
+        rig.backend.sharedHandle.sendError = nil
+        try confirmUploads(rig, engine, zone: zone)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.device.store.loadMetadata().pendingLeaves?.isEmpty == true)
+        await engine.stop()
+    }
+
+    @Test func leavingAfterAnOfflineLaunchIsRememberedAndFinishesOnceSyncStarts() async throws {
+        let (rig, engine, zone) = try sharedRig(retry: BackoffPolicy(base: 0.01, cap: 0.01))
+        rig.backend.userResult = .failure(CKError(.networkUnavailable))
+        await engine.start()
+        let result = await leaveThroughTheScreen(rig, engine)
+        #expect(result.left)
+        #expect(result.error == nil)
+        #expect(rig.device.store.loadMetadata().pendingLeaves == [zone.zoneName])
+
+        rig.backend.userResult = .success("_alice")
+        #expect(await eventually { engine.syncers.count == 2 })
+        let note = try #require(try removalNote(rig))
+        #expect(await eventually { rig.backend.sharedHandle.savedRecordIDs.contains { $0.recordName == note.recordName } })
+        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        try confirmUploads(rig, engine, zone: zone)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        await engine.stop()
+    }
+
+    @Test func aLeaveWaitingToFinishSurvivesARelaunch() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        await engine.start()
+        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        rig.backend.sharedHandle.sendError = CKError(.networkUnavailable)
+        _ = await leaveThroughTheScreen(rig, engine)
+        await engine.stop()
+        rig.backend.sharedHandle.sendError = nil
+
+        let relaunched = CloudKitSyncEngine(
+            backend: rig.backend, services: rig.device.services, store: rig.device.store,
+            connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10)
+        )
+        await relaunched.start()
+        #expect(await eventually { relaunched.syncers.count == 2 })
+        try await Task.sleep(for: .milliseconds(50))
+        try confirmUploads(rig, relaunched, zone: zone)
+        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        // given up here but not yet confirmed: planned again until the server says so
+        #expect(try rig.device.tracker.pendingChanges().contains { $0.recordType == .group && $0.operation == .delete })
+        await relaunched.stop()
+    }
+
+    @Test func aLeaveDoesNotWaitForAZoneThatRefusesTheChanges() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        await engine.start()
+        #expect(await eventually { !rig.backend.sharedHandle.savedRecordIDs.isEmpty })
+        _ = await leaveThroughTheScreen(rig, engine)
+        let note = try #require(try removalNote(rig))
+        let payload = try #require(try rig.device.tracker.payload(recordType: .activity, recordName: note.recordName))
+        let syncer = try #require(engine.syncers.first { $0.scope == .sharedDatabase })
+        syncer.handle(.sentRecords(
+            saved: [], failedSaves: [(RecordMapper.record(for: payload, in: zone), CKError(.permissionFailure))],
+            deleted: [], failedDeletes: [:]
+        ))
+        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
         await engine.stop()
     }
 }

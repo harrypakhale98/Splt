@@ -45,6 +45,20 @@ extension ChangeTracker {
         try save()
     }
 
+    func hasUnsentChanges(inZone zone: String) throws -> Bool {
+        try records(inZone: zone).contains { $0.isDirty }
+    }
+
+    /// Hides a zone's records and marks its group for removal, which plans leaving the zone until the
+    /// server confirms it, also across launches.
+    func retireForLeaving(zone: String) throws {
+        try retireLocally(zone: zone)
+        guard let group = try GroupRecord.find(recordName: zone, in: context) else { return }
+        group.isDirty = true
+        group.pendingOperation = .delete
+        try save()
+    }
+
     /// Drops the tombstones of a zone that no longer exists on the server.
     func purgeTombstones(inZone zone: String) throws {
         for record in try records(inZone: zone) where record.deletedAt != nil && !record.isDirty {

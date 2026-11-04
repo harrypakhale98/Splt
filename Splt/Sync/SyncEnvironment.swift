@@ -19,6 +19,14 @@ enum NoOpReason: Equatable, Sendable {
     case restricted
     case accountUnavailable
 
+    /// True when this build can sync and only the account stands in the way.
+    var isAboutTheAccount: Bool {
+        switch self {
+        case .noAccount, .restricted, .accountUnavailable: true
+        case .simulator, .preview, .testing, .missingEntitlement: false
+        }
+    }
+
     var status: SyncStatus {
         switch self {
         case .simulator, .preview, .testing, .missingEntitlement: .unavailable

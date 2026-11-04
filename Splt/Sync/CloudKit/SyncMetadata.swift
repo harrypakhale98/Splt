@@ -36,6 +36,9 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     /// Groups left on the device by the previous iCloud account. They stay local and are not uploaded.
     /// Optional so that metadata saved before this field existed still loads.
     var detachedZones: Set<String>?
+    /// Shared groups this person left, waiting for their last changes to reach the others.
+    /// Optional for the same reason.
+    var pendingLeaves: Set<String>?
 
     func isDetached(zoneName: String) -> Bool {
         detachedZones?.contains(zoneName) == true
@@ -85,5 +88,6 @@ struct SyncMetadata: Codable, Equatable, Sendable {
         zones[zoneName] = nil
         personCopies[zoneName] = nil
         personQueue = personQueue.filter { $0.zoneName != zoneName }
+        pendingLeaves?.remove(zoneName)
     }
 }

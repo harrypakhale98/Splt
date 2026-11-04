@@ -55,6 +55,7 @@ final class SyncCoordinator {
 
     /// Accepting an invitation makes this person a member, even if they were removed or left before.
     func joined(zoneName: String) throws {
+        adapter.updateMetadata { $0.pendingLeaves?.remove(zoneName) }
         guard let user = userRecordName else { return }
         try ParticipantImporter(services: services).ensureMembership(ofMe: user, inZone: zoneName, afterInvitation: true)
     }
@@ -90,14 +91,31 @@ final class SyncCoordinator {
     // MARK: Queueing
 
     /// Queues everything the data store has waiting.
-    func reconcile() throws {
+    func reconcile(givingUpOn refused: Set<String> = []) throws {
         guard isReady else { return }
         try adoptIdentity()
+        try finishLeaves(givingUpOn: refused)
         let plan = try adapter.collectOutgoing()
         guard !plan.isEmpty else { return }
         for scope in DatabaseScope.allCases {
             let part = plan.part(for: scope)
             if !part.isEmpty { queues[scope]?.queue(part) }
+        }
+    }
+
+    /// Remembers that this person is leaving a shared group. The zone is given up once what they
+    /// still have to send, such as leaving the member list, has gone out: after that they cannot write to it.
+    func requestLeave(zoneName: String) {
+        adapter.updateMetadata { $0.pendingLeaves = ($0.pendingLeaves ?? []).union([zoneName]) }
+    }
+
+    private func finishLeaves(givingUpOn refused: Set<String>) throws {
+        for zone in (adapter.metadata.pendingLeaves ?? []).sorted() {
+            if adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
+                if !refused.contains(zone), try adapter.tracker.hasUnsentChanges(inZone: zone) { continue }
+                try adapter.tracker.retireForLeaving(zone: zone)
+            }
+            adapter.updateMetadata { $0.pendingLeaves?.remove(zone) }
         }
     }
 
@@ -182,7 +200,9 @@ final class SyncCoordinator {
             failures.append(try adapter.deleteFailed(id: id, error: error))
         }
         noteResult(failures: failures, scope: scope)
-        if failures.isEmpty { try reconcile() }
+        // no permission means the zone is no longer ours, so a leave has nothing more to wait for
+        let refused = failedSaves.filter { SyncFailure($0.error) == .noPermission }.map(\.record.recordID.zoneID.zoneName)
+        if failures.isEmpty || !refused.isEmpty { try reconcile(givingUpOn: Set(refused)) }
     }
 
     private func noteResult(failures: [SyncFailure], scope: DatabaseScope) {

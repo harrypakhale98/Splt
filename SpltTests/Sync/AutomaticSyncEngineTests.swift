@@ -129,6 +129,37 @@ struct AutomaticSyncEngineTests {
         #expect(fake.left == [group])
         await engine.stop()
     }
+
+    @Test func leavingWhileTheAccountIsOutOfReachIsRememberedForTheEngine() async {
+        let store = InMemorySyncStateStore()
+        let engine = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        #expect(engine.choice == .noOp(.accountUnavailable))
+        let group = GroupID()
+        try? await engine.leave(group: group)
+        #expect(store.loadMetadata().pendingLeaves == [group.description])
+        await engine.stop()
+    }
+
+    @Test func aBuildThatCannotSyncRemembersNoLeave() async {
+        let store = InMemorySyncStateStore()
+        let simulator = {
+            var environment = SyncEnvironment.signedDevice()
+            environment.isSimulator = true
+            return environment
+        }()
+        let engine = AutomaticSyncEngine(
+            environment: { simulator }, probe: FakeAccountProbe(.available), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        await #expect(throws: SyncError.unavailable) { try await engine.leave(group: GroupID()) }
+        #expect(store.loadMetadata().pendingLeaves == nil)
+        await engine.stop()
+    }
 }
 
 @MainActor

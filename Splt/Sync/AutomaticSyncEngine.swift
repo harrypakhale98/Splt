@@ -27,18 +27,21 @@ final class AutomaticSyncEngine: SyncEngine {
     @ObservationIgnored private var rechecking: Task<Void, Never>?
     @ObservationIgnored private let recheckInterval: Duration
     @ObservationIgnored private var isRunning = false
+    @ObservationIgnored private let stateStore: any SyncStateStore
 
     init(
         environment: @escaping @Sendable () -> SyncEnvironment = { .current },
         probe: any AccountProbe,
         accountChanges: @escaping @Sendable () -> AsyncStream<Void> = { AutomaticSyncEngine.systemAccountChanges() },
         recheckInterval: Duration = .seconds(30),
+        stateStore: any SyncStateStore = FileSyncStateStore(),
         makeCloudKitEngine: @escaping @MainActor (String) -> any SyncEngine
     ) {
         self.environment = environment
         self.probe = probe
         self.accountChanges = accountChanges
         self.recheckInterval = recheckInterval
+        self.stateStore = stateStore
         self.makeCloudKitEngine = makeCloudKitEngine
         self.status = .unavailable
         self.broadcaster = StatusBroadcaster(initial: .unavailable)
@@ -85,6 +88,13 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     func leave(group: GroupID) async throws {
+        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+            // iCloud is only out of reach for now: the CloudKit engine finishes this when it starts
+            var metadata = stateStore.loadMetadata()
+            metadata.pendingLeaves = (metadata.pendingLeaves ?? []).union([group.description])
+            stateStore.saveMetadata(metadata)
+            return
+        }
         try await current.leave(group: group)
     }
 
