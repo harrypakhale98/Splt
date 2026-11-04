@@ -2360,10 +2360,48 @@
 
     },
     "Scanned %lld items. Tap people under each item to assign it." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Scanned %lld item. Tap people under each item to assign it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Scanned %lld items. Tap people under each item to assign it."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "Scanned %lld items. The numbers do not fully add up, so check them against the receipt." : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Scanned %lld item. The numbers do not fully add up, so check them against the receipt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Scanned %lld items. The numbers do not fully add up, so check them against the receipt."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "Scanning Isn't Available" : {
 
@@ -3371,7 +3409,26 @@
 
     },
     "split %lld ways" : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "split %lld way"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "split %lld ways"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "split by amount" : {
 

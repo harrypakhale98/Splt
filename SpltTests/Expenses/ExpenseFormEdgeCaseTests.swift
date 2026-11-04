@@ -143,4 +143,21 @@ struct ExpenseFormEdgeCaseTests {
         #expect(AmountKeypad.display("-1234.00", locale: english) == "-1,234.00")
         #expect(AmountKeypad.display("1234", locale: english) == "1,234")
     }
+
+    @Test func oneScannedItemReadsAsSingular() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        var parsed = ParsedReceipt(currencyCode: "USD")
+        parsed.items = [item("Pasta", 2000)]
+        parsed.total = usd(2000)
+        model.apply(receipt: parsed)
+        #expect(model.scanNotice?.hasPrefix("Scanned 1 item.") == true)
+    }
+
+    @Test func oneWayReadsAsSingular() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.participants = [harness.me]
+        #expect(model.summaryLine.hasSuffix("split 1 way"))
+    }
 }
