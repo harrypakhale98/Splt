@@ -19,6 +19,8 @@ final class SwiftDataGroupRepository: GroupRepository {
     }
 
     func create(_ group: SplitGroup) throws {
+        var group = group
+        group.name = group.name.limited(to: RecordLimits.name)
         let record = GroupRecord(group)
         env.context.insert(record)
         env.tracker.recordEdit(record)
@@ -27,6 +29,8 @@ final class SwiftDataGroupRepository: GroupRepository {
     }
 
     func update(_ group: SplitGroup) throws {
+        var group = group
+        group.name = group.name.limited(to: RecordLimits.name)
         guard let record = try env.groupRecord(group.id) else { throw DataError.notFound("group \(group.id)") }
         let previousName = record.name
         let members = record.memberIDs

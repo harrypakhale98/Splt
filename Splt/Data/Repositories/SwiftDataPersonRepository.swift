@@ -46,6 +46,8 @@ final class SwiftDataPersonRepository: PersonRepository {
     }
 
     func add(_ person: Person) throws {
+        var person = person
+        person.name = person.name.limited(to: RecordLimits.name)
         let record = PersonRecord(person)
         env.context.insert(record)
         env.tracker.recordEdit(record)
@@ -53,6 +55,8 @@ final class SwiftDataPersonRepository: PersonRepository {
     }
 
     func update(_ person: Person) throws {
+        var person = person
+        person.name = person.name.limited(to: RecordLimits.name)
         guard let record = try env.personRecord(person.id) else { throw DataError.notFound("person \(person.id)") }
         record.update(from: person)
         env.tracker.recordEdit(record)

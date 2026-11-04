@@ -41,6 +41,7 @@ final class SwiftDataPaymentRepository: PaymentRepository {
 
     /// Stores many payments without saving or logging, after checking them all with a few queries.
     func insertBatch(_ payments: [Payment]) throws {
+        let payments = payments.map(Self.fitted)
         var knownGroups = Set<GroupID>()
         var seen = Set<PaymentID>()
         for payment in payments {
@@ -105,6 +106,7 @@ final class SwiftDataPaymentRepository: PaymentRepository {
 
     /// Stores a payment without saving. Importers pass `logsActivity: false`.
     func insert(_ payment: Payment, logsActivity: Bool = true) throws {
+        let payment = Self.fitted(payment)
         guard let groupID = payment.groupID else { throw DataError.missingGroup }
         guard try env.groupRecord(groupID) != nil else { throw DataError.notFound("group \(groupID)") }
         do {
@@ -119,6 +121,12 @@ final class SwiftDataPaymentRepository: PaymentRepository {
         if logsActivity {
             try env.log(.paymentRecorded(Self.reference(payment)), groupID: groupID)
         }
+    }
+
+    private static func fitted(_ payment: Payment) -> Payment {
+        var payment = payment
+        payment.note = payment.note.limited(to: RecordLimits.text)
+        return payment
     }
 
     private static func reference(_ payment: Payment) -> PaymentReference {

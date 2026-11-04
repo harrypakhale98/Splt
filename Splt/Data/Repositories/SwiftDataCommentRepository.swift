@@ -31,6 +31,8 @@ final class SwiftDataCommentRepository: CommentRepository {
     }
 
     func add(_ comment: ExpenseComment) throws {
+        var comment = comment
+        comment.text = comment.text.limited(to: RecordLimits.text)
         guard try CommentRecord.find(recordName: comment.id.uuidString, in: env.context) == nil else {
             throw DataError.alreadyExists("comment \(comment.id)")
         }
@@ -46,6 +48,7 @@ final class SwiftDataCommentRepository: CommentRepository {
     }
 
     func edit(id: UUID, text: String) throws {
+        let text = text.limited(to: RecordLimits.text)
         let record = try find(id)
         guard record.text != text else { return }
         record.text = text

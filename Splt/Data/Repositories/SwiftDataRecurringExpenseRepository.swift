@@ -20,6 +20,7 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
     }
 
     func add(_ template: RecurringExpense) throws {
+        let template = Self.fitted(template)
         guard let groupID = template.groupID else { throw DataError.missingGroup }
         guard try env.groupRecord(groupID) != nil else { throw DataError.notFound("group \(groupID)") }
         let record = RecurringExpenseRecord(template)
@@ -29,6 +30,7 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
     }
 
     func update(_ template: RecurringExpense) throws {
+        let template = Self.fitted(template)
         guard let record = try RecurringExpenseRecord.find(recordName: template.id.uuidString, in: env.context),
               record.deletedAt == nil else { throw DataError.notFound("recurring expense \(template.id)") }
         record.update(from: template)
@@ -41,6 +43,13 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
               record.deletedAt == nil else { return }
         env.tracker.tombstone(record)
         try env.save()
+    }
+
+    private static func fitted(_ template: RecurringExpense) -> RecurringExpense {
+        var template = template
+        template.title = template.title.limited(to: RecordLimits.name)
+        template.note = template.note.limited(to: RecordLimits.text)
+        return template
     }
 
     @discardableResult
