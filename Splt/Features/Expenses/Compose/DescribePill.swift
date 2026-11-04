@@ -34,6 +34,13 @@ struct DescribePill: View {
                 }
             }
 
+            if let notice = dictation.notice {
+                Label(notice, systemImage: "mic.slash")
+                    .font(.footnote)
+                    .foregroundStyle(.legible)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 6)
+            }
             if let notice = model.filledNotice {
                 Label(notice, systemImage: "checkmark.circle")
                     .font(.footnote)

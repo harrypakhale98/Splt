@@ -1006,6 +1006,9 @@
     "Credit card" : {
 
     },
+    "Dictation could not start. You can type instead." : {
+
+    },
     "Dumbbell" : {
 
     },
@@ -1046,6 +1049,9 @@
 
     },
     "Link copied" : {
+
+    },
+    "Microphone access is off for Splt. Turn it on in Settings, or type instead." : {
 
     },
     "Most of this group went to %@." : {
@@ -3385,6 +3391,9 @@
 
     },
     "You are settled up in %@." : {
+
+    },
+    "You shared this group, so you can't leave it. Stop sharing in Invite with iCloud to keep it just for you, or delete it to remove it for everyone." : {
 
     },
     "You are the only member. Delete the group instead." : {
