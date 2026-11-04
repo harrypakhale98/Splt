@@ -50,8 +50,9 @@ enum MinorUnitParser {
             if digitsAfter == 0 {
                 decimalIndex = last.offset
             } else if fractionDigits == 0 {
-                guard digitsAfter == 3 else { return nil }
+                guard digitsAfter == 3, text.first != "0" else { return nil }
             } else if digitsAfter == 3 && !(fractionDigits == 3 && isDot) {
+                guard text.first != "0" else { return nil }
                 decimalIndex = nil
             } else if digitsAfter <= fractionDigits {
                 decimalIndex = last.offset
@@ -60,7 +61,8 @@ enum MinorUnitParser {
             }
         } else {
             let groups = text.split(separator: last.element, omittingEmptySubsequences: false).dropFirst()
-            guard groups.allSatisfy({ $0.count == 3 }) else { return nil }
+            // the last group has three digits, the ones before two or three: 1,234,567 or 1,23,456
+            guard groups.last?.count == 3, groups.dropLast().allSatisfy({ (2...3).contains($0.count) }) else { return nil }
         }
 
         if let decimalIndex {

@@ -129,4 +129,13 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("dinner 1500", code: "HUF").amount == money(150_000, "HUF"))
         #expect(parse("dinner 5000", code: "IQD").amount == money(5_000_000, "IQD"))
     }
+
+    @Test func indianGroupingIsRead() {
+        #expect(parse("rent ₹1,00,000").amount == money(10_000_000, "INR"))
+        #expect(parse("car 12,34,567.50", code: "INR").amount == money(123_456_750, "INR"))
+        #expect(parse("rent 1,234,567").amount == money(123_456_700))
+        #expect(MinorUnitParser.minorUnits(from: "1,23,45", fractionDigits: 2) == nil)
+        #expect(MinorUnitParser.minorUnits(from: "0.125", fractionDigits: 2) == nil)
+        #expect(MinorUnitParser.minorUnits(from: "0.125", fractionDigits: 3) == 125)
+    }
 }
