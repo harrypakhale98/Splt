@@ -25,6 +25,7 @@ struct ExpenseFormView: View {
 }
 
 private struct ExpenseFormScreen: View {
+    @Environment(Router.self) private var router: Router?
     @State private var model: ExpenseFormModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -61,6 +62,8 @@ private struct ExpenseFormScreen: View {
             .toolbar { toolbar }
         }
         .interactiveDismissDisabled(model.isDirty)
+        .onChange(of: model.isDirty, initial: true) { router?.hasUnsavedForm = model.isDirty }
+        .onDisappear { router?.hasUnsavedForm = false }
         .confirmationDialog("Discard this expense?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
             Button("Discard Changes", role: .destructive) { dismiss() }
             Button("Keep Editing", role: .cancel) {}

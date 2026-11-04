@@ -88,6 +88,37 @@ struct UIRouterTests {
         #expect(!router.open(URL(string: "https://example.com/group/\(id)")!))
         #expect(!router.open(URL(string: "splt://unknown")!))
     }
+
+    @Test func aLinkWaitsForAFormWithUnsavedWork() {
+        let router = Router()
+        router.sheet = .addExpense
+        router.hasUnsavedForm = true
+        router.open(.group(id))
+        #expect(router.sheet == .addExpense)
+        #expect(router.groupsPath.isEmpty)
+
+        router.hasUnsavedForm = false
+        #expect(router.groupsPath == [.group(id)])
+    }
+
+    @Test func aLinkClosesASheetWithNothingToLose() {
+        let router = Router()
+        router.sheet = .addExpense
+        router.open(.group(id))
+        #expect(router.sheet == nil)
+        #expect(router.groupsPath == [.group(id)])
+    }
+
+    @Test func onlyTheLatestLinkIsKeptWhileAFormIsOpen() {
+        let router = Router()
+        router.sheet = .addExpense
+        router.hasUnsavedForm = true
+        router.open(.friend(id))
+        router.open(.group(id))
+        router.hasUnsavedForm = false
+        #expect(router.groupsPath == [.group(id)])
+        #expect(router.friendsPath.isEmpty)
+    }
 }
 
 @Suite("Deep links")

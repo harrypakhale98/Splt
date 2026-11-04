@@ -8,6 +8,16 @@ import Observation
 final class Router {
     var selectedTab: AppTab = .groups
     var sheet: AppSheet?
+    /// True while an open form holds typed work. A link then waits, so it cannot close the form
+    /// or the screen under it, and opens once the form is gone.
+    var hasUnsavedForm = false {
+        didSet {
+            guard !hasUnsavedForm, let link = waitingLink else { return }
+            waitingLink = nil
+            open(link)
+        }
+    }
+    @ObservationIgnored private var waitingLink: DeepLink?
     /// The welcome tour, shown on first launch and from Account.
     var showsOnboarding = false
     /// An invite that was opened from a link or a scan, waiting for the add friend sheet to confirm it.
@@ -54,6 +64,10 @@ final class Router {
     }
 
     func open(_ link: DeepLink) {
+        guard !hasUnsavedForm else {
+            waitingLink = link
+            return
+        }
         switch link {
         case .group(let id):
             sheet = nil
