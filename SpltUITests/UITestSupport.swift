@@ -44,7 +44,8 @@ extension XCTestCase {
 
     @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
-        let button = app.tabBars.firstMatch.buttons[name]
+        // iPhone Duo shows the tabs in a side rail, outside any tab bar
+        let button = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.buttons[name] : app.buttons[name].firstMatch
         // the tab bar shrinks to the current tab while a list is scrolled down
         var attempts = 0
         while !button.exists && attempts < 8 {
