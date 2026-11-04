@@ -147,7 +147,24 @@ struct InsightSummarizer: InsightSummarizing {
                 if !allowed.contains(folded) && !["i", "you"].contains(folded) { return nil }
             }
         }
+        guard opensWithKnownSubject(sentences, allowed: allowed) else { return nil }
         return cleaned.hasSuffix(".") || cleaned.hasSuffix("!") || cleaned.hasSuffix("?") ? cleaned : cleaned + "."
+    }
+
+    /// The capital letter check cannot judge a sentence's first word, so "Bob paid most" needs its own check.
+    /// Refusing too much is safe: the template takes over.
+    private static func opensWithKnownSubject(_ sentences: [Substring], allowed: Set<String>) -> Bool {
+        let verbs: Set<String> = [
+            "paid", "pays", "covered", "covers", "fronted", "picked", "spent", "bought", "handled", "footed", "took", "has", "is", "was"
+        ]
+        let openers: Set<String> = [
+            "everyone", "everybody", "someone", "somebody", "nobody", "it", "this", "that", "they", "you", "we", "most", "spending", "the"
+        ]
+        return sentences.allSatisfy { sentence in
+            let words = sentence.split(separator: " ").map { String($0).folded.trimmingCharacters(in: .punctuationCharacters) }
+            guard words.count > 1, verbs.contains(words[1]) else { return true }
+            return allowed.contains(words[0]) || openers.contains(words[0])
+        }
     }
 
     // MARK: Fallback sentences
@@ -195,6 +212,6 @@ struct InsightSummarizer: InsightSummarizing {
     /// Whole percent of `part` in `whole`, rounded to nearest, using integers only.
     static func percent(_ part: Int64, of whole: Int64) -> Int {
         guard whole > 0 else { return 0 }
-        return Int((part * 100 + whole / 2) / whole)
+        return Int((Int128(part) * 100 + Int128(whole) / 2) / Int128(whole))
     }
 }

@@ -89,4 +89,20 @@ struct IntelligenceEdgeCaseTests {
         #expect(parse("Pizza \u{1F355} 20").title == "Pizza \u{1F355}")
         #expect(parse("= dinner + 20").title == "Dinner")
     }
+
+    @Test func insightsMayNotOpenWithAnInventedName() {
+        let input = InsightInput(
+            groupName: "Flat", expenseCount: 3, categories: [.init(name: "Food", minorUnits: 100)],
+            members: [.init(name: "Sam", paidMinorUnits: 100)]
+        )
+        #expect(InsightSummarizer.validated("Bob covered most of it.", for: input) == nil)
+        #expect(InsightSummarizer.validated("Sam covered most of it.", for: input) != nil)
+        #expect(InsightSummarizer.validated("Most of it went to food.", for: input) != nil)
+        #expect(InsightSummarizer.validated("Everyone has paid a similar amount.", for: input) != nil)
+        #expect(InsightSummarizer.validated("Food was the biggest part. Bob paid the rest.", for: input) == nil)
+    }
+
+    @Test func insightPercentagesSurviveHugeTotals() {
+        #expect(InsightSummarizer.percent(.max / 2, of: .max) == 50)
+    }
 }
