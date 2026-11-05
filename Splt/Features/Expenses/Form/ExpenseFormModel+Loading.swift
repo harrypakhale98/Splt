@@ -87,28 +87,5 @@ extension ExpenseFormModel {
 }
 
 extension ExpenseFormModel {
-    /// Groups the expense can be added to, newest first. Empty unless adding.
-    var availableGroups: [SplitGroup] {
-        guard case .add = mode else { return [] }
-        return (try? services.groups.groups(includeArchived: false)) ?? []
-    }
-
-    /// Moves a new expense to another group, resetting the people-based fields to that group's members.
-    func switchGroup(to id: GroupID) {
-        guard case .add = mode, id != group?.id,
-              let next = try? services.groups.group(id: id) else { return }
-        let previousCurrency = group?.currencyCode
-        do {
-            try configure(group: next, extra: [])
-        } catch {
-            return
-        }
-        if currencyCode != previousCurrency { currencyCode = next.currencyCode }
-        participants = Set(members.map(\.id))
-        payer = PayerState()
-        payer.single = members.contains { $0.id == me?.id } ? me?.id : members.first?.id
-        split = SplitEditorState()
-    }
-
     static let lastGroupKey = "expenses.lastGroupID"
 }

@@ -401,13 +401,13 @@ struct ExpenseRatesSeamTests {
         #expect(rates.rate(from: "EUR", to: "USD") == Decimal(string: "1.3"))
     }
 
-    @Test func dataServicesExposeTheSeamAndWarmItself() async throws {
+    @Test func dataServicesExposeTheSeam() async throws {
         let provider = StubRatesProvider()
         provider.setLatest(table("USD", fetchedAt: clock.start, rates: ["EUR": 0.9]), base: "USD")
         let service = RatesService(provider: provider, cache: RatesCache(directory: nil, now: clock.reading), now: clock.reading)
         let services = try DataServices.inMemory(rates: service, now: clock.reading)
         try services.groups.create(SplitGroup(name: "Flat", currencyCode: "USD"))
-        await services.warmRates()
+        await service.warmUp(currencies: ["USD"])
         let seamGroup = try #require(try services.groups.groups(includeArchived: false).first)
         #expect(services.expenseRates.rates(seamGroup) != nil)
         #expect(services.rates === service)

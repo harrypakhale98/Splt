@@ -687,12 +687,6 @@
     "Add the person's real name as a friend first." : {
 
     },
-    "Add what you paid. Splt works out who owes whom, to the cent, and keeps it all in one place." : {
-
-    },
-    "Add your name so friends know it is you" : {
-
-    },
     "Added %@, %@, to %@." : {
       "localizations" : {
         "en" : {
@@ -842,9 +836,6 @@
     "Blocked" : {
 
     },
-    "Both Ways" : {
-
-    },
     "Busiest %@: %@, %@" : {
       "localizations" : {
         "en" : {
@@ -856,9 +847,6 @@
       }
     },
     "By Category" : {
-
-    },
-    "By Group" : {
 
     },
     "By item" : {
@@ -1129,9 +1117,6 @@
     "Dinner 60 with Sam and Priya" : {
 
     },
-    "Dinner 60 with Sam and Priya, I paid" : {
-
-    },
     "Direct expenses" : {
 
     },
@@ -1160,12 +1145,6 @@
 
     },
     "Each Person Pays" : {
-
-    },
-    "Each payment is recorded so the group ends up square." : {
-
-    },
-    "Each person keeps one color in every group, balance and split, so you can tell who is who at a glance." : {
 
     },
     "Each person pays in proportion to their shares, for example 2 shares for a couple and 1 for a single person." : {
@@ -1268,9 +1247,6 @@
 
     },
     "Everyone Is Hidden" : {
-
-    },
-    "Everyone has a color" : {
 
     },
     "Everyone is settled up" : {
@@ -1397,18 +1373,6 @@
     },
     "Finished" : {
 
-    },
-    "Free Forever" : {
-      "comment" : "Settings section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Free Forever"
-          }
-        }
-      }
     },
     "Friend" : {
       "comment" : "Title of a single friend screen",
@@ -1590,9 +1554,6 @@
     "History" : {
 
     },
-    "Hold a person for who paid" : {
-
-    },
     "Home" : {
 
     },
@@ -1768,9 +1729,6 @@
     "Merge %@?" : {
 
     },
-    "Merge With…" : {
-
-    },
     "Merge into %@" : {
 
     },
@@ -1841,9 +1799,6 @@
       }
     },
     "New Person" : {
-
-    },
-    "New groups start with this currency." : {
 
     },
     "Next %@" : {
@@ -2002,18 +1957,6 @@
         }
       }
     },
-    "Notifications remind you about balances and new expenses in your groups." : {
-      "comment" : "Footer of the Feedback settings section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notifications remind you about balances and new expenses in your groups."
-          }
-        }
-      }
-    },
     "Number pad" : {
 
     },
@@ -2084,12 +2027,6 @@
 
     },
     "Over %@" : {
-
-    },
-    "Owe You" : {
-
-    },
-    "Owes You" : {
 
     },
     "PDF" : {
@@ -2179,12 +2116,6 @@
     "People you hide or block show up here." : {
 
     },
-    "Per day" : {
-
-    },
-    "Per month" : {
-
-    },
     "Percent" : {
 
     },
@@ -2225,9 +2156,6 @@
 
     },
     "Quarterly" : {
-
-    },
-    "Quick Add" : {
 
     },
     "Rate" : {
@@ -2431,9 +2359,6 @@
     "Settle up first. This person still owes or is owed money in the group." : {
 
     },
-    "Settled Up" : {
-
-    },
     "Settled up" : {
       "comment" : "VoiceOver label for a zero balance",
       "extractionState" : "manual",
@@ -2459,9 +2384,6 @@
 
     },
     "Share Link" : {
-
-    },
-    "Shared Expenses" : {
 
     },
     "Shared by %@" : {
@@ -2622,21 +2544,6 @@
 
     },
     "Splt group with %@" : {
-
-    },
-    "Splt has no ads, no limits and no subscription, now and later." : {
-      "comment" : "Statement that the app is free",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Splt has no ads, no limits and no subscription, now and later."
-          }
-        }
-      }
-    },
-    "Splt is free forever: no ads, no limits, no subscription, and nothing to sign up for. With iCloud on, your groups sync between your devices and the people you share them with. Without it, everything stays on this device." : {
 
     },
     "Splt isn't allowed to send notifications. You can change this in the Settings app." : {
@@ -2891,9 +2798,6 @@
     "Trip" : {
 
     },
-    "Trip Recap" : {
-
-    },
     "Try a different filter." : {
 
     },
@@ -3034,9 +2938,6 @@
           }
         }
       }
-    },
-    "You Owe" : {
-
     },
     "You already imported this file." : {
 

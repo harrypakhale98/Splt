@@ -68,13 +68,6 @@ final class DataServices {
     /// Rates for the expense form's seam: pinned group rate first, then the cached latest table.
     var expenseRates: ExpenseRates { .cached(by: rates) }
 
-    /// Downloads or loads the latest rates for every group currency so conversions can show at once.
-    func warmRates() async {
-        let currencies = Set(((try? groups.groups(includeArchived: false)) ?? []).map(\.currencyCode))
-        warmedCurrencies = currencies
-        await rates.warmUp(currencies: currencies)
-    }
-
     private func warmRatesIfNeeded() {
         let currencies = Set(((try? groups.groups(includeArchived: false)) ?? []).map(\.currencyCode))
         guard currencies != warmedCurrencies else { return }

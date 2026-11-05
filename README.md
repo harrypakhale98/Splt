@@ -52,18 +52,6 @@ Splt looks like a well-kept paper ledger: ink on warm paper, with big printed nu
 - Settling up draws an arc between two people and closes a ring when you are square. A short haptic marks it, and you can turn haptics off in Settings.
 - It works in light and dark, with Dynamic Type up to the largest accessibility sizes, VoiceOver labels and Reduce Motion.
 
-When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
-
-## Design
-
-- Every person has one color that follows them across groups, balances, splits and recaps. Text on a color picks black or white for contrast.
-- The balance orbit puts people on a ring with ribbons for payments. Tap a person to see only their payments.
-- The split bar shows each share as a block in that person's color. Drag a divider, or tap a person to fine tune.
-- Settling up draws an arc between two people and closes a ring when you are square. A short haptic marks it, and you can turn haptics off in Settings.
-- It works in light and dark, with Dynamic Type up to the largest accessibility sizes, VoiceOver labels and Reduce Motion.
-
-When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
-
 ## Requirements
 
 - Xcode 26 or later

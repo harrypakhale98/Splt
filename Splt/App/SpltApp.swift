@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct SpltApp: App {
-    @State private var router = Router(selectedTab: LaunchServices.startTab())
+    @State private var router = Router()
     @State private var services: DataServices?
     @State private var isReady = false
     @UIApplicationDelegateAdaptor(SyncAppDelegate.self) private var appDelegate

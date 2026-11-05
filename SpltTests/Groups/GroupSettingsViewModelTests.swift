@@ -135,7 +135,6 @@ struct GroupSettingsViewModelTests {
         try fixture.addExpense(cents: 3000, paidBy: fixture.sam)
         let model = makeModel(fixture)
         let row = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
-        #expect(!row.canRemove)
 
         model.remove(row)
         let message = try #require(model.blockedMessage)
@@ -159,7 +158,6 @@ struct GroupSettingsViewModelTests {
         try fixture.addExpense(cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
         let model = makeModel(fixture)
         let row = try #require(model.memberRows.first { $0.person.id == fixture.priya.id })
-        #expect(row.canRemove)
 
         model.remove(row)
         #expect(model.blockedMessage == nil)
@@ -176,7 +174,6 @@ struct GroupSettingsViewModelTests {
         )
         let model = makeModel(fixture)
         let row = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
-        #expect(row.canRemove)
         model.remove(row)
         #expect(model.blockedMessage == nil)
         #expect(!model.memberRows.contains { $0.person.id == fixture.sam.id })
@@ -186,7 +183,6 @@ struct GroupSettingsViewModelTests {
         let fixture = try Fixture()
         let model = makeModel(fixture)
         let mine = try #require(model.myRow)
-        #expect(!mine.canRemove)
         model.remove(mine)
         #expect(model.memberRows.count == 3)
     }

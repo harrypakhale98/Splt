@@ -201,19 +201,4 @@ struct ExpenseFormSavingTests {
         #expect(model.date == harness.fixture.clock.start)
         #expect(model.canSave)
     }
-
-    @Test func movingToAnotherGroupResetsThePeople() throws {
-        let harness = try ExpenseFormHarness()
-        let trip = SplitGroup(
-            name: "Trip", currencyCode: "EUR", memberIDs: [harness.me, harness.sam]
-        )
-        try harness.fixture.services.groups.create(trip)
-        let model = harness.filledDinner()
-        model.switchGroup(to: trip.id)
-        #expect(model.group?.id == trip.id)
-        #expect(model.currencyCode == "EUR")
-        #expect(model.participants == [harness.me, harness.sam])
-        #expect(model.members.count == 2)
-        #expect(model.availableGroups.count == 2)
-    }
 }

@@ -43,18 +43,6 @@ extension Money {
         return Money(minorUnits: value, currencyCode: currencyCode)
     }
 
-    /// The amount without its sign.
-    public func absoluteValue() throws -> Money {
-        isNegative ? try negated() : self
-    }
-
-    /// The amount times a whole number.
-    public func multiplied(by factor: Int64) throws -> Money {
-        let (value, overflow) = minorUnits.multipliedReportingOverflow(by: factor)
-        guard !overflow else { throw MoneyError.overflow }
-        return Money(minorUnits: value, currencyCode: currencyCode)
-    }
-
     /// A share of the amount in basis points (1 basis point is 0.01 percent), rounded half away from zero.
     /// Handy for tips and tax: `bill.percentage(basisPoints: 1800)` is 18 percent.
     public func percentage(basisPoints: Int64) throws -> Money {

@@ -14,18 +14,18 @@ struct UIAvatarTests {
     }
 
     @Test func colorIsStableForTheSameName() {
-        #expect(AvatarStyle.paletteIndex(for: "Sam Rivera") == AvatarStyle.paletteIndex(for: "Sam Rivera"))
-        #expect(AvatarStyle.paletteIndex(for: "Sam Rivera") == AvatarStyle.paletteIndex(for: " sam rivera "))
+        #expect(PersonPalette.preferredIndex(forName: "Sam Rivera") == PersonPalette.preferredIndex(forName: "Sam Rivera"))
+        #expect(PersonPalette.preferredIndex(forName: "Sam Rivera") == PersonPalette.preferredIndex(forName: " sam rivera "))
     }
 
     @Test func paletteIndexHasAKnownValue() {
         // pins the hash so colors never change between releases
-        #expect(AvatarStyle.paletteIndex(for: "a") == 4)
+        #expect(PersonPalette.preferredIndex(forName: "a") == 4)
     }
 
     @Test func differentNamesSpreadAcrossThePalette() {
         let names = ["Sam", "Priya", "Alex", "Jo", "Maria", "Chen", "Ola", "Ravi", "Kim", "Lee", "Noor", "Eli"]
-        let indexes = Set(names.map(AvatarStyle.paletteIndex(for:)))
+        let indexes = Set(names.map(PersonPalette.preferredIndex(forName:)))
         #expect(indexes.count > 3)
     }
 }

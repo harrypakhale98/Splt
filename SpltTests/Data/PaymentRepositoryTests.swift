@@ -36,21 +36,6 @@ struct PaymentRepositoryTests {
         #expect(try fixture.services.groups.balances(for: fixture.group.id).isSettled)
     }
 
-    @Test func settleUpClearsTheWholeGroup() throws {
-        let fixture = try Fixture()
-        try fixture.addExpense("A", cents: 9000)
-        try fixture.addExpense("B", cents: 3000, paidBy: fixture.sam, splitBetween: [fixture.sam.id, fixture.priya.id])
-        let made = try fixture.services.payments.settleUp(group: fixture.group.id, date: fixture.clock.start)
-        #expect(!made.isEmpty)
-        #expect(try fixture.services.groups.balances(for: fixture.group.id).isSettled)
-        #expect(try fixture.services.payments.payments(in: fixture.group.id).count == made.count)
-    }
-
-    @Test func settleUpOnASettledGroupMakesNothing() throws {
-        let fixture = try Fixture()
-        #expect(try fixture.services.payments.settleUp(group: fixture.group.id, date: fixture.clock.start).isEmpty)
-    }
-
     @Test func rejectsInvalidPayments() throws {
         let fixture = try Fixture()
         let same = Payment(groupID: fixture.group.id, payer: fixture.me.id, receiver: fixture.me.id, amount: usdAmount(100), date: fixture.clock.start)

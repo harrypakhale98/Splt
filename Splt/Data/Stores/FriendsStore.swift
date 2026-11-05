@@ -24,7 +24,6 @@ final class FriendsStore {
     }
 
     /// Friends you are not square with.
-    var unsettled: [FriendSummary] { summaries.filter { !$0.isSettled } }
 
     func refresh() {
         do {

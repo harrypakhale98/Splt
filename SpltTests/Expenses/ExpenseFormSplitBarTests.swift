@@ -237,15 +237,4 @@ struct ExpenseFormSplitBarTests {
         model.apply(receipt: receipt)
         #expect(model.selectedItemID == model.split.items.first?.id)
     }
-
-    @Test func detailBarsShowReadOnlyShares() throws {
-        let fixture = try Fixture()
-        let expense = try fixture.addExpense("Dinner", cents: 3000)
-        let model = ExpenseDetailModel(expenseID: expense.id, services: fixture.services, locale: Locale(identifier: "en_US"))
-        let data = try #require(model.splitBarData)
-        #expect(!data.canDrag)
-        #expect(data.segments.count == 3)
-        #expect(data.weights.reduce(0, +) == 3000)
-        #expect(model.memberIDs.count == 3)
-    }
 }

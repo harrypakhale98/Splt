@@ -35,34 +35,11 @@ struct RecurrenceQueryTests {
         #expect(capped.nextOccurrence(after: localDate(2025, 1, 3)) == nil)
     }
 
-    @Test func occurrencesBetweenTwoDatesIncludeBothEnds() {
-        let found = monthly.occurrences(from: localDate(2025, 2, 28), through: localDate(2025, 5, 31))
-        #expect(text(found) == ["2025-02-28 09:00", "2025-03-31 09:00", "2025-04-30 09:00", "2025-05-31 09:00"])
-    }
-
-    @Test func occurrencesBeforeTheStartAreSkipped() {
-        let found = monthly.occurrences(from: localDate(2020, 1, 1), through: localDate(2025, 3, 1))
-        #expect(text(found) == ["2025-01-31 09:00", "2025-02-28 09:00"])
-    }
-
-    @Test func emptyWhenNothingFits() {
-        #expect(monthly.occurrences(from: localDate(2025, 3, 1), through: localDate(2025, 3, 30)).isEmpty)
-        #expect(monthly.occurrences(from: localDate(2025, 5, 1), through: localDate(2025, 4, 1)).isEmpty)
-        #expect(monthly.occurrences(from: localDate(2020, 1, 1), through: localDate(2020, 12, 31)).isEmpty)
-    }
-
-    @Test func occurrencesRespectTheEndAndTheCap() {
-        let limited = rule(.daily, from: localDate(2025, 1, 1), until: localDate(2025, 1, 4))
-        #expect(limited.occurrences(from: localDate(2025, 1, 2), through: localDate(2025, 12, 31)).count == 3)
-        let capped = rule(.daily, from: localDate(2025, 1, 1), max: 5)
-        #expect(capped.occurrences(from: localDate(2025, 1, 1), through: localDate(2025, 12, 31)).count == 5)
-    }
-
     @Test func limitStopsHugeRanges() {
         let daily = rule(.daily, from: localDate(2025, 1, 1))
-        let found = daily.occurrences(from: localDate(2025, 1, 1), through: localDate(2125, 1, 1), limit: 10)
+        let found = daily.dueOccurrences(after: nil, through: localDate(2125, 1, 1), limit: 10)
         #expect(found.count == 10)
-        #expect(daily.occurrences(from: localDate(2025, 1, 1), through: localDate(2025, 12, 31)).count == 365)
+        #expect(daily.dueOccurrences(after: nil, through: localDate(2025, 12, 31)).count == 365)
     }
 
     @Test func dueOccurrencesCatchUpAfterBeingAway() {
@@ -88,7 +65,7 @@ struct RecurrenceQueryTests {
         let first = weekly.dueOccurrences(after: nil, through: localDate(2025, 1, 20))
         let second = weekly.dueOccurrences(after: first.last, through: localDate(2025, 2, 20))
         #expect(Set(first).isDisjoint(with: Set(second)))
-        #expect(first.count + second.count == weekly.occurrences(from: localDate(2025, 1, 1), through: localDate(2025, 2, 20)).count)
+        #expect(first.count + second.count == weekly.dueOccurrences(after: nil, through: localDate(2025, 2, 20)).count)
     }
 
     @Test func searchMatchesAStraightScanForEveryFrequency() {
@@ -113,8 +90,6 @@ struct RecurrenceQueryTests {
                     if let expected {
                         #expect(schedule.nextOccurrence(after: probe) == expected)
                     }
-                    let from = probe, to = probe.addingTimeInterval(86_400 * 90)
-                    #expect(schedule.occurrences(from: from, through: to) == all.filter { $0 >= from && $0 <= to })
                 }
             }
         }
