@@ -76,6 +76,7 @@ private struct GroupsListContent: View {
         .searchable(text: $model.query, prompt: "Search groups")
         .refreshable { model.refresh() }
         .toolbar {
+            AccountToolbarItem()
             ToolbarItemGroup(placement: .primaryAction) {
                 Button("New Group", systemImage: "person.2.badge.plus") {
                     router.present(.newGroup)

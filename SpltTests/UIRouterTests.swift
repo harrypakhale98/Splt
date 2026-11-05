@@ -26,8 +26,25 @@ struct UIRouterTests {
         let router = Router()
         router.accountPath = [.expense(id)]
         router.push(.settings, in: .groups)
-        #expect(router.selectedTab == .account)
+        #expect(router.selectedTab == .groups)
+        #expect(router.sheet == .account)
         #expect(router.accountPath.isEmpty)
+    }
+
+    @Test func welcomeTourWaitsForAnOpenSheetToClose() {
+        let router = Router()
+        router.openAccount()
+        router.showWelcomeTour()
+        #expect(router.sheet == nil)
+        #expect(!router.showsOnboarding)
+        router.sheetDidDismiss()
+        #expect(router.showsOnboarding)
+    }
+
+    @Test func welcomeTourOpensAtOnceWithNoSheet() {
+        let router = Router()
+        router.showWelcomeTour()
+        #expect(router.showsOnboarding)
     }
 
     @Test func activityLinkSelectsTheActivityTab() {

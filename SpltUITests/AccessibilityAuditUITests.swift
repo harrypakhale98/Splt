@@ -50,9 +50,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Activity"].waitForExistence(timeout: 10))
         audit(app, "Activity")
 
-        openTab("Account", in: app)
-        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 10))
+        openAccount(in: app)
         audit(app, "Account")
+        app.buttons["Done"].firstMatch.tap()
 
         openTab("Search", in: app)
         XCTAssertTrue(app.navigationBars["Search"].waitForExistence(timeout: 10))

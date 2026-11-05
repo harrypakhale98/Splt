@@ -19,6 +19,7 @@ enum AppSheet: String, Identifiable, Hashable, Sendable {
     case addExpense
     case newGroup
     case newFriend
+    case account
 
     var id: String { rawValue }
 }

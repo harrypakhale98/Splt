@@ -13,6 +13,11 @@ enum SyncStatusPresentation {
         }
     }
 
+    /// Whether the status is a problem worth marking outside Account. Having no iCloud is a choice, not a problem.
+    static func needsAttention(_ status: SyncStatus) -> Bool {
+        if case .error = status { true } else { false }
+    }
+
     static func tint(for status: SyncStatus) -> Color {
         switch status {
         case .error: Ink.owe

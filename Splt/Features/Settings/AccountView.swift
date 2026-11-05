@@ -1,10 +1,11 @@
 import SpltCore
 import SwiftUI
 
-/// The Account tab: who you are, then how Splt behaves.
+/// The Account sheet: who you are, then how Splt behaves.
 struct AccountView: View {
     @Environment(Router.self) private var router
     @Environment(\.dataServices) private var services
+    @Environment(\.dismiss) private var dismiss
     @State private var profile = AccountProfile.shared
     @State private var summary = AccountSummary()
     @State private var showsEditor = false
@@ -14,16 +15,26 @@ struct AccountView: View {
 
         NavigationStack(path: $router.accountPath) {
             List {
-                Section {
-                    AccountHero(profile: profile, summary: summary) { showsEditor = true }
-                }
+                // rows in a sheet default to a lighter shade than the paper behind them
+                Group {
+                    Section {
+                        AccountHero(profile: profile, summary: summary) { showsEditor = true }
+                    }
 
-                SettingsSections()
+                    SettingsSections()
+                }
+                .listRowBackground(Ink.paper)
             }
             .listStyle(.plain)
             .listRowSeparatorTint(Ink.hairline)
             .paperBackground()
             .navigationTitle("Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done", role: .close) { dismiss() }
+                }
+            }
             .settingsBehavior()
             .routeDestinations()
             .navigationDestination(isPresented: $showsEditor) {
@@ -32,6 +43,7 @@ struct AccountView: View {
             .task { summary = AccountSummary.load(from: services) }
             .onAppear { summary = AccountSummary.load(from: services) }
         }
+        .presentationBackground(Ink.paper)
     }
 }
 
@@ -43,7 +55,7 @@ struct AccountHero: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            avatar
+            AccountAvatar(profile: profile, summary: summary, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(summary.displayName(for: profile))
                     .font(Typeface.heading)
@@ -62,14 +74,20 @@ struct AccountHero: View {
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
     }
+}
 
-    @ViewBuilder
-    private var avatar: some View {
+/// Your avatar, in your own color before your person exists.
+struct AccountAvatar: View {
+    let profile: AccountProfile
+    let summary: AccountSummary
+    let size: CGFloat
+
+    var body: some View {
         let name = summary.displayName(for: profile)
         if let meID = summary.meID {
-            AvatarView(name: name, id: meID, size: 44)
+            AvatarView(name: name, id: meID, size: size)
         } else {
-            AvatarView(name: name, hue: PersonPalette.meIndex, size: 44)
+            AvatarView(name: name, hue: PersonPalette.meIndex, size: size)
         }
     }
 }

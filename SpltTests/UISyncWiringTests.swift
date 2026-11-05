@@ -5,6 +5,13 @@ import Testing
 
 @Suite("Sync status presentation")
 struct UISyncStatusPresentationTests {
+    @Test func onlyAnErrorMarksTheAccountButton() {
+        #expect(SyncStatusPresentation.needsAttention(.error("iCloud storage is full.")))
+        for status: SyncStatus in [.idle, .syncing, .offline, .noAccount, .restricted, .unavailable] {
+            #expect(!SyncStatusPresentation.needsAttention(status))
+        }
+    }
+
     @Test func noAccountExplainsHowToTurnOnICloud() {
         let text = SyncStatusPresentation.detail(for: .noAccount)
         #expect(text.contains("iCloud"))

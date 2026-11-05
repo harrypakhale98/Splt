@@ -27,7 +27,7 @@ struct SettingsSections: View {
                 SplitwiseImportView()
             }
             Button("Show Welcome Tour") {
-                router.showsOnboarding = true
+                router.showWelcomeTour()
             }
             .foregroundStyle(Ink.text)
             .accessibilityIdentifier("account.welcomeTour")

@@ -43,6 +43,14 @@ extension XCTestCase {
     }
 
     @MainActor
+    func openAccount(in app: XCUIApplication) {
+        let button = app.buttons["account.button"].firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "Account button missing")
+        button.tap()
+        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 10))
+    }
+
+    @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
         let button = app.tabBars.firstMatch.buttons[name]
         // the tab bar shrinks to the current tab while a list is scrolled down

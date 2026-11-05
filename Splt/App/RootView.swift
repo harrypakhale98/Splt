@@ -19,9 +19,6 @@ struct RootView: View {
                 ActivityView()
             }
             .badge(unread?.count ?? 0)
-            Tab("Account", systemImage: "person.crop.circle", value: AppTab.account) {
-                AccountView()
-            }
             Tab(value: AppTab.search, role: .search) {
                 SearchView()
             }
@@ -32,7 +29,7 @@ struct RootView: View {
         .task {
             if unread == nil, let services { unread = UnreadActivityStore(services: services) }
         }
-        .sheet(item: $router.sheet) { sheet in
+        .sheet(item: $router.sheet, onDismiss: router.sheetDidDismiss) { sheet in
             switch sheet {
             case .newGroup:
                 CreateGroupView { router.open(.group($0.rawValue)) }
@@ -40,6 +37,8 @@ struct RootView: View {
                 AddExpenseLauncher()
             case .newFriend:
                 AddFriendView()
+            case .account:
+                AccountView()
             }
         }
     }

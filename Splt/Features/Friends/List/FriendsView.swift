@@ -80,6 +80,7 @@ private struct FriendsContent: View {
         .searchable(text: $model.query, prompt: "Search friends")
         .overlay { emptyState(sections) }
         .toolbar {
+            AccountToolbarItem()
             ToolbarItem(placement: .primaryAction) {
                 Button("Add Friend", systemImage: "person.badge.plus") {
                     router.present(.newFriend)

@@ -15,8 +15,8 @@ final class LaunchTests: XCTestCase {
             XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5), "\(name) title missing")
         }
 
-        tabBar.buttons["Account"].tap()
-        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 5))
+        XCTAssertFalse(tabBar.buttons["Account"].exists)
+        openAccount(in: app)
 
         XCTAssertTrue(app.buttons["Edit Profile"].waitForExistence(timeout: 5))
         let currencyRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Default Currency'")).firstMatch
@@ -29,6 +29,37 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(currencyRow.waitForExistence(timeout: 5))
         currencyRow.tap()
         XCTAssertTrue(app.navigationBars["Default Currency"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testWelcomeTourOpensFromAccount() {
+        let app = launchApp()
+        openAccount(in: app)
+        let tour = app.buttons["account.welcomeTour"]
+        var attempts = 0
+        while !tour.isHittable && attempts < 4 {
+            app.swipeUp()
+            attempts += 1
+        }
+        tour.tap()
+        XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testRemindOpensAccountWhenNotificationsAreOff() {
+        let app = launchApp("-sampledata")
+        openTab("Friends", in: app)
+        let friend = element(labelStartingWith: "Hana Sato", in: app)
+        reveal(friend, in: app)
+        friend.swipeLeft()
+        app.buttons["Remind"].firstMatch.tap()
+        let tomorrow = app.buttons["Tomorrow"]
+        XCTAssertTrue(tomorrow.waitForExistence(timeout: 5))
+        tomorrow.tap()
+        let openSettings = app.buttons["Open Settings"]
+        XCTAssertTrue(openSettings.waitForExistence(timeout: 5))
+        openSettings.tap()
+        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 10))
     }
 
     @MainActor
