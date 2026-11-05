@@ -3,7 +3,6 @@ import SwiftUI
 /// A grid of group symbols.
 struct SymbolPickerView: View {
     @Binding var selection: String
-    let color: Color
 
     @Environment(\.dismiss) private var dismiss
 
@@ -20,11 +19,14 @@ struct SymbolPickerView: View {
                         Image(systemName: symbol)
                             .font(.title2)
                             .frame(maxWidth: .infinity, minHeight: 56)
-                            .foregroundStyle(symbol == selection ? Color.white : color)
+                            .foregroundStyle(symbol == selection ? Ink.paper : Ink.text)
                             .background(
-                                symbol == selection ? AnyShapeStyle(color) : AnyShapeStyle(color.opacity(0.12)),
+                                symbol == selection ? Ink.text : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                             )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline)
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(symbol.replacingOccurrences(of: ".fill", with: "").replacingOccurrences(of: ".", with: " "))
@@ -33,11 +35,12 @@ struct SymbolPickerView: View {
             }
             .padding()
         }
+        .background(Ink.paper.ignoresSafeArea())
         .navigationTitle("Symbol")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
-    NavigationStack { SymbolPickerView(selection: .constant("airplane"), color: .blue) }
+    NavigationStack { SymbolPickerView(selection: .constant("airplane")) }
 }

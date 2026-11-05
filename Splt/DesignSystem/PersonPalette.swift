@@ -5,29 +5,29 @@ import UIKit
 
 /// One stable color per person, used for the avatar, split bar, charts, balance flow and group header.
 ///
-/// Twelve hues, each tuned for light and dark. A person has one hue on every screen: the app
+/// Twelve muted pigments, each tuned for light and dark. A person has one hue on every screen: the app
 /// assigns hues once across everyone it knows (`PersonColorBook`), you first, and until it has
 /// done so a person falls back to the hue their id points to.
 enum PersonPalette {
-    /// The hue that belongs to you, the brand teal.
+    /// The hue that belongs to you.
     static let meIndex = 5
 
     static let count = 12
 
     /// Light and dark fills as hex values: fills carry white text in light and near black text in dark.
     private static let fills: [(light: UInt32, dark: UInt32)] = [
-        (0xD63A3F, 0xFF7A7E), // coral
-        (0xD2570A, 0xFF9F5A), // orange
-        (0x9A6A00, 0xF5C44E), // amber
-        (0x5D7F00, 0xB5E04A), // lime
-        (0x2B8639, 0x5FD97A), // green
-        (0x00806F, 0x3DDBB9), // teal
-        (0x007F99, 0x4CD0EE), // cyan
-        (0x1A6FD8, 0x6AAEFF), // azure
-        (0x4B52C9, 0x8F96FF), // indigo
-        (0x8040C8, 0xBB8CFF), // violet
-        (0xB62E9B, 0xF07FD9), // magenta
-        (0xCC2F67, 0xFF7FA8)  // rose
+        (0xB5432F, 0xE58E7A), // oxide
+        (0xA85510, 0xE3A26A), // sienna
+        (0x8A660C, 0xD9BC6A), // ochre
+        (0x62722A, 0xB4C676), // olive
+        (0x3B7A4B, 0x8CC99A), // moss
+        (0x1F7668, 0x6FC7B5), // pine
+        (0x1F7488, 0x74C1D3), // lagoon
+        (0x2F66A8, 0x8DB3E5), // cobalt
+        (0x4B55A0, 0xA3A9E8), // indigo
+        (0x6F4FA3, 0xBDA3E6), // iris
+        (0x96437F, 0xDD9CCB), // plum
+        (0xAF3F62, 0xE895AE)  // madder
     ]
 
     // MARK: Colors

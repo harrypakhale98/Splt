@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// The top card of the settle sheet: the people, who pays whom and the amount. It plays the ceremony.
+/// The top of the settle sheet, on paper: the people joined by an arc, who pays whom and one large amount. It plays the ceremony.
 struct SettleHeroCard: View {
     let model: SettleModel
     let ceremony: SettleCeremony
@@ -31,32 +31,24 @@ struct SettleHeroCard: View {
             if ceremony.finished {
                 Text(model.remaining == nil ? String(localized: "All square") : String(localized: "still owed"))
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
                     .transition(.opacity)
             } else if !ceremony.rolled, let remaining = model.remaining {
                 Text("\(MoneyFormatting.magnitudeString(remaining, locale: locale)) will still be owed")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
             }
         }
         .padding(.vertical, 16)
-        .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-        .background {
-            ZStack {
-                Color(.secondarySystemGroupedBackground)
-                GroupGradient(colors: model.participants.map(\.color)).opacity(0.7)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        }
         .accessibilityElement(children: .contain)
     }
 
     private var caption: some View {
         Text(model.headline)
             .font(.headline)
-            .foregroundStyle(ceremony.finished ? .secondary : .primary)
+            .foregroundStyle(ceremony.finished ? Ink.secondary : Ink.text)
     }
 
     private var stageLayout: SettleStage.Layout {

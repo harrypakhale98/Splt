@@ -9,12 +9,12 @@ struct HiddenFriendsView: View {
             Section {
                 ForEach(model.hiddenSummaries) { summary in
                     HStack(spacing: 12) {
-                        AvatarView(person: summary.person, size: 36)
+                        AvatarView(person: summary.person, size: 28)
                         VStack(alignment: .leading) {
                             Text(summary.person.name)
                             Text(model.state(of: summary.id) == .blocked ? "Blocked" : "Hidden")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Ink.secondary)
                         }
                         Spacer(minLength: 8)
                         Menu {
@@ -30,11 +30,15 @@ struct HiddenFriendsView: View {
                         }
                     }
                     .accessibilityElement(children: .combine)
+                    .listRowBackground(Color.clear)
                 }
             } footer: {
                 Text("Hidden people stay out of the list. Blocked people also stay out of search and reminders. This only changes what you see on this device.")
             }
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .overlay {
             if model.hiddenSummaries.isEmpty {
                 EmptyStateView(

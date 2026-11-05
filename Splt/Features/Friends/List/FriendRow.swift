@@ -11,14 +11,14 @@ struct FriendRow: View {
     var body: some View {
         let lines = BalanceLine.lines(for: summary.balance)
         HStack(spacing: 12) {
-            AvatarView(person: summary.person, size: 44)
+            AvatarView(person: summary.person, size: 28)
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
-                    nameBlock
+                    nameText
                     balanceBlock(lines)
                 }
             } else {
-                nameBlock
+                nameText
                 Spacer(minLength: 8)
                 balanceBlock(lines)
             }
@@ -26,16 +26,10 @@ struct FriendRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var nameBlock: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(summary.person.name)
-                .font(.body)
-            if summary.person.isPlaceholder {
-                Text("Not on Splt yet")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
+    private var nameText: some View {
+        Text(summary.person.name)
+            .font(.body)
+            .lineLimit(2)
     }
 
     @ViewBuilder
@@ -43,19 +37,18 @@ struct FriendRow: View {
         if lines.isEmpty {
             Text("Settled up")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink.secondary)
         } else {
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                 ForEach(lines) { line in
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
-                            .font(.system(.body, design: .rounded, weight: .semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(MoneyLabel.balanceTint(for: line.money))
-                            .accessibilityLabel(spoken(line))
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(caption(for: line.direction))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .font(.footnote)
+                            .foregroundStyle(Ink.secondary)
+                        Text(MoneyFormatting.string(line.money, locale: locale, showsSign: false))
+                            .font(Typeface.figure)
+                            .foregroundStyle(Ink.direction(of: line.money.minorUnits))
+                            .accessibilityLabel(spoken(line))
                     }
                 }
             }

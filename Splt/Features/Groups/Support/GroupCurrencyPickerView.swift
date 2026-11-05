@@ -22,18 +22,19 @@ struct GroupCurrencyPickerView: View {
                             .foregroundStyle(.primary)
                         Text(option.code)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Ink.secondary)
                     }
                     Spacer()
                     if option.code == selection {
                         Image(systemName: "checkmark")
-                            .foregroundStyle(.tint)
+                            .foregroundStyle(Ink.text)
                             .accessibilityHidden(true)
                     }
                 }
             }
             .accessibilityAddTraits(option.code == selection ? .isSelected : [])
         }
+        .paperBackground()
         .overlay {
             if options.isEmpty {
                 ContentUnavailableView.search(text: query)

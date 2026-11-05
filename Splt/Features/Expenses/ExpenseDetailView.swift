@@ -51,6 +51,7 @@ private struct ExpenseDetailScreen: View {
         }
         .navigationTitle(model.expense?.title ?? String(localized: "Expense"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarVisibility(.hidden, for: .tabBar)
         .toolbar { toolbar }
         .confirmationDialog("Delete this expense?", isPresented: $confirmsDelete, titleVisibility: .visible) {
             Button("Delete Expense", role: .destructive) {
@@ -89,7 +90,7 @@ private struct ExpenseDetailScreen: View {
             PaidBySection(model: model)
             ReceiptSection(model: model)
             if !expense.note.isEmpty {
-                Section(header: Text("Notes").foregroundStyle(.legible)) { Text(expense.note) }
+                Section(header: Text("Notes").foregroundStyle(Ink.secondary)) { Text(expense.note) }
             }
             if model.details?.extras.recurringExpenseID != nil, let groupID = expense.groupID {
                 Section {
@@ -101,6 +102,9 @@ private struct ExpenseDetailScreen: View {
             CommentsSection(model: model) { translating = $0 }
             ExpenseHistorySection(model: model)
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .safeAreaBar(edge: .bottom) {
             if model.isDeleted {
                 DeletedBanner { model.undoDelete() }
@@ -138,8 +142,8 @@ private struct DeletedBanner: View {
             Label("Expense deleted", systemImage: "trash")
             Spacer(minLength: 8)
             Button("Undo", action: undo)
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
+                .font(.body.weight(.medium))
+                .frame(minHeight: 44)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)

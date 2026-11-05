@@ -7,31 +7,28 @@ enum FormSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
-/// The compact row of glass chips under the split: each opens a small sheet.
+/// The row of plain options under the split: each opens a small sheet.
 struct FormChipsRow: View {
     let model: ExpenseFormModel
     var open: (FormSheet) -> Void
 
     var body: some View {
         ScrollView(.horizontal) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    chip(.category, model.category.title, model.category.symbolName)
-                    if !model.isEditingRecurring {
-                        chip(.date, dateText, "calendar")
-                    }
-                    chip(.currency, model.currencyCode, "coloncurrencysign.circle")
-                    chip(.note, model.note.isEmpty ? String(localized: "Note") : String(localized: "Note added"), "note.text")
-                    chip(
-                        .receipt, model.receipt.isEmpty ? String(localized: "Receipt") : String(localized: "Receipt added"),
-                        model.receipt.isEmpty ? "doc.text.viewfinder" : "doc.text.image.fill"
-                    )
-                    if showsRepeat {
-                        chip(.repeating, model.repeatChoice.frequency?.shortTitle ?? String(localized: "Repeat"), "repeat")
-                    }
-                    chip(.more, String(localized: "More"), "ellipsis")
+            HStack(spacing: 20) {
+                chip(.category, model.category.title, model.category.symbolName)
+                if !model.isEditingRecurring {
+                    chip(.date, dateText, "calendar")
                 }
-                .padding(.vertical, 2)
+                chip(.currency, model.currencyCode, "coloncurrencysign.circle")
+                chip(.note, model.note.isEmpty ? String(localized: "Note") : String(localized: "Note added"), "note.text")
+                chip(
+                    .receipt, model.receipt.isEmpty ? String(localized: "Receipt") : String(localized: "Receipt added"),
+                    model.receipt.isEmpty ? "doc.text.viewfinder" : "doc.text.image.fill"
+                )
+                if showsRepeat {
+                    chip(.repeating, model.repeatChoice.frequency?.shortTitle ?? String(localized: "Repeat"), "repeat")
+                }
+                chip(.more, String(localized: "More"), "ellipsis")
             }
             .padding(.horizontal, 20)
         }
@@ -53,10 +50,13 @@ struct FormChipsRow: View {
     private func chip(_ sheet: FormSheet, _ title: String, _ symbol: String) -> some View {
         Button { open(sheet) } label: {
             Label(title, systemImage: symbol)
-                .font(.subheadline.weight(.medium))
+                .font(.subheadline)
+                .foregroundStyle(Ink.text)
                 .lineLimit(1)
+                .frame(minHeight: 44)
+                .contentShape(.rect)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.plain)
         .accessibilityIdentifier("chip-\(sheet.rawValue)")
     }
 }

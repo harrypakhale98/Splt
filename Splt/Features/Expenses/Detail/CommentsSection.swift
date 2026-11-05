@@ -41,7 +41,7 @@ struct CommentsSection: View {
                 }
             }
         } header: {
-            Text("Comments").foregroundStyle(.legible)
+            Text("Comments").foregroundStyle(Ink.secondary)
         }
     }
 
@@ -64,7 +64,7 @@ private struct CommentRow: View {
                 Spacer(minLength: 8)
                 Text(comment.createdAt, format: .relative(presentation: .named))
                     .font(.caption)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
             }
             Text(comment.text)
             reactions

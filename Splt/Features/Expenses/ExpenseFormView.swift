@@ -54,7 +54,7 @@ private struct ExpenseFormScreen: View {
                     content
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Ink.paper.ignoresSafeArea())
             .navigationTitle(navigationTitle)
             .navigationSubtitle(model.group?.name ?? "")
             .navigationBarTitleDisplayMode(.inline)
@@ -94,19 +94,17 @@ private struct ExpenseFormScreen: View {
 
     private var content: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                if case .add = model.mode {
-                    DescribePill(model: model, focus: $focus)
-                }
+            VStack(spacing: 24) {
                 if !model.possibleDuplicates.isEmpty {
                     DuplicateBanner(model: model)
                 }
-                VStack(spacing: 12) {
+                VStack(spacing: 8) {
                     AmountHero(model: model, keypadOpen: keypadOpen && !typeSize.isAccessibilitySize) {
                         Motion.perform(.snappy) { keypadOpen.toggle() }
                         focus = nil
                     }
                     TitleField(model: model, focus: $focus)
+                    PaidByMenu(model: model) { keypadOpen = false }
                 }
                 WhoIsInSection(model: model) { keypadOpen = false }
                 if model.split.method == .itemized {
@@ -122,6 +120,9 @@ private struct ExpenseFormScreen: View {
                     sheet = opened
                 }
                 .padding(.horizontal, -20)
+                if case .add = model.mode {
+                    DescribePill(model: model, focus: $focus)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -144,10 +145,13 @@ private struct ExpenseFormScreen: View {
                     .padding(.horizontal, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                SaveBar(summary: model.summaryLine, reason: model.blockingReason, canSave: model.canSave) {
+                SaveBar(summary: model.summaryLine, hint: saveHint, canSave: model.canSave) {
                     if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
                 }
             }
+            .padding(.top, 8)
+            .background(Ink.paper)
+            .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
         }
         .sheet(isPresented: Binding(
             get: { keypadOpen && typeSize.isAccessibilitySize }, set: { if !$0 { keypadOpen = false } }
@@ -155,7 +159,7 @@ private struct ExpenseFormScreen: View {
             NavigationStack {
                 VStack(spacing: 16) {
                     Text(AmountKeypad.display(model.amountText, locale: model.locale).isEmpty ? "0" : AmountKeypad.display(model.amountText, locale: model.locale))
-                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        .font(Typeface.hero(size: 48))
                         .monospacedDigit()
                     NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode)) { key in
                         model.amountText = AmountKeypad.apply(
@@ -186,6 +190,14 @@ private struct ExpenseFormScreen: View {
         }
     }
 
+    /// What is wrong with the split, if anything. A missing amount or title needs no sentence.
+    private var saveHint: String? {
+        switch model.issue {
+        case nil, .missingAmount?, .missingTitle?: nil
+        default: model.blockingReason
+        }
+    }
+
     private var navigationTitle: LocalizedStringKey {
         switch model.mode {
         case .add: "New Expense"
@@ -210,7 +222,7 @@ private struct ExpenseFormScreen: View {
     }
 }
 
-/// The title, centered under the amount, with the category suggestion when there is one.
+/// The title, centered under the amount on a hairline, with the category suggestion when there is one.
 private struct TitleField: View {
     @Bindable var model: ExpenseFormModel
     var focus: FocusState<ExpenseFormField?>.Binding
@@ -227,18 +239,18 @@ private struct TitleField: View {
                     model.acceptSuggestedCategory()
                 } label: {
                     Label(suggestion.title, systemImage: suggestion.symbolName)
-                        .font(.footnote.weight(.semibold))
+                        .font(.footnote)
+                        .foregroundStyle(Ink.secondary)
+                        .frame(minHeight: 44)
+                        .contentShape(.rect)
                 }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.capsule)
+                .buttonStyle(.plain)
                 .accessibilityLabel("Use \(suggestion.title)")
                 .accessibilityHint("Suggested category for this title")
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
         .frame(minHeight: 48)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .bottom) { Rectangle().fill(Ink.hairline).frame(height: 1) }
     }
 
     /// One line normally; at accessibility sizes it wraps so a long title never truncates.
@@ -249,14 +261,14 @@ private struct TitleField: View {
         if typeSize.isAccessibilitySize {
             TextField("Title", text: $model.title, prompt: prompt, axis: .vertical)
                 .lineLimit(1...4)
-                .font(.title3.weight(.medium))
+                .font(.title3)
                 .multilineTextAlignment(alignment)
                 .focused(focus, equals: .title)
                 .onChange(of: model.title) { model.titleDidChange() }
                 .accessibilityIdentifier("expense-title")
         } else {
             TextField("Title", text: $model.title, prompt: prompt)
-                .font(.title3.weight(.medium))
+                .font(.title3)
                 .multilineTextAlignment(alignment)
                 .submitLabel(.done)
                 .focused(focus, equals: .title)
@@ -275,11 +287,11 @@ private struct DuplicateBanner: View {
                 Text("\(match.title) for the same amount was added on \(match.date.formatted(date: .abbreviated, time: .omitted)).")
                     .font(.footnote)
             } icon: {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
+                Image(systemName: "exclamationmark.triangle").foregroundStyle(Ink.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(14)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .padding(.vertical, 8)
+            .overlay(alignment: .bottom) { Rectangle().fill(Ink.hairline).frame(height: 1) }
             .accessibilityElement(children: .combine)
         }
     }

@@ -48,7 +48,8 @@ private struct GroupsListContent: View {
             if model.hasGroups && !model.isSearching {
                 Section {
                     NetPositionHero(scope: "Across All Groups", totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
-                        .listRowInsets(EdgeInsets())
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
+                        .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                 }
             }
@@ -67,6 +68,9 @@ private struct GroupsListContent: View {
                 }
             }
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .overlay { emptyState }
         .navigationTitle("Groups")
         .searchable(text: $model.query, prompt: "Search groups")
@@ -115,8 +119,7 @@ private struct GroupsListContent: View {
                 systemImage: "person.3",
                 description: "Create a group for a trip, a home or a night out.",
                 actionTitle: "Create Group",
-                action: { router.present(.newGroup) },
-                showsOrbit: true
+                action: { router.present(.newGroup) }
             )
         } else if model.isSearching && !model.hasResults {
             ContentUnavailableView.search(text: model.query)
@@ -125,20 +128,21 @@ private struct GroupsListContent: View {
 
     private func row(_ summary: GroupSummary) -> some View {
         NavigationLink(value: Route.group(summary.group.id.rawValue)) {
-            GroupRowView(summary: summary, members: model.membersByGroup[summary.group.id] ?? [])
+            GroupRowView(summary: summary)
         }
+        .listRowBackground(Color.clear)
         .zoomSource(for: .group(summary.group.id.rawValue))
         .swipeActions(edge: .trailing) {
             if summary.group.isArchived {
                 Button("Restore", systemImage: "tray.and.arrow.up") {
                     model.restore(summary.group.id)
                 }
-                .tint(.blue)
+                .tint(Ink.secondary)
             } else {
                 Button("Archive", systemImage: "archivebox") {
                     model.archive(summary.group.id)
                 }
-                .tint(.orange)
+                .tint(Ink.secondary)
             }
         }
         .contextMenu {

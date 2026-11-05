@@ -68,6 +68,7 @@ private struct SplitwiseImportContent: View {
                 previewForm
             }
         }
+        .paperBackground()
         .navigationTitle("Import from Splitwise")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(
@@ -116,7 +117,7 @@ private struct SplitwiseImportContent: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(number, format: .number)
                 .font(.headline.monospacedDigit())
-                .foregroundStyle(.tint)
+                .foregroundStyle(Ink.text)
                 .frame(minWidth: 20)
                 .accessibilityHidden(true)
             Text(text)
@@ -208,7 +209,7 @@ private struct SplitwiseImportContent: View {
         } footer: {
             if let problem = model.mappingProblem {
                 Text(problem)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Ink.owe)
             } else {
                 Text("Match each Splitwise member to someone you already split with, or add them as a new person.")
             }

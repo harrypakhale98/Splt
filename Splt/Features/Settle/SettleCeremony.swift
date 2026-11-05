@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Where the settle moment is: the arc contracts, a ring closes, the amount rolls, then the card settles.
+/// Where the settle moment is: the arc contracts, a ring closes, the amount rolls, then the receipt settles.
 struct SettleCeremony: Equatable {
     /// 0 for the full arc, 1 for a single point.
     var contraction: CGFloat = 0
@@ -29,6 +29,6 @@ struct SettleCeremony: Equatable {
         try? await Task.sleep(for: .milliseconds(160))
         withAnimation(.smooth(duration: 0.6)) { state.wrappedValue.rolled = true }
         try? await Task.sleep(for: .milliseconds(560))
-        withAnimation(.smooth) { state.wrappedValue.finished = true }
+        withAnimation(Motion.settle) { state.wrappedValue.finished = true }
     }
 }

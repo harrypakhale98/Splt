@@ -43,13 +43,8 @@ struct OrbitColors {
         assignments[person].map { PersonPalette.color(at: $0) } ?? PersonPalette.color(for: person)
     }
 
-    /// A flow from the person who owes to the person who is owed.
-    func gradient(for transfer: OrbitTransfer, from start: CGPoint, to end: CGPoint, in size: CGSize) -> LinearGradient {
-        let width = max(size.width, 1), height = max(size.height, 1)
-        return LinearGradient(
-            colors: [color(for: transfer.debtor), color(for: transfer.creditor)],
-            startPoint: UnitPoint(x: start.x / width, y: start.y / height),
-            endPoint: UnitPoint(x: end.x / width, y: end.y / height)
-        )
+    /// A ribbon takes the color of the person who owes.
+    func ribbon(for transfer: OrbitTransfer) -> Color {
+        color(for: transfer.debtor)
     }
 }

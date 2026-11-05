@@ -64,7 +64,7 @@ struct AvatarView: View {
             .overlay {
                 if showsInitials {
                     Text(AvatarStyle.initials(for: name))
-                        .font(.system(size: diameter * 0.4, weight: .semibold, design: .rounded))
+                        .font(.system(size: diameter * 0.4, weight: .medium))
                         .foregroundStyle(PersonPalette.onColor(at: hue))
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)

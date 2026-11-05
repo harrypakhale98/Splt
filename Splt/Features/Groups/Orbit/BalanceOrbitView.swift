@@ -57,7 +57,7 @@ struct BalanceOrbitView: View {
 
     private func ring(_ scene: OrbitScene) -> some View {
         Circle()
-            .strokeBorder(.quaternary, style: StrokeStyle(lineWidth: 1, dash: [2, 5]))
+            .strokeBorder(Ink.hairline, lineWidth: 1)
             .frame(width: scene.layout.ringRadius * 2, height: scene.layout.ringRadius * 2)
             .position(scene.layout.center)
     }
@@ -67,7 +67,7 @@ struct BalanceOrbitView: View {
         if pairs.isEmpty {
             ForEach(scene.arcs, id: \.transfer.id) { transfer, geometry in
                 OrbitArcShape(from: geometry, to: geometry, progress: 1)
-                    .fill(colors.gradient(for: transfer, from: geometry.start, to: geometry.end, in: scene.layout.size))
+                    .fill(colors.ribbon(for: transfer))
                     .opacity(scene.emphasis(of: transfer, focus: focus).opacity)
                     .transition(.opacity)
             }
@@ -77,9 +77,8 @@ struct BalanceOrbitView: View {
                 if let shapes = OrbitMorph.geometry(for: pair, in: old, target: scene) {
                     let transfer = pair.end ?? pair.start
                     OrbitArcShape(from: shapes.from, to: shapes.to, progress: progress)
-                        .fill(transfer.map { colors.gradient(for: $0, from: shapes.to.start, to: shapes.to.end, in: scene.layout.size) }
-                              ?? LinearGradient(colors: [.gray], startPoint: .top, endPoint: .bottom))
-                        .opacity(0.9)
+                        .fill(transfer.map { colors.ribbon(for: $0) } ?? Ink.tertiary)
+                        .opacity(0.75)
                 }
             }
         }
@@ -103,12 +102,13 @@ struct BalanceOrbitView: View {
             ForEach(requests, id: \.id) { request in
                 if let placement = placements[request.id] {
                     Text(placement.isCompact ? request.compact : request.full)
-                        .font((placement.isCompact ? Font.caption2 : Font.caption).weight(.semibold).monospacedDigit())
-                        .fontDesign(.rounded)
+                        .font((placement.isCompact ? Font.caption2 : Font.caption).monospacedDigit())
+                        .foregroundStyle(Ink.text)
                         .lineLimit(1)
                         .fixedSize()
                         .frame(width: placement.rect.width, height: placement.rect.height)
-                        .background(.regularMaterial, in: .capsule)
+                        .background(Ink.paper, in: .capsule)
+                        .overlay(Capsule().strokeBorder(Ink.hairline))
                         .position(placement.center)
                         .transition(.opacity)
                         .allowsHitTesting(false)
@@ -126,13 +126,13 @@ struct BalanceOrbitView: View {
                 Circle()
                     .fill(colors.color(for: node.id))
                 Text(AvatarStyle.initials(for: node.name))
-                    .font(.system(size: layout.nodeRadius * 0.8, weight: .semibold, design: .rounded))
+                    .font(.system(size: layout.nodeRadius * 0.8, weight: .medium))
                     .foregroundStyle(colors.ink(for: node.id))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 if focus.person == node.id {
                     Circle()
-                        .strokeBorder(Color(.systemBackground), lineWidth: 2)
+                        .strokeBorder(Ink.paper, lineWidth: 2)
                         .padding(-3)
                         .overlay { Circle().strokeBorder(colors.color(for: node.id), lineWidth: 2).padding(-5) }
                 }
@@ -145,7 +145,7 @@ struct BalanceOrbitView: View {
                 Text(label(for: node, layout: layout))
                     .font(layout.labelStyle == .name ? .caption.weight(.medium) : .caption2)
                     .lineLimit(1)
-                    .foregroundStyle(emphasis == .dimmed ? .tertiary : .secondary)
+                    .foregroundStyle(emphasis == .dimmed ? Ink.tertiary : Ink.secondary)
                     .fixedSize()
                     .position(layout.labelPosition(index))
             }
@@ -227,10 +227,6 @@ struct OrbitCenterView: View {
         VStack(spacing: 2) {
             switch center.kind {
             case .settled:
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.tint)
-                    .accessibilityHidden(true)
                 Group {
                     if center.subjectIsMe || center.subject.isEmpty {
                         Text("All settled up")
@@ -238,23 +234,22 @@ struct OrbitCenterView: View {
                         Text("\(center.subject) is settled up")
                     }
                 }
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(.subheadline)
+                .foregroundStyle(Ink.secondary)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
             default:
                 Text(caption)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                HeroAmount(signed, showsSign: center.subjectIsMe)
+                HeroAmount(signed, showsSign: false)
             }
         }
         .frame(width: diameter * 0.84)
         .frame(width: diameter, height: diameter)
-        .background(Color(.secondarySystemGroupedBackground), in: .circle)
-        .overlay(Circle().strokeBorder(.separator.opacity(0.35)))
+        .overlay(Circle().strokeBorder(Ink.hairline))
         .motion(.smooth, value: center)
         .accessibilityHidden(true)
     }

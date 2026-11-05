@@ -19,9 +19,9 @@ struct ProfileEditorView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Name")
                         .font(.footnote.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ink.secondary)
                     TextField("Name", text: $profile.displayName, prompt: Text("Your Name"))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .font(.title3.weight(.semibold))
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
@@ -47,7 +47,7 @@ struct ProfileEditorView: View {
             .padding(.bottom, 32)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color(.systemGroupedBackground))
+        .paperBackground()
         .navigationTitle("Your Profile")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear(perform: commit)
@@ -62,7 +62,7 @@ struct ProfileEditorView: View {
     private func note(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.footnote)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Ink.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 8)
     }
@@ -71,9 +71,9 @@ struct ProfileEditorView: View {
     private var avatar: some View {
         let name = profile.hasName ? profile.effectiveName : (summary.meName ?? profile.effectiveName)
         if let meID = summary.meID {
-            AvatarView(name: name, id: meID, size: 96)
+            AvatarView(name: name, id: meID, size: 56)
         } else {
-            AvatarView(name: name, hue: PersonPalette.meIndex, size: 96)
+            AvatarView(name: name, hue: PersonPalette.meIndex, size: 56)
         }
     }
 
@@ -102,7 +102,7 @@ private struct HandleField: View {
         HStack(spacing: 12) {
             Image(systemName: method.symbol)
                 .font(.title3)
-                .foregroundStyle(.tint)
+                .foregroundStyle(Ink.text)
                 .frame(width: 32)
                 .accessibilityHidden(true)
             Text(method.handleTitle)
@@ -111,7 +111,7 @@ private struct HandleField: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(method == .zelle ? .emailAddress : .asciiCapable)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink.secondary)
                 .onChange(of: text) { profile.setHandle(text, for: method) }
         }
         .padding(.horizontal, 16)

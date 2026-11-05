@@ -1,8 +1,8 @@
 import SwiftUI
 
 extension View {
-    /// A content card: grouped background, continuous corners, the app's standard radius.
-    func cardSurface(radius: CGFloat = 24) -> some View {
-        background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+    /// The rare raised surface: a sheet of paper with gentle corners.
+    func cardSurface(radius: CGFloat = 14) -> some View {
+        background(Ink.sheet, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }

@@ -47,7 +47,7 @@ struct PayerSection: View {
                 }
             }
         } header: {
-            Text("Paid By").foregroundStyle(.legible)
+            Text("Paid By").foregroundStyle(Ink.secondary)
         }
     }
 }
@@ -63,14 +63,13 @@ struct RemainingRow: View {
                 Label {
                     Text("All assigned")
                 } icon: {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    Image(systemName: "checkmark.circle")
                 }
             } else {
                 Label {
                     MoneyLabel(money: remaining)
                 } icon: {
                     Image(systemName: remaining.isNegative ? "minus.circle.fill" : "exclamationmark.circle.fill")
-                        .foregroundStyle(remaining.isNegative ? .red : .orange)
                 }
             }
         }

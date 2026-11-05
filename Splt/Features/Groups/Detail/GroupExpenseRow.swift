@@ -54,9 +54,8 @@ struct GroupExpenseRow: View {
         layout {
             Image(systemName: expense.category.symbolName)
                 .font(.body)
-                .foregroundStyle(.secondary)
-                .frame(width: 32, height: 32)
-                .background(Color(.tertiarySystemFill), in: .circle)
+                .foregroundStyle(Ink.secondary)
+                .frame(width: 28, height: 28)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(expense.title)
@@ -67,7 +66,7 @@ struct GroupExpenseRow: View {
                     payerMarkers(summary.payers)
                     Text(summary.payerText)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ink.secondary)
                 }
             }
             if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
@@ -81,19 +80,21 @@ struct GroupExpenseRow: View {
     private func trailing(_ summary: ExpenseRowSummary) -> some View {
         Group {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 3) {
-                MoneyLabel(money: expense.total)
-                    .font(.body.weight(.semibold))
+                Text(MoneyFormatting.string(expense.total, locale: locale))
+                    .font(Typeface.figure)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 if let net = summary.yourNet, let detail = summary.detail(locale: locale) {
                     Text(detail)
                         .font(.caption)
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-                        .foregroundStyle(MoneyLabel.balanceTint(for: net))
+                        .foregroundStyle(Ink.direction(of: net.minorUnits))
                 } else {
                     Text("Not involved")
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Ink.secondary)
                 }
             }
         }
@@ -106,7 +107,7 @@ struct GroupExpenseRow: View {
                 Circle()
                     .fill(PersonPalette.color(for: id, in: members))
                     .frame(width: 10, height: 10)
-                    .overlay { Circle().strokeBorder(Color(.systemBackground), lineWidth: 1.5) }
+                    .overlay { Circle().strokeBorder(Ink.paper, lineWidth: 1.5) }
             }
         }
         .accessibilityHidden(true)

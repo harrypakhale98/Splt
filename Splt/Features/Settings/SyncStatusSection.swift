@@ -15,9 +15,8 @@ enum SyncStatusPresentation {
 
     static func tint(for status: SyncStatus) -> Color {
         switch status {
-        case .idle: .green
-        case .error: .red
-        case .offline, .noAccount, .restricted, .unavailable, .syncing: .secondary
+        case .error: Ink.owe
+        case .idle, .offline, .noAccount, .restricted, .unavailable, .syncing: Ink.secondary
         }
     }
 }
@@ -47,8 +46,6 @@ struct SyncStatusSectionContent: View {
                 }
             }
             .accessibilityElement(children: .combine)
-        } header: {
-            Text("Sync")
         } footer: {
             Text(SyncStatusPresentation.detail(for: status))
         }

@@ -1,32 +1,26 @@
 import SpltCore
 import SwiftUI
 
-/// The hues behind each recap page. Every page borrows the color of what it is about, so the story
-/// has a sense of progress and the pages do not all look the same.
+/// The strip of person colors along the top of each recap page. The pages sit on flat paper, so the
+/// strip is the only color: everyone in the group, and on the payer page the top payer widest.
 enum RecapBackdrop {
-    /// Palette indexes, the strongest first.
-    static func hues(for page: RecapPage, group: SplitGroup, stats: RecapStats) -> [Int] {
-        let own = GroupHeroTint.hues(for: group)
-        let dominant = own[0]
-        switch page {
-        case .total, .summary:
-            return own
-        case .days:
-            return [(dominant + 2) % PersonPalette.count, dominant]
-        case .biggest:
-            guard let biggest = stats.biggest else { return own }
-            return [categoryHue(biggest.category), dominant]
-        case .payer:
-            guard let payer = stats.topPayer else { return own }
-            return [PersonPalette.index(for: payer.id, in: group.memberIDs), dominant]
-        case .categories:
-            guard let top = stats.categories.first else { return own }
-            return [categoryHue(top.category), dominant]
-        }
+    /// One member's share of the strip.
+    struct Segment: Equatable {
+        var person: PersonID
+        var weight: Double
     }
 
-    /// A stable hue for a category, from its name.
-    static func categoryHue(_ category: ExpenseCategory) -> Int {
-        PersonPalette.preferredIndex(forName: category.rawValue)
+    static func segments(for page: RecapPage, members: [PersonID], stats: RecapStats) -> [Segment] {
+        let topPayer = page == .payer ? stats.topPayer?.id : nil
+        return members.map { Segment(person: $0, weight: $0 == topPayer ? Double(max(members.count, 2)) : 1) }
+    }
+
+    static func strip(for page: RecapPage, members: [PersonID], stats: RecapStats) -> some View {
+        let segments = segments(for: page, members: members, stats: stats)
+        return ShareStrip(
+            colors: segments.map { PersonPalette.color(for: $0.person) },
+            weights: segments.map(\.weight),
+            height: 6
+        )
     }
 }

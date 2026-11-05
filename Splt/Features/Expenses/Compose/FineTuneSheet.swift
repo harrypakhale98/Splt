@@ -14,14 +14,14 @@ struct FineTuneSheet: View {
         NavigationStack {
             VStack(spacing: 20) {
                 if let segment = model.barData?.segments.first(where: { $0.id == personID }), let data = model.barData {
-                    AvatarView(name: segment.person.name, id: segment.id, members: model.members.map(\.id), size: 72)
-                    Text(model.displayName(for: segment.id)).font(.title3.weight(.semibold))
+                    AvatarView(name: segment.person.name, id: segment.id, members: model.members.map(\.id), size: 40)
+                    Text(model.displayName(for: segment.id)).font(.title3)
                     if let amount = segment.amount {
                         HeroAmount(amount, showsSign: false)
                     }
                     Text(percentText(segment, scale: data.scale))
-                        .font(.headline)
-                        .foregroundStyle(.legible)
+                        .font(.headline.weight(.regular))
+                        .foregroundStyle(Ink.secondary)
                         .monospacedDigit()
 
                     if data.canDrag {
@@ -31,7 +31,7 @@ struct FineTuneSheet: View {
                         }
                         Text(model.barStepDescription + " per tap. The difference comes from or goes to the next person.")
                             .font(.footnote)
-                            .foregroundStyle(.legible)
+                            .foregroundStyle(Ink.secondary)
                             .multilineTextAlignment(.center)
                     }
                     if model.split.method != .itemized {
@@ -39,12 +39,13 @@ struct FineTuneSheet: View {
                             model.toggleParticipant(segment.id)
                             onDone()
                         }
-                        .buttonStyle(.glass)
+                        .frame(minHeight: 44)
                     }
                 }
             }
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .paperBackground()
             .navigationTitle("Fine Tune")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -59,11 +60,12 @@ struct FineTuneSheet: View {
             if model.adjustShare(of: personID, increase: increase) { steps += 1 }
         } label: {
             Image(systemName: systemImage)
-                .font(.title.weight(.semibold))
+                .font(.title)
                 .frame(width: 56, height: 56)
+                .overlay { Circle().strokeBorder(Ink.hairline) }
+                .contentShape(.circle)
         }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
+        .buttonStyle(.plain)
         .accessibilityLabel(label)
     }
 

@@ -24,15 +24,16 @@ struct SplitBarSection: View {
                     Button {
                         listOverride = !showsList
                     } label: {
-                        Label(showsList ? "Show Bar" : "Show List", systemImage: showsList ? "chart.bar.fill" : "list.bullet")
+                        Label(showsList ? "Show Bar" : "Show List", systemImage: showsList ? "chart.bar" : "list.bullet")
                             .labelStyle(.iconOnly)
+                            .foregroundStyle(Ink.secondary)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
                     }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.circle)
+                    .buttonStyle(.plain)
                     .accessibilityLabel(showsList ? "Show bar" : "Show list")
                 }
             }
-            .padding(.horizontal, 0)
 
             SplitMethodSwitcher(selection: model.split.method) { method in
                 onInteract()
@@ -63,9 +64,8 @@ struct SplitBarSection: View {
                      ? "Assign items to people and the bar fills in."
                      : "Choose at least one person to split with.")
                     .font(.subheadline)
-                    .foregroundStyle(.legible)
-                    .frame(maxWidth: .infinity, minHeight: 76)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .foregroundStyle(Ink.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 56)
             }
         }
     }
@@ -79,15 +79,15 @@ struct SplitBarSection: View {
         if data.method == .itemized {
             Text("Assign each item to people and the bar fills in.")
                 .font(.footnote)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         } else if data.total == nil {
             Text("Enter an amount to see what everyone pays.")
                 .font(.footnote)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         } else {
             Text("Drag the dividers. Tap a person to fine tune.")
                 .font(.footnote)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         }
     }
 }

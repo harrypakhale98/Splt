@@ -17,7 +17,7 @@ struct ExpenseCurrencyPicker: View {
 
         List {
             if !pinned.isEmpty {
-                Section(header: Text("Group Currency").foregroundStyle(.legible)) {
+                Section(header: Text("Group Currency").foregroundStyle(Ink.secondary)) {
                     ForEach(pinned) { row($0) }
                 }
             }
@@ -25,6 +25,7 @@ struct ExpenseCurrencyPicker: View {
                 ForEach(rest) { row($0) }
             }
         }
+        .paperBackground()
         .overlay {
             if matches.isEmpty {
                 ContentUnavailableView.search(text: query)
@@ -43,11 +44,11 @@ struct ExpenseCurrencyPicker: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text(option.name).foregroundStyle(.primary)
-                    Text(option.code).font(.subheadline).foregroundStyle(.legible)
+                    Text(option.code).font(.subheadline).foregroundStyle(Ink.secondary)
                 }
                 Spacer()
                 if option.code == selection {
-                    Image(systemName: "checkmark").foregroundStyle(.tint).accessibilityHidden(true)
+                    Image(systemName: "checkmark").foregroundStyle(Ink.text).accessibilityHidden(true)
                 }
             }
         }

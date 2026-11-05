@@ -61,9 +61,11 @@ final class ScreenshotWalkUITests: XCTestCase {
         app.buttons["Add Expense"].firstMatch.tap()
         if app.navigationBars["New Expense"].waitForExistence(timeout: 5) {
             shot("08-add-expense")
-            app.swipeUp()
+            for key in ["6", "0"] { app.buttons[key].firstMatch.tap() }
             shot("09-add-expense-split")
             app.buttons["Close"].tap()
+            let discard = app.buttons["Discard Changes"].firstMatch
+            if discard.waitForExistence(timeout: 5) { discard.tap() }
         }
 
         for _ in 0..<3 { scroll(.down, in: app) }
@@ -104,13 +106,12 @@ final class ScreenshotWalkUITests: XCTestCase {
                 field.tap()
                 field.typeText("dinner")
                 shot("14-search")
-                // the search keyboard would otherwise cover the tab bar
-                let cancel = app.buttons["Cancel"].firstMatch
-                if cancel.exists { cancel.tap() } else { app.swipeDown() }
+                // leaving search brings the tab bar back
+                dismissSheet(in: app)
             }
         }
 
-        if visit("Account", in: app) {
+        if visit("Account", in: app), app.navigationBars["Account"].waitForExistence(timeout: 5) {
             shot("15-account")
             app.swipeUp()
             shot("16-account-more")

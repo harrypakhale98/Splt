@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// The one big number of a screen: rounded numerals that roll when the value changes.
+/// The one big number of a screen: serif numerals that roll when the value changes.
 struct HeroAmount: View {
     let money: Money
     var showsSign = true
@@ -19,7 +19,7 @@ struct HeroAmount: View {
 
     var body: some View {
         Text(MoneyFormatting.string(money, locale: locale, showsSign: showsSign))
-            .font(.system(size: min(size, 80), weight: .bold, design: .rounded))
+            .font(Typeface.hero(size: min(size, 80)))
             .monospacedDigit()
             .foregroundStyle(tint ?? .primary)
             .lineLimit(1)

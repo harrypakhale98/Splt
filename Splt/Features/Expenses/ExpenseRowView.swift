@@ -67,10 +67,10 @@ struct ExpenseRowView: View {
                 .font(.headline)
             Text("\(summary.paidBy) \(MoneyFormatting.magnitudeString(expense.total, locale: locale))")
                 .font(.subheadline)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
             Text(expense.date, format: .dateTime.day().month(.abbreviated).year())
                 .font(.caption)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         }
     }
 
@@ -79,19 +79,19 @@ struct ExpenseRowView: View {
         if expense.isDeleted {
             Text("Deleted")
                 .font(.subheadline)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         } else if let share = summary.myShare {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                 MoneyLabel(money: share)
-                    .font(.body.weight(.semibold))
+                    .font(Typeface.figure)
                 Text("Your share")
                     .font(.caption)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
             }
         } else {
             Text("Not involved")
                 .font(.subheadline)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
         }
     }
 
@@ -118,19 +118,18 @@ struct ExpenseRowView: View {
     }
 }
 
-/// A category symbol on a tinted rounded square.
+/// A category symbol, flat and quiet.
 struct CategoryBadge: View {
     let category: ExpenseCategory
-    @ScaledMetric(relativeTo: .body) private var scaledSide: CGFloat = 40
+    @ScaledMetric(relativeTo: .body) private var scaledSide: CGFloat = 28
 
-    private var side: CGFloat { min(scaledSide, 60) }
+    private var side: CGFloat { min(scaledSide, 40) }
 
     var body: some View {
         Image(systemName: category.symbolName)
-            .font(.system(size: side * 0.45, weight: .medium))
-            .foregroundStyle(.tint)
+            .font(.system(size: side * 0.6))
+            .foregroundStyle(Ink.secondary)
             .frame(width: side, height: side)
-            .background(.tint.opacity(0.15), in: RoundedRectangle(cornerRadius: side * 0.25, style: .continuous))
             .accessibilityHidden(true)
     }
 }

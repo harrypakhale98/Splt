@@ -23,7 +23,7 @@ struct InviteGroupView: View {
                 HStack {
                     ProgressView()
                     Text("Preparing invite")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ink.secondary)
                 }
             case .ready(let url, let image):
                 Section {
@@ -40,7 +40,7 @@ struct InviteGroupView: View {
                     }
                     Text(url.absoluteString)
                         .font(.footnote.monospaced())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ink.secondary)
                         .textSelection(.enabled)
                 }
                 Section {
@@ -64,6 +64,7 @@ struct InviteGroupView: View {
                 )
             }
         }
+        .paperBackground()
         .navigationTitle("Invite")
         .navigationBarTitleDisplayMode(.inline)
         .haptic(.success, trigger: copyCount)

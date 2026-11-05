@@ -9,13 +9,13 @@ struct RootView: View {
         @Bindable var router = router
 
         TabView(selection: $router.selectedTab) {
+            Tab("Groups", systemImage: "square.stack", value: AppTab.groups) {
+                GroupsListView()
+            }
             Tab("Friends", systemImage: "person.2", value: AppTab.friends) {
                 FriendsView()
             }
-            Tab("Groups", systemImage: "person.3", value: AppTab.groups) {
-                GroupsListView()
-            }
-            Tab("Activity", systemImage: "list.bullet.rectangle", value: AppTab.activity) {
+            Tab("Activity", systemImage: "clock", value: AppTab.activity) {
                 ActivityView()
             }
             .badge(unread?.count ?? 0)

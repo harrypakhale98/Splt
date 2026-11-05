@@ -8,7 +8,7 @@ struct ReceiptSection: View {
 
     var body: some View {
         if let fileName = model.receiptFileName {
-            Section(header: Text("Receipt").foregroundStyle(.legible)) {
+            Section(header: Text("Receipt").foregroundStyle(Ink.secondary)) {
                 if store.exists(fileName) {
                     Button {
                         showsFullScreen = true
@@ -18,7 +18,7 @@ struct ReceiptSection: View {
                             Text("View Receipt")
                             Spacer()
                             Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                .foregroundStyle(.legible)
+                                .foregroundStyle(Ink.secondary)
                                 .accessibilityHidden(true)
                         }
                     }
@@ -28,7 +28,7 @@ struct ReceiptSection: View {
                     }
                 } else {
                     Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
-                        .foregroundStyle(.legible)
+                        .foregroundStyle(Ink.secondary)
                 }
             }
         }

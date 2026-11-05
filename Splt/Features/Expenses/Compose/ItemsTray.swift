@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// The items of a scanned or typed bill as glass pills. Select one, then tap people to assign it.
+/// The items of a scanned or typed bill as outlined rows. Select one, then tap people to assign it.
 struct ItemsTray: View {
     @Bindable var model: ExpenseFormModel
     var onEdit: () -> Void
@@ -21,7 +21,7 @@ struct ItemsTray: View {
             if let notice = model.scanNotice {
                 Label(notice, systemImage: "doc.text.viewfinder")
                     .font(.footnote)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
             }
             if model.split.items.isEmpty {
                 Button {
@@ -29,8 +29,8 @@ struct ItemsTray: View {
                     onEdit()
                 } label: {
                     Label("Add Items", systemImage: "plus")
+                        .frame(minHeight: 44)
                 }
-                .buttonStyle(.glass)
             } else {
                 FlowLayout(spacing: 8) {
                     ForEach(model.split.items) { item in
@@ -56,27 +56,30 @@ struct ItemsTray: View {
                         Text(MoneyFormatting.magnitudeString(money, locale: model.locale))
                             .font(.caption)
                             .monospacedDigit()
-                            .foregroundStyle(.legible)
+                            .foregroundStyle(Ink.secondary)
                     }
                 }
                 if people.isEmpty {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(.orange)
+                    Image(systemName: "person.badge.plus")
+                        .foregroundStyle(Ink.secondary)
                         .accessibilityHidden(true)
                 } else {
-                    AvatarStack(people, members: model.members.map(\.id), size: 22, limit: 3)
+                    AvatarStack(people, members: model.members.map(\.id), size: 22, limit: 3, ring: Ink.paper)
                         .transition(.scale)
                 }
             }
-            .padding(.horizontal, 4)
-        }
-        return Group {
-            if selected {
-                button.buttonStyle(.glassProminent)
-            } else {
-                button.buttonStyle(.glass)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(minHeight: 44)
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(selected ? Ink.text : Ink.hairline, lineWidth: selected ? 1.5 : 1)
             }
+            .contentShape(.rect)
         }
+        return button
+            .buttonStyle(.plain)
+            .motion(Motion.quick, value: selected)
         .contextMenu {
             Button("Everyone", systemImage: "person.3") { model.assignEveryone(to: item.id) }
             Button("Delete", systemImage: "trash", role: .destructive) {

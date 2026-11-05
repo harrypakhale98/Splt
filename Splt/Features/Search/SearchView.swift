@@ -40,6 +40,9 @@ private struct SearchContent: View {
                     results
                 }
             }
+            .listStyle(.plain)
+            .listRowSeparatorTint(Ink.hairline)
+            .paperBackground()
             .overlay { placeholder }
             .navigationTitle("Search")
             .searchable(text: $model.query, prompt: "Friends, groups, expenses")
@@ -57,27 +60,18 @@ private struct SearchContent: View {
 
     @ViewBuilder
     private var results: some View {
-        if !model.understood.isEmpty {
-            Section {
-                UnderstoodChips(items: model.understood)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                    .listRowBackground(Color.clear)
-            } header: {
-                Text("Showing")
-            }
-        }
         if !model.people.isEmpty {
             Section("People") {
                 ForEach(model.people) { person in
                     NavigationLink(value: Route.friend(person.id.rawValue)) {
                         HStack(spacing: 12) {
-                            AvatarView(person: person, size: 36)
+                            AvatarView(person: person, size: 28)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(person.name)
                                 if person.isPlaceholder {
                                     Text("Not on Splt yet")
                                         .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Ink.secondary)
                                 }
                             }
                         }
@@ -92,12 +86,12 @@ private struct SearchContent: View {
                 ForEach(model.groups) { group in
                     NavigationLink(value: Route.group(group.id.rawValue)) {
                         HStack(spacing: 12) {
-                            GroupGlyph(symbol: group.symbol, members: group.memberIDs, size: 36)
+                            GroupGlyph(symbol: group.symbol, size: 28)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(group.name)
                                 Text("\(group.memberIDs.count) people")
                                     .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Ink.secondary)
                             }
                         }
                         .accessibilityElement(children: .combine)
@@ -126,8 +120,8 @@ private struct SearchContent: View {
                     Button {
                         model.query = recent
                     } label: {
-                        Label(recent, systemImage: "clock.arrow.circlepath")
-                            .foregroundStyle(.primary)
+                        Text(recent)
+                            .foregroundStyle(Ink.text)
                     }
                 }
             } header: {
@@ -136,6 +130,7 @@ private struct SearchContent: View {
                     Spacer()
                     Button("Clear") { model.clearRecents() }
                         .font(.footnote)
+                        .foregroundStyle(Ink.text)
                         .textCase(nil)
                 }
             }
@@ -155,66 +150,38 @@ private struct SearchContent: View {
         }
     }
 
-    /// The first thing you see: the orbit, what search can do, and questions to try.
+    /// The first thing you see: what search can do, and questions to try.
     private var intro: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                OrbitMotif(size: 160) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 30, weight: .medium))
-                        .foregroundStyle(.tertiary)
-                }
-                VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Search Splt")
-                        .font(.title2.bold())
+                        .font(Typeface.heading)
+                        .foregroundStyle(Ink.text)
                     Text("Find friends, groups and expenses, or ask in your own words.")
                         .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        .foregroundStyle(Ink.secondary)
                 }
-                GlassEffectContainer(spacing: 8) {
-                    FlowLayout(spacing: 8) {
-                        ForEach(SearchModel.examples, id: \.self) { example in
-                            Button { model.query = example } label: {
-                                GlassPill(isInteractive: true) {
-                                    Text(example)
-                                        .font(.subheadline.weight(.medium))
-                                        .lineLimit(1)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .contentShape(.capsule)
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(example)
-                            .accessibilityAddTraits(.isButton)
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(SearchModel.examples, id: \.self) { example in
+                        Divider().overlay(Ink.hairline)
+                        Button { model.query = example } label: {
+                            Text(example)
+                                .font(.body)
+                                .foregroundStyle(Ink.text)
+                                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
+                    Divider().overlay(Ink.hairline)
                 }
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 24)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollBounceBehavior(.basedOnSize)
-    }
-}
-
-/// How a question was read, as small capsules that wrap onto more lines when needed.
-private struct UnderstoodChips: View {
-    let items: [String]
-
-    var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(items, id: \.self) { item in
-                Text(item)
-                    .font(.subheadline.weight(.medium))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.accentColor.opacity(0.14), in: .capsule)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(items.joined(separator: ", "))
     }
 }
 
