@@ -16,7 +16,7 @@ struct SplitMethodSwitcher: View {
             if typeSize.isAccessibilitySize {
                 scrolling
             } else {
-                Picker("Split method", selection: Binding(get: { selection }, set: onSelect)) {
+                Picker("Split method", selection: Binding(get: { selection }, set: { onSelect($0) })) {
                     ForEach(order) { method in
                         Text(method.shortTitle).tag(method)
                     }
