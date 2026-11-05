@@ -164,10 +164,17 @@ struct BalanceCacheAgreementTests {
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 1)
     }
 
+    @discardableResult
+    private func settleGroup(_ fixture: Fixture) throws -> [Payment] {
+        try fixture.services.groups.balances(for: fixture.group.id).suggestedSettlements.map {
+            try fixture.services.payments.settle($0, in: fixture.group.id, date: fixture.clock.start)
+        }
+    }
+
     @Test func paymentsAndUndoAgree() throws {
         let (fixture, _) = try twoGroups()
         let services = fixture.services
-        let made = try services.payments.settleUp(group: fixture.group.id, date: fixture.clock.start)
+        let made = try settleGroup(fixture)
         try expectAgreement(services)
         try readEverything(services)
         try services.payments.undo(id: try #require(made.first).id)
@@ -176,17 +183,17 @@ struct BalanceCacheAgreementTests {
         try services.payments.restore(id: try #require(made.first).id)
         try expectAgreement(services)
         try readEverything(services)
-        try services.payments.recordAll([Payment(
+        try services.payments.record(Payment(
             groupID: fixture.group.id, payer: fixture.priya.id, receiver: fixture.me.id,
             amount: usdAmount(100), date: fixture.clock.start
-        )])
+        ))
         try expectAgreement(services)
     }
 
     @Test func memberAndGroupSettingChangesAgree() throws {
         let (fixture, _) = try twoGroups()
         let services = fixture.services
-        try services.payments.settleUp(group: fixture.group.id, date: fixture.clock.start)
+        try settleGroup(fixture)
         try readEverything(services)
         try services.groups.removeMember(fixture.priya.id, from: fixture.group.id)
         try expectAgreement(services)

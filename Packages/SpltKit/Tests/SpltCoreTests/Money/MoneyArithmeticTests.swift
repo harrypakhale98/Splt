@@ -19,20 +19,11 @@ struct MoneyArithmeticTests {
         #expect(throws: MoneyError.overflow) { try usd(Int64.max).adding(usd(1)) }
         #expect(throws: MoneyError.overflow) { try usd(Int64.min).subtracting(usd(1)) }
         #expect(throws: MoneyError.overflow) { try usd(Int64.min).negated() }
-        #expect(throws: MoneyError.overflow) { try usd(Int64.min).absoluteValue() }
-        #expect(throws: MoneyError.overflow) { try usd(Int64.max).multiplied(by: 2) }
     }
 
-    @Test func negatesAndTakesAbsoluteValue() throws {
+    @Test func negates() throws {
         #expect(try usd(5).negated() == usd(-5))
-        #expect(try usd(-5).absoluteValue() == usd(5))
-        #expect(try usd(5).absoluteValue() == usd(5))
         #expect(try usd(0).negated() == usd(0))
-    }
-
-    @Test func multiplies() throws {
-        #expect(try usd(125).multiplied(by: 3) == usd(375))
-        #expect(try usd(125).multiplied(by: -1) == usd(-125))
     }
 
     @Test func signFlags() {

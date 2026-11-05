@@ -85,7 +85,6 @@ struct BatchInsertTests {
         let fixture = try Fixture()
         let before = try fixture.services.activity.entries(limit: 100).count
         try fixture.services.expenses.addAll([])
-        try fixture.services.payments.recordAll([])
         #expect(try fixture.services.activity.entries(limit: 100).count == before)
     }
 
@@ -96,28 +95,6 @@ struct BatchInsertTests {
         let kinds = try fixture.services.activity.entries(in: fixture.group.id, limit: 10).map(\.event.kind)
         #expect(kinds.filter { $0 == .expenseAdded }.count == 2)
         #expect(!kinds.contains(.expensesImported))
-    }
-
-    @Test func paymentsBatchTheSameWay() throws {
-        let fixture = try Fixture()
-        let payments = (1...5).map {
-            Payment(groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(Int64($0 * 100)), date: fixture.clock.start)
-        }
-        try fixture.services.payments.recordAll(payments)
-        #expect(try fixture.services.payments.payments(in: fixture.group.id).count == 5)
-        let first = try #require(try fixture.services.activity.entries(in: fixture.group.id, limit: 1).first)
-        #expect(first.event == .expensesImported(expenses: 0, payments: 5))
-    }
-
-    @Test func invalidOrRepeatedPaymentsStoreNothing() throws {
-        let fixture = try Fixture()
-        let good = Payment(groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(100), date: fixture.clock.start)
-        let same = Payment(groupID: fixture.group.id, payer: fixture.me.id, receiver: fixture.me.id, amount: usdAmount(100), date: fixture.clock.start)
-        #expect(throws: DataError.invalidPayment(.samePerson)) { try fixture.services.payments.recordAll([good, same]) }
-        try fixture.services.payments.record(good)
-        let again = Payment(id: good.id, groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(5), date: fixture.clock.start)
-        #expect(throws: DataError.alreadyExists("payment \(good.id)")) { try fixture.services.payments.recordAll([again]) }
-        #expect(try fixture.services.payments.payments(in: fixture.group.id).count == 1)
     }
 
     @Test func theImporterWritesOneSummaryAndBalancesMatch() throws {

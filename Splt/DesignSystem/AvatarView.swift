@@ -87,11 +87,6 @@ enum AvatarStyle {
     static func color(for name: String) -> Color {
         PersonPalette.color(forName: name)
     }
-
-    /// Stable across launches, unlike `hashValue`.
-    static func paletteIndex(for name: String) -> Int {
-        PersonPalette.preferredIndex(forName: name)
-    }
 }
 
 #Preview {

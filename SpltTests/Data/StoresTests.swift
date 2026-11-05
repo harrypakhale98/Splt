@@ -51,8 +51,8 @@ struct StoresTests {
         try fixture.services.groups.setArchived(true, id: fixture.group.id)
         let store = fixture.services.groupsStore
         store.refresh()
-        #expect(store.activeSummaries.isEmpty)
-        #expect(store.archivedSummaries.count == 1)
+        #expect(store.summaries.count == 1)
+        #expect(store.summaries.first?.group.isArchived == true)
         #expect(store.totals.isSettled)
     }
 
@@ -84,7 +84,7 @@ struct StoresTests {
         #expect(sam.byGroup.map(\.groupID) == [fixture.group.id])
         let priya = try #require(store.summaries.first { $0.person.id == fixture.priya.id })
         #expect(priya.isSettled)
-        #expect(store.unsettled.map(\.id) == [fixture.sam.id])
+        #expect(store.summaries.filter { !$0.isSettled }.map(\.id) == [fixture.sam.id])
         #expect(store.totals == BalanceTotals(owedToYou: [], youOwe: [usdAmount(1500)]))
     }
 
@@ -106,7 +106,7 @@ struct StoresTests {
         let store = fixture.services.friendsStore
         store.refresh()
         try fixture.addExpense(cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
-        #expect(await eventually { !store.unsettled.isEmpty })
+        #expect(await eventually { store.summaries.contains { !$0.isSettled } })
     }
 
     @Test func expensesStoreBuildsRowsForAGroup() throws {

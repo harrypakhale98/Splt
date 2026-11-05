@@ -14,7 +14,6 @@ final class GroupSettingsViewModel {
         var balance: [Money]
 
         var id: PersonID { person.id }
-        var canRemove: Bool { !isMe && balance.isEmpty }
     }
 
     let groupID: GroupID

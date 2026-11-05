@@ -8,13 +8,8 @@ protocol PaymentRepository {
     func payment(id: PaymentID) throws -> Payment?
     /// Validates and stores a settlement, and writes an activity entry.
     func record(_ payment: Payment) throws
-    /// Records many settlements in one save with a single summary entry per group.
-    /// Nothing is stored if any payment is invalid or already exists.
-    func recordAll(_ payments: [Payment]) throws
     /// Records a payment that settles a suggested debt.
     @discardableResult func settle(_ debt: Debt, in group: GroupID, date: Date, note: String) throws -> Payment
-    /// Records a payment for every suggested settlement, which leaves the group square.
-    @discardableResult func settleUp(group: GroupID, date: Date) throws -> [Payment]
     /// Undoes a settlement. The payment stays in history but no longer counts.
     func undo(id: PaymentID) throws
     /// Brings back a settlement that was undone.

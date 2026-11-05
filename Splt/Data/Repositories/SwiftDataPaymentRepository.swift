@@ -23,22 +23,6 @@ final class SwiftDataPaymentRepository: PaymentRepository {
         try env.save()
     }
 
-    func recordAll(_ payments: [Payment]) throws {
-        guard !payments.isEmpty else { return }
-        do {
-            let me = try env.currentUser()?.personID
-            try insertBatch(payments)
-            let counts = Dictionary(grouping: payments.compactMap(\.groupID), by: { $0 }).mapValues(\.count)
-            for group in counts.keys.sorted() {
-                try env.log(.expensesImported(expenses: 0, payments: counts[group] ?? 0), groupID: group, actor: me)
-            }
-            try env.save()
-        } catch {
-            env.tracker.rollback()
-            throw error
-        }
-    }
-
     /// Stores many payments without saving or logging, after checking them all with a few queries.
     func insertBatch(_ payments: [Payment]) throws {
         var knownGroups = Set<GroupID>()
@@ -72,19 +56,6 @@ final class SwiftDataPaymentRepository: PaymentRepository {
         let payment = Payment(settling: debt, groupID: group, date: date, note: note)
         try record(payment)
         return payment
-    }
-
-    @discardableResult
-    func settleUp(group: GroupID, date: Date) throws -> [Payment] {
-        guard let record = try env.groupRecord(group) else { throw DataError.notFound("group \(group)") }
-        let ledger = try env.ledger(forGroup: group)
-        let debts = record.simplifiesDebts ? ledger.simplifiedDebts : ledger.debts
-        let payments = debts.map { Payment(settling: $0, groupID: group, date: date) }
-        for payment in payments {
-            try insert(payment)
-        }
-        try env.save()
-        return payments
     }
 
     func undo(id: PaymentID) throws {

@@ -32,8 +32,6 @@ final class GroupsStore {
         refresh()
     }
 
-    var activeSummaries: [GroupSummary] { summaries.filter { !$0.group.isArchived } }
-    var archivedSummaries: [GroupSummary] { summaries.filter(\.group.isArchived) }
 
     func refresh() {
         do {

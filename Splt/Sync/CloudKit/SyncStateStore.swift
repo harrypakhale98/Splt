@@ -1,5 +1,4 @@
 import Foundation
-import Synchronization
 
 /// Where sync keeps its own bookkeeping: the CKSyncEngine state for each database and the metadata.
 protocol SyncStateStore: Sendable {
@@ -61,35 +60,5 @@ final class FileSyncStateStore: SyncStateStore {
     private func write(_ data: Data, to url: URL) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-    }
-}
-
-/// A store that lives only in memory, for tests and previews.
-final class InMemorySyncStateStore: SyncStateStore {
-    private struct Contents {
-        var metadata = SyncMetadata()
-        var states: [DatabaseScope: Data] = [:]
-    }
-
-    private let contents = Mutex(Contents())
-
-    func loadMetadata() -> SyncMetadata {
-        contents.withLock { $0.metadata }
-    }
-
-    func saveMetadata(_ metadata: SyncMetadata) {
-        contents.withLock { $0.metadata = metadata }
-    }
-
-    func loadEngineState(_ scope: DatabaseScope) -> Data? {
-        contents.withLock { $0.states[scope] }
-    }
-
-    func saveEngineState(_ data: Data?, scope: DatabaseScope) {
-        contents.withLock { $0.states[scope] = data }
-    }
-
-    func reset() {
-        contents.withLock { $0 = Contents() }
     }
 }
