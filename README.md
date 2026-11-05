@@ -10,10 +10,10 @@ It is built with SwiftUI and Apple frameworks only, with no third party packages
 
 <table>
   <tr>
-    <td><img src="docs/images/groups-dark.png" width="180" alt="The Groups tab in dark mode, with a card showing what you owe and are owed across all groups"></td>
-    <td><img src="docs/images/balance-orbit.png" width="180" alt="The balance orbit for a trip group, with colored ribbons between six people"></td>
-    <td><img src="docs/images/split-bar.png" width="180" alt="The add expense sheet with the split bar set to percent"></td>
-    <td><img src="docs/images/settle-up.png" width="180" alt="The settle up sheet with an arc between two people for a partial payment"></td>
+    <td><img src="docs/images/groups-dark.png" width="180" alt="The Groups tab in dark mode, showing your overall balance and a plain list of groups"></td>
+    <td><img src="docs/images/balance-orbit.png" width="180" alt="The balance orbit for a trip group, with thin colored ribbons between six people"></td>
+    <td><img src="docs/images/split-bar.png" width="180" alt="The add expense sheet with an amount, the people in the expense and the split bar"></td>
+    <td><img src="docs/images/settle-up.png" width="180" alt="The settle up sheet with one total and a plain list of who pays whom"></td>
   </tr>
   <tr>
     <td align="center">Groups</td>
@@ -39,6 +39,18 @@ It is built with SwiftUI and Apple frameworks only, with no third party packages
 - Invite people with a link or a QR code.
 - Export a group as a spreadsheet (CSV), PDF or JSON.
 - Totals, charts and a story style trip recap of up to six pages for each group.
+
+When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
+
+## Design
+
+Splt looks like a well-kept paper ledger: ink on warm paper, with big printed numbers. Color only ever means a person or the direction of money. The full rules are in [docs/design.md](docs/design.md).
+
+- Every person has one muted color that follows them across groups, balances, splits and recaps.
+- The balance orbit puts people on a ring with ribbons for payments. Tap a person to see only their payments.
+- The split bar shows each share as a block in that person's color. Drag a divider, or tap a person to fine tune.
+- Settling up draws an arc between two people and closes a ring when you are square. A short haptic marks it, and you can turn haptics off in Settings.
+- It works in light and dark, with Dynamic Type up to the largest accessibility sizes, VoiceOver labels and Reduce Motion.
 
 When the on-device language model is not available, quick add and category suggestions fall back to simple rules.
 
