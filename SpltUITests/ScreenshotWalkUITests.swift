@@ -111,7 +111,8 @@ final class ScreenshotWalkUITests: XCTestCase {
             }
         }
 
-        if visit("Account", in: app), app.navigationBars["Account"].waitForExistence(timeout: 5) {
+        if visit("Groups", in: app) {
+            openAccount(in: app)
             shot("15-account")
             app.swipeUp()
             shot("16-account-more")

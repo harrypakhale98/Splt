@@ -13,6 +13,7 @@ struct RemindSheet: View {
     @Environment(\.locale) private var locale
     @Environment(Router.self) private var router
     @State private var outcome: ReminderScheduler.Outcome?
+    @State private var opensAccount = false
     @State private var showsSettingsPrompt = false
 
     private var message: String {
@@ -49,10 +50,14 @@ struct RemindSheet: View {
                     Button("Done", role: .close) { dismiss() }
                 }
             }
+            // Account is a sheet too, so it opens only once this one has gone
+            .onDisappear {
+                if opensAccount { router.openAccount() }
+            }
             .alert("Turn On Notifications", isPresented: $showsSettingsPrompt) {
                 Button("Open Settings") {
+                    opensAccount = true
                     dismiss()
-                    router.push(.settings, in: .account)
                 }
                 Button("Not Now", role: .cancel) {}
             } message: {

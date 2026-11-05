@@ -118,6 +118,7 @@ private struct ActivityContent: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        AccountToolbarItem()
         ToolbarItem(placement: .primaryAction) {
             Button("Mark All Read", systemImage: "envelope.open") { model.markAllRead() }
                 .disabled(model.unreadCount == 0)

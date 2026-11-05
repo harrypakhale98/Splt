@@ -10,6 +10,7 @@ final class Router {
     var sheet: AppSheet?
     /// The welcome tour, shown on first launch and from Account.
     var showsOnboarding = false
+    private var showsTourAfterSheet = false
     /// An invite that was opened from a link or a scan, waiting for the add friend sheet to confirm it.
     var pendingInvite: FriendInvite?
     /// A friend whose settle up sheet should open as soon as their screen appears.
@@ -27,8 +28,7 @@ final class Router {
     func push(_ route: Route, in tab: AppTab? = nil) {
         if route == .settings {
             // the settings sections are the Account screen itself
-            selectedTab = .account
-            accountPath = []
+            openAccount()
             return
         }
         let target = tab ?? selectedTab
@@ -37,13 +37,34 @@ final class Router {
         case .friends: friendsPath.append(route)
         case .groups: groupsPath.append(route)
         case .activity: activityPath.append(route)
-        case .account: accountPath.append(route)
         case .search: break
         }
     }
 
     func present(_ sheet: AppSheet) {
         self.sheet = sheet
+    }
+
+    /// Opens the Account sheet at its top, whatever tab you are on.
+    func openAccount() {
+        accountPath = []
+        sheet = .account
+    }
+
+    /// Shows the tour, closing any sheet first because a full screen cover can't open over one.
+    func showWelcomeTour() {
+        guard sheet != nil else {
+            showsOnboarding = true
+            return
+        }
+        showsTourAfterSheet = true
+        sheet = nil
+    }
+
+    func sheetDidDismiss() {
+        guard showsTourAfterSheet else { return }
+        showsTourAfterSheet = false
+        showsOnboarding = true
     }
 
     @discardableResult
