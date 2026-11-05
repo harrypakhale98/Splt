@@ -39,45 +39,28 @@ struct RecapBackdropTests {
 
     private let pages: [RecapPage] = [.total, .days, .biggest, .payer, .categories, .summary]
 
-    @Test func everyPageHasOneToThreeDistinctHues() throws {
+    @Test func everyPageStripHoldsEachMemberOnce() throws {
         let (group, stats) = try setup()
         for page in pages {
-            let hues = RecapBackdrop.hues(for: page, group: group, stats: stats)
-            #expect((1...3).contains(hues.count), "\(page)")
-            #expect(Set(hues).count == hues.count, "\(page)")
-            #expect(hues.allSatisfy { (0..<PersonPalette.count).contains($0) })
+            let segments = RecapBackdrop.segments(for: page, members: group.memberIDs, stats: stats)
+            #expect(segments.map(\.person) == group.memberIDs, "\(page)")
+            #expect(segments.allSatisfy { $0.weight > 0 })
         }
     }
 
-    @Test func thePayerPageUsesThePayersColor() throws {
+    @Test func thePayerPageGivesTheTopPayerTheWidestShare() throws {
         let (group, stats) = try setup()
-        let hues = RecapBackdrop.hues(for: .payer, group: group, stats: stats)
-        #expect(hues.first == PersonPalette.index(for: ben, in: group.memberIDs))
+        let segments = RecapBackdrop.segments(for: .payer, members: group.memberIDs, stats: stats)
+        let widest = try #require(segments.max { $0.weight < $1.weight })
+        #expect(widest.person == ben)
+        #expect(widest.weight > (segments.first { $0.person == ana }?.weight ?? 0))
     }
 
-    @Test func theBiggestAndCategoryPagesUseTheCategoryColor() throws {
+    @Test func otherPagesShareTheStripEvenly() throws {
         let (group, stats) = try setup()
-        let lodging = RecapBackdrop.categoryHue(.lodging)
-        #expect(RecapBackdrop.hues(for: .biggest, group: group, stats: stats).first == lodging)
-        #expect(RecapBackdrop.hues(for: .categories, group: group, stats: stats).first == lodging)
-    }
-
-    @Test func theStoryOpensAndClosesInTheGroupsOwnColors() throws {
-        let (group, stats) = try setup()
-        let own = GroupHeroTint.hues(for: group)
-        #expect(RecapBackdrop.hues(for: .total, group: group, stats: stats) == own)
-        #expect(RecapBackdrop.hues(for: .summary, group: group, stats: stats) == own)
-    }
-
-    @Test func pagesDoNotAllLookTheSame() throws {
-        let (group, stats) = try setup()
-        let firsts = Set(pages.map { RecapBackdrop.hues(for: $0, group: group, stats: stats).first })
-        #expect(firsts.count >= 3)
-    }
-
-    @Test func categoryHuesAreStable() {
-        #expect(RecapBackdrop.categoryHue(.dining) == RecapBackdrop.categoryHue(.dining))
-        let hues = Set(ExpenseCategory.allCases.map(RecapBackdrop.categoryHue))
-        #expect(hues.count >= 6)
+        for page in pages where page != .payer {
+            let weights = Set(RecapBackdrop.segments(for: page, members: group.memberIDs, stats: stats).map(\.weight))
+            #expect(weights.count == 1, "\(page)")
+        }
     }
 }

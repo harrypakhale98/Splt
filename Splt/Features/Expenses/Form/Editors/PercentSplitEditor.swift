@@ -16,7 +16,7 @@ struct PercentSplitEditor: View {
                         .multilineTextAlignment(.trailing)
                         .monospacedDigit()
                         .accessibilityLabel("Percent owed by \(model.displayName(for: person.id))")
-                        Text("%").foregroundStyle(.legible).accessibilityHidden(true)
+                        Text("%").foregroundStyle(Ink.secondary).accessibilityHidden(true)
                     }
                 }
             }
@@ -26,14 +26,13 @@ struct PercentSplitEditor: View {
                         Label {
                             Text("All assigned")
                         } icon: {
-                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            Image(systemName: "checkmark.circle")
                         }
                     } else {
                         Label {
                             Text(AmountInput.hundredthsText(remaining, locale: model.locale) + "%").monospacedDigit()
                         } icon: {
                             Image(systemName: remaining < 0 ? "minus.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundStyle(remaining < 0 ? .red : .orange)
                         }
                     }
                 }
@@ -41,7 +40,7 @@ struct PercentSplitEditor: View {
             }
             Button("Split Percentages Evenly") { model.fillPercentagesEvenly() }
         } header: {
-            Text("Percentages").foregroundStyle(.legible)
+            Text("Percentages").foregroundStyle(Ink.secondary)
         }
     }
 }

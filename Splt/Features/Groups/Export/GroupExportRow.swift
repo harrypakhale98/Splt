@@ -16,7 +16,7 @@ struct GroupExportRow: View {
             HStack(spacing: 12) {
                 ProgressView()
                 Text("Preparing \(shortName)")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
             }
             .accessibilityElement(children: .combine)
         case .ready(let url):
@@ -27,7 +27,7 @@ struct GroupExportRow: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(message)
                     .font(.subheadline)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Ink.owe)
                 Button("Retry", systemImage: "arrow.clockwise", action: prepare)
             }
         }

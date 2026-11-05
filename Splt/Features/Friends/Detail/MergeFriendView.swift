@@ -30,6 +30,7 @@ struct MergeFriendView: View {
                     Section("Everyone Else") { rows(model.others) }
                 }
             }
+            .paperBackground()
             .overlay {
                 if model.suggestions.isEmpty, model.others.isEmpty {
                     EmptyStateView(
@@ -80,7 +81,7 @@ struct MergeFriendView: View {
                     if person.isPlaceholder {
                         Text("Not on Splt yet")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Ink.secondary)
                     }
                 }
             }

@@ -12,7 +12,7 @@ struct SplitBarView: View {
     var onStep: (PersonID, Bool) -> Void
     var onTap: (PersonID) -> Void
 
-    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 76
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 56
     @Environment(\.locale) private var locale
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,7 +21,7 @@ struct SplitBarView: View {
     @State private var lastSnap: SplitBarDetent.Kind?
 
     private let barSpace = "splitBar"
-    private let corner: CGFloat = 24
+    private let corner: CGFloat = 8
 
     var body: some View {
         GeometryReader { proxy in
@@ -89,10 +89,10 @@ struct SplitBarView: View {
     private func handle(divider: Int, layout: SplitBarLayout) -> some View {
         let position = layout.visual.indices.contains(divider + 1) ? layout.visual[divider + 1] : 0
         return Capsule()
-            .fill(.white)
-            .frame(width: 6, height: height * 0.46)
-            .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+            .fill(Ink.paper)
+            .frame(width: 4, height: height * 0.5)
             .scaleEffect(draggingDivider == divider ? 1.2 : 1)
+            .motion(Motion.quick, value: draggingDivider)
             .frame(width: 44, height: height)
             .contentShape(.rect)
             .position(x: position, y: height / 2)
@@ -117,7 +117,7 @@ struct SplitBarView: View {
     /// The floating label above the divider being dragged: both neighbors and what they get.
     private func callout(divider: Int, x: CGFloat, width: CGFloat) -> some View {
         let pair = Array(data.segments[divider...(divider + 1)])
-        return GlassPill {
+        return Group {
             HStack(spacing: 12) {
                 ForEach(pair) { segment in
                     let label = SplitBarLabels.make(method: data.method, segment: segment, scale: data.scale, wide: true, locale: locale)
@@ -128,13 +128,17 @@ struct SplitBarView: View {
                         Text(firstName(of: segment.person))
                             .font(.caption.weight(.medium))
                         Text(label.primary)
-                            .font(.system(.footnote, design: .rounded, weight: .bold))
+                            .font(.footnote.weight(.semibold))
                             .monospacedDigit()
                     }
                 }
             }
             .lineLimit(1)
             .fixedSize()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Ink.sheet, in: Capsule())
+            .overlay { Capsule().strokeBorder(Ink.hairline) }
         }
         .position(x: min(max(x, 90), max(width - 90, 90)), y: -22)
         .allowsHitTesting(false)
@@ -162,42 +166,32 @@ private struct SegmentView: View {
         ZStack {
             Rectangle().fill(fill)
             if width >= 26 {
-                VStack(spacing: 2) {
-                    initials(ink: ink)
+                VStack(spacing: 1) {
+                    Text(width >= 58 ? firstName : AvatarStyle.initials(for: segment.person.name))
+                        .font(.caption.weight(.medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                     if width >= 58 {
                         let label = SplitBarLabels.make(
-                            method: method, segment: segment, scale: scale, wide: width >= 84, locale: locale
+                            method: method, segment: segment, scale: scale, wide: false, locale: locale
                         )
                         Text(label.primary)
-                            .font(.system(.caption, design: .rounded, weight: .bold))
-                            .monospacedDigit()
+                            .font(.caption2.monospacedDigit())
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
-                            .foregroundStyle(ink)
                             .contentTransition(.numericText())
-                        if let secondary = label.secondary {
-                            Text(secondary)
-                                .font(.system(size: 10, weight: .medium, design: .rounded))
-                                .monospacedDigit()
-                                .minimumScaleFactor(0.6)
-                                .lineLimit(1)
-                                .foregroundStyle(ink)
-                        }
                     }
                 }
+                .foregroundStyle(ink)
                 .padding(.horizontal, 3)
             }
         }
         .overlay(alignment: .trailing) {
-            Rectangle().fill(Color(.systemBackground).opacity(0.5)).frame(width: 1)
+            Rectangle().fill(Ink.paper).frame(width: 1)
         }
     }
 
-    private func initials(ink: Color) -> some View {
-        Text(AvatarStyle.initials(for: segment.person.name))
-            .font(.system(size: 10, weight: .bold, design: .rounded))
-            .foregroundStyle(ink)
-            .frame(width: 24, height: 24)
-            .overlay { Circle().strokeBorder(ink.opacity(0.9), lineWidth: 1.5) }
+    private var firstName: String {
+        segment.person.name.split(separator: " ").first.map(String.init) ?? segment.person.name
     }
 }

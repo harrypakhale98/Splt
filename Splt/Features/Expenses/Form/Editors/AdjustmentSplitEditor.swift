@@ -18,9 +18,9 @@ struct AdjustmentSplitEditor: View {
                 }
             }
         } header: {
-            Text("Adjustments").foregroundStyle(.legible)
+            Text("Adjustments").foregroundStyle(Ink.secondary)
         } footer: {
-            Text("Enter an amount to add to someone's share, or a minus amount to take off. Everything else is split equally.").foregroundStyle(.legible)
+            Text("Enter an amount to add to someone's share, or a minus amount to take off. Everything else is split equally.").foregroundStyle(Ink.secondary)
         }
     }
 }

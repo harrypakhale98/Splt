@@ -9,6 +9,7 @@ struct SpltApp: App {
 
     init() {
         NotificationCoordinator.shared.install()
+        Typeface.installNavigationTitles()
     }
 
     var body: some Scene {
@@ -26,7 +27,7 @@ struct SpltApp: App {
                 .onboardingTour(router: router)
                 .tint(Color("AccentColor"))
                 } else {
-                    Color(.systemBackground).ignoresSafeArea()
+                    Ink.paper.ignoresSafeArea()
                 }
             }
             .onOpenURL { router.open($0) }

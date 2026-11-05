@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The "Describe it" glass pill: type or dictate what you spent, and the form fills itself in.
+/// The "Describe it" line: type or dictate what you spent, and the form fills itself in.
 struct DescribePill: View {
     @Bindable var model: ExpenseFormModel
     var focus: FocusState<ExpenseFormField?>.Binding
@@ -10,11 +10,8 @@ struct DescribePill: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            GlassPill(isInteractive: true) {
+            VStack(spacing: 0) {
                 HStack(spacing: 10) {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(.tint)
-                        .accessibilityHidden(true)
                     TextField(
                         "Describe it", text: $model.describeText,
                         prompt: Text("Dinner 60 with Sam and Priya"), axis: .vertical
@@ -28,12 +25,14 @@ struct DescribePill: View {
 
                     trailing
                 }
+                .frame(minHeight: 44)
+                Rectangle().fill(Ink.hairline).frame(height: 1)
             }
 
             if let notice = model.filledNotice {
                 Label(notice, systemImage: "checkmark.circle")
                     .font(.footnote)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
@@ -41,7 +40,7 @@ struct DescribePill: View {
                 let names = model.unmatchedNames.formatted(.list(type: .and))
                 Label("\(names) is not in this group, so they were left out.", systemImage: "person.fill.questionmark")
                     .font(.footnote)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
@@ -54,9 +53,8 @@ struct DescribePill: View {
             ProgressView()
         } else if !model.describeText.trimmingCharacters(in: .whitespaces).isEmpty {
             Button("Fill In", action: fill)
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.small)
+                .font(.body.weight(.medium))
+                .frame(minHeight: 44)
         } else {
             HStack(spacing: 14) {
                 if DictationController.isSupported {
@@ -69,7 +67,7 @@ struct DescribePill: View {
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(.borderless)
-            .imageScale(.large)
+            .foregroundStyle(Ink.secondary)
         }
     }
 

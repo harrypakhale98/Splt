@@ -33,7 +33,7 @@ struct OrbitLayout: Equatable {
         labelStyle = style
         let labelRoom: CGFloat = style == .hidden ? 0 : (style == .name ? 26 : 18)
 
-        var node = side * (count <= 4 ? 0.095 : count <= 6 ? 0.085 : count <= 9 ? 0.07 : 0.058)
+        var node = side * (count <= 4 ? 0.07 : count <= 6 ? 0.063 : count <= 9 ? 0.054 : 0.046)
         let margin: CGFloat = 8
         let ring = max(side / 2 - node - labelRoom - margin, 1)
         if count >= 3 {
@@ -70,8 +70,8 @@ struct OrbitLayout: Equatable {
     }
 
     /// The widest an arc may be.
-    var maxArcWidth: CGFloat { nodeRadius * 0.9 }
-    var minArcWidth: CGFloat { 3 }
+    var maxArcWidth: CGFloat { min(nodeRadius * 0.3, 5) }
+    var minArcWidth: CGFloat { 1.5 }
 
     /// Arc width for an amount, in proportion to the largest amount on the ring.
     func arcWidth(amount: Int64, largest: Int64) -> CGFloat {

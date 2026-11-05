@@ -55,6 +55,9 @@ private struct FriendDetailContent: View {
                     timeline
                     paymentHistory
                 }
+                .listStyle(.plain)
+                .listRowSeparatorTint(Ink.hairline)
+                .paperBackground()
                 .navigationTitle(friend.name)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbar(friend) }
@@ -101,37 +104,22 @@ private struct FriendDetailContent: View {
     // MARK: Sections
 
     private func hero(_ friend: Person) -> some View {
-        let owedToYou = !model.owedToYou.isEmpty
-        let settle = FriendHero.Action(title: "Settle Up", symbol: "checkmark.circle", spokenTitle: nil) { settleRequest = model.settleRequest }
-        let remind = FriendHero.Action(
-            title: "Remind \(ReminderMessage.firstName(friend.name))", symbol: "bell", spokenTitle: nil
-        ) { showsRemind = true }
-        let add = FriendHero.Action(title: "Add", symbol: "plus.circle", spokenTitle: "Add Expense") {
-            expenseTarget = model.expenseGroup().map(ExpenseTarget.init)
-        }
-        let primary: FriendHero.Action
-        let secondary: FriendHero.Action?
-        if model.settleRequest == nil {
-            (primary, secondary) = (add, nil)
-        } else if owedToYou {
-            (primary, secondary) = (remind, settle)
-        } else {
-            (primary, secondary) = (settle, add)
-        }
-        return Section {
+        Section {
             FriendHero(
-                friend: friend, balance: model.balance, sharedGroups: model.sharedGroups,
-                primary: primary, secondary: secondary
+                friend: friend, balance: model.balance, canSettle: model.settleRequest != nil,
+                onSettle: { settleRequest = model.settleRequest },
+                onAdd: { expenseTarget = model.expenseGroup().map(ExpenseTarget.init) }
             )
-            .listRowInsets(EdgeInsets())
+            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
             .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
     }
 
     @ViewBuilder
     private var groupBreakdown: some View {
         if !model.groupRows.isEmpty {
-            Section("By Group") {
+            Section {
                 ForEach(model.groupRows) { row in
                     NavigationLink(value: Route.group(row.groupID.rawValue)) {
                         HStack {
@@ -139,13 +127,16 @@ private struct FriendDetailContent: View {
                             Spacer(minLength: 8)
                             VStack(alignment: .trailing) {
                                 ForEach(row.amounts, id: \.currencyCode) { amount in
-                                    MoneyLabel(money: amount, style: .balance)
+                                    BalanceFigure(money: amount)
                                 }
                             }
                         }
                         .accessibilityElement(children: .combine)
                     }
+                    .listRowBackground(Color.clear)
                 }
+            } header: {
+                sectionLabel(Text("By group"))
             }
         }
     }
@@ -153,27 +144,27 @@ private struct FriendDetailContent: View {
     @ViewBuilder
     private var timeline: some View {
         if model.expenses.isEmpty {
-            Section("Shared Expenses") {
+            Section {
                 Text("Nothing shared yet.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
+                    .listRowBackground(Color.clear)
+            } header: {
+                sectionLabel(Text("Shared expenses"))
             }
         } else {
-            let members = [model.me?.id, model.friend?.id].compactMap { $0 }
             ForEach(model.timeline) { month in
                 Section {
-                    ForEach(Array(month.expenses.enumerated()), id: \.element.id) { index, expense in
+                    ForEach(month.expenses, id: \.id) { expense in
                         NavigationLink(value: Route.expense(expense.id.rawValue)) {
                             FriendTimelineRow(
-                                expense: expense, payerID: expense.payers.keys.sorted().first,
-                                payerName: model.payerText(for: expense), members: members,
-                                myNet: model.myNet(in: expense),
-                                isFirst: index == 0, isLast: index == month.expenses.count - 1
+                                expense: expense, payerName: model.payerText(for: expense),
+                                myNet: model.myNet(in: expense)
                             )
                         }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        .listRowBackground(Color.clear)
                     }
                 } header: {
-                    Text(month.start, format: .dateTime.month(.wide).year())
+                    sectionLabel(Text(month.start, format: .dateTime.month(.wide).year()))
                 }
             }
         }
@@ -182,21 +173,31 @@ private struct FriendDetailContent: View {
     @ViewBuilder
     private var paymentHistory: some View {
         if !model.payments.isEmpty {
-            Section("Payments") {
+            Section {
                 ForEach(model.payments) { payment in
                     PaymentRow(payment: payment, model: model)
+                        .listRowBackground(Color.clear)
                 }
+            } header: {
+                sectionLabel(Text("Payments"))
             }
         }
+    }
+
+    private func sectionLabel(_ text: Text) -> some View {
+        text
+            .font(.footnote)
+            .foregroundStyle(Ink.secondary)
+            .textCase(nil)
     }
 
     // MARK: Toolbar
 
     @ToolbarContentBuilder
     private func toolbar(_ friend: Person) -> some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Button("Add Expense", systemImage: "plus") {
-                expenseTarget = model.expenseGroup().map(ExpenseTarget.init)
+        if !model.owedToYou.isEmpty {
+            ToolbarItem(placement: .secondaryAction) {
+                Button("Remind \(ReminderMessage.firstName(friend.name))", systemImage: "bell") { showsRemind = true }
             }
         }
         ToolbarItem(placement: .secondaryAction) {
@@ -250,7 +251,8 @@ private struct PaymentRow: View {
                 Text(sentence)
                     .strikethrough(isUndone)
                 Spacer(minLength: 8)
-                MoneyLabel(money: payment.amount)
+                Text(MoneyFormatting.magnitudeString(payment.amount, locale: locale))
+                    .font(Typeface.figure)
                     .strikethrough(isUndone)
             }
             HStack(spacing: 6) {
@@ -263,17 +265,17 @@ private struct PaymentRow: View {
                 }
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Ink.secondary)
         }
-        .foregroundStyle(isUndone ? .secondary : .primary)
+        .foregroundStyle(isUndone ? Ink.secondary : Ink.text)
         .accessibilityElement(children: .combine)
         .swipeActions {
             if isUndone {
                 Button("Restore", systemImage: "arrow.uturn.forward") { model.restore(payment) }
-                    .tint(.green)
+                    .tint(Ink.owed)
             } else {
                 Button("Undo", systemImage: "arrow.uturn.backward") { model.undo(payment) }
-                    .tint(.orange)
+                    .tint(Ink.text)
             }
         }
     }
@@ -283,6 +285,25 @@ private struct PaymentRow: View {
         if payment.payer == model.me?.id { return String(localized: "You paid \(receiver)") }
         if payment.receiver == model.me?.id { return String(localized: "\(payer) paid you") }
         return String(localized: "\(payer) paid \(receiver)")
+    }
+}
+
+/// An amount in a row with a sign and a word, so direction never rests on color.
+private struct BalanceFigure: View {
+    let money: Money
+
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        Text(MoneyFormatting.string(money, locale: locale, showsSign: true))
+            .font(Typeface.figure)
+            .foregroundStyle(Ink.direction(of: money.minorUnits))
+            .accessibilityLabel(spoken)
+    }
+
+    private var spoken: String {
+        let amount = MoneyFormatting.magnitudeString(money, locale: locale)
+        return money.isPositive ? String(localized: "owes you \(amount)") : String(localized: "you owe \(amount)")
     }
 }
 

@@ -60,16 +60,13 @@ private struct CreateGroupForm: View {
                     .textInputAutocapitalization(.words)
                     .submitLabel(.done)
                 NavigationLink {
-                    SymbolPickerView(
-                        selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }),
-                        color: .accentColor
-                    )
+                    SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
                 } label: {
                     HStack {
                         Text("Symbol")
                         Spacer()
                         Image(systemName: model.symbol)
-                            .foregroundStyle(.tint)
+                            .foregroundStyle(Ink.text)
                             .accessibilityHidden(true)
                     }
                 }
@@ -100,6 +97,7 @@ private struct CreateGroupForm: View {
                 Text("Combines debts so the group settles with as few payments as possible.")
             }
         }
+        .paperBackground()
         .navigationTitle("New Group")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -128,10 +126,10 @@ private struct CreateGroupForm: View {
     private var membersSection: some View {
         Section {
             Label("You", systemImage: "person.crop.circle")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink.secondary)
             ForEach(model.members) { member in
                 HStack {
-                    AvatarView(name: member.name, size: 32)
+                    AvatarView(name: member.name, size: 28)
                     VStack(alignment: .leading) {
                         Text(member.name)
                         if let hint = member.contactHint {

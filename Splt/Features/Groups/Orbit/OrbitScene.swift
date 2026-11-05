@@ -49,7 +49,7 @@ enum OrbitEmphasis: Equatable, Sendable {
 
     var opacity: Double {
         switch self {
-        case .normal: 0.9
+        case .normal: 0.75
         case .highlighted: 1
         case .dimmed: 0.14
         }

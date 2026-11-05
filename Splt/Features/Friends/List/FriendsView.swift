@@ -54,25 +54,29 @@ private struct FriendsContent: View {
                         owedBy: model.summaries.filter { $0.balance.contains(where: \.isPositive) }.map(\.person),
                         owedTo: model.summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }.map(\.person)
                     )
-                    .listRowInsets(EdgeInsets())
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
                     .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 }
             }
-            section("Owes You", sections.owesYou)
-            section("You Owe", sections.youOwe)
-            section("Both Ways", sections.mixed)
-            section("Settled Up", sections.settled)
+            section("Owes you", sections.owesYou)
+            section("You owe", sections.youOwe)
+            section("Both ways", sections.mixed)
+            section("Settled up", sections.settled)
             if model.query.isEmpty, !model.hiddenSummaries.isEmpty {
                 Section {
                     NavigationLink {
                         HiddenFriendsView(model: model)
                     } label: {
-                        Label("Hidden and Blocked", systemImage: "eye.slash")
-                            .badge(model.hiddenSummaries.count)
+                        LabeledContent("Hidden and Blocked", value: model.hiddenSummaries.count, format: .number)
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .searchable(text: $model.query, prompt: "Search friends")
         .overlay { emptyState(sections) }
         .toolbar {
@@ -92,34 +96,40 @@ private struct FriendsContent: View {
     @ViewBuilder
     private func section(_ title: LocalizedStringKey, _ summaries: [FriendSummary]) -> some View {
         if !summaries.isEmpty {
-            Section(title) {
+            Section {
                 ForEach(summaries) { summary in
                     NavigationLink(value: Route.friend(summary.id.rawValue)) {
                         FriendRow(summary: summary)
                     }
+                    .listRowBackground(Color.clear)
                     .zoomSource(for: .friend(summary.id.rawValue))
                     .swipeActions(edge: .leading) {
                         if !summary.isSettled {
                             Button("Settle", systemImage: "checkmark.circle") {
                                 settleRequest = model.settleRequest(for: summary)
                             }
-                            .tint(.green)
+                            .tint(Ink.owed)
                         }
                     }
                     .swipeActions(edge: .trailing) {
                         Button("Hide", systemImage: "eye.slash") {
                             model.setState(.hidden, for: summary.id)
                         }
-                        .tint(.gray)
+                        .tint(Ink.secondary)
                         if summary.balance.contains(where: \.isPositive) {
                             Button("Remind", systemImage: "bell") {
                                 remindTarget = RemindTarget(summary: summary, model: model)
                             }
-                            .tint(.orange)
+                            .tint(Ink.text)
                         }
                     }
                     .contextMenu { menu(for: summary) }
                 }
+            } header: {
+                Text(title)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.secondary)
+                    .textCase(nil)
             }
         }
     }
@@ -148,8 +158,7 @@ private struct FriendsContent: View {
                 systemImage: "person.2",
                 description: "Add friends to split bills and see who owes what.",
                 actionTitle: "Add Friend",
-                action: { router.present(.newFriend) },
-                showsOrbit: true
+                action: { router.present(.newFriend) }
             )
         } else if sections.isEmpty, !model.query.isEmpty {
             ContentUnavailableView.search(text: model.query)

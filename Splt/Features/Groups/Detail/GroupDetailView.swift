@@ -49,22 +49,22 @@ private struct GroupDetailContent: View {
         Group {
             if let group = model.group {
                 List {
-                    GroupHeroSection(
-                        group: group,
-                        members: model.members,
-                        totals: model.myTotals,
-                        canSettle: !model.transfers.isEmpty,
-                        onSettleUp: { settleRoute = model.settleRoute() },
-                        condense: condenseProgress,
-                        compact: model.segment != .expenses,
-                        showsAmount: model.segment != .balances
-                    )
+                    if model.segment == .expenses {
+                        GroupHeroSection(
+                            group: group,
+                            members: model.members,
+                            totals: model.myTotals,
+                            canSettle: !model.transfers.isEmpty,
+                            onSettleUp: { settleRoute = model.settleRoute() }
+                        )
+                    }
                     segmentPicker
                     content
                 }
                 .navigationTitle(group.name)
                 .navigationBarTitleDisplayMode(.inline)
                 .listSectionSpacing(10)
+                .paperBackground()
                 .onScrollGeometryChange(for: Double.self) { geometry in
                     let offset = geometry.contentOffset.y + geometry.contentInsets.top
                     return min(max(offset / 220, 0), 1)
@@ -162,9 +162,6 @@ private struct GroupDetailContent: View {
     @ViewBuilder
     private var expensesContent: some View {
         let sections = model.sections
-        if let group = model.group, group.kind == .trip, let stats = model.recapStats, !model.filter.isActive {
-            RecapEntryCard(group: group, stats: stats, members: model.members, onOpen: { showsRecap = true })
-        }
         if model.filter.isFiltering {
             Section {
                 Button("Clear Filters", systemImage: "xmark.circle") {
@@ -214,7 +211,8 @@ private struct GroupDetailContent: View {
                                 .fixedSize(horizontal: true, vertical: false)
                         }
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
                     .textCase(nil)
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(.isHeader)
@@ -228,19 +226,12 @@ private struct GroupDetailContent: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .principal) {
-            VStack(spacing: 0) {
-                Text(model.group?.name ?? "")
-                    .font(.headline)
-                    .lineLimit(1)
-                if let line = model.myBalance.first {
-                    Text(MoneyFormatting.string(line.money, locale: locale, showsSign: true))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .opacity(condensed ? 1 : 0)
+            Text(model.group?.name ?? "")
+                .font(.headline)
+                .lineLimit(1)
+            .opacity(condensed || model.segment != .expenses ? 1 : 0)
             .motion(.smooth, value: condensed)
-            .accessibilityHidden(!condensed)
+            .accessibilityHidden(!(condensed || model.segment != .expenses))
         }
         ToolbarItemGroup(placement: .primaryAction) {
             if model.segment == .expenses { filterMenu }
@@ -252,7 +243,7 @@ private struct GroupDetailContent: View {
             Button("Activity", systemImage: "list.bullet.rectangle") {
                 showsActivity = true
             }
-            Button("Recap", systemImage: "sparkles.rectangle.stack") {
+            Button("Recap", systemImage: "play.rectangle") {
                 showsRecap = true
             }
             .disabled(model.recapStats == nil)

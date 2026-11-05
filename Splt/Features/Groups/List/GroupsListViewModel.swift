@@ -9,7 +9,6 @@ final class GroupsListViewModel {
     var query = ""
     var errorMessage: String?
 
-    private(set) var membersByGroup: [GroupID: [Person]] = [:]
     /// Friends who owe you something, and friends you owe, for the hero at the top.
     private(set) var owedBy: [Person] = []
     private(set) var owedTo: [Person] = []
@@ -36,11 +35,6 @@ final class GroupsListViewModel {
     private func refreshPeople() {
         let everyone = (try? people.allPeople()) ?? []
         let byID = Dictionary(everyone.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        membersByGroup = Dictionary(
-            uniqueKeysWithValues: store.summaries.map { summary in
-                (summary.group.id, summary.group.memberIDs.compactMap { byID[$0] })
-            }
-        )
         let balances = (try? people.friendBalances()) ?? []
         owedBy = balances.filter { $0.total.contains(where: \.isPositive) }.compactMap { byID[$0.friendID] }
         owedTo = balances.filter { !$0.total.contains(where: \.isPositive) && !$0.total.isEmpty }.compactMap { byID[$0.friendID] }

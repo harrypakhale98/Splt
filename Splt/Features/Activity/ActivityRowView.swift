@@ -1,50 +1,35 @@
 import SpltCore
 import SwiftUI
 
-/// One event on the timeline: an unread dot like Mail's, one marker, what happened, where and when.
-/// Your own actions show only their symbol, because the sentence already says "You". Other people's show their avatar.
+/// One event on the feed: what happened in a sentence, a quiet group and time line, and a small mark.
+/// An unread event has a dot in the margin, like Mail.
 struct ActivityRowView: View {
     let entry: ActivityEntry
     let text: String
     let groupName: String?
-    let actor: (id: PersonID, name: String, isMe: Bool)?
-    var isFirst = false
-    var isLast = false
-
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    private let dot: CGFloat = 10
-    private let rail: CGFloat = 36
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             Circle()
-                .fill(entry.isRead ? Color.clear : Color.accentColor)
-                .frame(width: dot, height: dot)
-                .padding(.top, 14)
+                .fill(entry.isRead ? Color.clear : Ink.text)
+                .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
-            marker
             VStack(alignment: .leading, spacing: 3) {
                 Text(text)
                     .font(.body)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Ink.text)
                     .multilineTextAlignment(.leading)
                 caption
                     .font(.footnote)
-                .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
             }
-            .padding(.top, 8)
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
+            Image(systemName: entry.event.kind.symbol)
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, 6)
-        .background(alignment: .leading) {
-            Rectangle()
-                .fill(Color(.separator))
-                .frame(width: 2)
-                .padding(.leading, dot + 8 + rail / 2 - 1)
-                .padding(.top, isFirst ? 30 : 0)
-                .padding(.bottom, isLast ? 40 : 0)
-        }
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
@@ -59,34 +44,6 @@ struct ActivityRowView: View {
         } else {
             Text(entry.createdAt, style: .time)
         }
-    }
-
-    @ViewBuilder
-    private var marker: some View {
-        Group {
-            if let actor, !actor.isMe {
-                ZStack(alignment: .bottomTrailing) {
-                    AvatarView(name: actor.name, id: actor.id, size: rail - 2)
-                    glyph(size: 16)
-                        .background(Color(.systemBackground), in: .circle)
-                        .overlay { Circle().strokeBorder(Color(.separator), lineWidth: 0.5) }
-                        .offset(x: 7, y: 7)
-                }
-            } else {
-                glyph(size: rail - 2)
-                    .background(Color.accentColor.opacity(0.16), in: .circle)
-            }
-        }
-        .frame(width: rail, height: rail)
-        .padding(.top, 6)
-        .accessibilityHidden(true)
-    }
-
-    private func glyph(size: CGFloat) -> some View {
-        Image(systemName: entry.event.kind.symbol)
-            .font(.system(size: size * 0.5, weight: .semibold))
-            .foregroundStyle(.primary)
-            .frame(width: size, height: size)
     }
 
     private var accessibilityText: String {

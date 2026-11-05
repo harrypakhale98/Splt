@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// The amount as big rounded numerals. Tapping it opens the number pad.
+/// The amount as the big serif figure. Tapping it opens the number pad.
 struct AmountHero: View {
     let model: ExpenseFormModel
     let keypadOpen: Bool
@@ -15,20 +15,20 @@ struct AmountHero: View {
             Button(action: onTap) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(symbol)
-                        .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.legible)
+                        .font(Typeface.hero(size: size * 0.45))
+                        .foregroundStyle(Ink.secondary)
                     Text(shown.isEmpty ? "0" : shown)
-                        .font(.system(size: min(size, 96), weight: .bold, design: .rounded))
+                        .font(Typeface.hero(size: min(size, 80)))
                         .monospacedDigit()
-                        .foregroundStyle(shown.isEmpty ? Color.legible : Color.primary)
+                        .foregroundStyle(shown.isEmpty ? Ink.tertiary : Ink.text)
                         .lineLimit(1)
                         .minimumScaleFactor(0.4)
                         .contentTransition(.numericText())
-                        .motion(.snappy, value: model.amountText)
+                        .motion(Motion.quick, value: model.amountText)
                     if keypadOpen {
-                        Capsule()
-                            .fill(.tint)
-                            .frame(width: 3, height: size * 0.6)
+                        Rectangle()
+                            .fill(Ink.text)
+                            .frame(width: 2, height: size * 0.6)
                             .accessibilityHidden(true)
                     }
                 }
@@ -40,11 +40,12 @@ struct AmountHero: View {
                 if keypadOpen {
                     Button(action: onTap) {
                         Image(systemName: "chevron.down")
-                            .font(.body.weight(.semibold))
-                            .frame(width: 36, height: 36)
+                            .font(.body)
+                            .foregroundStyle(Ink.secondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(.rect)
                     }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.circle)
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Hide number pad")
                 }
             }
@@ -77,17 +78,17 @@ struct AmountHero: View {
                 if let rate = model.rateText { Text("(\(rate))") }
             }
             .font(.footnote)
-            .foregroundStyle(.legible)
+            .foregroundStyle(Ink.secondary)
             .accessibilityElement(children: .combine)
         } else if model.isFindingRate {
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)
-                Text("Finding the exchange rate").font(.footnote).foregroundStyle(.legible)
+                Text("Finding the exchange rate").font(.footnote).foregroundStyle(Ink.secondary)
             }
         } else if model.lacksRate {
             Text("No exchange rate for \(model.currencyCode) yet. The amount stays in \(model.currencyCode).")
                 .font(.footnote)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
                 .multilineTextAlignment(.center)
         }
     }

@@ -41,6 +41,7 @@ struct RemindSheet: View {
                     footer
                 }
             }
+            .paperBackground()
             .navigationTitle("Remind \(ReminderMessage.firstName(friend.name))")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

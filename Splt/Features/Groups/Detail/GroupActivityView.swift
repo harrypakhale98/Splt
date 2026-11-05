@@ -12,7 +12,7 @@ struct GroupActivityView: View {
                 Text(text.sentence(for: entry))
                 Text(entry.createdAt, format: .relative(presentation: .named))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
             }
             .accessibilityElement(children: .combine)
         }

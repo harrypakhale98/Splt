@@ -29,11 +29,7 @@ struct TripRecapStoryView: View {
     var body: some View {
         let pages = pages
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
-            GroupHeroBackground(hues: RecapBackdrop.hues(for: pages[min(page, pages.count - 1)], group: group, stats: stats))
-                .ignoresSafeArea()
-                .motion(.smooth(duration: 0.6), value: page)
-            Color(.systemBackground).opacity(0.2).ignoresSafeArea()
+            Ink.paper.ignoresSafeArea()
             TabView(selection: $page) {
                 ForEach(Array(pages.enumerated()), id: \.offset) { index, kind in
                     GeometryReader { proxy in
@@ -53,7 +49,13 @@ struct TripRecapStoryView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
         }
-        .overlay(alignment: .top) { header(count: pages.count) }
+        .overlay(alignment: .top) {
+            VStack(spacing: 0) {
+                RecapBackdrop.strip(for: pages[min(page, pages.count - 1)], members: members, stats: stats)
+                    .motion(.smooth, value: page)
+                header(count: pages.count)
+            }
+        }
         .overlay(alignment: .bottom) { footer }
         .task(id: hidesAmounts) { renderShareCard() }
         .accessibilityAction(.escape) { dismiss() }
@@ -65,9 +67,9 @@ struct TripRecapStoryView: View {
         VStack(spacing: 12) {
             HStack(spacing: 4) {
                 ForEach(0..<count, id: \.self) { index in
-                    Capsule()
-                        .fill(index <= page ? Color.primary.opacity(0.75) : Color.primary.opacity(0.15))
-                        .frame(height: 3)
+                    Rectangle()
+                        .fill(index <= page ? Ink.text : Ink.hairline)
+                        .frame(height: 2)
                 }
             }
             .motion(.smooth, value: page)
@@ -75,8 +77,8 @@ struct TripRecapStoryView: View {
             .accessibilityLabel("Page \(page + 1) of \(count)")
             HStack {
                 Text("Recap")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary.opacity(0.7))
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
                 Spacer()
                 Button("Close", systemImage: "xmark") { dismiss() }
                     .labelStyle(.iconOnly)
@@ -92,19 +94,17 @@ struct TripRecapStoryView: View {
 
     private var footer: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) { hidePill; shareButton }
-            VStack(spacing: 12) { hidePill; shareButton }
+            HStack(spacing: 12) { hideToggle; shareButton }
+            VStack(spacing: 12) { hideToggle; shareButton }
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
-    private var hidePill: some View {
-        GlassPill {
-            Toggle("Hide Amounts", isOn: $hidesAmounts)
-                .font(.subheadline)
-        }
+    private var hideToggle: some View {
+        Toggle("Hide Amounts", isOn: $hidesAmounts)
+            .font(.subheadline)
     }
 
     @ViewBuilder

@@ -29,7 +29,7 @@ struct NetPosition: Equatable, Sendable {
 }
 
 /// The hero of the Groups and Friends tabs: one big number for where you stand, a quiet sentence,
-/// and who the money is between.
+/// and a strip of who the money is between.
 struct NetPositionHero: View {
     /// What the number covers, such as "Across All Groups" or "With Friends".
     var scope: LocalizedStringKey = "Your Balance"
@@ -38,35 +38,27 @@ struct NetPositionHero: View {
     var owedTo: [Person] = []
 
     @Environment(\.locale) private var locale
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var position: NetPosition { NetPosition(totals: totals) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(scope)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(.subheadline)
+                .foregroundStyle(Ink.secondary)
             figure
             Text(sentence)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if !owedBy.isEmpty || !owedTo.isEmpty {
-                people
+            let everyone = owedBy + owedTo
+            if !everyone.isEmpty {
+                ShareStrip(colors: everyone.map { PersonPalette.color(for: $0.id) })
                     .padding(.top, 6)
             }
         }
-        .padding(20)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            ZStack {
-                Color(.secondarySystemGroupedBackground)
-                GroupGradient(members: (owedBy + owedTo).map(\.id))
-                    .opacity(0.7)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        }
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .accessibilityElement(children: .combine)
     }
@@ -82,7 +74,7 @@ struct NetPositionHero: View {
             }
         } else {
             Text("All Square")
-                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .font(Typeface.hero(size: 44))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
         }
@@ -104,28 +96,6 @@ struct NetPositionHero: View {
         case (false, false): return String(localized: "You are owed \(owed) and you owe \(owe).")
         }
     }
-
-    @ViewBuilder
-    private var people: some View {
-        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 24))
-        layout {
-            if !owedBy.isEmpty {
-                stack(owedBy, caption: "Owe You")
-            }
-            if !owedTo.isEmpty {
-                stack(owedTo, caption: "You Owe")
-            }
-        }
-    }
-
-    private func stack(_ people: [Person], caption: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            AvatarStack(people, size: 30, limit: 3, ring: Color(.secondarySystemGroupedBackground))
-            Text(caption)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-        }
-    }
 }
 
 #if DEBUG
@@ -141,6 +111,6 @@ struct NetPositionHero: View {
         )
         .padding()
     }
-    .background(Color(.systemGroupedBackground))
+    .background(Ink.paper)
 }
 #endif

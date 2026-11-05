@@ -32,7 +32,7 @@ struct FormSheetContent: View {
         case .receipt:
             ReceiptSheet(model: model, onDone: onDone).navigationTitle("Receipt")
         case .repeating:
-            Form { RepeatSection(model: model) }.navigationTitle("Repeat")
+            Form { RepeatSection(model: model) }.paperBackground().navigationTitle("Repeat")
         case .currency:
             ExpenseCurrencyPicker(
                 selection: Binding(get: { model.currencyCode }, set: { model.changeCurrency(to: $0) }),
@@ -75,19 +75,24 @@ private struct CategorySheet: View {
                             Image(systemName: category.symbolName).font(.title2)
                             Text(category.title).font(.caption.weight(.medium)).lineLimit(2).multilineTextAlignment(.center)
                             if category == model.suggestedCategory, !selected {
-                                Text("Suggested").font(.caption2).foregroundStyle(.tint)
+                                Text("Suggested").font(.caption2)
                             }
                         }
                         .frame(maxWidth: .infinity, minHeight: 72)
                         .padding(.vertical, 6)
                     }
-                    .buttonStyle(.glass)
-                    .tint(selected ? .accentColor : nil)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(selected ? Ink.text : Ink.secondary)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(selected ? Ink.text : Ink.hairline, lineWidth: selected ? 1.5 : 1)
+                    }
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
             .padding(20)
         }
+        .paperBackground()
     }
 }
 
@@ -98,6 +103,8 @@ private struct DateSheet: View {
         DatePicker("Date", selection: $model.date, displayedComponents: .date)
             .datePickerStyle(.graphical)
             .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .paperBackground()
     }
 }
 
@@ -108,10 +115,10 @@ private struct NoteSheet: View {
         TextField("Add a note", text: $model.note, axis: .vertical)
             .lineLimit(3...10)
             .padding(16)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline) }
             .padding(20)
             .frame(maxHeight: .infinity, alignment: .top)
-            .background(Color(.systemGroupedBackground))
+            .paperBackground()
     }
 }
 
@@ -133,12 +140,11 @@ private struct ReceiptSheet: View {
                     store: model.dependencies.receipts, side: 160
                 )
                 Button("Remove Receipt", role: .destructive) { model.clearReceipt() }
-                    .buttonStyle(.glass)
             }
             HStack(spacing: 12) {
                 ReceiptActions(model: model)
                     .labelStyle(.titleAndIcon)
-                    .buttonStyle(.glass)
+                    .buttonStyle(.borderless)
             }
             if model.isScanning {
                 HStack { ProgressView(); Text("Reading the receipt") }
@@ -146,6 +152,7 @@ private struct ReceiptSheet: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .paperBackground()
         .onChange(of: model.isScanning) { was, now in
             if was, !now { onDone() }
         }
@@ -159,8 +166,8 @@ private struct MoreOptionsSheet: View {
         Form {
             PayerSection(model: model)
             SplitSection(model: model)
-            if model.split.method != .itemized { EmptyView() }
             NotesSection(model: model)
         }
+        .paperBackground()
     }
 }

@@ -1,8 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// An avatar and a name on a glass capsule that can be selected, for choosing who is in.
-/// Selection shows as a person-colored tint and a check mark, so color is never the only cue.
+/// An avatar and a name that can be selected, for choosing who is in. Selection shows as weight
+/// and a check mark, so color is never the only cue.
 struct PersonChip: View {
     let name: String
     let id: PersonID
@@ -28,22 +28,19 @@ struct PersonChip: View {
 
     var body: some View {
         Button(action: action) {
-            GlassPill(
-                tint: isSelected ? PersonPalette.color(for: id, in: members.isEmpty ? [id] : members) : nil,
-                isInteractive: true
-            ) {
-                HStack(spacing: 8) {
-                    AvatarView(name: name, id: id, members: members, size: 28)
-                    Text(name)
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(1)
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.caption.weight(.bold))
-                            .accessibilityHidden(true)
-                    }
+            HStack(spacing: 8) {
+                AvatarView(name: name, id: id, members: members, size: 28)
+                Text(name)
+                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Ink.text : Ink.secondary)
+                    .lineLimit(1)
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.caption.weight(.semibold))
+                        .accessibilityHidden(true)
                 }
             }
+            .frame(minHeight: 44)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)

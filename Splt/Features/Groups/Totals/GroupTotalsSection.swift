@@ -24,9 +24,6 @@ struct GroupTotalsSection: View {
             }
         } else {
             let members = model.group?.memberIDs ?? []
-            if let group = model.group, let stats = model.recapStats {
-                RecapEntryCard(group: group, stats: stats, members: model.members, onOpen: onRecap)
-            }
             ForEach(model.totals) { totals in
                 Section {
                     hero(totals)
@@ -51,25 +48,42 @@ struct GroupTotalsSection: View {
                     }
                 }
             }
+            if model.recapStats != nil {
+                Section {
+                    Button(action: onRecap) {
+                        HStack {
+                            Text("Watch the Recap")
+                                .foregroundStyle(Ink.text)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Ink.tertiary)
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
     }
 
     private func hero(_ totals: GroupTotals) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Total Spent")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(.subheadline)
+                .foregroundStyle(Ink.secondary)
             HeroAmount(totals.total, showsSign: false)
                 .accessibilityLabel(MoneyFormatting.magnitudeString(totals.total, locale: locale))
             Text("^[\(totals.expenseCount) expense](inflect: true) in \(totals.currencyCode)")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink.secondary)
             if let summary, totals.currencyCode == model.primaryTotals?.currencyCode {
-                Label(summary, systemImage: "sparkles")
+                Text(summary)
                     .font(.body)
                     .fontDesign(.serif)
                     .padding(.top, 10)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Ink.text)
             }
         }
         .padding(.vertical, 6)
@@ -101,18 +115,18 @@ private struct SpendingBarChart: View {
         let largest = bars.map(\.chartValue).max() ?? 1
         Chart(bars) { bar in
             BarMark(x: .value("Amount", bar.chartValue), y: .value("Name", bar.label), height: .fixed(14))
-                .cornerRadius(7)
-                .foregroundStyle(bar.color ?? Color.accentColor)
+                .cornerRadius(2)
+                .foregroundStyle(bar.color ?? Ink.text)
                 .annotation(position: .top, alignment: .leading, spacing: 4) {
                     Text(bar.label)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.primary)
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.text)
                 }
                 .annotation(position: .trailing, alignment: .center, spacing: 8) {
                     Text(MoneyFormatting.string(bar.money))
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline)
                         .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ink.secondary)
                 }
                 .accessibilityLabel(bar.label)
                 .accessibilityValue(MoneyFormatting.magnitudeString(bar.money))

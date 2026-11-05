@@ -42,7 +42,7 @@ struct AvatarStack: View {
             }
             if overflow > 0 {
                 Text("+\(overflow)")
-                    .font(.system(size: diameter * 0.36, weight: .semibold, design: .rounded))
+                    .font(.system(size: diameter * 0.36, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .frame(width: diameter, height: diameter)

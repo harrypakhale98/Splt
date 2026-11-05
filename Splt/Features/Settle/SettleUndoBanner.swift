@@ -38,7 +38,7 @@ struct SettleUndoBanner: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundStyle(iconColor)
+                .foregroundStyle(Ink.text)
                 .accessibilityHidden(true)
             Text(banner.message)
                 .font(.subheadline.weight(.medium))
@@ -48,25 +48,21 @@ struct SettleUndoBanner: View {
                 .accessibilityLabel(banner.message)
             if case .recorded = banner, let services {
                 Button("Undo") { center.undo(using: services.payments) }
-                    .font(.subheadline.weight(.semibold))
-                    .buttonStyle(.glass)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Ink.text)
                     .fixedSize()
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        .glassEffect(.regular, in: .rect(cornerRadius: 24))
+        .background(Ink.sheet, in: .rect(cornerRadius: 14))
+        .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline) }
         .accessibilityElement(children: .contain)
     }
 
     private var icon: String {
         if case .recorded = banner { return "checkmark.circle.fill" }
         return "arrow.uturn.backward.circle.fill"
-    }
-
-    private var iconColor: Color {
-        if case .recorded = banner { return .green }
-        return .secondary
     }
 }

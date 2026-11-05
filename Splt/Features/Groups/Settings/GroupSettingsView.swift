@@ -130,16 +130,13 @@ private struct GroupSettingsForm: View {
                 TextField("Group Name", text: $model.name)
                     .textInputAutocapitalization(.words)
                 NavigationLink {
-                    SymbolPickerView(
-                        selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }),
-                        color: model.group.map { GroupAppearance.color(for: $0.id) } ?? .accentColor
-                    )
+                    SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
                 } label: {
                     HStack {
                         Text("Symbol")
                         Spacer()
                         Image(systemName: model.symbol)
-                            .foregroundStyle(.tint)
+                            .foregroundStyle(Ink.text)
                             .accessibilityHidden(true)
                     }
                 }
@@ -184,6 +181,7 @@ private struct GroupSettingsForm: View {
                 }
             }
         }
+        .paperBackground()
         .onChange(of: model.tripStart) { model.tripStartChanged() }
     }
 
@@ -220,13 +218,13 @@ private struct GroupSettingsForm: View {
         Section {
             ForEach(model.memberRows) { row in
                 HStack(spacing: 12) {
-                    AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 36)
+                    AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
                     VStack(alignment: .leading) {
                         Text(row.isMe ? String(localized: "You") : row.person.name)
                         if row.person.isPlaceholder {
                             Text("Hasn't joined yet")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Ink.secondary)
                         }
                     }
                 }

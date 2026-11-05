@@ -1,49 +1,34 @@
 import SwiftUI
 
-/// The bottom of the screen: one line saying what will happen, and the Save button.
+/// The bottom of the screen: the Save button, with a line above it only when something in the split needs fixing.
 struct SaveBar: View {
     let summary: String
-    let reason: String?
+    let hint: String?
     let canSave: Bool
     var onSave: () -> Void
 
-    @State private var tapped = 0
-
     var body: some View {
         VStack(spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                if reason != nil {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(.orange)
-                        .accessibilityHidden(true)
-                }
-                Text(reason ?? summary)
-                    .foregroundStyle(reason == nil ? Color.legible : Color.primary)
+            if let hint {
+                Text(hint)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.updatesFrequently)
+                    .accessibilityIdentifier("expense-summary")
             }
-            .font(.footnote.weight(.medium))
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.updatesFrequently)
-            .accessibilityIdentifier("expense-summary")
-            Button {
-                tapped += 1
-                onSave()
-            } label: {
+            Button(action: onSave) {
                 Text("Save")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: 36)
-                    .foregroundStyle(PersonPalette.onColor)
             }
-            .buttonStyle(.glassProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(!canSave)
+            .accessibilityHint(summary)
             .accessibilityIdentifier("expense-save")
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 4)
-        .background(.regularMaterial)
+        .background(Ink.paper)
     }
 }

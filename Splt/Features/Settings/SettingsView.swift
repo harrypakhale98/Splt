@@ -16,47 +16,30 @@ struct SettingsSections: View {
                     value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
                 )
             }
-        } header: {
-            Text("General")
-        } footer: {
-            Text("New groups start with this currency.")
-        }
-
-        Section {
             Toggle("Haptics", isOn: preferences.$hapticsEnabled)
             Toggle("Notifications", isOn: preferences.$notificationsEnabled)
-        } header: {
-            Text("Feedback")
-        } footer: {
-            Text("Notifications remind you about balances and new expenses in your groups.")
         }
 
         SyncStatusSection()
 
         Section {
-            NavigationLink {
+            NavigationLink("Import from Splitwise") {
                 SplitwiseImportView()
-            } label: {
-                Label("Import from Splitwise", systemImage: "square.and.arrow.down")
             }
-        }
-
-        Section("Free Forever") {
-            Text("Splt has no ads, no limits and no subscription, now and later.")
+            Button("Show Welcome Tour") {
+                router.showsOnboarding = true
+            }
+            .foregroundStyle(Ink.text)
+            .accessibilityIdentifier("account.welcomeTour")
         }
 
         Section("About") {
-            Button("Show Welcome Tour", systemImage: "sparkles") {
-                router.showsOnboarding = true
-            }
-            .accessibilityIdentifier("account.welcomeTour")
             LabeledContent("Version", value: AppInfo.versionDescription)
             LabeledContent("License") {
                 Text("MIT")
             }
-            Link(destination: AppInfo.sourceCodeURL) {
-                Label("Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
-            }
+            Link("Source Code", destination: AppInfo.sourceCodeURL)
+                .foregroundStyle(Ink.text)
         }
     }
 }
@@ -87,9 +70,12 @@ private struct SettingsBehavior: ViewModifier {
 
 struct SettingsView: View {
     var body: some View {
-        Form {
+        List {
             SettingsSections()
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .settingsBehavior()

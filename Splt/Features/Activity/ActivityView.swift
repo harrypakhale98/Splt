@@ -41,24 +41,22 @@ private struct ActivityContent: View {
         List {
             ForEach(model.sections) { section in
                 Section {
-                    ForEach(Array(section.entries.enumerated()), id: \.element.id) { index, entry in
+                    ForEach(section.entries, id: \.id) { entry in
                         Button { open(entry) } label: {
                             ActivityRowView(
                                 entry: entry,
                                 text: model.text(for: entry, locale: locale),
-                                groupName: model.groupName(for: entry),
-                                actor: model.actor(for: entry),
-                                isFirst: index == 0,
-                                isLast: index == section.entries.count - 1
+                                groupName: model.groupName(for: entry)
                             )
                         }
                         .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 16))
-                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparatorTint(Ink.hairline)
                         .swipeActions(edge: .leading) {
                             if !entry.isRead {
                                 Button("Read", systemImage: "envelope.open") { model.markRead(entry) }
-                                    .tint(.blue)
+                                    .tint(Ink.text)
                             }
                         }
                         .swipeActions(edge: .trailing) { paymentAction(for: entry) }
@@ -66,12 +64,13 @@ private struct ActivityContent: View {
                 } header: {
                     Text(model.title(for: section, locale: locale))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color(.label).opacity(0.72))
+                        .foregroundStyle(Ink.secondary)
                         .textCase(nil)
                 }
             }
         }
         .listStyle(.plain)
+        .paperBackground()
         .safeAreaInset(edge: .top, spacing: 0) {
             if !model.entries.isEmpty { ActivityFilterChips(model: model) }
         }
@@ -89,10 +88,10 @@ private struct ActivityContent: View {
         switch model.paymentActions[entry.id] {
         case .undo:
             Button("Undo Payment", systemImage: "arrow.uturn.backward") { model.perform(.undo, on: entry) }
-                .tint(.orange)
+                .tint(Ink.owe)
         case .restore:
             Button("Restore Payment", systemImage: "arrow.uturn.forward") { model.perform(.restore, on: entry) }
-                .tint(.green)
+                .tint(Ink.owed)
         case nil:
             EmptyView()
         }
@@ -106,8 +105,7 @@ private struct ActivityContent: View {
                 systemImage: "list.bullet.rectangle",
                 description: "Expenses and payments from your groups will show up here.",
                 actionTitle: "Add Expense",
-                action: { router.present(.addExpense) },
-                showsOrbit: true
+                action: { router.present(.addExpense) }
             )
         } else if model.sections.isEmpty, model.didLoad {
             ContentUnavailableView(

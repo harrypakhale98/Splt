@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// The segmented control above the bar: Equal, Percent, Shares, Exact, Adjust, Items.
-/// It is the system control, so it gets Liquid Glass for free. At accessibility text sizes it becomes
-/// a scrolling row of glass buttons that never truncate.
+/// It is the system control. At accessibility text sizes it becomes a scrolling row of plain
+/// text buttons that never truncate.
 struct SplitMethodSwitcher: View {
     let selection: SplitMethod
     var onSelect: @MainActor @Sendable (SplitMethod) -> Void
@@ -30,11 +30,9 @@ struct SplitMethodSwitcher: View {
 
     private var scrolling: some View {
         ScrollView(.horizontal) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    ForEach(order) { method in
-                        button(for: method)
-                    }
+            HStack(spacing: 20) {
+                ForEach(order) { method in
+                    button(for: method)
                 }
             }
             .padding(.horizontal, 20)
@@ -48,14 +46,15 @@ struct SplitMethodSwitcher: View {
     @ViewBuilder
     private func button(for method: SplitMethod) -> some View {
         let isSelected = method == selection
-        let action = { onSelect(method) }
-        Group {
-            if isSelected {
-                Button(action: action) { Text(method.shortTitle) }.buttonStyle(.glassProminent)
-            } else {
-                Button(action: action) { Text(method.shortTitle) }.buttonStyle(.glass)
-            }
+        Button { onSelect(method) } label: {
+            Text(method.shortTitle)
+                .font(.body.weight(isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? Ink.text : Ink.secondary)
+                .underline(isSelected)
+                .frame(minHeight: 44)
+                .contentShape(.rect)
         }
+        .buttonStyle(.plain)
         .accessibilityLabel(method.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

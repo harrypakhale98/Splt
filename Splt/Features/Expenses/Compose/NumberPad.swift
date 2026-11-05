@@ -1,16 +1,16 @@
 import SwiftUI
 
 /// The number pad built into the screen, so the system keyboard never covers the split.
-/// Flat tonal keys on a system material, with large rounded digits that read clearly in both appearances.
+/// Flat keys in ink on paper, with no fill.
 struct NumberPad: View {
     let exponent: Int
     var onKey: (AmountKey) -> Void
 
     @Environment(\.locale) private var locale
-    @ScaledMetric(relativeTo: .title) private var keyHeight: CGFloat = 44
+    @ScaledMetric(relativeTo: .title) private var keyHeight: CGFloat = 48
 
     var body: some View {
-        Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+        Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             ForEach([[1, 2, 3], [4, 5, 6], [7, 8, 9]], id: \.self) { row in
                 GridRow {
                     ForEach(row, id: \.self) { digit in key(.digit(digit), title: "\(digit)") }
@@ -26,8 +26,6 @@ struct NumberPad: View {
                 key(.delete, systemImage: "delete.backward", label: String(localized: "Delete"))
             }
         }
-        .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Number pad")
     }
@@ -44,13 +42,11 @@ struct NumberPad: View {
                     Text(title ?? "")
                 }
             }
-            .font(.system(.title, design: .rounded, weight: .semibold))
-            .foregroundStyle(.primary)
+            .font(.system(.title, design: .serif))
             .frame(maxWidth: .infinity, minHeight: keyHeight)
+            .contentShape(.rect)
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle(radius: 14))
-        .tint(.primary)
+        .buttonStyle(KeyStyle())
         .accessibilityLabel(label ?? title ?? "")
         .accessibilityIdentifier(identifier(for: key))
     }
@@ -61,5 +57,15 @@ struct NumberPad: View {
         case .decimal: "key-decimal"
         case .delete: "key-delete"
         }
+    }
+}
+
+/// A key with no fill: ink that dims while it is held.
+private struct KeyStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(Ink.text)
+            .opacity(configuration.isPressed ? 0.3 : 1)
+            .motion(Motion.quick, value: configuration.isPressed)
     }
 }

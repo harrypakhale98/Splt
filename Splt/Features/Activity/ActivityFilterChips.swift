@@ -1,47 +1,37 @@
 import SpltCore
 import SwiftUI
 
-/// The feed filters as a row of glass chips: one per kind of event, and a menu for the group.
+/// The feed filters as plain text: one per kind of event, and a menu for the group.
+/// The selected one is set in ink, bolder and underlined.
 struct ActivityFilterChips: View {
     @Bindable var model: ActivityModel
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    ForEach(ActivityTypeFilter.allCases) { filter in
-                        chip(filter)
-                    }
-                    if model.filterGroups.count > 1 {
-                        groupMenu
-                    }
+            HStack(spacing: 20) {
+                ForEach(ActivityTypeFilter.allCases) { filter in
+                    option(filter)
+                }
+                if model.filterGroups.count > 1 {
+                    groupMenu
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 6)
         }
-        .mask {
-            // the last chips fade out at the edge, a hint that the row scrolls
-            LinearGradient(
-                stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.93), .init(color: .clear, location: 1)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        }
         .accessibilityElement(children: .contain)
     }
 
-    private func chip(_ filter: ActivityTypeFilter) -> some View {
+    private func option(_ filter: ActivityTypeFilter) -> some View {
         let selected = model.typeFilter == filter
         return Button {
             model.typeFilter = filter
         } label: {
-            Text(filter.shortTitle)
-                .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .frame(minHeight: 32)
+            label(filter.shortTitle, selected: selected)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
-        .chipStyle(selected: selected)
+        .buttonStyle(.plain)
         .accessibilityLabel(filter.title)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .haptics(.tick, trigger: selected)
@@ -57,30 +47,27 @@ struct ActivityFilterChips: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
-                Text(selected?.name ?? String(localized: "All Groups"))
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2.weight(.bold))
+            HStack(spacing: 4) {
+                label(selected?.name ?? String(localized: "All Groups"), selected: selected != nil)
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(Ink.secondary)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: 32)
         }
-        .chipStyle(selected: selected != nil)
+        .buttonStyle(.plain)
         .accessibilityLabel("Group")
         .accessibilityValue(selected?.name ?? String(localized: "All Groups"))
     }
-}
 
-private extension View {
-    /// A selected chip is solid accent with white text, the others are plain glass, so the choice reads at a glance.
-    @ViewBuilder
-    func chipStyle(selected: Bool) -> some View {
-        if selected {
-            buttonStyle(.glassProminent).buttonBorderShape(.capsule)
-        } else {
-            buttonStyle(.glass).buttonBorderShape(.capsule)
-        }
+    private func label(_ title: String, selected: Bool) -> some View {
+        Text(title)
+            .font(.subheadline.weight(selected ? .semibold : .regular))
+            .foregroundStyle(selected ? Ink.text : Ink.secondary)
+            .underline(selected, color: Ink.text)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .frame(minHeight: 32)
+            .contentShape(Rectangle())
     }
 }

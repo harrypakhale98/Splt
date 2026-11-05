@@ -11,8 +11,8 @@ struct SettleParticipant: Identifiable, Equatable {
 }
 
 /// The two people of a payment facing each other, with an arc between them in their blended colors.
-/// Dragging the knob along the arc chooses how much of the debt is paid. For a whole group the
-/// people stand in a row and only the ring closes around them.
+/// Dragging the knob along the arc chooses how much of the debt is paid. A whole group has no
+/// pair to join, so it shows the strip of everyone's colors.
 struct SettleStage: View {
     enum Layout {
         /// Payer on the left, receiver on the right.
@@ -32,10 +32,10 @@ struct SettleStage: View {
     var onFraction: (Double) -> Void
     var onStep: (Int) -> Void
 
-    @ScaledMetric(relativeTo: .body) private var scaledDiameter: CGFloat = 64
+    @ScaledMetric(relativeTo: .body) private var scaledDiameter: CGFloat = 40
     @State private var lastDetent: Int?
 
-    private let baseDiameter: CGFloat = 64
+    private let baseDiameter: CGFloat = 40
     private let inset: CGFloat = 14
 
     private var diameter: CGFloat { AvatarView.diameter(scaled: scaledDiameter, base: baseDiameter) }
@@ -44,19 +44,16 @@ struct SettleStage: View {
     private var rowY: CGFloat { height - diameter / 2 - 14 }
 
     var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            ZStack(alignment: .topLeading) {
-                switch layout {
-                case .pair(let payer, let receiver):
-                    pair(payer, receiver, width: width)
-                case .group(let people):
-                    group(people, width: width)
-                }
+        switch layout {
+        case .pair(let payer, let receiver):
+            GeometryReader { proxy in
+                pair(payer, receiver, width: proxy.size.width)
+                    .frame(width: proxy.size.width, height: height, alignment: .topLeading)
             }
-            .frame(width: width, height: height, alignment: .topLeading)
+            .frame(height: height)
+        case .group(let people):
+            group(people)
         }
-        .frame(height: height)
     }
 
     // MARK: Pair
@@ -65,19 +62,18 @@ struct SettleStage: View {
         let start = CGPoint(x: inset + diameter / 2, y: rowY)
         let end = CGPoint(x: width - inset - diameter / 2, y: rowY)
         let geometry = SettleArcGeometry(start: start, end: end, radius: diameter / 2 + 6, peak: peak)
-        let flow = LinearGradient(colors: [payer.color, receiver.color], startPoint: .leading, endPoint: .trailing)
         let isContracting = contraction > 0
 
         return ZStack(alignment: .topLeading) {
-            ringShape(width: width, flow: flow)
+            ringShape(width: width)
             SettleArcShape(geometry: geometry, contraction: contraction)
-                .stroke(Color(.tertiarySystemFill), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .stroke(Ink.hairline, style: StrokeStyle(lineWidth: 4, lineCap: .round))
             SettleArcShape(geometry: geometry, contraction: contraction)
                 .trim(from: 0, to: max(fraction, 0.001))
-                .stroke(flow, style: StrokeStyle(lineWidth: 8 * (1 - 0.5 * contraction), lineCap: .round))
+                .stroke(Ink.text, style: StrokeStyle(lineWidth: 4 * (1 - 0.5 * contraction), lineCap: .round))
             Circle()
-                .fill(flow)
-                .frame(width: 14, height: 14)
+                .fill(Ink.text)
+                .frame(width: 12, height: 12)
                 .position(geometry.point(at: 0.5, contraction: 1))
                 .scaleEffect(isContracting ? 1 : 0.2)
                 .opacity(isContracting ? 1 : 0)
@@ -104,10 +100,9 @@ struct SettleStage: View {
 
     private func knob(at point: CGPoint) -> some View {
         Circle()
-            .fill(.background)
+            .fill(Ink.paper)
             .frame(width: 26, height: 26)
-            .overlay { Circle().strokeBorder(Color(.separator), lineWidth: 1) }
-            .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+            .overlay { Circle().strokeBorder(Ink.text, lineWidth: 1.5) }
             .padding(9)
             .contentShape(Circle())
             .position(point)
@@ -131,34 +126,19 @@ struct SettleStage: View {
 
     // MARK: Group
 
-    private func group(_ people: [SettleParticipant], width: CGFloat) -> some View {
-        let shown = Array(people.prefix(5))
-        let gap = diameter * 0.7
-        let total = diameter + gap * CGFloat(max(shown.count - 1, 0))
-        let left = (width - total) / 2 + diameter / 2
-        let colors = shown.map(\.color)
-        let flow = LinearGradient(colors: colors.isEmpty ? [.accentColor] : colors, startPoint: .leading, endPoint: .trailing)
-
-        return ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: (diameter + 16) / 2, style: .continuous)
-                .trim(from: 0, to: ring)
-                .stroke(flow, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                .frame(width: total + 16, height: diameter + 16)
-                .position(x: width / 2, y: height / 2)
-            ForEach(Array(shown.enumerated()), id: \.element.id) { index, person in
-                avatar(person, at: CGPoint(x: left + gap * CGFloat(index), y: height / 2))
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(ListFormatter.localizedString(byJoining: people.map(\.name))))
+    private func group(_ people: [SettleParticipant]) -> some View {
+        ShareStrip(colors: people.map(\.color))
+            .padding(.vertical, 12)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(ListFormatter.localizedString(byJoining: people.map(\.name))))
     }
 
     // MARK: Pieces
 
-    private func ringShape(width: CGFloat, flow: LinearGradient) -> some View {
+    private func ringShape(width: CGFloat) -> some View {
         Capsule()
             .trim(from: 0, to: ring)
-            .stroke(flow, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            .stroke(Ink.text, style: StrokeStyle(lineWidth: 2, lineCap: .round))
             .frame(width: width - inset * 2 + 16, height: diameter + 16)
             .position(x: width / 2, y: rowY)
     }

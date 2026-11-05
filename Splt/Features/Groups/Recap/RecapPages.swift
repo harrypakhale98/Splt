@@ -7,13 +7,13 @@ private struct RecapTitle: View {
 
     var body: some View {
         Text(text)
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(Color.primary.opacity(0.7))
+            .font(.title3)
+            .foregroundStyle(Ink.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
 
-/// A big rounded number that rolls up from zero when its page comes into view.
+/// A big serif number that rolls up from zero when its page comes into view.
 private struct RecapNumber: View {
     let money: Money
     let hidden: Bool
@@ -27,7 +27,7 @@ private struct RecapNumber: View {
     var body: some View {
         let shown = (active || reduceMotion) ? money : Money.zero(currencyCode: money.currencyCode)
         Text(recapAmount(shown, hidden: hidden, locale: locale))
-            .font(.system(size: min(size * scale, size * 1.4), weight: .bold, design: .rounded))
+            .font(Typeface.hero(size: min(size * scale, size * 1.4)))
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.4)
@@ -47,19 +47,14 @@ struct RecapTotalPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: group.symbol)
-                .font(.largeTitle)
-                .foregroundStyle(Color.primary.opacity(0.7))
-                .accessibilityHidden(true)
             Text(group.name)
-                .font(.largeTitle.weight(.bold))
-                .fontDesign(.serif)
+                .font(.system(.largeTitle, design: .serif))
                 .minimumScaleFactor(0.6)
             RecapTitle(text: "You spent together")
             RecapNumber(money: stats.total, hidden: hidesAmounts, active: active, size: 68)
             Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
                 .font(.headline)
-                .foregroundStyle(Color.primary.opacity(0.7))
+                .foregroundStyle(Ink.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
@@ -82,8 +77,8 @@ struct RecapDaysPage: View {
                     x: .value("Date", slice.start, unit: stats.bucket == .day ? .day : .month),
                     y: .value("Spent", active || reduceMotion ? chartValue(slice.total) : 0)
                 )
-                .cornerRadius(5)
-                .foregroundStyle(slice == stats.busiest ? Color.accentColor : Color.accentColor.opacity(0.35))
+                .cornerRadius(1)
+                .foregroundStyle(slice == stats.busiest ? Ink.text : Ink.tertiary)
                 .accessibilityLabel(slice.start.formatted(.dateTime.month().day()))
                 .accessibilityValue(recapAmount(slice.total, hidden: hidesAmounts, locale: locale))
             }
@@ -102,7 +97,7 @@ struct RecapDaysPage: View {
             }
             Text("About \(recapAmount(stats.average, hidden: hidesAmounts, locale: locale)) a \(stats.bucket == .day ? "day" : "month") on average")
                 .font(.subheadline)
-                .foregroundStyle(Color.primary.opacity(0.7))
+                .foregroundStyle(Ink.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -122,23 +117,20 @@ struct RecapBiggestPage: View {
     var body: some View {
         if let biggest = stats.biggest {
             VStack(alignment: .leading, spacing: 14) {
-                    RecapTitle(text: "The biggest one")
+                RecapTitle(text: "The biggest one")
                 Image(systemName: biggest.category.symbolName)
-                    .font(.system(size: 44))
-                    .foregroundStyle(.tint)
-                    .frame(width: 88, height: 88)
-                    .background(.tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .font(.title)
+                    .foregroundStyle(Ink.secondary)
                     .accessibilityHidden(true)
                 Text(biggest.title)
-                    .font(.largeTitle.weight(.bold))
-                    .fontDesign(.serif)
+                    .font(.system(.largeTitle, design: .serif))
                     .minimumScaleFactor(0.6)
                     .lineLimit(3)
                 RecapNumber(money: biggest.amount, hidden: hidesAmounts, active: active, size: 52)
                 Text(detail(biggest))
                     .font(.headline)
-                    .foregroundStyle(Color.primary.opacity(0.7))
-                    }
+                    .foregroundStyle(Ink.secondary)
+            }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
         }
@@ -163,30 +155,30 @@ struct RecapPayerPage: View {
     var body: some View {
         if let payer = stats.topPayer {
             let color = PersonPalette.color(for: payer.id, in: members)
-            VStack(spacing: 18) {
-                    RecapTitle(text: "Who paid the most")
-                ZStack {
-                    Circle().stroke(color.opacity(0.18), lineWidth: 16)
-                    Circle()
-                        .trim(from: 0, to: active || reduceMotion ? min(CGFloat(payer.percent) / 100, 1) : 0)
-                        .stroke(color, style: StrokeStyle(lineWidth: 16, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(reduceMotion ? nil : .smooth(duration: 1.0), value: active)
-                    AvatarView(name: payer.name, id: payer.id, members: members, size: 96)
-                }
-                .frame(width: 190, height: 190)
-                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 14) {
+                RecapTitle(text: "Who paid the most")
+                AvatarView(name: payer.name, id: payer.id, members: members, size: 56)
+                    .accessibilityHidden(true)
                 Text(payer.name)
-                    .font(.largeTitle.weight(.bold))
-                    .fontDesign(.serif)
+                    .font(.system(.largeTitle, design: .serif))
                 Text("covered \(payer.percent)% of the bills")
                     .font(.title3)
-                    .foregroundStyle(Color.primary.opacity(0.7))
-                Text(recapAmount(payer.paid, hidden: hidesAmounts, locale: locale))
-                    .font(.system(.title, design: .rounded, weight: .bold))
-                    .monospacedDigit()
+                    .foregroundStyle(Ink.secondary)
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Rectangle().fill(Ink.hairline)
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: proxy.size.width * (active || reduceMotion ? min(CGFloat(payer.percent) / 100, 1) : 0))
+                            .animation(reduceMotion ? nil : .smooth(duration: 1.0), value: active)
                     }
-            .frame(maxWidth: .infinity)
+                }
+                .frame(height: 6)
+                .accessibilityHidden(true)
+                Text(recapAmount(payer.paid, hidden: hidesAmounts, locale: locale))
+                    .font(Typeface.figure)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
         }
     }
@@ -201,7 +193,7 @@ struct RecapCategoriesPage: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private func color(at index: Int) -> Color {
-        PersonPalette.color(at: [5, 7, 1, 10, 3][index % 5])
+        Ink.text.opacity([1, 0.7, 0.5, 0.35, 0.2][index % 5])
     }
 
     var body: some View {
@@ -211,9 +203,9 @@ struct RecapCategoriesPage: View {
                 SectorMark(
                     angle: .value("Share", active || reduceMotion ? Double(share.amount.minorUnits) : 0.0001),
                     innerRadius: .ratio(0.62),
-                    angularInset: 2
+                    angularInset: 1
                 )
-                .cornerRadius(6)
+                .cornerRadius(0)
                 .foregroundStyle(color(at: index))
                 .accessibilityLabel(share.category.title)
                 .accessibilityValue("\(share.percent)%")
@@ -226,14 +218,15 @@ struct RecapCategoriesPage: View {
                         Circle().fill(color(at: index)).frame(width: 12, height: 12)
                         Label(share.category.title, systemImage: share.category.symbolName)
                             .font(.body)
-                                    Text("\(share.percent)%")
-                            .font(.body.weight(.semibold))
+                        Spacer(minLength: 4)
+                        Text("\(share.percent)%")
+                            .font(.body)
                             .monospacedDigit()
                         if !hidesAmounts {
                             Text(MoneyFormatting.string(share.amount, locale: locale))
                                 .font(.subheadline)
                                 .monospacedDigit()
-                                .foregroundStyle(Color.primary.opacity(0.7))
+                                .foregroundStyle(Ink.secondary)
                         }
                     }
                     .accessibilityElement(children: .combine)
@@ -254,13 +247,8 @@ struct RecapSummaryPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Image(systemName: "sparkles")
-                .font(.largeTitle)
-                .foregroundStyle(.tint)
-                .accessibilityHidden(true)
             Text(summary ?? String(localized: "That is the story of \(group.name)."))
-                .font(.largeTitle.weight(.semibold))
-                .fontDesign(.serif)
+                .font(.system(.largeTitle, design: .serif))
                 .minimumScaleFactor(0.6)
                 .opacity(active || reduceMotion ? 1 : 0)
                 .offset(y: active || reduceMotion ? 0 : 12)
@@ -279,25 +267,21 @@ struct RecapShareCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Image(systemName: group.symbol)
-                Text(group.name)
-                    .fontDesign(.serif)
-                }
-            .font(.title2.weight(.bold))
+            Text(group.name)
+                .font(.system(.title2, design: .serif))
             Text(recapAmount(stats.total, hidden: hidesAmounts))
-                .font(.system(size: 54, weight: .bold, design: .rounded))
+                .font(Typeface.hero(size: 54))
                 .monospacedDigit()
             Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
                 .font(.subheadline)
-                .foregroundStyle(Color.primary.opacity(0.7))
+                .foregroundStyle(Ink.secondary)
             Chart(stats.slices) { slice in
                 BarMark(
                     x: .value("Date", slice.start, unit: stats.bucket == .day ? .day : .month),
                     y: .value("Spent", NSDecimalNumber(decimal: slice.total.decimalValue).doubleValue)
                 )
-                .cornerRadius(3)
-                .foregroundStyle(slice == stats.busiest ? Color.accentColor : Color.accentColor.opacity(0.35))
+                .cornerRadius(1)
+                .foregroundStyle(slice == stats.busiest ? Ink.text : Ink.tertiary)
             }
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
@@ -318,19 +302,18 @@ struct RecapShareCard: View {
                 Text(summary)
                     .font(.callout)
                     .fontDesign(.serif)
-                    .foregroundStyle(Color.primary.opacity(0.7))
+                    .foregroundStyle(Ink.secondary)
             }
             Spacer(minLength: 0)
             Text("Splt")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .font(.caption)
+                .foregroundStyle(Ink.secondary)
         }
         .padding(24)
         .frame(width: 340, height: 440, alignment: .topLeading)
-        .background(Color.white)
+        .background(Ink.paper)
         .overlay(alignment: .top) {
-            GroupHeroBackground(group: group).frame(height: 8)
+            ShareStrip(colors: group.memberIDs.map { PersonPalette.color(for: $0) }, height: 8)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 }

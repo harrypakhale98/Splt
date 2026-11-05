@@ -18,7 +18,7 @@ struct SharesSplitEditor: View {
                             Text(name)
                             Text("\(count, format: .number.precision(.fractionLength(0...2))) shares")
                                 .font(.subheadline)
-                                .foregroundStyle(.legible)
+                                .foregroundStyle(Ink.secondary)
                                 .monospacedDigit()
                         }
                     }
@@ -27,7 +27,7 @@ struct SharesSplitEditor: View {
                 .accessibilityValue("\(count.formatted(.number.precision(.fractionLength(0...2)))) shares")
             }
         } header: {
-            Text("Shares").foregroundStyle(.legible)
+            Text("Shares").foregroundStyle(Ink.secondary)
         }
     }
 }

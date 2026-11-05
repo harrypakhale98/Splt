@@ -15,11 +15,9 @@ struct SplitShareList: View {
         VStack(spacing: 0) {
             ForEach(data.segments) { segment in
                 row(segment)
-                if segment.id != data.segments.last?.id { Divider() }
+                if segment.id != data.segments.last?.id { Rectangle().fill(Ink.hairline).frame(height: 1) }
             }
         }
-        .padding(.horizontal, 16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     private func row(_ segment: SplitBarSegment) -> some View {
@@ -53,19 +51,19 @@ struct SplitShareList: View {
 
     private func identity(_ segment: SplitBarSegment, name: String) -> some View {
         HStack(spacing: 10) {
-            AvatarView(name: segment.person.name, id: segment.id, members: members, size: 32)
-            Text(name).font(.body.weight(.medium))
+            AvatarView(name: segment.person.name, id: segment.id, members: members, size: 28)
+            Text(name)
         }
     }
 
     private func amounts(_ segment: SplitBarSegment, percent: Double) -> some View {
         VStack(alignment: .trailing, spacing: 0) {
             if let amount = segment.amount {
-                MoneyLabel(money: amount).font(.system(.body, design: .rounded, weight: .semibold))
+                MoneyLabel(money: amount).font(Typeface.figure)
             }
             Text(percent.formatted(.number.precision(.fractionLength(0))) + "%")
                 .font(.caption)
-                .foregroundStyle(.legible)
+                .foregroundStyle(Ink.secondary)
                 .monospacedDigit()
         }
     }

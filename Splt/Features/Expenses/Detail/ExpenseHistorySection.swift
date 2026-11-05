@@ -7,16 +7,16 @@ struct ExpenseHistorySection: View {
 
     var body: some View {
         if let details = model.details {
-            Section(header: Text("History").foregroundStyle(.legible)) {
+            Section(header: Text("History").foregroundStyle(Ink.secondary)) {
                 ForEach(details.history.reversed()) { entry in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(summary(of: entry))
                         if let detail = previousValues(of: entry) {
-                            Text(detail).font(.subheadline).foregroundStyle(.legible)
+                            Text(detail).font(.subheadline).foregroundStyle(Ink.secondary)
                         }
                         Text(entry.date, format: .dateTime.day().month().year().hour().minute())
                             .font(.caption)
-                            .foregroundStyle(.legible)
+                            .foregroundStyle(Ink.secondary)
                     }
                     .accessibilityElement(children: .combine)
                 }
@@ -24,7 +24,7 @@ struct ExpenseHistorySection: View {
                 let created = details.createdAt.formatted(date: .abbreviated, time: .shortened)
                 Text("Added by \(creator) on \(created)")
                     .font(.subheadline)
-                    .foregroundStyle(.legible)
+                    .foregroundStyle(Ink.secondary)
             }
         }
     }

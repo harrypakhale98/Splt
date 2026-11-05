@@ -46,10 +46,13 @@ private struct RecurringExpensesScreen: View {
                     Button(template.isActive ? "Pause" : "Resume", systemImage: template.isActive ? "pause" : "play") {
                         model.setActive(!template.isActive, for: template)
                     }
-                    .tint(.indigo)
+                    .tint(Ink.secondary)
                 }
             }
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .overlay {
             if model.templates.isEmpty {
                 EmptyStateView(
@@ -107,11 +110,11 @@ private struct RecurringRow: View {
             CategoryBadge(category: template.category)
             VStack(alignment: .leading, spacing: 2) {
                 Text(template.title).font(.headline)
-                Text(template.rule.frequency.title).font(.subheadline).foregroundStyle(.legible)
-                Text(statusText).font(.caption).foregroundStyle(.legible)
+                Text(template.rule.frequency.title).font(.subheadline).foregroundStyle(Ink.secondary)
+                Text(statusText).font(.caption).foregroundStyle(Ink.secondary)
             }
             Spacer(minLength: 8)
-            MoneyLabel(money: template.total)
+            MoneyLabel(money: template.total).font(Typeface.figure)
         }
         .opacity(template.isActive ? 1 : 0.6)
         .accessibilityElement(children: .ignore)

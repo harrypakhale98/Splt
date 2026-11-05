@@ -15,29 +15,26 @@ struct GroupBalancesSection: View {
     let onSettle: (Debt) -> Void
 
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverOn
-    @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var chosenMode: Mode?
+        @State private var chosenMode: Mode?
     @State private var chosenCurrency: String?
 
     private var mode: Mode { chosenMode ?? (voiceOverOn ? .list : .orbit) }
 
-    private var controls: some View {
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 12))
-        return layout {
-            Toggle("Simplify Debts", isOn: Binding(
-                get: { model.simplifiesDebts },
-                set: { model.setSimplifiesDebts($0) }
-            ))
-            Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
-                Image(systemName: "circle.hexagongrid").tag(Mode.orbit).accessibilityLabel("Orbit")
-                Image(systemName: "list.bullet").tag(Mode.list).accessibilityLabel("List")
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(maxWidth: 110)
+    private var simplifyToggle: some View {
+        Toggle("Simplify Debts", isOn: Binding(
+            get: { model.simplifiesDebts },
+            set: { model.setSimplifiesDebts($0) }
+        ))
+    }
+
+    private var modePicker: some View {
+        Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
+            Text("Orbit").tag(Mode.orbit)
+            Text("List").tag(Mode.list)
         }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel("Balance View")
     }
 
     private var currency: String {
@@ -47,7 +44,7 @@ struct GroupBalancesSection: View {
 
     var body: some View {
         Section {
-            controls
+            modePicker
             if model.balanceCurrencies.count > 1 {
                 Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
                     ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
@@ -62,6 +59,10 @@ struct GroupBalancesSection: View {
                 .padding(.vertical, 4)
                 .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 12, trailing: 8))
             }
+        }
+
+        Section {
+            simplifyToggle
         } footer: {
             if model.simplifiesDebts {
                 Text("Showing the fewest payments that settle the group.")
@@ -73,8 +74,8 @@ struct GroupBalancesSection: View {
         if mode == .list {
             Section("Who Owes Whom") {
                 if model.transfers.isEmpty {
-                    Label("Everyone is settled up", systemImage: "checkmark.circle")
-                        .foregroundStyle(.secondary)
+                    Text("Everyone is settled up")
+                        .foregroundStyle(Ink.secondary)
                 } else {
                     ForEach(model.transfers, id: \.self) { debt in
                         TransferRow(
@@ -111,15 +112,20 @@ private struct TransferRow: View {
     let members: [PersonID]
     let onTap: () -> Void
 
+    @Environment(\.locale) private var locale
+
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                AvatarView(name: avatarName, id: debt.debtor, members: members, size: 36)
+                AvatarView(name: avatarName, id: debt.debtor, members: members, size: 28)
                 Text(sentence)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Ink.text)
                 Spacer(minLength: 8)
-                MoneyLabel(money: displayAmount, style: style)
-                    .font(.body.weight(.semibold))
+                Text(MoneyFormatting.string(displayAmount, locale: locale, showsSign: involvesMe))
+                    .font(Typeface.figure)
+                    .foregroundStyle(involvesMe ? Ink.direction(of: displayAmount.minorUnits) : Ink.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .contentShape(Rectangle())
         }
@@ -133,8 +139,8 @@ private struct TransferRow: View {
         return String(localized: "\(debtorName) owes \(creditorName)")
     }
 
-    private var style: MoneyLabel.Style {
-        debt.debtor == currentPerson || debt.creditor == currentPerson ? .balance : .plain
+    private var involvesMe: Bool {
+        debt.debtor == currentPerson || debt.creditor == currentPerson
     }
 
     private var displayAmount: Money {
@@ -151,20 +157,17 @@ private struct NetBalanceRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(name: row.person.name, id: row.person.id, members: members, size: 32)
+            AvatarView(name: row.person.name, id: row.person.id, members: members, size: 28)
             Text(isMe ? String(localized: "You") : row.person.name)
             Spacer(minLength: 8)
             if row.isSettled {
                 Text("Settled up")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
             } else {
-                VStack(alignment: .trailing) {
-                    ForEach(row.amounts, id: \.currencyCode) { amount in
-                        Text(caption(for: amount))
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                Text(row.amounts.map(caption(for:)).joined(separator: " \u{B7} "))
+                    .monospacedDigit()
+                    .foregroundStyle(Ink.secondary)
+                    .multilineTextAlignment(.trailing)
             }
         }
         .accessibilityElement(children: .combine)

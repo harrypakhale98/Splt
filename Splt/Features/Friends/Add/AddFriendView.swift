@@ -45,6 +45,7 @@ private struct AddFriendContent: View {
                 contactsSection
                 inviteSection
             }
+            .paperBackground()
             .navigationTitle("New Friend")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -168,7 +169,7 @@ private struct AddFriendContent: View {
                 if let scanMessage {
                     Text(scanMessage)
                         .padding()
-                        .glassEffect(.regular, in: .capsule)
+                        .background(Ink.sheet, in: .capsule)
                         .padding()
                 }
             }

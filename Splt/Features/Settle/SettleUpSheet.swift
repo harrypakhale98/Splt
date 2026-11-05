@@ -51,7 +51,7 @@ private struct SettleUpContent: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 8) {
                     SettleHeroCard(model: model, ceremony: ceremony)
                     if ceremony.finished {
                         SettleDoneCard(model: model, finished: ceremony.finished)
@@ -63,7 +63,7 @@ private struct SettleUpContent: View {
                 .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(.systemGroupedBackground))
+            .paperBackground()
             .navigationTitle("Settle Up")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
@@ -100,26 +100,23 @@ private struct SettleUpContent: View {
         }
     }
 
-    /// The button rides on a bar, so the form scrolls underneath it instead of showing through.
+    /// The button rides on paper, so the form scrolls underneath it instead of showing through.
     private var recordBar: some View {
         Button {
             model.record()
         } label: {
             Text("Record Payment")
-                .font(.headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-                .frame(maxWidth: .infinity)
         }
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-        .buttonStyle(.glassProminent)
-        .controlSize(.large)
+        .buttonStyle(PrimaryButtonStyle())
         .disabled(!model.canRecord)
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
-        .background(.bar, ignoresSafeAreaEdges: .bottom)
-        .overlay(alignment: .top) { Divider() }
+        .background(Ink.paper, ignoresSafeAreaEdges: .bottom)
+        .overlay(alignment: .top) { Divider().overlay(Ink.hairline) }
     }
 
     // MARK: Ceremony

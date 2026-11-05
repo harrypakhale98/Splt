@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// Who is in the split, as person chips. Tap to include or remove, long press for who paid.
+/// Who is in the split, as plain names. Tap to include or remove, long press for who paid.
 /// While a receipt item is selected, a tap assigns the item instead.
 struct WhoIsInSection: View {
     let model: ExpenseFormModel
@@ -13,19 +13,13 @@ struct WhoIsInSection: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(headline)
                     .font(.headline)
-                if model.split.method != .itemized, !typeSize.isAccessibilitySize {
-                    Text("Hold a person for who paid")
-                        .font(.caption)
-                        .foregroundStyle(.legible)
-                        .lineLimit(1)
-                }
                 Spacer()
                 if model.split.method != .itemized {
                     Button(allIn ? "None" : "Everyone") {
                         if allIn { model.participants = [] } else { model.selectEveryone() }
                         onChange()
                     }
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline)
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(.rect)
                 }
@@ -37,11 +31,10 @@ struct WhoIsInSection: View {
                 }
             } else {
                 ScrollView(.horizontal) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 20) {
                         ForEach(model.members) { person in chip(for: person, members: ids) }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 6)
                 }
                 .scrollIndicators(.hidden)
                 .scrollClipDisabled()
@@ -60,26 +53,13 @@ struct WhoIsInSection: View {
     }
 
     private func chip(for person: Person, members: [PersonID]) -> some View {
-        let selected = isHighlighted(person.id)
         var shown = person
         if typeSize.isAccessibilitySize, let first = person.name.split(separator: " ").first {
             shown.name = String(first)
         }
-        return PersonChip(person: shown, members: members, isSelected: selected) {
+        return PersonToggle(person: shown, members: members, isSelected: isHighlighted(person.id)) {
             model.tapPerson(person.id)
             onChange()
-        }
-        .overlay(alignment: .topTrailing) {
-            if model.isPayer(person.id) {
-                Image(systemName: "banknote.fill")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .padding(4)
-                    .background(Color.green, in: .circle)
-                    .offset(x: 4, y: -4)
-                    .accessibilityHidden(true)
-                    .transition(.scale)
-            }
         }
         .contextMenu {
             Button("Paid by \(model.displayName(for: person.id))", systemImage: "banknote") {
@@ -106,5 +86,46 @@ struct WhoIsInSection: View {
             return item.assignees.contains(id)
         }
         return model.participants.contains(id)
+    }
+}
+
+/// A small avatar and a name. Selected people are in ink with a check and an underline,
+/// and the others are dimmed, so the state never rests on color alone.
+private struct PersonToggle: View {
+    let person: Person
+    let members: [PersonID]
+    let isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 2) {
+                HStack(spacing: 6) {
+                    AvatarView(person: person, members: members, size: 24)
+                        .opacity(isSelected ? 1 : 0.4)
+                    Text(person.name)
+                        .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                        .foregroundStyle(isSelected ? Ink.text : Ink.secondary)
+                        .lineLimit(1)
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Ink.text)
+                            .accessibilityHidden(true)
+                    }
+                }
+                Rectangle()
+                    .fill(isSelected ? Ink.text : Color.clear)
+                    .frame(height: 1)
+            }
+            .frame(minHeight: 44)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .motion(Motion.quick, value: isSelected)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(person.name)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .haptics(.tick, trigger: isSelected)
     }
 }
