@@ -8,38 +8,44 @@ struct SettingsSections: View {
 
     var body: some View {
         Section {
-            NavigationLink {
-                CurrencyPickerView()
-            } label: {
-                LabeledContent(
-                    "Default Currency",
-                    value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
-                )
+            RaisedRows {
+                NavigationLink {
+                    CurrencyPickerView()
+                } label: {
+                    LabeledContent(
+                        "Default Currency",
+                        value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
+                    )
+                }
+                Toggle("Haptics", isOn: preferences.$hapticsEnabled)
+                Toggle("Notifications", isOn: preferences.$notificationsEnabled)
             }
-            Toggle("Haptics", isOn: preferences.$hapticsEnabled)
-            Toggle("Notifications", isOn: preferences.$notificationsEnabled)
         }
 
         SyncStatusSection()
 
         Section {
-            NavigationLink("Import from Splitwise") {
-                SplitwiseImportView()
+            RaisedRows {
+                NavigationLink("Import from Splitwise") {
+                    SplitwiseImportView()
+                }
+                Button("Show Welcome Tour") {
+                    router.showWelcomeTour()
+                }
+                .foregroundStyle(Ink.text)
+                .accessibilityIdentifier("account.welcomeTour")
             }
-            Button("Show Welcome Tour") {
-                router.showWelcomeTour()
-            }
-            .foregroundStyle(Ink.text)
-            .accessibilityIdentifier("account.welcomeTour")
         }
 
         Section("About") {
-            LabeledContent("Version", value: AppInfo.versionDescription)
-            LabeledContent("License") {
-                Text("MIT")
+            RaisedRows {
+                LabeledContent("Version", value: AppInfo.versionDescription)
+                LabeledContent("License") {
+                    Text("MIT")
+                }
+                Link("Source Code", destination: AppInfo.sourceCodeURL)
+                    .foregroundStyle(Ink.text)
             }
-            Link("Source Code", destination: AppInfo.sourceCodeURL)
-                .foregroundStyle(Ink.text)
         }
     }
 }

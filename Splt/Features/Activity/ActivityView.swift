@@ -41,25 +41,24 @@ private struct ActivityContent: View {
         List {
             ForEach(model.sections) { section in
                 Section {
-                    ForEach(section.entries, id: \.id) { entry in
-                        Button { open(entry) } label: {
-                            ActivityRowView(
-                                entry: entry,
-                                text: model.text(for: entry, locale: locale),
-                                groupName: model.groupName(for: entry)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparatorTint(Ink.hairline)
-                        .swipeActions(edge: .leading) {
-                            if !entry.isRead {
-                                Button("Read", systemImage: "envelope.open") { model.markRead(entry) }
-                                    .tint(Ink.text)
+                    RaisedRows(padding: EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)) {
+                        ForEach(section.entries, id: \.id) { entry in
+                            Button { open(entry) } label: {
+                                ActivityRowView(
+                                    entry: entry,
+                                    text: model.text(for: entry, locale: locale),
+                                    groupName: model.groupName(for: entry)
+                                )
                             }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .leading) {
+                                if !entry.isRead {
+                                    Button("Read", systemImage: "envelope.open") { model.markRead(entry) }
+                                        .tint(Ink.text)
+                                }
+                            }
+                            .swipeActions(edge: .trailing) { paymentAction(for: entry) }
                         }
-                        .swipeActions(edge: .trailing) { paymentAction(for: entry) }
                     }
                 } header: {
                     Text(model.title(for: section, locale: locale))

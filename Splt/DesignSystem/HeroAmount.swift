@@ -26,6 +26,7 @@ struct HeroAmount: View {
             .minimumScaleFactor(0.4)
             .contentTransition(.numericText(value: Double(money.minorUnits)))
             .motion(.smooth, value: money)
+            .letterpress()
             .accessibilityLabel(spokenText)
     }
 

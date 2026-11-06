@@ -56,8 +56,7 @@ struct SettleUndoBanner: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        .background(Ink.sheet, in: .rect(cornerRadius: 14))
-        .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline) }
+        .cardSurface()
         .accessibilityElement(children: .contain)
     }
 

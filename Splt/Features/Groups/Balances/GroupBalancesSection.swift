@@ -44,32 +44,44 @@ struct GroupBalancesSection: View {
 
     var body: some View {
         Section {
-            modePicker
-            if model.balanceCurrencies.count > 1 {
-                Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
-                    ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
+            VStack(spacing: 12) {
+                VStack(spacing: 12) {
+                    modePicker
+                    if model.balanceCurrencies.count > 1 {
+                        Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
+                            ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                if mode == .orbit {
+                    Divider().overlay(Ink.hairline)
+                    BalanceOrbitView(
+                        board: model.orbitBoard(currency: currency),
+                        members: model.group?.memberIDs ?? [],
+                        onSettle: onSettle
+                    )
+                    .padding(.vertical, 4)
                 }
             }
-            if mode == .orbit {
-                BalanceOrbitView(
-                    board: model.orbitBoard(currency: currency),
-                    members: model.group?.memberIDs ?? [],
-                    onSettle: onSettle
-                )
-                .padding(.vertical, 4)
-                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 12, trailing: 8))
-            }
+            .raisedRow(padding: EdgeInsets(top: 12, leading: 8, bottom: 12, trailing: 8))
         }
+        .raisedSection()
 
         Section {
             simplifyToggle
+                .raisedRow(padding: EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
         } footer: {
-            if model.simplifiesDebts {
-                Text("Showing the fewest payments that settle the group.")
-            } else {
-                Text("Showing what each person owes each other person directly.")
+            Group {
+                if model.simplifiesDebts {
+                    Text("Showing the fewest payments that settle the group.")
+                } else {
+                    Text("Showing what each person owes each other person directly.")
+                }
             }
+            .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
 
         if mode == .list {
             Section("Who Owes Whom") {

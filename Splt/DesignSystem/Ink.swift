@@ -4,8 +4,8 @@ import UIKit
 /// The app's colors. See docs/design.md: chrome is ink on paper, and color only ever means a
 /// person or the direction of money.
 enum Ink {
-    static let paper = dynamic(light: 0xF6F4EF, dark: 0x131210)
-    static let sheet = dynamic(light: 0xFCFBF8, dark: 0x1C1B18)
+    static let paper = dynamic(light: 0xF3F0EA, dark: 0x131210)
+    static let sheet = dynamic(light: 0xFFFEFB, dark: 0x23211D)
     static let text = dynamic(light: 0x1A1917, dark: 0xEFEDE6)
     static let secondary = dynamic(light: 0x66635B, dark: 0xA3A097)
     static let tertiary = dynamic(light: 0x9A968C, dark: 0x6E6B63)
@@ -66,20 +66,45 @@ enum Typeface {
     }
 }
 
-/// The screen's one main action: full width, ink fill.
+/// The screen's one main action: full width, a slab of ink that sinks when pressed. A disabled
+/// button lies flat on the page, so only what can be pressed looks raised.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let isPressed = configuration.isPressed
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let isRaised = isEnabled && contrast != .increased
+        let isDark = colorScheme == .dark
+        return configuration.label
             .font(.body.weight(.medium))
             .foregroundStyle(Ink.paper)
+            .multilineTextAlignment(.center)
+            .buttonLabelPadding()
             .frame(maxWidth: .infinity, minHeight: 52)
-            .background(
-                isEnabled ? Ink.text : Ink.tertiary,
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-            )
-            .pressEffect(isPressed: configuration.isPressed)
+            .background {
+                shape.fill(isEnabled ? Ink.text : Ink.tertiary)
+                    .overlay {
+                        if isRaised {
+                            shape.strokeBorder(
+                                Depth.topLight(strength: isDark ? 0.9 : (isPressed ? 0.08 : 0.16)),
+                                lineWidth: 1
+                            )
+                        }
+                    }
+                    .shadow(
+                        color: isRaised ? .black.opacity(isDark ? 0.5 : 0.2) : .clear,
+                        radius: isPressed ? 1 : 4,
+                        y: isPressed ? 1 : 3
+                    )
+            }
+            .scaleEffect(isPressed && !reduceMotion ? 0.985 : 1)
+            .offset(y: isPressed && !reduceMotion ? 1 : 0)
+            .opacity(isPressed && reduceMotion ? 0.7 : 1)
+            .motion(Motion.quick, value: isPressed)
     }
 }
 
@@ -89,6 +114,8 @@ struct QuietButtonStyle: ButtonStyle {
         configuration.label
             .font(.body)
             .foregroundStyle(Ink.text)
+            .multilineTextAlignment(.center)
+            .buttonLabelPadding()
             .frame(maxWidth: .infinity, minHeight: 52)
             .overlay {
                 RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline)
@@ -99,6 +126,13 @@ struct QuietButtonStyle: ButtonStyle {
 }
 
 private extension View {
+    /// Keeps a label off the button's edges wherever the button ends up: when a container shrinks
+    /// it to fit, and when large text fills it.
+    func buttonLabelPadding() -> some View {
+        padding(.horizontal, 24)
+            .padding(.vertical, 8)
+    }
+
     func pressEffect(isPressed: Bool) -> some View {
         opacity(isPressed ? 0.7 : 1)
             .motion(Motion.quick, value: isPressed)
@@ -110,6 +144,13 @@ struct ShareStrip: View {
     let colors: [Color]
     var weights: [Double]?
     var height: CGFloat = 3
+    /// Sets the bar into the page as a thin groove, for use under the one big number.
+    var isGrooved = false
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    private var showsGroove: Bool { isGrooved && contrast != .increased }
 
     private var total: Double { weights?.reduce(0, +) ?? Double(colors.count) }
 
@@ -120,12 +161,21 @@ struct ShareStrip: View {
             HStack(spacing: 2) {
                 ForEach(colors.indices, id: \.self) { index in
                     Rectangle()
-                        .fill(colors[index])
+                        .fill(
+                            colors[index].shadow(
+                                .inner(color: .black.opacity(showsGroove ? 0.4 : 0), radius: 0.5, y: 1)
+                            )
+                        )
                         .frame(width: total > 0 ? room * CGFloat(weight(at: index) / total) : 0)
                 }
             }
         }
-        .frame(height: height)
+        .frame(height: showsGroove ? height + 1 : height)
+        .shadow(
+            color: showsGroove ? (colorScheme == .dark ? .white.opacity(0.08) : .white.opacity(0.95)) : .clear,
+            radius: 0,
+            y: 1
+        )
         .accessibilityHidden(true)
     }
 

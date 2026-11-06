@@ -70,7 +70,7 @@ private struct FriendsContent: View {
                     } label: {
                         LabeledContent("Hidden and Blocked", value: model.hiddenSummaries.count, format: .number)
                     }
-                    .listRowBackground(Color.clear)
+                    .raisedRow()
                 }
             }
         }
@@ -98,33 +98,35 @@ private struct FriendsContent: View {
     private func section(_ title: LocalizedStringKey, _ summaries: [FriendSummary]) -> some View {
         if !summaries.isEmpty {
             Section {
-                ForEach(summaries) { summary in
-                    NavigationLink(value: Route.friend(summary.id.rawValue)) {
-                        FriendRow(summary: summary)
-                    }
-                    .listRowBackground(Color.clear)
-                    .zoomSource(for: .friend(summary.id.rawValue))
-                    .swipeActions(edge: .leading) {
-                        if !summary.isSettled {
-                            Button("Settle", systemImage: "checkmark.circle") {
-                                settleRequest = model.settleRequest(for: summary)
+                RaisedRows {
+                    ForEach(summaries) { summary in
+                        NavigationLink(value: Route.friend(summary.id.rawValue)) {
+                            FriendRow(summary: summary)
+                        }
+                        .zoomSource(for: .friend(summary.id.rawValue))
+                        .swipeActions(edge: .leading) {
+                            if !summary.isSettled {
+                                Button("Settle", systemImage: "checkmark.circle") {
+                                    settleRequest = model.settleRequest(for: summary)
+                                }
+                                .tint(Ink.owed)
                             }
-                            .tint(Ink.owed)
                         }
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button("Hide", systemImage: "eye.slash") {
-                            model.setState(.hidden, for: summary.id)
-                        }
-                        .tint(Ink.secondary)
-                        if summary.balance.contains(where: \.isPositive) {
-                            Button("Remind", systemImage: "bell") {
-                                remindTarget = RemindTarget(summary: summary, model: model)
+                        .swipeActions(edge: .trailing) {
+                            Button("Hide", systemImage: "eye.slash") {
+                                model.setState(.hidden, for: summary.id)
                             }
-                            .tint(Ink.text)
+                            .tint(Ink.secondary)
+                            if summary.balance.contains(where: \.isPositive) {
+                                Button("Remind", systemImage: "bell") {
+                                    remindTarget = RemindTarget(summary: summary, model: model)
+                                }
+                                .tint(Ink.text)
+                            }
                         }
+                        .raisedContextMenuShape()
+                        .contextMenu { menu(for: summary) }
                     }
-                    .contextMenu { menu(for: summary) }
                 }
             } header: {
                 Text(title)

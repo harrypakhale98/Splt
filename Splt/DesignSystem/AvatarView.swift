@@ -61,6 +61,7 @@ struct AvatarView: View {
         Circle()
             .fill(PersonPalette.color(at: hue))
             .frame(width: diameter, height: diameter)
+            .solidDisc(diameter: diameter)
             .overlay {
                 if showsInitials {
                     Text(AvatarStyle.initials(for: name))

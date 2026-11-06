@@ -19,11 +19,16 @@ struct EmptyStateView: View {
             Text(description).foregroundStyle(Ink.secondary)
         } actions: {
             if let actionTitle, let action {
+                // ContentUnavailableView shrinks its actions to fit, so the button can't rely on
+                // filling the screen for its width.
                 Button(actionTitle, action: action)
                     .buttonStyle(PrimaryButtonStyle())
-                    .padding(.horizontal, 32)
+                    .frame(minWidth: 240)
+                    .padding(.horizontal, 16)
             }
         }
+        // this view doesn't scroll, so larger text would push the button under the tab bar
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 }
 

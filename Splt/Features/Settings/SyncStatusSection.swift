@@ -51,9 +51,13 @@ struct SyncStatusSectionContent: View {
                 }
             }
             .accessibilityElement(children: .combine)
+            .raisedRow()
         } footer: {
             Text(SyncStatusPresentation.detail(for: status))
         }
+        // a section footer in a sheet defaults to a lighter shade than the paper behind it
+        .listRowBackground(Ink.paper)
+        .listSectionSeparator(.hidden)
     }
 }
 

@@ -125,6 +125,7 @@ struct BalanceOrbitView: View {
             ZStack {
                 Circle()
                     .fill(colors.color(for: node.id))
+                    .solidDisc(diameter: layout.nodeRadius * 2)
                 Text(AvatarStyle.initials(for: node.name))
                     .font(.system(size: layout.nodeRadius * 0.8, weight: .medium))
                     .foregroundStyle(colors.ink(for: node.id))

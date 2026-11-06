@@ -53,7 +53,7 @@ struct NetPositionHero: View {
                 .fixedSize(horizontal: false, vertical: true)
             let everyone = owedBy + owedTo
             if !everyone.isEmpty {
-                ShareStrip(colors: everyone.map { PersonPalette.color(for: $0.id) })
+                ShareStrip(colors: everyone.map { PersonPalette.color(for: $0.id) }, isGrooved: true)
                     .padding(.top, 6)
             }
         }
@@ -77,6 +77,7 @@ struct NetPositionHero: View {
                 .font(Typeface.hero(size: 44))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
+                .letterpress()
         }
     }
 

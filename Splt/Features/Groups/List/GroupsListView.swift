@@ -131,7 +131,7 @@ private struct GroupsListContent: View {
         NavigationLink(value: Route.group(summary.group.id.rawValue)) {
             GroupRowView(summary: summary)
         }
-        .listRowBackground(Color.clear)
+        .raisedRow()
         .zoomSource(for: .group(summary.group.id.rawValue))
         .swipeActions(edge: .trailing) {
             if summary.group.isArchived {
@@ -146,6 +146,7 @@ private struct GroupsListContent: View {
                 .tint(Ink.secondary)
             }
         }
+        .raisedContextMenuShape()
         .contextMenu {
             if summary.group.isArchived {
                 Button("Restore", systemImage: "tray.and.arrow.up") {

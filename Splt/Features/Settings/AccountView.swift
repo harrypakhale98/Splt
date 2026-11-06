@@ -15,15 +15,12 @@ struct AccountView: View {
 
         NavigationStack(path: $router.accountPath) {
             List {
-                // rows in a sheet default to a lighter shade than the paper behind them
-                Group {
-                    Section {
-                        AccountHero(profile: profile, summary: summary) { showsEditor = true }
-                    }
-
-                    SettingsSections()
+                Section {
+                    AccountHero(profile: profile, summary: summary) { showsEditor = true }
+                        .raisedRow()
                 }
-                .listRowBackground(Ink.paper)
+
+                SettingsSections()
             }
             .listStyle(.plain)
             .listRowSeparatorTint(Ink.hairline)
