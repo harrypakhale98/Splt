@@ -48,16 +48,16 @@ enum SampleData {
         }
 
         let trip = SplitGroup(
-            id: GroupID(rawValue: uuid(101)), name: "Lisbon Trip", symbol: "airplane", currencyCode: "EUR",
+            id: GroupID(rawValue: uuid(101)), name: "Lisbon Trip", symbol: "airplane", currencyCode: "USD",
             kind: .trip, memberIDs: [me.id, maya.id, jonas.id, priya.id, diego.id, hana.id],
             tripStart: day(0), tripEnd: day(6), createdAt: day(-20)
         )
         let flat = SplitGroup(
-            id: GroupID(rawValue: uuid(102)), name: "Flat 4B", symbol: "house.fill", currencyCode: "EUR",
+            id: GroupID(rawValue: uuid(102)), name: "Flat 4B", symbol: "house.fill", currencyCode: "USD",
             memberIDs: [me.id, maya.id], createdAt: day(-90)
         )
         let friendGroup = SplitGroup(
-            id: GroupID(rawValue: uuid(103)), name: "Priya", symbol: "person.fill", currencyCode: "EUR",
+            id: GroupID(rawValue: uuid(103)), name: "Priya", symbol: "person.fill", currencyCode: "USD",
             kind: .friend, memberIDs: [me.id, priya.id], createdAt: day(-60)
         )
         for group in [trip, flat, friendGroup] {
@@ -70,8 +70,8 @@ enum SampleData {
                  payers: [PersonID: Int64], split: SplitDefinition, in group: SplitGroup? = nil) throws {
             let expense = Expense(
                 id: ExpenseID(rawValue: uuid(200 + expenses.count)),
-                groupID: (group ?? trip).id, title: title, total: eur(payers.values.reduce(0, +)),
-                date: day(dayOffset), category: category, payers: payers.mapValues(eur), split: split
+                groupID: (group ?? trip).id, title: title, total: usd(payers.values.reduce(0, +)),
+                date: day(dayOffset), category: category, payers: payers.mapValues(usd), split: split
             )
             precondition(expense.total.minorUnits == cents, "payers must add up to the total of \(title)")
             try services.expenses.add(expense)
@@ -86,19 +86,19 @@ enum SampleData {
         try add("groceries", "Groceries at Pingo Doce", 5_837, 1, .groceries, payers: [hana.id: 5_837],
                 split: .shares(weights: [me.id: 2, maya.id: 2, jonas.id: 1, priya.id: 1, diego.id: 1, hana.id: 1]))
         try add("car", "Rental car for Sintra", 21_000, 2, .transport, payers: [jonas.id: 21_000],
-                split: .exact(amounts: [me.id: eur(7_000), jonas.id: eur(7_000), priya.id: eur(7_000)]))
+                split: .exact(amounts: [me.id: usd(7_000), jonas.id: usd(7_000), priya.id: usd(7_000)]))
         try add("seafood", "Seafood dinner", 17_000, 3, .dining, payers: [diego.id: 17_000], split: .itemized(ItemizedSplit(
             items: [
-                SplitItem(id: uuid(301), name: "Grilled sea bass", amount: eur(4_200), assignees: [me.id]),
-                SplitItem(id: uuid(302), name: "Cataplana for three", amount: eur(7_800), assignees: [maya.id, jonas.id, priya.id]),
-                SplitItem(id: uuid(303), name: "Vinho verde", amount: eur(3_200), assignees: all)
+                SplitItem(id: uuid(301), name: "Grilled sea bass", amount: usd(4_200), assignees: [me.id]),
+                SplitItem(id: uuid(302), name: "Cataplana for three", amount: usd(7_800), assignees: [maya.id, jonas.id, priya.id]),
+                SplitItem(id: uuid(303), name: "Vinho verde", amount: usd(3_200), assignees: all)
             ],
-            tip: eur(1_800)
+            tip: usd(1_800)
         )))
         try add("fado", "Fado night", 9_000, 4, .entertainment, payers: [me.id: 9_000],
                 split: .percentages(basisPoints: [me.id: 2_500, maya.id: 2_500, jonas.id: 2_500, priya.id: 2_500]))
         try add("brunch", "Brunch in Principe Real", 7_200, 5, .dining, payers: [maya.id: 7_200],
-                split: .adjustments(participants: all, adjustments: [hana.id: eur(600)]))
+                split: .adjustments(participants: all, adjustments: [hana.id: usd(600)]))
         try add("beachbar", "Beach bar in Cascais", 6_000, 5, .drinks, payers: [me.id: 4_000, jonas.id: 2_000],
                 split: .equal(participants: all))
         try add("refund", "Museum tickets refund", -2_400, 5, .entertainment, payers: [priya.id: -2_400],
@@ -112,7 +112,7 @@ enum SampleData {
 
         let payment = Payment(
             id: PaymentID(rawValue: uuid(400)), groupID: trip.id, payer: jonas.id, receiver: maya.id,
-            amount: eur(10_000), date: day(6), note: "Bank transfer"
+            amount: usd(10_000), date: day(6), note: "Bank transfer"
         )
         try services.payments.record(payment)
 
@@ -130,8 +130,8 @@ enum SampleData {
         )
     }
 
-    private static func eur(_ cents: Int64) -> Money {
-        Money(minorUnits: cents, currencyCode: "EUR")
+    private static func usd(_ cents: Int64) -> Money {
+        Money(minorUnits: cents, currencyCode: "USD")
     }
 
     private static func uuid(_ number: Int) -> UUID {

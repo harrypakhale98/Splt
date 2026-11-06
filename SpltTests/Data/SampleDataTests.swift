@@ -18,7 +18,7 @@ struct SampleDataTests {
         let group = try #require(try services.groups.group(id: trip.trip.id))
         #expect(group.memberIDs.count == 6)
         #expect(group.kind == .trip)
-        #expect(group.currencyCode == "EUR")
+        #expect(group.currencyCode == "USD")
         #expect(try services.people.friends().count == 5)
         #expect(try services.groups.groups(includeArchived: true).count == 3)
     }
