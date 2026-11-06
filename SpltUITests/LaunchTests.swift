@@ -47,7 +47,8 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testRemindOpensAccountWhenNotificationsAreOff() {
-        let app = launchApp("-sampledata")
+        // The setting persists on the simulator, so pin it for this launch rather than assume it.
+        let app = launchApp("-sampledata", extra: ["-preferences.notificationsEnabled", "NO"])
         openTab("Friends", in: app)
         let friend = element(labelStartingWith: "Hana Sato", in: app)
         reveal(friend, in: app)
