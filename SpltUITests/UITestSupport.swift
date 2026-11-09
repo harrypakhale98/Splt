@@ -53,6 +53,10 @@ extension XCTestCase {
     @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
         let button = app.tabBars.firstMatch.buttons[name]
+        // On iOS 26 the Search tab shrinks the bar to a single button for the last tab, and tapping it
+        // brings the full bar back.
+        let collapsed = app.tabBars.firstMatch.buttons.matching(NSPredicate(format: "value == 'Collapsed'")).firstMatch
+        if !button.exists && collapsed.exists { collapsed.tap() }
         // the tab bar shrinks to the current tab while a list is scrolled down
         var attempts = 0
         while !button.exists && attempts < 8 {
