@@ -115,7 +115,7 @@ struct EdgeCaseTests {
     @Test func aDeletedFriendDoesNotBreakTheGroup() throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000)
-        try fixture.services.people.delete(id: fixture.sam.id)
+        try fixture.services.removePerson(fixture.sam.id)
 
         let balances = try fixture.services.groups.balances(for: fixture.group.id)
         #expect(balances.net(for: fixture.me.id).first?.minorUnits == 2000)

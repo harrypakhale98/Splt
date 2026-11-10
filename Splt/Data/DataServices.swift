@@ -20,7 +20,6 @@ final class DataServices {
 
     let groupsStore: GroupsStore
     let friendsStore: FriendsStore
-    let expensesStore: ExpensesStore
 
     private var currencyObserver: ContainerChangeObserver?
     private var warmedCurrencies: Set<String> = []
@@ -48,7 +47,6 @@ final class DataServices {
         self.search = SwiftDataSearchRepository(environment)
         self.groupsStore = GroupsStore(groups: groups, people: people, activity: activity, container: container)
         self.friendsStore = FriendsStore(people: people, container: container)
-        self.expensesStore = ExpensesStore(expenses: expenses, people: people, container: container)
         currencyObserver = ContainerChangeObserver(container: container) { [weak self] in self?.warmRatesIfNeeded() }
         warmRatesIfNeeded()
     }

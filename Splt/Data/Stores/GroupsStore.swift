@@ -8,8 +8,6 @@ import SwiftData
 @Observable
 final class GroupsStore {
     private(set) var summaries: [GroupSummary] = []
-    private(set) var totals = BalanceTotals.zero
-    private(set) var didFailToLoad = false
 
     @ObservationIgnored private let groups: any GroupRepository
     @ObservationIgnored private let people: any PersonRepository
@@ -32,7 +30,7 @@ final class GroupsStore {
         refresh()
     }
 
-
+    /// Reads the groups again. A failed read keeps what was there.
     func refresh() {
         do {
             let me = try people.me()?.id
@@ -45,11 +43,7 @@ final class GroupsStore {
                     lastActivity: try activity.entries(in: group.id, limit: 1).first?.createdAt
                 )
             }
-            totals = BalanceTotals(amounts: summaries.flatMap(\.myBalance))
-            didFailToLoad = false
-        } catch {
-            didFailToLoad = true
-        }
+        } catch {}
     }
 
     private func scheduleRefresh() {

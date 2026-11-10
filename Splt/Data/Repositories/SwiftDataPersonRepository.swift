@@ -73,12 +73,6 @@ final class SwiftDataPersonRepository: PersonRepository {
         try env.save()
     }
 
-    func delete(id: PersonID) throws {
-        guard let record = try env.personRecord(id) else { return }
-        env.tracker.tombstone(record)
-        try env.save()
-    }
-
     func friendBalance(with friend: PersonID) throws -> FriendBalance {
         try friendBalances().first { $0.friendID == friend } ?? FriendBalance(friendID: friend, total: [], byGroup: [])
     }

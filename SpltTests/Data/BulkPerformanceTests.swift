@@ -62,8 +62,8 @@ struct BulkPerformanceTests {
                 paidBy: members[number % members.count], split: .equal(participants: Set(members.prefix(6)))
             )
         }
-        let elapsed = try seconds { try fixture.services.expenses.addAll(batch) }
-        print("perf addAll 2000 into a store of 5000: \(elapsed)")
+        let elapsed = try seconds { try fixture.services.insertBatch(batch) }
+        print("perf batch of 2000 into a store of 5000: \(elapsed)")
         #expect(elapsed < 20)
         let stored = try fixture.services.expenses.expenses(in: group.id).filter { $0.title.hasPrefix("Bulk ") }
         #expect(stored.count == 2_000)

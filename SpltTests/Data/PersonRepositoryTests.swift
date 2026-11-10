@@ -60,15 +60,6 @@ struct PersonRepositoryTests {
         #expect(claimed.claimedByCloudUserID == "_user1")
     }
 
-    @Test func deletedPeopleDisappearFromQueries() throws {
-        let services = try DataServices.inMemory()
-        let person = Person(name: "Gone")
-        try services.people.add(person)
-        try services.people.delete(id: person.id)
-        #expect(try services.people.person(id: person.id) == nil)
-        #expect(try services.people.allPeople().isEmpty)
-    }
-
     @Test func editsAreTrackedForSync() throws {
         let services = try DataServices.inMemory()
         try services.people.add(Person(name: "Sam"))

@@ -23,10 +23,6 @@ struct ExpenseRowView: View {
         self.init(expense: expense, currentPerson: currentPerson.id, people: people + [currentPerson])
     }
 
-    init(row: ExpenseRow, currentPerson: PersonID?) {
-        self.init(expense: row.expense, currentPerson: currentPerson, people: row.payers)
-    }
-
     private var summary: ExpenseSummary {
         var names = Dictionary(fetched.map { ($0.key, $0.value.name) }, uniquingKeysWith: { first, _ in first })
         for person in people { names[person.id] = person.name }

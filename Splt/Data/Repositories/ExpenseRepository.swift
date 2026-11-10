@@ -12,9 +12,6 @@ protocol ExpenseRepository {
 
     /// Validates the expense, stores it and writes an activity entry.
     func add(_ expense: Expense, extras: ExpenseExtras) throws
-    /// Adds many expenses in one save with a single summary entry per group, for imports and bulk entry.
-    /// Nothing is stored if any expense is invalid or already exists.
-    func addAll(_ expenses: [Expense]) throws
     /// Stores the edit, appends to the edit history and writes an activity entry.
     /// Pass nil extras to leave the receipt, location and recurrence as they are. Does nothing if nothing changed.
     func update(_ expense: Expense, extras: ExpenseExtras?) throws

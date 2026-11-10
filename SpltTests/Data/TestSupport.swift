@@ -31,6 +31,26 @@ final class TestClock: Sendable {
     }
 }
 
+extension DataServices {
+    /// Stores expenses the way the importer does: checked as one batch and saved once, or not at all.
+    func insertBatch(_ expenses: [Expense]) throws {
+        do {
+            try SwiftDataExpenseRepository(environment).insertBatch(expenses, createdBy: try people.me()?.id)
+            try environment.save()
+        } catch {
+            environment.tracker.rollback()
+            throw error
+        }
+    }
+
+    /// Removes a person the way sync or a merge does. Nothing in the app deletes a person directly.
+    func removePerson(_ id: PersonID) throws {
+        guard let record = try environment.personRecord(id) else { return }
+        environment.tracker.tombstone(record)
+        try environment.save()
+    }
+}
+
 func usdAmount(_ cents: Int64) -> Money {
     Money(minorUnits: cents, currencyCode: "USD")
 }

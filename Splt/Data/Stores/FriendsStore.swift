@@ -9,7 +9,6 @@ import SwiftData
 final class FriendsStore {
     private(set) var summaries: [FriendSummary] = []
     private(set) var totals = BalanceTotals.zero
-    private(set) var didFailToLoad = false
 
     @ObservationIgnored private let people: any PersonRepository
     @ObservationIgnored private var observer: ContainerChangeObserver?
@@ -23,6 +22,7 @@ final class FriendsStore {
         refresh()
     }
 
+    /// Reads the friends again. A failed read keeps what was there.
     func refresh() {
         do {
             let balances = Dictionary(
@@ -33,10 +33,7 @@ final class FriendsStore {
                 return FriendSummary(person: friend, balance: balance?.total ?? [], byGroup: balance?.byGroup ?? [])
             }
             totals = BalanceTotals(amounts: summaries.flatMap(\.balance))
-            didFailToLoad = false
-        } catch {
-            didFailToLoad = true
-        }
+        } catch {}
     }
 
     private func scheduleRefresh() {

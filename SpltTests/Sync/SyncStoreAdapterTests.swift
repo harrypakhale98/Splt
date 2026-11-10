@@ -112,7 +112,7 @@ struct SyncStoreAdapterTests {
         #expect(plan.saves.count == 2)
         #expect(plan.saves.allSatisfy { $0.recordName == populated.sam.id.description })
 
-        try populated.device.services.people.delete(id: populated.sam.id)
+        try populated.device.services.removePerson(populated.sam.id)
         let deletion = try cloud.upload(from: populated.device)
         #expect(deletion.deletes.count == 2)
         #expect(try populated.device.adapter.collectOutgoing().isEmpty)

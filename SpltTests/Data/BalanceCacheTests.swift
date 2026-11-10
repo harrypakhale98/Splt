@@ -151,7 +151,7 @@ struct BalanceCacheAgreementTests {
     @Test func batchAddsAgree() throws {
         let (fixture, _) = try twoGroups()
         let batch = (1...20).map { fixture.expense("Batch \($0)", cents: Int64(100 * $0)) }
-        try fixture.services.expenses.addAll(batch)
+        try fixture.services.insertBatch(batch)
         try expectAgreement(fixture.services)
     }
 
@@ -159,7 +159,7 @@ struct BalanceCacheAgreementTests {
         let (fixture, _) = try twoGroups()
         var batch = (1...5).map { fixture.expense("Batch \($0)", cents: Int64(100 * $0)) }
         batch[3].payers = [fixture.me.id: usdAmount(1)]
-        #expect(throws: DataError.self) { try fixture.services.expenses.addAll(batch) }
+        #expect(throws: DataError.self) { try fixture.services.insertBatch(batch) }
         try expectAgreement(fixture.services)
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 1)
     }

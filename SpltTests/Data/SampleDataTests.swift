@@ -63,7 +63,7 @@ struct SampleDataTests {
         services.friendsStore.refresh()
         services.groupsStore.refresh()
         #expect(!services.friendsStore.totals.isSettled)
-        #expect(!services.groupsStore.totals.isSettled)
+        #expect(services.groupsStore.summaries.contains { !$0.isSettled })
         #expect(services.friendsStore.summaries.count == 5)
         #expect(try services.people.friendBalances().contains { $0.byGroup.count == 2 })
     }

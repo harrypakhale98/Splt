@@ -17,7 +17,6 @@ protocol PersonRepository {
     func update(_ person: Person) throws
     /// Turns a placeholder into a friend who owns the given iCloud user.
     func claim(_ id: PersonID, cloudUserID: String) throws
-    func delete(id: PersonID) throws
     /// What one friend owes you across every group.
     func friendBalance(with friend: PersonID) throws -> FriendBalance
     /// A balance for every friend you share a group with, sorted by friend name.

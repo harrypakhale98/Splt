@@ -39,22 +39,6 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         try env.save()
     }
 
-    func addAll(_ expenses: [Expense]) throws {
-        guard !expenses.isEmpty else { return }
-        do {
-            let me = try env.currentUser()?.personID
-            try insertBatch(expenses, createdBy: me)
-            let counts = Dictionary(grouping: expenses.compactMap(\.groupID), by: { $0 }).mapValues(\.count)
-            for group in counts.keys.sorted() {
-                try env.log(.expensesImported(expenses: counts[group] ?? 0, payments: 0), groupID: group, actor: me)
-            }
-            try env.save()
-        } catch {
-            env.tracker.rollback()
-            throw error
-        }
-    }
-
     /// Stores an expense without saving. Importers pass `logsActivity: false` and write one summary entry instead.
     func insert(_ expense: Expense, extras: ExpenseExtras, logsActivity: Bool) throws {
         let expense = Self.fitted(expense)
