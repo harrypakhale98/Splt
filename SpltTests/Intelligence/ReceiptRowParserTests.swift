@@ -28,6 +28,13 @@ private let options = ReceiptParsingOptions(
     referenceDate: Date(timeIntervalSince1970: 1_800_000_000)
 )
 
+/// One printed row per string, top to bottom.
+private func receipt(_ rows: [String]) -> ParsedReceipt {
+    var page = Page()
+    for row in rows { page.row(row) }
+    return ReceiptRowParser.parse(lines: page.lines, options: options)
+}
+
 @Suite("Receipt row parsing")
 struct ReceiptRowParserTests {
     @Test func readsASplitColumnRestaurantReceipt() {
@@ -301,5 +308,32 @@ struct ReceiptRowParserTests {
         #expect(ReceiptPrice.minorUnits(of: "12", fractionDigits: 2) == nil)
         #expect(ReceiptPrice.minorUnits(of: "8.5%", fractionDigits: 2) == nil)
         #expect(ReceiptPrice.minorUnits(of: "12x", fractionDigits: 2) == nil)
+    }
+
+    @Test func aTotalThatSaysTaxIsIncludedIsTheTotal() {
+        for label in ["TOTAL INC GST", "Total incl. VAT", "Total including tax", "Total (GST included)"] {
+            let parsed = receipt(["Cafe", "Burger 20.00", "Fries 25.00", "\(label) 45.00"])
+            #expect(parsed.total == usdMoney(4500), "\(label)")
+            #expect(parsed.tax == nil, "\(label)")
+            #expect(parsed.isConsistent, "\(label)")
+        }
+    }
+
+    @Test func aTotalBeforeTaxIsTheSubtotal() {
+        for label in ["Total excl. VAT", "Total before tax"] {
+            let parsed = receipt(["Cafe", "Burger 20.00", "Fries 25.00", "\(label) 45.00", "VAT 9.00", "Total 54.00"])
+            #expect(parsed.subtotal == usdMoney(4500), "\(label)")
+            #expect(parsed.tax == usdMoney(900), "\(label)")
+            #expect(parsed.total == usdMoney(5400), "\(label)")
+            #expect(parsed.isConsistent, "\(label)")
+        }
+    }
+
+    @Test func rowsThatNameTheTaxItselfStayTax() {
+        for label in ["Total Tax", "Tax Total", "Total Sales Tax", "Sales Tax 8%", "GST included in total", "Total includes GST of"] {
+            let parsed = receipt(["Cafe", "Burger 20.00", "Fries 25.00", "\(label) 3.60", "Total 48.60"])
+            #expect(parsed.tax == usdMoney(360), "\(label)")
+            #expect(parsed.total == usdMoney(4860), "\(label)")
+        }
     }
 }

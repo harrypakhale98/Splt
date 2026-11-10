@@ -129,7 +129,18 @@ private func classify(_ name: String) -> RowKind {
 
     if !words.isDisjoint(with: ["taxable", "exempt"]) || joined.contains(" tax id ") { return .ignore }
     if words.contains("subtotal") || joined.contains(" sub total ") || joined.contains(" net total ") { return .subtotal }
-    if !words.isDisjoint(with: ["tax", "taxes", "vat", "gst", "hst", "pst", "iva", "sgst", "cgst", "igst"]) { return .tax }
+    let ordered = name.foldedWords
+    let taxWords: Set<String> = ["tax", "taxes", "vat", "gst", "hst", "pst", "iva", "sgst", "cgst", "igst"]
+    if let taxIndex = ordered.firstIndex(where: taxWords.contains) {
+        // "Total excl. VAT" is the amount before tax and "Total inc GST" is the total itself.
+        // "Total tax", "Tax total" and "GST included in total" still name the tax.
+        let totalIndex = ordered.firstIndex(of: "total")
+        if totalIndex != nil, !words.isDisjoint(with: ["ex", "exc", "excl", "excluding", "exclusive", "before", "without"]) {
+            return .subtotal
+        }
+        let saysIncluded = !words.isDisjoint(with: ["inc", "incl", "including", "included", "inclusive", "with", "after"])
+        guard let index = totalIndex, index < taxIndex, saysIncluded else { return .tax }
+    }
     if !words.isDisjoint(with: ["tip", "gratuity", "gratuities", "svc"])
         || joined.contains(" service charge ") || joined.contains(" service fee ") { return .tip }
     if !words.isDisjoint(with: ["cash", "change", "tendered", "tender", "visa", "mastercard", "amex", "discover", "debit", "credit", "card", "paid", "payment", "auth", "approval", "approved", "contactless"]) {
