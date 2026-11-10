@@ -35,8 +35,6 @@ final class SyncCoordinator {
     var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     /// Called when changes arrive for a group someone else shared and this person is a member of it.
     var onMembership: (@MainActor (GroupID) -> Void)?
-    /// Called when the server will not delete the zone of a group this person is leaving.
-    var onLeaveRefused: (@MainActor (CKRecordZone.ID) -> Void)?
 
     init(services: DataServices, adapter: SyncStoreAdapter, retry: RetryScheduler? = nil) {
         self.services = services
@@ -200,34 +198,24 @@ final class SyncCoordinator {
         }
         var failures: [SyncFailure] = failedSaves.map { SyncFailure($0.error) }
         for (id, error) in failedDeletes {
-            let failure = SyncFailure(error)
-            if failure == .zoneMissing {
+            if SyncFailure(error) == .zoneMissing {
                 try adapter.zoneDeleteConfirmed(id)
-            } else if scope == .sharedDatabase, failure.isRefusal, adapter.metadata.pendingLeaves?.contains(id.zoneName) == true,
-                      let onLeaveRefused {
-                // Deleting the zone is one way to leave. Deleting the share record is the documented one.
-                onLeaveRefused(id)
             } else {
-                failures.append(failure)
+                failures.append(SyncFailure(error))
             }
         }
         noteResult(failures: failures, scope: scope)
-    }
-
-    /// Leaving through the share record worked or did not.
-    func leftByShare(_ zone: CKRecordZone.ID, error: (any Error)?) throws {
-        if let error {
-            noteResult(failures: [SyncFailure(error)], scope: .sharedDatabase)
-        } else {
-            try adapter.zoneDeleteConfirmed(zone)
-        }
     }
 
     func sentRecords(
         saved: [CKRecord], failedSaves: [(record: CKRecord, error: CKError)],
         deleted: [CKRecord.ID], failedDeletes: [CKRecord.ID: CKError], scope: DatabaseScope
     ) throws {
-        let orphans = try adapter.didSend(saved: saved, deleted: deleted)
+        // A share record this device deleted is this person having left that group.
+        for share in deleted where share.recordName == CKRecordNameZoneWideShare {
+            try adapter.zoneDeleteConfirmed(share.zoneID)
+        }
+        let orphans = try adapter.didSend(saved: saved, deleted: deleted.filter { $0.recordName != CKRecordNameZoneWideShare })
         if !orphans.isEmpty { queues[scope]?.queue(OutgoingPlan(deletes: orphans)) }
         var failures: [SyncFailure] = []
         var missingZones: Set<CKRecordZone.ID> = []
@@ -241,7 +229,21 @@ final class SyncCoordinator {
             if outcome.failure != .conflict { failures.append(outcome.failure) }
         }
         for (id, error) in failedDeletes {
-            failures.append(try adapter.deleteFailed(id: id, error: error))
+            guard id.recordName == CKRecordNameZoneWideShare else {
+                failures.append(try adapter.deleteFailed(id: id, error: error))
+                continue
+            }
+            let failure = SyncFailure(error)
+            if failure == .itemMissing || failure == .zoneMissing {
+                // the share is gone already, so there is nothing left to leave
+                try adapter.zoneDeleteConfirmed(id.zoneID)
+            } else if failure.isRefusal {
+                // Deleting the share record is how CloudKit says a participant leaves. If it will not
+                // have that, give the zone up instead, which is how earlier versions left.
+                queues[scope]?.queue(OutgoingPlan(zonesToDelete: [id.zoneID]))
+            } else {
+                failures.append(failure)
+            }
         }
         if !missingZones.isEmpty {
             Task { [weak self] in await self?.settleMissingZones(missingZones, scope: scope) }

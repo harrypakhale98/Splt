@@ -52,10 +52,12 @@ struct DatabaseSyncerTests {
         let left = CKRecordZone.ID(zoneName: "L", ownerName: "_owner")
         let record = CKRecord.ID(recordName: "R", zoneID: zone)
         rig.syncer.queue(OutgoingPlan(deletes: [record], zonesToDelete: [zone], zonesToLeave: [left]))
-        #expect(rig.handle.deletedRecordIDs == [record])
-        #expect(rig.handle.deletedZoneIDs == [zone, left])
+        // a zone of your own is deleted, and a group you joined is left by deleting its share record
+        #expect(rig.handle.deletedRecordIDs == [record, left.zoneWideShareID])
+        #expect(rig.handle.deletedZoneIDs == [zone])
+        #expect(rig.handle.leftZoneIDs == [left])
         rig.syncer.queue(OutgoingPlan())
-        #expect(rig.handle.recordChanges.count == 1)
+        #expect(rig.handle.recordChanges.count == 2)
     }
 
     @Test func singleSavesAndZonesCanBeQueuedAgain() throws {

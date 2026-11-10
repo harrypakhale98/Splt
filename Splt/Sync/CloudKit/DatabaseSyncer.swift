@@ -170,10 +170,12 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
 
     func queue(_ plan: OutgoingPlan) {
         var databaseChanges: [CKSyncEngine.PendingDatabaseChange] = plan.zonesToSave.map { .saveZone(CKRecordZone(zoneID: $0)) }
-        databaseChanges += (plan.zonesToDelete + plan.zonesToLeave).map { .deleteZone($0) }
+        databaseChanges += plan.zonesToDelete.map { .deleteZone($0) }
         if !databaseChanges.isEmpty { engine?.add(pendingDatabaseChanges: databaseChanges) }
         var recordChanges = plan.saves.map { CKSyncEngine.PendingRecordZoneChange.saveRecord($0) }
         recordChanges += plan.deletes.map { .deleteRecord($0) }
+        // Someone who joined a group leaves it by deleting the share record from their shared database.
+        recordChanges += plan.zonesToLeave.map { .deleteRecord($0.zoneWideShareID) }
         if !recordChanges.isEmpty { engine?.add(pendingRecordZoneChanges: recordChanges) }
     }
 

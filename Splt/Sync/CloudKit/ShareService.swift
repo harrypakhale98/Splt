@@ -26,6 +26,11 @@ struct CloudKitShareDatabase: ShareDatabase {
     }
 }
 
+extension CKRecordZone.ID {
+    /// The record that shares this whole zone.
+    var zoneWideShareID: CKRecord.ID { CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: self) }
+}
+
 /// Creates, finds and removes the CKShare of a group's record zone.
 struct ShareService {
     let privateDatabase: any ShareDatabase
@@ -51,26 +56,14 @@ struct ShareService {
         return saved
     }
 
-    /// Leaves a group someone else shared by deleting its share record from the shared database,
-    /// which is how CloudKit says a participant leaves. A share that is already gone counts as left.
-    func leave(zoneID: CKRecordZone.ID) async throws {
-        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
-        do {
-            try await sharedDatabase.deleteRecord(id)
-        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
-            return
-        }
-    }
-
     /// The share of a zone in either database, or nil when the zone is not shared.
     func share(zoneID: CKRecordZone.ID) async throws -> CKShare? {
         try await existingShare(zoneID: zoneID, in: zoneID.scope == .privateDatabase ? privateDatabase : sharedDatabase)
     }
 
     private func existingShare(zoneID: CKRecordZone.ID, in database: any ShareDatabase) async throws -> CKShare? {
-        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
         do {
-            return try await database.fetchRecord(id) as? CKShare
+            return try await database.fetchRecord(zoneID.zoneWideShareID) as? CKShare
         } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
             return nil
         }

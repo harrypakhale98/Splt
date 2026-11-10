@@ -58,7 +58,6 @@ final class CloudKitSyncEngine: SyncEngine {
         coordinator.onStatusChange = { [weak self] in self?.publish($0) }
         coordinator.onRemoteChanges = { [weak self] report in self?.notifier?.notify(for: report, services: self?.services) }
         coordinator.onMembership = { [weak self] in self?.onMembership?($0) }
-        coordinator.onLeaveRefused = { [weak self] in self?.leaveByShare($0) }
     }
 
     var statusUpdates: AsyncStream<SyncStatus> { broadcaster.updates() }
@@ -226,18 +225,6 @@ final class CloudKitSyncEngine: SyncEngine {
     }
 
     var groupsSharedWithMe: Set<GroupID> { adapter.metadata.groupsSharedWithMe }
-
-    private func leaveByShare(_ zoneID: CKRecordZone.ID) {
-        tasks.append(Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await backend.shareService.leave(zoneID: zoneID)
-                try? coordinator.leftByShare(zoneID, error: nil)
-            } catch {
-                try? coordinator.leftByShare(zoneID, error: error)
-            }
-        })
-    }
 
     func leave(group: GroupID) async throws {
         guard try services.groups.group(id: group) != nil else { throw SyncError.groupNotFound }

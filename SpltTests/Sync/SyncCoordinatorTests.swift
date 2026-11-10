@@ -520,33 +520,40 @@ struct SyncCoordinatorTests {
         #expect(groups.isEmpty)
     }
 
-    @Test func aRefusedZoneDeleteWhileLeavingAsksForTheShareToBeDeletedInstead() throws {
+    @Test func aShareRecordThisDeviceDeletedMeansTheGroupHasBeenLeft() throws {
         let joiner = try Joiner()
         try joiner.fetch()
-        var asked: [CKRecordZone.ID] = []
-        joiner.coordinator.onLeaveRefused = { asked.append($0) }
-        let zone = joiner.sharedZone
-
-        // a refusal for a group that is not being left is only a failure
-        try joiner.coordinator.sentZones(
-            saved: [], failedSaves: [], deleted: [], failedDeletes: [zone: CKError(.permissionFailure)], scope: .sharedDatabase
-        )
-        #expect(asked.isEmpty)
-
-        joiner.coordinator.requestLeave(zoneName: joiner.owner.zone)
-        // being offline is not a refusal
-        try joiner.coordinator.sentZones(
-            saved: [], failedSaves: [], deleted: [], failedDeletes: [zone: CKError(.networkUnavailable)], scope: .sharedDatabase
-        )
-        #expect(asked.isEmpty)
-        try joiner.coordinator.sentZones(
-            saved: [], failedSaves: [], deleted: [], failedDeletes: [zone: CKError(.permissionFailure)], scope: .sharedDatabase
-        )
-        #expect(asked == [zone])
-
-        // once the share record is gone the group is, as after a zone delete
+        let share = joiner.sharedZone.zoneWideShareID
         #expect(joiner.device.adapter.metadata.isKnown(zoneName: joiner.owner.zone))
-        try joiner.coordinator.leftByShare(zone, error: nil)
+        try joiner.coordinator.sentRecords(saved: [], failedSaves: [], deleted: [share], failedDeletes: [:], scope: .sharedDatabase)
+        #expect(!joiner.device.adapter.metadata.isKnown(zoneName: joiner.owner.zone))
+    }
+
+    @Test func aRefusedShareDeleteFallsBackToGivingUpTheZone() throws {
+        let joiner = try Joiner()
+        try joiner.fetch()
+        let queue = FakeQueue()
+        joiner.coordinator.attach(queue, for: .sharedDatabase)
+        let share = joiner.sharedZone.zoneWideShareID
+        // being offline is not a refusal: the leave is simply tried again later
+        try joiner.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [share: CKError(.networkUnavailable)], scope: .sharedDatabase
+        )
+        #expect(queue.plans.allSatisfy { $0.zonesToDelete.isEmpty })
+        try joiner.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [share: CKError(.permissionFailure)], scope: .sharedDatabase
+        )
+        #expect(queue.plans.last?.zonesToDelete == [joiner.sharedZone])
+        #expect(joiner.device.adapter.metadata.isKnown(zoneName: joiner.owner.zone))
+    }
+
+    @Test func aShareThatIsAlreadyGoneHasBeenLeftToo() throws {
+        let joiner = try Joiner()
+        try joiner.fetch()
+        let share = joiner.sharedZone.zoneWideShareID
+        try joiner.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [share: CKError(.unknownItem)], scope: .sharedDatabase
+        )
         #expect(!joiner.device.adapter.metadata.isKnown(zoneName: joiner.owner.zone))
     }
 

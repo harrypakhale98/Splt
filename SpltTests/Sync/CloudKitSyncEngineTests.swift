@@ -124,7 +124,7 @@ struct CloudKitSyncEngineTests {
         rig.backend.privateDatabase.put(CKShare(recordZoneID: zone))
         try await rig.engine.leave(group: rig.populated.group.id)
         #expect(rig.backend.privateDatabase.contains(shareID))
-        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(rig.backend.sharedHandle.leftZoneIDs.isEmpty)
         await rig.engine.stop()
     }
 
@@ -335,11 +335,11 @@ struct CloudKitSyncEngineTests {
         #expect(result.error == nil)
         let note = try #require(try removalNote(rig))
         #expect(rig.backend.sharedHandle.savedRecordIDs.contains { $0.recordName == note.recordName })
-        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(rig.backend.sharedHandle.leftZoneIDs.isEmpty)
         #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
 
         try confirmUploads(rig, engine, zone: zone)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.backend.sharedHandle.leftZoneIDs == [zone])
         #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
         await engine.stop()
     }
@@ -354,12 +354,12 @@ struct CloudKitSyncEngineTests {
         let note = try #require(try removalNote(rig))
         #expect(note.isDirty)
         #expect(note.deletedAt == nil)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(rig.backend.sharedHandle.leftZoneIDs.isEmpty)
         #expect(rig.device.store.loadMetadata().pendingLeaves == [zone.zoneName])
 
         rig.backend.sharedHandle.sendError = nil
         try confirmUploads(rig, engine, zone: zone)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.backend.sharedHandle.leftZoneIDs == [zone])
         #expect(rig.device.store.loadMetadata().pendingLeaves?.isEmpty == true)
         await engine.stop()
     }
@@ -377,9 +377,9 @@ struct CloudKitSyncEngineTests {
         #expect(await eventually { engine.syncers.count == 2 })
         let note = try #require(try removalNote(rig))
         #expect(await eventually { rig.backend.sharedHandle.savedRecordIDs.contains { $0.recordName == note.recordName } })
-        #expect(rig.backend.sharedHandle.deletedZoneIDs.isEmpty)
+        #expect(rig.backend.sharedHandle.leftZoneIDs.isEmpty)
         try confirmUploads(rig, engine, zone: zone)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.backend.sharedHandle.leftZoneIDs == [zone])
         await engine.stop()
     }
 
@@ -400,7 +400,7 @@ struct CloudKitSyncEngineTests {
         #expect(await eventually { relaunched.syncers.count == 2 })
         try await Task.sleep(for: .milliseconds(50))
         try confirmUploads(rig, relaunched, zone: zone)
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.backend.sharedHandle.leftZoneIDs == [zone])
         // given up here but not yet confirmed: planned again until the server says so
         #expect(try rig.device.tracker.pendingChanges().contains { $0.recordType == .group && $0.operation == .delete })
         await relaunched.stop()
@@ -418,7 +418,7 @@ struct CloudKitSyncEngineTests {
             saved: [], failedSaves: [(RecordMapper.record(for: payload, in: zone), CKError(.permissionFailure))],
             deleted: [], failedDeletes: [:]
         ))
-        #expect(rig.backend.sharedHandle.deletedZoneIDs == [zone])
+        #expect(rig.backend.sharedHandle.leftZoneIDs == [zone])
         await engine.stop()
     }
 }

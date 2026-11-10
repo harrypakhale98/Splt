@@ -55,6 +55,11 @@ final class FakeEngineHandle: SyncEngineHandle {
     var deletedZoneIDs: [CKRecordZone.ID] {
         databaseChanges.compactMap { if case .deleteZone(let id) = $0 { id } else { nil } }
     }
+
+    /// The zones being left: a participant leaves by deleting the zone's share record.
+    var leftZoneIDs: [CKRecordZone.ID] {
+        deletedRecordIDs.filter { $0.recordName == CKRecordNameZoneWideShare }.map(\.zoneID)
+    }
 }
 
 /// A database of in memory records for sharing tests.
