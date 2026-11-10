@@ -12,6 +12,7 @@ final class ExpensesUITests: XCTestCase {
         return app
     }
 
+    @MainActor
     private func field(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }

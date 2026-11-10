@@ -59,7 +59,7 @@ struct SampleDataTests {
     }
 
     @Test func friendsAndGroupsHaveBalances() throws {
-        let (services, trip) = try load()
+        let (services, _) = try load()
         services.friendsStore.refresh()
         services.groupsStore.refresh()
         #expect(!services.friendsStore.totals.isSettled)
