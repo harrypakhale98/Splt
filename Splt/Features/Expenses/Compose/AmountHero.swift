@@ -62,7 +62,7 @@ struct AmountHero: View {
         }
     }
 
-    private var shown: String { AmountKeypad.display(model.amountText, locale: locale) }
+    private var shown: String { AmountKeypad.display(model.signedAmountText, locale: locale) }
 
     private var symbolLeads: Bool { AmountKeypad.symbolLeads(currencyCode: model.currencyCode, locale: locale) }
 

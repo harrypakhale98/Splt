@@ -187,6 +187,56 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.issue == .splitShort(usd(5000)))
     }
 
+    @Test func aRefundStaysARefundWhenItsAmountIsRetyped() throws {
+        let harness = try ExpenseFormHarness()
+        let refund = Expense(
+            groupID: harness.fixture.group.id, title: "Refund", total: usd(-3000), date: Date(), paidBy: harness.me,
+            split: .equal(participants: harness.fixture.everyone)
+        )
+        try harness.fixture.services.expenses.add(refund)
+        let model = harness.editor(for: refund.id)
+        #expect(model.total == usd(-3000))
+        #expect(model.signedAmountText == "-30.00")
+        #expect(!model.isDirty)
+
+        // The number pad has no minus key, so clearing the amount leaves only digits to type.
+        model.amountText = ""
+        #expect(model.signedAmountText == "")
+        model.amountText = "25"
+        #expect(model.signedAmountText == "-25")
+        #expect(model.total == usd(-2500))
+        #expect(try model.save().total == usd(-2500))
+        #expect(try harness.fixture.services.expenses.expense(id: refund.id)?.total == usd(-2500))
+    }
+
+    @Test func aRecurringRefundOpensReadyToSave() throws {
+        let harness = try ExpenseFormHarness()
+        let fixture = harness.fixture
+        let template = RecurringExpense(
+            groupID: fixture.group.id, title: "Cashback", total: usd(-3000), payers: [harness.me: usd(-3000)],
+            split: .equal(participants: fixture.everyone), rule: RecurrenceRule(frequency: .monthly, startDate: fixture.clock.start)
+        )
+        try fixture.services.recurring.add(template)
+        let editor = ExpenseFormModel(mode: .editRecurring(template), services: fixture.services, dependencies: harness.dependencies)
+        #expect(editor.total == usd(-3000))
+        #expect(editor.issue == nil)
+
+        editor.amountText = "35"
+        try editor.save()
+        let updated = try #require(try fixture.services.recurring.templates(in: fixture.group.id).first)
+        #expect(updated.total == usd(-3500))
+    }
+
+    @Test func aNewExpenseDoesNotBecomeARefund() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        #expect(!model.isRefund)
+        #expect(model.signedAmountText == "60")
+        model.amountText = "-25"
+        #expect(model.total == nil)
+        #expect(!model.canSave)
+    }
+
     @Test func negativeAmountsDisplayWithoutAStrayGroupMark() {
         let english = Locale(identifier: "en_US")
         #expect(AmountKeypad.display("-123.00", locale: english) == "-123.00")

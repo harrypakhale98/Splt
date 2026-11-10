@@ -180,7 +180,7 @@ private struct ExpenseFormScreen: View {
             NavigationStack {
                 // in landscape the amount sits beside the pad, as four rows of keys and the amount do not fit on top of each other
                 (verticalSizeClass == .compact ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 16))) {
-                    Text(AmountKeypad.display(model.amountText, locale: model.locale).isEmpty ? "0" : AmountKeypad.display(model.amountText, locale: model.locale))
+                    Text(AmountKeypad.display(model.signedAmountText, locale: model.locale).isEmpty ? "0" : AmountKeypad.display(model.signedAmountText, locale: model.locale))
                         .font(Typeface.hero(size: 48))
                         .monospacedDigit()
                     NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode)) { key in

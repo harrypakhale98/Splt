@@ -54,7 +54,7 @@ extension ExpenseFormModel {
     }
 
     private func populate(from expense: Expense) {
-        amountText = AmountInput.text(for: expense.total, locale: locale)
+        setAmount(expense.total)
         currencyCode = expense.total.currencyCode
         title = expense.title
         category = expense.category
@@ -66,13 +66,19 @@ extension ExpenseFormModel {
         split = SplitEditorState(definition: expense.split, locale: locale)
     }
 
+    /// Shows a stored total. A negative one makes the form a refund, and the text keeps its size.
+    private func setAmount(_ total: Money) {
+        isRefund = total.isNegative
+        let size = total.isNegative ? 0 &- total.minorUnits : total.minorUnits
+        amountText = AmountInput.text(for: Money(minorUnits: size, currencyCode: total.currencyCode), locale: locale)
+    }
+
     /// Fills the form from a draft handed in by the caller, such as a duplicate.
     func apply(_ draft: ExpenseDraft) {
         if !draft.title.isEmpty { title = draft.title }
         if let total = draft.total {
-            startedAsRefund = total.isNegative
             currencyCode = total.currencyCode
-            amountText = AmountInput.text(for: total, locale: locale)
+            setAmount(total)
         }
         if let date = draft.date { self.date = date }
         if let category = draft.category { self.category = category }

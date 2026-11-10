@@ -49,9 +49,10 @@ final class ExpenseFormModel {
     @ObservationIgnored var original: Expense?
     @ObservationIgnored var originalExtras = ExpenseExtras()
     @ObservationIgnored var template: RecurringExpense?
-    /// True when the form was filled from a refund, whose negative total must stay readable.
-    @ObservationIgnored var startedAsRefund = false
 
+    /// True when the form was filled from a refund. The amount text holds the size only, as the
+    /// number pad has no minus key, so this is what keeps a refund one while its amount is retyped.
+    var isRefund = false
     var amountText = ""
     var currencyCode = "USD"
     var title = ""
@@ -114,7 +115,15 @@ final class ExpenseFormModel {
     var groupCurrencyCode: String { group?.currencyCode ?? currencyCode }
 
     var total: Money? {
-        AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: original?.isRefund == true || startedAsRefund)
+        guard let typed = AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: isRefund) else {
+            return nil
+        }
+        return isRefund && typed.isPositive ? Money(minorUnits: -typed.minorUnits, currencyCode: typed.currencyCode) : typed
+    }
+
+    /// The amount as typed, with the minus sign of a refund, for the large figure.
+    var signedAmountText: String {
+        isRefund && !amountText.isEmpty && !amountText.hasPrefix("-") ? "-" + amountText : amountText
     }
 
     var isDirty: Bool { snapshot.map { $0 != Snapshot(self) } ?? false }
