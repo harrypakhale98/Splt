@@ -39,6 +39,7 @@ struct SettleStage: View {
 
     private let baseDiameter: CGFloat = 40
     private let inset: CGFloat = 14
+    private let knobSize: CGFloat = 26
 
     private var diameter: CGFloat { AvatarView.diameter(scaled: scaledDiameter, base: baseDiameter) }
     private var peak: CGFloat { diameter * 0.75 }
@@ -63,15 +64,21 @@ struct SettleStage: View {
     private func pair(_ payer: SettleParticipant, _ receiver: SettleParticipant, width: CGFloat) -> some View {
         let start = CGPoint(x: inset + diameter / 2, y: rowY)
         let end = CGPoint(x: width - inset - diameter / 2, y: rowY)
-        let geometry = SettleArcGeometry(start: start, end: end, radius: diameter / 2 + 6, peak: peak)
+        // the arc ends 6pt off each disc; the knob stops further in, leaving an 8pt gap, so it sits whole on
+        // the line with a small gap before the person instead of tucking under their disc
+        let geometry = SettleArcGeometry(
+            start: start, end: end, radius: diameter / 2 + 6, peak: peak, knobInset: knobSize / 2 + 2
+        )
         let isContracting = contraction > 0
 
         return ZStack(alignment: .topLeading) {
             ringShape(width: width)
+            // the track ends where the knob stops, so nothing pokes out past it toward the person
             SettleArcShape(geometry: geometry, contraction: contraction)
+                .trim(from: 0, to: contraction > 0 ? 1 : geometry.knobT(for: 1))
                 .stroke(Ink.hairline, style: StrokeStyle(lineWidth: 4, lineCap: .round))
             SettleArcShape(geometry: geometry, contraction: contraction)
-                .trim(from: 0, to: max(fraction, 0.001))
+                .trim(from: 0, to: contraction > 0 ? max(fraction, 0.001) : (fraction > 0 ? geometry.knobT(for: fraction) : 0))
                 .stroke(Ink.text, style: StrokeStyle(lineWidth: 4 * (1 - 0.5 * contraction), lineCap: .round))
             Circle()
                 .fill(Ink.text)
@@ -80,7 +87,7 @@ struct SettleStage: View {
                 .scaleEffect(isContracting ? 1 : 0.2)
                 .opacity(isContracting ? 1 : 0)
             if isAdjustable, contraction == 0 {
-                knob(at: geometry.point(at: fraction, contraction: 0))
+                knob(at: geometry.point(at: geometry.knobT(for: fraction), contraction: 0))
             }
             avatar(payer, at: start)
             avatar(receiver, at: end)
@@ -104,7 +111,7 @@ struct SettleStage: View {
     private func knob(at point: CGPoint) -> some View {
         Circle()
             .fill(Ink.paper)
-            .frame(width: 26, height: 26)
+            .frame(width: knobSize, height: knobSize)
             .overlay { Circle().strokeBorder(Ink.text, lineWidth: 1.5) }
             .padding(9)
             .contentShape(Circle())
@@ -138,8 +145,7 @@ struct SettleStage: View {
 
     /// Sets the amount from a point on the stage and returns the nearest quarter, for the detent haptic.
     private func apply(_ location: CGPoint, _ geometry: SettleArcGeometry) -> Int {
-        let span = max(geometry.end.x - geometry.start.x, 1)
-        let share = min(max(Double((location.x - geometry.start.x) / span), 0), 1)
+        let share = geometry.fraction(atX: location.x)
         onFraction(share)
         return Int((share * 4).rounded())
     }
@@ -177,6 +183,22 @@ struct SettleArcGeometry {
     /// How far the ends stay from the avatar centers, so the arc starts at their edges.
     var radius: CGFloat
     var peak: CGFloat
+    /// How far the knob's center stays in from each end of the arc.
+    var knobInset: CGFloat = 0
+
+    private var span: CGFloat { max(end.x - start.x - 2 * radius, 1) }
+    private var knobEdge: Double { min(Double(knobInset / span), 0.45) }
+
+    /// Where along the arc the knob sits for a share of the debt, kept clear of both ends.
+    func knobT(for fraction: Double) -> Double {
+        knobEdge + min(max(fraction, 0), 1) * (1 - 2 * knobEdge)
+    }
+
+    /// The share of the debt for a finger at `x`: the inverse of `knobT`.
+    func fraction(atX x: CGFloat) -> Double {
+        let t = Double((x - start.x - radius) / span)
+        return min(max((t - knobEdge) / (1 - 2 * knobEdge), 0), 1)
+    }
 
     private var middleX: CGFloat { (start.x + end.x) / 2 }
 

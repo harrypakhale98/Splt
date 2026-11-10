@@ -26,6 +26,28 @@ struct SettleArcGeometryTests {
         #expect(middle.y == 50)
     }
 
+    @Test func theKnobStaysClearOfBothPeople() {
+        let inset = SettleArcGeometry(
+            start: CGPoint(x: 40, y: 100), end: CGPoint(x: 340, y: 100), radius: 30, peak: 50, knobInset: 12
+        )
+        // the arc runs 70...310, so the knob runs 82...298
+        #expect(abs(inset.point(at: inset.knobT(for: 0), contraction: 0).x - 82) < 0.001)
+        #expect(abs(inset.point(at: inset.knobT(for: 1), contraction: 0).x - 298) < 0.001)
+        #expect(abs(inset.point(at: inset.knobT(for: 0.5), contraction: 0).x - 190) < 0.001)
+    }
+
+    @Test func aFingerMapsBackToTheShareItPointsAt() {
+        let inset = SettleArcGeometry(
+            start: CGPoint(x: 40, y: 100), end: CGPoint(x: 340, y: 100), radius: 30, peak: 50, knobInset: 12
+        )
+        for share in [0.0, 0.25, 0.5, 0.75, 1.0] {
+            let x = inset.point(at: inset.knobT(for: share), contraction: 0).x
+            #expect(abs(inset.fraction(atX: x) - share) < 0.0001)
+        }
+        #expect(inset.fraction(atX: 0) == 0)
+        #expect(inset.fraction(atX: 400) == 1)
+    }
+
     @Test func contractingPullsTheEndsToTheMiddleAndFlattens() {
         let half = geometry.controlPoints(contraction: 0.5)
         #expect(half.from.x == 130)
