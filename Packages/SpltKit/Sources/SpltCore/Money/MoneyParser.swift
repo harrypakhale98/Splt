@@ -17,7 +17,34 @@ public enum MoneyParser {
         locale: Locale = .current,
         allowNegative: Bool = true
     ) throws -> Money {
-        let chars = normalize(text)
+        try parse(text, currencyCode: currencyCode, separators: Separators(locale: locale), allowNegative: allowNegative)
+    }
+
+    /// What a locale writes between digits. Kept apart from `Locale` because the answer differs between
+    /// system versions: Geez, for one, groups with a comma on some and with an Ethiopic letter on others.
+    struct Separators: Equatable, Sendable {
+        var decimal: String?
+        var grouping: String?
+
+        init(decimal: String?, grouping: String?) {
+            self.decimal = decimal
+            self.grouping = grouping
+        }
+
+        init(locale: Locale) {
+            self.init(decimal: locale.decimalSeparator, grouping: locale.groupingSeparator)
+        }
+
+        /// A grouping mark of the locale's own that is not one the parser already knows.
+        var ownGroupingMark: Character? {
+            guard let grouping, grouping.count == 1, let mark = grouping.first,
+                  !mark.isASCII, !mark.isWhitespace else { return nil }
+            return mark
+        }
+    }
+
+    static func parse(_ text: String, currencyCode: String, separators: Separators, allowNegative: Bool = true) throws -> Money {
+        let chars = normalize(text, separators: separators)
         guard chars.contains(where: { !$0.isWhitespace }) else { throw MoneyParseError.empty }
         guard let firstDigit = chars.firstIndex(where: isDigit),
               let lastDigit = chars.lastIndex(where: isDigit) else {
@@ -44,7 +71,7 @@ public enum MoneyParser {
         if negative && !allowNegative { throw MoneyParseError.negativeNotAllowed }
 
         let exponent = Currency.minorUnitExponent(for: currencyCode)
-        let magnitude = try readMagnitude(Array(chars[start...end]), exponent: exponent, locale: locale)
+        let magnitude = try readMagnitude(Array(chars[start...end]), exponent: exponent, separators: separators)
         return Money(minorUnits: negative ? -magnitude : magnitude, currencyCode: currencyCode)
     }
 
@@ -56,9 +83,10 @@ public enum MoneyParser {
         ch == "." || ch == ","
     }
 
-    private static func normalize(_ text: String) -> [Character] {
+    private static func normalize(_ text: String, separators: Separators) -> [Character] {
+        let ownGroupingMark = separators.ownGroupingMark
         // Bidi marks are invisible, and locales such as Arabic and Hebrew put them around a minus sign.
-        String(String.UnicodeScalarView(text.unicodeScalars.filter { !$0.properties.isBidiControl })).map { ch -> Character in
+        return String(String.UnicodeScalarView(text.unicodeScalars.filter { !$0.properties.isBidiControl })).map { ch -> Character in
             switch ch {
             case "\u{2212}", "\u{2013}", "\u{2014}": return "-"
             case "\u{066B}": return "."
@@ -66,6 +94,8 @@ public enum MoneyParser {
             case "\u{00A0}", "\u{202F}", "\u{2009}", "\u{3000}": return " "
             case "\u{2018}", "\u{2019}": return "'"
             default:
+                // a locale's own grouping mark is read as the comma it stands for
+                if ch == ownGroupingMark { return "," }
                 if !ch.isASCII, ch.unicodeScalars.first?.properties.numericType == .decimal,
                    let value = ch.wholeNumberValue {
                     return Character(String(value))
@@ -99,7 +129,7 @@ public enum MoneyParser {
         return minusCount == 1 || parentheses
     }
 
-    private static func readMagnitude(_ core: [Character], exponent: Int, locale: Locale) throws -> Int64 {
+    private static func readMagnitude(_ core: [Character], exponent: Int, separators: Separators) throws -> Int64 {
         let spaceGrouped = core.contains { $0 == " " || $0 == "'" }
         let body = spaceGrouped ? try joinSpaceGroups(core) : core
         guard body.allSatisfy({ isDigit($0) || isSeparator($0) }) else { throw MoneyParseError.invalidFormat }
@@ -118,14 +148,14 @@ public enum MoneyParser {
             guard decimals.count == 1 else { throw MoneyParseError.invalidFormat }
             decimalIndex = decimals[0]
             groupCharacter = decimalIsDot ? "," : "."
-        } else if let separators = [dots, commas].first(where: { !$0.isEmpty }) {
-            let character = body[separators[0]]
-            if separators.count > 1 {
+        } else if let marks = [dots, commas].first(where: { !$0.isEmpty }) {
+            let character = body[marks[0]]
+            if marks.count > 1 {
                 groupCharacter = character
-            } else if looksLikeGrouping(body, at: separators[0], exponent: exponent, locale: locale) {
+            } else if looksLikeGrouping(body, at: marks[0], exponent: exponent, separators: separators) {
                 groupCharacter = character
             } else {
-                decimalIndex = separators[0]
+                decimalIndex = marks[0]
             }
         }
 
@@ -155,13 +185,13 @@ public enum MoneyParser {
 
     /// A lone separator is a thousands separator only when it follows one to three digits,
     /// is followed by exactly three, and the locale (or a zero decimal currency) says so.
-    private static func looksLikeGrouping(_ body: [Character], at index: Int, exponent: Int, locale: Locale) -> Bool {
+    private static func looksLikeGrouping(_ body: [Character], at index: Int, exponent: Int, separators: Separators) -> Bool {
         let after = body.count - index - 1
         guard (1...3).contains(index), body[0] != "0", after == 3 else { return false }
         if exponent == 0 { return true }
         // The body is already normalized, so the locale's separators have to be as well.
-        if normalize(locale.decimalSeparator ?? "").first == body[index] { return false }
-        return normalize(locale.groupingSeparator ?? "").first == body[index]
+        if normalize(separators.decimal ?? "", separators: separators).first == body[index] { return false }
+        return normalize(separators.grouping ?? "", separators: separators).first == body[index]
     }
 
     /// Joins chunks split by spaces or apostrophes, as in "1 234,56" or "1'234.50".

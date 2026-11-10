@@ -186,6 +186,23 @@ struct MoneyParserTests {
         }
     }
 
+    /// Some system versions group Geez with the Ethiopic letter wa, others with a comma. Both have to read.
+    @Test func aLocalesOwnGroupingMarkIsRead() throws {
+        let geez = MoneyParser.Separators(decimal: ".", grouping: "\u{12C8}")
+        func parse(_ text: String, _ code: String) throws -> Int64 {
+            try MoneyParser.parse(text, currencyCode: code, separators: geez).minorUnits
+        }
+        #expect(try parse("1\u{12C8}234\u{12C8}567.89", "USD") == 123_456_789)
+        #expect(try parse("123\u{12C8}456\u{12C8}789", "JPY") == 123_456_789)
+        #expect(try parse("123\u{12C8}456.789", "KWD") == 123_456_789)
+        #expect(try parse("1\u{12C8}234", "USD") == 123_400)
+        // the letter means nothing in a locale that does not group with it
+        let english = MoneyParser.Separators(decimal: ".", grouping: ",")
+        #expect(throws: MoneyParseError.self) {
+            try MoneyParser.parse("1\u{12C8}234", currencyCode: "USD", separators: english)
+        }
+    }
+
     @Test func arabicGroupingIsNotReadAsADecimal() throws {
         let arabic = Locale(identifier: "ar_SA")
         #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234_000)
