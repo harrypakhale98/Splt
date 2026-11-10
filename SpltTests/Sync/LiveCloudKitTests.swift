@@ -57,6 +57,27 @@ struct LiveCloudKitTests {
 
     private var container: String? { EntitlementReader.current().cloudKitContainers.first }
 
+    /// The choice the app makes at launch, with everything as this build and this machine really are
+    /// except for the one fact that it is a test run.
+    @Test func aSignedBuildWithAnAccountPicksICloudAndComesUpToDate() async throws {
+        let container = try #require(container, "this build has no iCloud container: run a signed build")
+        let found = SyncEnvironment.current
+        #expect(found.isTesting)
+        var real = found
+        real.isTesting = false
+        let environment = real
+        let services = try DataServices.inMemory()
+        let store = InMemorySyncStateStore()
+        let engine = AutomaticSyncEngine(
+            environment: { environment }, probe: CloudKitAccountProbe(), stateStore: store,
+            makeCloudKitEngine: { CloudKitSyncEngine(containerIdentifier: $0, services: services, store: store) }
+        )
+        await engine.start()
+        #expect(engine.choice == .cloudKit(containerIdentifier: container), "chose \(String(describing: engine.choice))")
+        #expect(await eventually(timeout: .seconds(30)) { engine.status == .idle }, "status stayed \(engine.status)")
+        await engine.stop()
+    }
+
     @Test func twoStoresOnOneAccountAgreeThroughICloud() async throws {
         let container = try #require(container, "this build has no iCloud container: run a signed build")
         // real time, so nothing is refused for its date, with B's clock ahead so its edits are the later ones

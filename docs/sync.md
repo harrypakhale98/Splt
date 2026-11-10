@@ -71,7 +71,7 @@ TEST_RUNNER_SPLT_LIVE_ICLOUD=1 xcodebuild test -project Splt.xcodeproj -scheme S
   -only-testing:SpltTests/LiveCloudKitTests
 ```
 
-It uploads a group with every kind of record, downloads it into a second store and compares the two, sends edits, settles a conflict each way, deletes an expense, shares the group for invited people and then by link, and deletes the group. Each change is checked on the server and on a store that starts from nothing. It is not looked for on the store next to the one that made it, because CloudKit does not report a zone as changed to the device that changed it, and here both stores are one device.
+It first checks that the app, as this build and this Mac really are, picks iCloud and comes up to date. Then it uploads a group with every kind of record, downloads it into a second store and compares the two, sends edits, settles a conflict each way, deletes an expense, shares the group for invited people and then by link, and deletes the group. Each change is checked on the server and on a store that starts from nothing. It is not looked for on the store next to the one that made it, because CloudKit does not report a zone as changed to the device that changed it, and here both stores are one device.
 
 ### On two iPhones, with two accounts
 
