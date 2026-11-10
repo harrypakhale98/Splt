@@ -142,6 +142,13 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     private var makeEngine: EngineFactory?
     private var hasStartedOver = false
     private var startingOver: Task<Void, Never>?
+    /// True from the moment the old engine's state is dropped until the new engine is in place.
+    private var isReplacingEngine = false
+    private var isStopped = false
+    /// The engine that began with no saved state, until its first whole fetch has gone through.
+    private var startedFromNothing: (any SyncEngineHandle)?
+    /// A zone could not be fetched since the fetch now running began.
+    private var zoneFailedInThisFetch = false
 
     init(scope: DatabaseScope, coordinator: SyncCoordinator, store: any SyncStateStore) {
         self.scope = scope
@@ -163,23 +170,33 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         let saved = store.loadEngineState(scope).flatMap {
             try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: $0)
         }
-        if saved == nil { coordinator.fetchFromNothingBegan(scope: scope) }
-        engine = makeEngine(saved, self)
+        isStopped = false
+        let made = makeEngine(saved, self)
+        engine = made
+        if saved == nil {
+            coordinator.fetchFromNothingBegan(scope: scope)
+            startedFromNothing = made
+        }
     }
 
     /// CloudKit says the change token in the saved state is too old to go on from, which the engine
     /// does not recover from by itself. The state is dropped and a new engine fetches everything
     /// again. Once per run, so a server that keeps saying it cannot cause a loop.
     private func startOver() {
-        guard !hasStartedOver, let makeEngine else { return }
+        guard !hasStartedOver, !isStopped, let makeEngine else { return }
         hasStartedOver = true
+        // the old engine may still report its state while it winds down: that state is the expired one
+        isReplacingEngine = true
         store.saveEngineState(nil, scope: scope)
         startingOver = Task { [weak self] in
             guard let self else { return }
             await engine?.cancelOperations()
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !isStopped else { return }
+            let made = makeEngine(nil, self)
+            engine = made
+            isReplacingEngine = false
             coordinator.fetchFromNothingBegan(scope: scope)
-            engine = makeEngine(nil, self)
+            startedFromNothing = made
             // what was waiting to be sent went with the old engine, so it is queued again
             try? coordinator.reconcile()
             try? await fetchChanges()
@@ -191,8 +208,10 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     }
 
     func stop() async {
+        isStopped = true
         startingOver?.cancel()
         startingOver = nil
+        startedFromNothing = nil
         await engine?.cancelOperations()
         engine = nil
     }
@@ -227,14 +246,24 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     }
 
     func fetchChanges() async throws {
+        // without an engine nothing was fetched, which is not the same as a fetch that found nothing
+        guard let fetching = engine else { throw SyncError.notReady }
+        zoneFailedInThisFetch = false
         do {
-            try await engine?.fetchChanges()
-            coordinator.fetchSucceeded(scope: scope)
-            try? coordinator.fetchFromNothingFinished(scope: scope)
+            try await fetching.fetchChanges()
         } catch {
             coordinator.fetchFailed(error, scope: scope)
             if Self.isExpiredToken(error) { startOver() }
             throw error
+        }
+        // another engine may have taken over while this one was fetching: its fetch says nothing now
+        guard fetching === engine else { return }
+        // a zone that failed keeps its failure showing, and the listing is not trusted as complete
+        guard !zoneFailedInThisFetch else { return }
+        coordinator.fetchSucceeded(scope: scope)
+        if startedFromNothing === fetching {
+            startedFromNothing = nil
+            try? coordinator.fetchFromNothingFinished(scope: scope)
         }
     }
 
@@ -295,7 +324,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         try applyFault?(input)
         switch input {
         case .stateUpdate(let data):
-            guard !lostFetchedChanges else { return }
+            guard !lostFetchedChanges, !isReplacingEngine else { return }
             store.saveEngineState(data, scope: scope)
         case .account(let change):
             try coordinator.accountChanged(change)
@@ -317,6 +346,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
             coordinator.updateStatus { $0.ended() }
         case .zoneFetchFailed(let error):
             // a group that did not arrive must not read as up to date
+            zoneFailedInThisFetch = true
             coordinator.fetchFailed(error, scope: scope)
             if Self.isExpiredToken(error) { startOver() }
         }

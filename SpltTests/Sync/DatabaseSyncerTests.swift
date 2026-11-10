@@ -235,6 +235,64 @@ struct DatabaseSyncerTests {
         await syncer.stop()
     }
 
+    /// The first engine's fetch comes back fine although one zone's token had expired, by which time a
+    /// new engine is on its way. That return says nothing about what the server lists.
+    @Test func aFetchThatLostAZoneDecidesNothingAboutWhichGroupsAreGone() async throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        let coordinator = SyncCoordinator(services: populated.device.services, adapter: populated.device.adapter)
+        let syncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: populated.device.store)
+        let first = FakeEngineHandle(), second = FakeEngineHandle()
+        first.onFetch = { [weak syncer] in syncer?.handle(.zoneFetchFailed(CKError(.changeTokenExpired))) }
+        second.onFetch = { [weak syncer] in syncer?.handle(.fetchedZones(modified: [zone], deleted: [])) }
+        var made = 0
+        syncer.start { _, _ in
+            made += 1
+            return made == 1 ? first : second
+        }
+        coordinator.attach(syncer, for: .privateDatabase)
+        coordinator.markReady()
+
+        try await syncer.fetchChanges()
+        #expect(populated.device.adapter.metadata.isKnown(zoneName: zone.zoneName))
+        #expect(await eventually { second.fetchCount == 1 })
+        #expect(made == 2)
+        #expect(populated.device.adapter.metadata.isKnown(zoneName: zone.zoneName))
+        #expect(!populated.device.adapter.metadata.isDetached(zoneName: zone.zoneName))
+        await syncer.stop()
+    }
+
+    @Test func aStoppedSyncerHasFetchedNothingAndSaysSo() async throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        let coordinator = SyncCoordinator(services: populated.device.services, adapter: populated.device.adapter)
+        let syncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: populated.device.store)
+        syncer.start { _, _ in FakeEngineHandle() }
+        await syncer.stop()
+        await #expect(throws: SyncError.notReady) { try await syncer.fetchChanges() }
+        #expect(populated.device.adapter.metadata.isKnown(zoneName: populated.zone))
+        #expect(!populated.device.adapter.metadata.isDetached(zoneName: populated.zone))
+    }
+
+    @Test func aZoneThatFailedStillShowsAfterTheFetchAsAWholeWentThrough() async throws {
+        let rig = try Rig()
+        rig.handle.onFetch = { [weak syncer = rig.syncer] in syncer?.handle(.zoneFetchFailed(CKError(.quotaExceeded))) }
+        try await rig.syncer.fetchChanges()
+        guard case .error = rig.coordinator.status else {
+            Issue.record("expected the failure to stay, got \(rig.coordinator.status)")
+            return
+        }
+        // the next fetch that loses nothing clears it
+        rig.handle.onFetch = nil
+        try await rig.syncer.fetchChanges()
+        #expect(rig.coordinator.status == .idle)
+    }
+
     @Test func aZoneThatCouldNotBeFetchedDoesNotReadAsUpToDate() throws {
         let rig = try Rig()
         rig.syncer.handle(.zoneFetchFailed(CKError(.quotaExceeded)))
