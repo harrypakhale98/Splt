@@ -21,13 +21,21 @@ final class SyncRuntime {
     @ObservationIgnored private var isRunning = false
     @ObservationIgnored private let liveServices: @MainActor () -> DataServices?
     @ObservationIgnored private let leftGroups: LeftGroupsStore
+    @ObservationIgnored private let invitationRetry: Duration
+    @ObservationIgnored private var retry: Task<Void, Never>?
+    @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
 
+    /// `makeEngine` replaces the engine that `start` builds, for tests.
     init(
         liveServices: @escaping @MainActor () -> DataServices? = { IntentServices.shared.live() },
-        leftGroups: LeftGroupsStore = LeftGroupsStore()
+        leftGroups: LeftGroupsStore = LeftGroupsStore(),
+        invitationRetry: Duration = .seconds(2),
+        makeEngine: (@MainActor (DataServices) -> any SyncEngine)? = nil
     ) {
         self.liveServices = liveServices
         self.leftGroups = leftGroups
+        self.invitationRetry = invitationRetry
+        self.makeEngine = makeEngine
     }
 
     var status: SyncStatus { engine.status }
@@ -36,16 +44,16 @@ final class SyncRuntime {
     func start(services: DataServices) async {
         guard !isRunning else { return }
         isRunning = true
+        let started = makeEngine?(services) ?? automaticEngine(services: services)
+        engine = started
+        await started.start()
+        await answerWaiting()
+    }
+
+    private func automaticEngine(services: DataServices) -> any SyncEngine {
         let notifier = notifier
-        let automatic = AutomaticSyncEngine(probe: CloudKitAccountProbe()) { identifier in
+        return AutomaticSyncEngine(probe: CloudKitAccountProbe()) { identifier in
             CloudKitSyncEngine(containerIdentifier: identifier, services: services, notifier: notifier)
-        }
-        engine = automatic
-        await automatic.start()
-        let invitations = waiting
-        waiting = []
-        for invitation in invitations {
-            await accept(invitation)
         }
     }
 
@@ -62,11 +70,25 @@ final class SyncRuntime {
 
     /// Called by the scene delegate. Invitations that arrive before launch finished are kept until sync starts.
     func receive(_ invitation: ShareInvitation) {
-        guard isRunning else {
-            waiting.append(invitation)
-            return
+        waiting.append(invitation)
+        guard isRunning else { return }
+        Task { await answerWaiting() }
+    }
+
+    /// Answers the invitations that can be answered now. One that sync is not ready for goes back in the
+    /// queue and is tried again shortly: at a cold launch the account is still being checked.
+    private func answerWaiting() async {
+        let invitations = waiting
+        waiting = []
+        for invitation in invitations {
+            await accept(invitation)
         }
-        Task { await accept(invitation) }
+        guard !waiting.isEmpty, retry == nil else { return }
+        retry = Task { [weak self, invitationRetry] in
+            try? await Task.sleep(for: invitationRetry)
+            self?.retry = nil
+            await self?.answerWaiting()
+        }
     }
 
     private func accept(_ invitation: ShareInvitation) async {
@@ -75,6 +97,8 @@ final class SyncRuntime {
             if let zone = invitation.metadata?.share.recordID.zoneID.zoneName, let id = UUID(uuidString: zone) {
                 groupJoined(GroupID(rawValue: id))
             }
+        } catch SyncError.notReady {
+            waiting.append(invitation)
         } catch {
             onInvitationFailed?(error.localizedDescription)
         }

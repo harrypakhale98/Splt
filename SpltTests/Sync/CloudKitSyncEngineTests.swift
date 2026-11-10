@@ -187,6 +187,15 @@ struct CloudKitSyncEngineTests {
         await engine.stop()
     }
 
+    @Test func anInvitationBeforeSyncHasStartedHasToWait() async throws {
+        let rig = try Rig()
+        await #expect(throws: SyncError.notReady) { try await rig.engine.accept(ShareInvitation(groupName: "x")) }
+        rig.backend.userResult = .failure(CKError(.networkUnavailable))
+        await rig.engine.start()
+        await #expect(throws: SyncError.notReady) { try await rig.engine.accept(ShareInvitation(groupName: "x")) }
+        await rig.engine.stop()
+    }
+
     @Test func invitationsWithoutMetadataAreRejected() async throws {
         let rig = try Rig()
         await rig.engine.start()

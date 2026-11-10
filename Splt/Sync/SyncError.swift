@@ -14,6 +14,10 @@ enum SyncError: LocalizedError, Equatable, Sendable {
     case linkNotOpen
     /// The system invite sheet is only for the person who shared the group.
     case ownerInvites
+    /// Nobody is signed in to iCloud, so an invitation cannot be accepted.
+    case noAccount
+    /// iCloud is restricted on this device, so an invitation cannot be accepted.
+    case restricted
 
     var errorDescription: String? {
         switch self {
@@ -31,6 +35,10 @@ enum SyncError: LocalizedError, Equatable, Sendable {
             String(localized: "Only the person who shared this group can make a link anyone can join.")
         case .ownerInvites:
             String(localized: "Only the person who shared this group can invite people with iCloud.")
+        case .noAccount:
+            String(localized: "Sign in to iCloud in the Settings app, then open the invitation again.")
+        case .restricted:
+            String(localized: "iCloud is restricted on this device, so shared groups cannot be joined here.")
         }
     }
 }

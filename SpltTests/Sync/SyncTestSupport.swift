@@ -40,7 +40,9 @@ final class FakeSyncEngine: SyncEngine {
         throw SyncError.unavailable
     }
 
+    var acceptError: (any Error)?
     func accept(_ invitation: ShareInvitation) async throws {
+        if let acceptError { throw acceptError }
         accepted.append(invitation)
     }
 

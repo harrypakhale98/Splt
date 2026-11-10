@@ -87,7 +87,17 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     func accept(_ invitation: ShareInvitation) async throws {
-        try await current.accept(invitation)
+        switch choice {
+        case nil, .noOp(.accountUnavailable)?:
+            // the account is still being checked, so the answer can be different in a moment
+            throw SyncError.notReady
+        case .noOp(.noAccount)?:
+            throw SyncError.noAccount
+        case .noOp(.restricted)?:
+            throw SyncError.restricted
+        case .cloudKit?, .noOp?:
+            try await current.accept(invitation)
+        }
     }
 
     func leave(group: GroupID) async throws {

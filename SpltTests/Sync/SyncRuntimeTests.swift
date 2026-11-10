@@ -35,6 +35,61 @@ struct SyncRuntimeTests {
         #expect(await eventually { failures.count == 1 })
     }
 
+    @Test func anInvitationAtAColdLaunchWaitsUntilSyncHasStarted() async throws {
+        let fake = FakeSyncEngine()
+        fake.acceptError = SyncError.notReady
+        let runtime = SyncRuntime(invitationRetry: .milliseconds(10), makeEngine: { _ in fake })
+        var failures: [String] = []
+        runtime.onInvitationFailed = { failures.append($0) }
+        runtime.receive(ShareInvitation(groupName: "Lisbon"))
+        await runtime.start(services: try DataServices.inMemory())
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(failures.isEmpty)
+        #expect(fake.accepted.isEmpty)
+
+        fake.acceptError = nil
+        #expect(await eventually { fake.accepted.count == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(fake.accepted.count == 1)
+        #expect(failures.isEmpty)
+    }
+
+    @Test func anInvitationWaitsWhileICloudCannotBeReachedAndIsAnsweredOnceItCan() async throws {
+        let probe = FakeAccountProbe(.unknown)
+        let cloudKit = FakeSyncEngine()
+        let automatic = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: probe, accountChanges: { AsyncStream { _ in } },
+            stateStore: InMemorySyncStateStore(), makeCloudKitEngine: { _ in cloudKit }
+        )
+        let runtime = SyncRuntime(invitationRetry: .milliseconds(10), makeEngine: { _ in automatic })
+        var failures: [String] = []
+        runtime.onInvitationFailed = { failures.append($0) }
+        runtime.receive(ShareInvitation(groupName: "Lisbon"))
+        await runtime.start(services: try DataServices.inMemory())
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(failures.isEmpty)
+
+        probe.set(.available)
+        await automatic.reevaluate()
+        #expect(await eventually { cloudKit.accepted.count == 1 })
+        #expect(failures.isEmpty)
+        await automatic.stop()
+    }
+
+    @Test func anInvitationFailsAtOnceWhenNobodyIsSignedInToICloud() async throws {
+        let automatic = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.noAccount), accountChanges: { AsyncStream { _ in } },
+            stateStore: InMemorySyncStateStore(), makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        let runtime = SyncRuntime(makeEngine: { _ in automatic })
+        var failures: [String] = []
+        runtime.onInvitationFailed = { failures.append($0) }
+        runtime.receive(ShareInvitation(groupName: "Lisbon"))
+        await runtime.start(services: try DataServices.inMemory())
+        #expect(failures == ["Sign in to iCloud in the Settings app, then open the invitation again."])
+        await automatic.stop()
+    }
+
     @Test func aReplacementEngineIsUsedForPreviews() {
         let runtime = SyncRuntime()
         let fake = FakeSyncEngine()

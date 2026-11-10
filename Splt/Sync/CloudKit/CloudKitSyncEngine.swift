@@ -189,9 +189,10 @@ final class CloudKitSyncEngine: SyncEngine {
     }
 
     func accept(_ invitation: ShareInvitation) async throws {
+        // until the engines exist nothing can fetch the group, so the invitation has to wait
+        guard !syncers.isEmpty else { throw SyncError.notReady }
         guard let metadata = invitation.metadata else { throw SyncError.invalidInvitation }
         guard metadata.containerIdentifier == backend.containerIdentifier else { throw SyncError.invalidInvitation }
-        guard isStarted else { throw SyncError.notReady }
         try await backend.accept(metadata)
         try await fetchChanges()
         try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)

@@ -202,6 +202,38 @@ struct AutomaticSyncEngineTests {
         #expect(await !engine.isSharedByMe(group: GroupID()))
         await engine.stop()
     }
+
+    @Test func anInvitationWaitsUntilTheAccountIsKnown() async throws {
+        let (engine, probe, made) = make(environment: .signedDevice(), account: .unknown)
+        let invitation = ShareInvitation(groupName: nil)
+        await #expect(throws: SyncError.notReady) { try await engine.accept(invitation) }
+        await engine.start()
+        #expect(engine.choice == .noOp(.accountUnavailable))
+        await #expect(throws: SyncError.notReady) { try await engine.accept(invitation) }
+        probe.set(.available)
+        await engine.reevaluate()
+        try await engine.accept(invitation)
+        #expect(made.engines.first?.accepted.count == 1)
+        await engine.stop()
+    }
+
+    @Test func anInvitationIsRefusedForAReasonThatWillNotChange() async throws {
+        let invitation = ShareInvitation(groupName: nil)
+        let (signedOut, _, _) = make(environment: .signedDevice(), account: .noAccount)
+        await signedOut.start()
+        await #expect(throws: SyncError.noAccount) { try await signedOut.accept(invitation) }
+        await signedOut.stop()
+        let (restricted, _, _) = make(environment: .signedDevice(), account: .restricted)
+        await restricted.start()
+        await #expect(throws: SyncError.restricted) { try await restricted.accept(invitation) }
+        await restricted.stop()
+        var simulator = SyncEnvironment.signedDevice()
+        simulator.isSimulator = true
+        let (unavailable, _, _) = make(environment: simulator)
+        await unavailable.start()
+        await #expect(throws: SyncError.unavailable) { try await unavailable.accept(invitation) }
+        await unavailable.stop()
+    }
 }
 
 @MainActor
