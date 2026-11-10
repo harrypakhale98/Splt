@@ -250,7 +250,10 @@ private struct FriendDetailContent: View {
     private func openPendingSettle() {
         guard router.pendingSettleFriend == model.friendID.rawValue, model.didLoad else { return }
         router.pendingSettleFriend = nil
-        settleRequest = model.settleRequest
+        // On the next turn: the link that asked for this also closes the sheets that are up, and
+        // that must not take this one with it.
+        let request = model.settleRequest
+        Task { @MainActor in settleRequest = request }
     }
 }
 
