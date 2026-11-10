@@ -214,6 +214,40 @@ struct ExpenseFormSplitBarTests {
         #expect(model.payer.single == harness.me)
     }
 
+    @Test func paymentsTypedByHandStayWhenTheAmountChanges() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "100"
+        model.toggleAlsoPaid(harness.sam)
+        model.setPayerAmount("70", for: harness.me)
+        model.setPayerAmount("30", for: harness.sam)
+        #expect(model.issue == nil)
+
+        model.amountText = "120"
+        model.refollowPayments()
+        #expect(model.payer.amounts[harness.me] == "70")
+        #expect(model.payer.amounts[harness.sam] == "30")
+        #expect(model.issue == .payersShort(usd(2000)))
+    }
+
+    @Test func choosingPayersByHandStopsFollowingTheAmount() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.toggleAlsoPaid(harness.sam)
+        model.togglePayer(harness.priya)
+        model.amountText = "90"
+        model.refollowPayments()
+        #expect(model.payer.amounts[harness.priya] == nil)
+        #expect(model.payer.amounts[harness.me] == "30.00")
+
+        let other = harness.filledDinner()
+        other.toggleAlsoPaid(harness.sam)
+        other.setMultiplePayers(true)
+        other.amountText = "90"
+        other.refollowPayments()
+        #expect(other.payer.amounts[harness.me] == "30.00")
+    }
+
     @Test func theSummaryNamesWhoPaidAndHowItSplits() throws {
         let harness = try ExpenseFormHarness()
         let model = harness.filledDinner()

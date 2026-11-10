@@ -174,6 +174,7 @@ final class ExpenseFormModel {
     }
 
     func setMultiplePayers(_ enabled: Bool) {
+        payersFollowAmount = false
         payer.isMultiple = enabled
         guard enabled else { return }
         if payer.selected.isEmpty, let single = payer.single ?? me?.id { payer.selected = [single] }
@@ -183,11 +184,18 @@ final class ExpenseFormModel {
     }
 
     func togglePayer(_ id: PersonID) {
+        payersFollowAmount = false
         if payer.selected.contains(id) {
             payer.selected.remove(id)
         } else {
             payer.selected.insert(id)
         }
+    }
+
+    /// A payment typed by hand. It stays as typed when the amount changes afterwards.
+    func setPayerAmount(_ text: String, for id: PersonID) {
+        payersFollowAmount = false
+        payer.amounts[id] = text
     }
 
     func splitPaymentsEvenly() {

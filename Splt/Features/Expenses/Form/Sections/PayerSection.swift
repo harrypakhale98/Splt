@@ -32,7 +32,7 @@ struct PayerSection: View {
                         PersonFieldRow(person: person, name: model.displayName(for: person.id), members: model.members.map(\.id)) {
                             TextField("Amount", text: Binding(
                                 get: { model.payer.amounts[person.id, default: ""] },
-                                set: { model.payer.amounts[person.id] = $0 }
+                                set: { model.setPayerAmount($0, for: person.id) }
                             ), prompt: Text("0"))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
