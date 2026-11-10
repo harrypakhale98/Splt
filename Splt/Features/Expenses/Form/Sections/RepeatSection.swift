@@ -16,14 +16,15 @@ struct RepeatSection: View {
                     }
                 }
                 if model.repeatChoice.frequency != nil {
+                    let earliest = RepeatChoice.earliestEnd(start: model.date, now: model.dependencies.now())
                     Toggle("End Date", isOn: Binding(
                         get: { model.repeatChoice.endDate != nil },
-                        set: { model.repeatChoice.endDate = $0 ? Calendar.current.date(byAdding: .year, value: 1, to: model.date).map { RepeatChoice.lastMoment(of: $0) } : nil }
+                        set: { model.repeatChoice.endDate = $0 ? RepeatChoice.defaultEnd(from: earliest) : nil }
                     ))
                     if let end = model.repeatChoice.endDate {
                         DatePicker(
                             "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = RepeatChoice.lastMoment(of: $0) }),
-                            in: model.date..., displayedComponents: .date
+                            in: earliest..., displayedComponents: .date
                         )
                     }
                 }
@@ -38,6 +39,17 @@ struct RepeatSection: View {
 }
 
 extension RepeatChoice {
+    /// The first day an end date can be. A template being edited may have started long ago,
+    /// and an end before today would finish it at once.
+    static func earliestEnd(start: Date, now: Date) -> Date {
+        max(start, now)
+    }
+
+    /// The end date offered first: a year after the earliest one, counting that whole day.
+    static func defaultEnd(from earliest: Date, calendar: Calendar = .current) -> Date? {
+        calendar.date(byAdding: .year, value: 1, to: earliest).map { lastMoment(of: $0, calendar: calendar) }
+    }
+
     /// The end date is picked as a day and that day counts, so an occurrence at any time on it is included.
     static func lastMoment(of day: Date, calendar: Calendar = .current) -> Date {
         let next = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: day))
