@@ -55,6 +55,17 @@ final class Router {
         }
     }
 
+    /// Swaps the screen on top of the selected tab for another, such as the friend a merge kept
+    /// in place of the one it removed. The screen asking is on that tab, whichever one it is.
+    func replaceTop(with route: Route) {
+        switch selectedTab {
+        case .friends: friendsPath = Array(friendsPath.dropLast()) + [route]
+        case .groups: groupsPath = Array(groupsPath.dropLast()) + [route]
+        case .activity: activityPath = Array(activityPath.dropLast()) + [route]
+        case .search: searchPath = Array(searchPath.dropLast()) + [route]
+        }
+    }
+
     func present(_ sheet: AppSheet) {
         self.sheet = sheet
     }

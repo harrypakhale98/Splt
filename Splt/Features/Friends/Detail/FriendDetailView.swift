@@ -79,7 +79,7 @@ private struct FriendDetailContent: View {
         .sheet(isPresented: $showsMerge) {
             if let friend = model.friend, let services {
                 MergeFriendView(placeholder: friend, services: services, merger: LivePlaceholderMerger(services: services)) { target in
-                    router.friendsPath = [.friend(target.id.rawValue)]
+                    router.replaceTop(with: .friend(target.id.rawValue))
                 }
             }
         }

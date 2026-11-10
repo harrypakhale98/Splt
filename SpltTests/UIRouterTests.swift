@@ -68,6 +68,21 @@ struct UIRouterTests {
         #expect(router.groupsPath == [.groupSettings(id)])
     }
 
+    @Test func replacingTheTopStaysOnTheTabTheScreenIsIn() {
+        let other = UUID()
+        let router = Router(selectedTab: .search)
+        router.searchPath = [.group(other), .friend(other)]
+        router.replaceTop(with: .friend(id))
+        #expect(router.selectedTab == .search)
+        #expect(router.searchPath == [.group(other), .friend(id)])
+        #expect(router.friendsPath.isEmpty)
+
+        router.selectedTab = .friends
+        router.friendsPath = [.friend(other)]
+        router.replaceTop(with: .friend(id))
+        #expect(router.friendsPath == [.friend(id)])
+    }
+
     @Test func presentSetsSheet() {
         let router = Router()
         router.present(.newGroup)
