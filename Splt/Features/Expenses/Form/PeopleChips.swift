@@ -12,12 +12,20 @@ struct PeopleChips: View {
         let ids = people.map(\.id)
         FlowLayout(spacing: 8) {
             ForEach(people) { person in
-                PersonToggle(person: person, name: person.name, members: ids, isSelected: selected.contains(person.id)) {
+                PersonToggle(
+                    person: person, name: Self.name(of: person, currentPerson: currentPerson), members: ids,
+                    isSelected: selected.contains(person.id)
+                ) {
                     toggle(person.id)
                 }
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// What a chip says: "You" for the person using the app, as the rows beside the chips do.
+    static func name(of person: Person, currentPerson: PersonID?) -> String {
+        person.id == currentPerson ? String(localized: "You") : person.name
     }
 }
 

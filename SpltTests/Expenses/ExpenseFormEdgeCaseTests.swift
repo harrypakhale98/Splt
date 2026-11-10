@@ -283,6 +283,13 @@ struct ExpenseFormEdgeCaseTests {
         #expect(!model.canSave)
     }
 
+    @Test func chipsSayYouForThePersonUsingTheApp() throws {
+        let harness = try ExpenseFormHarness()
+        #expect(PeopleChips.name(of: harness.fixture.me, currentPerson: harness.me) == "You")
+        #expect(PeopleChips.name(of: harness.fixture.sam, currentPerson: harness.me) == "Sam")
+        #expect(PeopleChips.name(of: harness.fixture.me, currentPerson: nil) == "Me")
+    }
+
     @Test func negativeAmountsDisplayWithoutAStrayGroupMark() {
         let english = Locale(identifier: "en_US")
         #expect(AmountKeypad.display("-123.00", locale: english) == "-123.00")
