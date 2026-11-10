@@ -99,9 +99,16 @@ private struct ExpenseFormScreen: View {
         typeSize.isAccessibilitySize || verticalSizeClass == .compact
     }
 
+    /// The pad shares the screen with the form, and its promise is that it never covers the split.
+    /// So while it is up, on a screen where both do not fit as they are, the sections sit closer
+    /// and the keys are a little lower.
+    private var padIsInline: Bool { keypadOpen && !keypadUsesSheet }
+    private var isSnug: Bool { formHeight < 840 }
+    private var isPacked: Bool { padIsInline && isSnug }
+
     private var content: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: isPacked ? 12 : 24) {
                 if !model.possibleDuplicates.isEmpty {
                     DuplicateBanner(model: model)
                 }
@@ -142,7 +149,7 @@ private struct ExpenseFormScreen: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 8)
+            .padding(.top, isPacked ? 0 : 8)
             .padding(.bottom, 16)
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -153,8 +160,8 @@ private struct ExpenseFormScreen: View {
         .onChange(of: focus) { _, new in if new != nil { closeKeypad() } }
         .safeAreaBar(edge: .bottom) {
             VStack(spacing: 8) {
-                if keypadOpen && !keypadUsesSheet {
-                    NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode), compact: formHeight < 700) { key in
+                if padIsInline {
+                    NumberPad(exponent: Currency.minorUnitExponent(for: model.currencyCode), compact: isSnug) { key in
                         model.amountText = AmountKeypad.apply(
                             key, to: model.amountText, exponent: Currency.minorUnitExponent(for: model.currencyCode),
                             locale: model.locale
@@ -170,7 +177,7 @@ private struct ExpenseFormScreen: View {
                     }
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, isPacked ? 4 : 8)
             .background(Ink.paper)
             .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
         }
