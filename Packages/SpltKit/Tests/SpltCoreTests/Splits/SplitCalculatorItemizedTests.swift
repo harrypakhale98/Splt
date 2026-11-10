@@ -81,7 +81,7 @@ struct SplitCalculatorItemizedTests {
 
     @Test func totalMustMatchTheBill() {
         let split = ItemizedSplit(items: [item("only", 500, [a])], tax: usd(50))
-        #expect(throws: SplitError.itemizedTotalMismatch(expected: usd(550), actual: usd(600))) {
+        #expect(throws: SplitError.itemizedTotalMismatch(itemsAndCharges: usd(550), total: usd(600))) {
             try calculate(split, 600)
         }
     }

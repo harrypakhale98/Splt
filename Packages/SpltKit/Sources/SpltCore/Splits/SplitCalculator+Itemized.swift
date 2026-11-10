@@ -30,8 +30,8 @@ extension SplitCalculator {
         let expected = subtotal + Int128(tax) + Int128(tip) - Int128(discount)
         guard expected == Int128(total.minorUnits) else {
             throw SplitError.itemizedTotalMismatch(
-                expected: Money(minorUnits: Int64(clamping: expected), currencyCode: total.currencyCode),
-                actual: total
+                itemsAndCharges: Money(minorUnits: Int64(clamping: expected), currencyCode: total.currencyCode),
+                total: total
             )
         }
 

@@ -23,7 +23,7 @@ public enum SplitError: Error, Equatable, Sendable {
     /// The discount is larger than the items it applies to.
     case discountExceedsSubtotal
     /// Items plus tax and tip minus discount do not equal the total.
-    case itemizedTotalMismatch(expected: Money, actual: Money)
+    case itemizedTotalMismatch(itemsAndCharges: Money, total: Money)
     /// A calculation does not fit in 64 bits.
     case overflow
     /// The allocator rejected its input in a way the checks above did not anticipate.
