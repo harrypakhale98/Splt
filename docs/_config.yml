@@ -2,5 +2,3 @@ title: Splt
 description: Split costs with friends. Free forever, private, no accounts.
 theme: jekyll-theme-minimal
 show_downloads: false
-exclude:
-  - appstore.md
