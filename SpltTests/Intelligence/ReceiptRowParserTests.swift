@@ -357,4 +357,35 @@ struct ReceiptRowParserTests {
         // without printed decimals a digit before the price is more likely a count
         #expect(ReceiptPrice.split("Ramen 1 250", fractionDigits: 0)?.minorUnits == 250)
     }
+
+    @Test func aTableOfSuggestedTipsIsNotATip() {
+        let oneRow = receipt(["Grill", "Steak 45.00", "Tax 3.60", "Total 48.60", "Suggested Tip: 18% $8.75 20% $9.72"])
+        #expect(oneRow.tip == nil)
+        #expect(oneRow.total == usdMoney(4860))
+        #expect(oneRow.isConsistent)
+
+        let stacked = receipt(["Grill", "Steak 45.00", "Tax 3.60", "Total 48.60", "Gratuity Guide", "18% 8.75", "20% 9.72"])
+        #expect(stacked.tip == nil)
+        #expect(stacked.isConsistent)
+
+        let unconfirmed = receipt(["Grill", "Steak 30.00", "Total 30.00", "Tip 6.00"])
+        #expect(unconfirmed.tip == nil)
+        #expect(unconfirmed.total == usdMoney(3000))
+        #expect(unconfirmed.isConsistent)
+    }
+
+    @Test func chargedTipsAndServiceChargesStillCount() {
+        let service = receipt(["Grill", "Steak 45.00", "Service Charge 12.5% 5.63", "Total 50.63"])
+        #expect(service.tip == usdMoney(563))
+        #expect(service.isConsistent)
+
+        let plain = receipt(["Grill", "Steak 45.00", "Tip 9.00", "Total 54.00"])
+        #expect(plain.tip == usdMoney(900))
+        #expect(plain.isConsistent)
+
+        let added = receipt(["Grill", "Steak 30.00", "Total 30.00", "Gratuity 20% 6.00", "Total 36.00"])
+        #expect(added.tip == usdMoney(600))
+        #expect(added.total == usdMoney(3600))
+        #expect(added.isConsistent)
+    }
 }

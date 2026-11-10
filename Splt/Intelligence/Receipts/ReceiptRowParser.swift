@@ -161,7 +161,13 @@ private func classify(_ name: String) -> RowKind {
         guard let index = totalIndex, index < taxIndex, saysIncluded else { return .tax }
     }
     if !words.isDisjoint(with: ["tip", "gratuity", "gratuities", "svc"])
-        || joined.contains(" service charge ") || joined.contains(" service fee ") { return .tip }
+        || joined.contains(" service charge ") || joined.contains(" service fee ") {
+        // A printed table of suggested tips is not a charge. One percentage can be a real
+        // service charge, so only a row that lists several is taken for a table.
+        let isSuggestion = !words.isDisjoint(with: ["suggested", "suggestion", "suggestions", "recommended"])
+            || name.filter { $0 == "%" }.count > 1
+        return isSuggestion ? .ignore : .tip
+    }
     if !words.isDisjoint(with: ["cash", "change", "tendered", "tender", "visa", "mastercard", "amex", "discover", "debit", "credit", "card", "paid", "payment", "auth", "approval", "approved", "contactless"]) {
         return .payment
     }
@@ -192,7 +198,8 @@ private struct BodyReader {
     var totalPriority = 0
     var sawSummaryRow = false
     var sawTotal = false
-    var tipAfterTotal = false
+    /// Tips printed after the total. They only count once a later total includes them.
+    var tipAfterTotal: Int64?
     var closed = false
     var pendingName: String?
 
@@ -250,14 +257,21 @@ private struct BodyReader {
             tax = (tax ?? 0) + minorUnits
             sawSummaryRow = true
         case .tip:
-            tip = (tip ?? 0) + minorUnits
-            if sawTotal { tipAfterTotal = true }
+            if sawTotal {
+                tipAfterTotal = (tipAfterTotal ?? 0) + minorUnits
+            } else {
+                tip = (tip ?? 0) + minorUnits
+            }
             sawSummaryRow = true
         case .total(let priority):
-            if !sawTotal || priority > totalPriority || tipAfterTotal {
+            if let added = tipAfterTotal, let earlier = total, minorUnits == earlier + added {
+                tip = (tip ?? 0) + added
+                total = minorUnits
+                totalPriority = max(totalPriority, priority)
+                tipAfterTotal = nil
+            } else if !sawTotal || priority > totalPriority {
                 total = minorUnits
                 totalPriority = priority
-                tipAfterTotal = false
             }
             sawTotal = true
             sawSummaryRow = true
