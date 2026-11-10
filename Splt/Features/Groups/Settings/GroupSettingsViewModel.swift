@@ -35,6 +35,8 @@ final class GroupSettingsViewModel {
     var locale: Locale = .current
     var errorMessage: String?
     var blockedMessage: String?
+    /// Why you can't leave, shown under its own title.
+    var leaveBlockedMessage: String?
 
     private(set) var group: SplitGroup?
     private(set) var symbol = ""
@@ -297,7 +299,7 @@ final class GroupSettingsViewModel {
     func leave(using sharing: any GroupSharing) async -> Bool {
         await loadSharing(using: sharing)
         guard leaveBlock == nil, let myRow else {
-            blockedMessage = leaveBlock
+            leaveBlockedMessage = leaveBlock
             return false
         }
         do {

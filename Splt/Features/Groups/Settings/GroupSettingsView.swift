@@ -94,6 +94,11 @@ private struct GroupSettingsForm: View {
         } message: {
             Text(model.blockedMessage ?? "")
         }
+        .alert("Can't Leave", isPresented: leaveBlockedBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(model.leaveBlockedMessage ?? "")
+        }
         .alert("Couldn't Finish", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -180,7 +185,7 @@ private struct GroupSettingsForm: View {
                     if model.canLeave {
                         Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                             if let reason = model.leaveBlock {
-                                model.blockedMessage = reason
+                                model.leaveBlockedMessage = reason
                             } else {
                                 showsLeaveConfirmation = true
                             }
@@ -242,7 +247,7 @@ private struct GroupSettingsForm: View {
                         VStack(alignment: .leading) {
                             Text(row.isMe ? String(localized: "You") : row.person.name)
                             if row.person.isPlaceholder {
-                                Text("Hasn't joined yet")
+                                Text("Not on Splt yet")
                                     .font(.subheadline)
                                     .foregroundStyle(Ink.secondary)
                             }
@@ -307,6 +312,10 @@ private struct GroupSettingsForm: View {
 
     private var blockedBinding: Binding<Bool> {
         Binding(get: { model.blockedMessage != nil }, set: { if !$0 { model.blockedMessage = nil } })
+    }
+
+    private var leaveBlockedBinding: Binding<Bool> {
+        Binding(get: { model.leaveBlockedMessage != nil }, set: { if !$0 { model.leaveBlockedMessage = nil } })
     }
 
     private var errorBinding: Binding<Bool> {

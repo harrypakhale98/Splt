@@ -60,7 +60,7 @@ private struct FriendDetailContent: View {
                 .toolbar { toolbar(friend) }
             } else if model.didLoad {
                 EmptyStateView(
-                    title: "Friend not found",
+                    title: "Friend Not Found",
                     systemImage: "person.2",
                     description: "This person may have been removed."
                 )

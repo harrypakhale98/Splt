@@ -36,7 +36,7 @@ extension EmptyStateView {
     /// A search that found nothing.
     static func search(query: String) -> EmptyStateView {
         EmptyStateView(
-            title: "No results for “\(query)”",
+            title: "No Results for “\(query)”",
             systemImage: "magnifyingglass",
             description: "Check the spelling or try a different search."
         )
@@ -45,7 +45,7 @@ extension EmptyStateView {
     /// The store couldn't be opened, so there is nothing to show. Use on any screen that needs it.
     static var dataUnavailable: EmptyStateView {
         EmptyStateView(
-            title: "Can't open your data",
+            title: "Can't Open Your Data",
             systemImage: "exclamationmark.triangle",
             description: "Restart the app and try again."
         )

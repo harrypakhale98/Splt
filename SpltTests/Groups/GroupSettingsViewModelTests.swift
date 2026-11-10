@@ -326,7 +326,8 @@ struct GroupSettingsViewModelTests {
         #expect(model.canDelete)
 
         #expect(await model.leave(using: LocalGroupSharing()) == false)
-        #expect(model.blockedMessage?.contains("Delete this group instead") == true)
+        #expect(model.leaveBlockedMessage?.contains("Delete this group instead") == true)
+        #expect(model.blockedMessage == nil)
         #expect(!leftGroups.contains(fixture.group.id))
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
         #expect(model.delete())
@@ -353,7 +354,7 @@ struct GroupSettingsViewModelTests {
         #expect(block.contains("Stop sharing"))
         #expect(block.contains("delete"))
         #expect(await model.leave(using: OwnerSharing()) == false)
-        #expect(model.blockedMessage == block)
+        #expect(model.leaveBlockedMessage == block)
         #expect(!leftGroups.contains(fixture.group.id))
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
     }
@@ -374,7 +375,8 @@ struct GroupSettingsViewModelTests {
         let block = try #require(model.leaveBlock)
         #expect(block.contains("You're owed $20.00"))
         #expect(await model.leave(using: joined) == false)
-        #expect(model.blockedMessage == block)
+        #expect(model.leaveBlockedMessage == block)
+        #expect(model.blockedMessage == nil)
         #expect(!leftGroups.contains(fixture.group.id))
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
     }

@@ -158,7 +158,7 @@ private struct FriendsContent: View {
     private func emptyState(_ sections: FriendSections) -> some View {
         if model.hasNoFriends {
             EmptyStateView(
-                title: "No friends yet",
+                title: "No Friends Yet",
                 systemImage: "person.2",
                 description: "Add friends to split bills and see who owes what.",
                 actionTitle: "Add Friend",
@@ -168,7 +168,7 @@ private struct FriendsContent: View {
             EmptyStateView.search(query: model.query)
         } else if sections.isEmpty {
             EmptyStateView(
-                title: "Everyone is hidden",
+                title: "Everyone Is Hidden",
                 systemImage: "eye.slash",
                 description: "Your friends are hidden or blocked. Bring them back from the list below."
             )

@@ -48,7 +48,7 @@ struct HiddenFriendsView: View {
         .overlay {
             if model.hiddenSummaries.isEmpty {
                 EmptyStateView(
-                    title: "Nobody hidden",
+                    title: "Nobody Hidden",
                     systemImage: "eye",
                     description: "People you hide or block show up here."
                 )

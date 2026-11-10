@@ -12,7 +12,7 @@ struct QRScannerView: View {
                 .ignoresSafeArea()
         } else {
             EmptyStateView(
-                title: "Scanning isn't available",
+                title: "Scanning Isn't Available",
                 systemImage: "qrcode.viewfinder",
                 description: "Allow camera access in Settings, or ask your friend for the invite link."
             )

@@ -100,7 +100,7 @@ private struct ActivityContent: View {
     private var emptyState: some View {
         if model.entries.isEmpty, model.didLoad {
             EmptyStateView(
-                title: "No activity yet",
+                title: "No Activity Yet",
                 systemImage: "list.bullet.rectangle",
                 description: "Expenses and payments from your groups will show up here.",
                 actionTitle: "Add Expense",
@@ -108,7 +108,7 @@ private struct ActivityContent: View {
             )
         } else if model.sections.isEmpty, model.didLoad {
             EmptyStateView(
-                title: "Nothing matches",
+                title: "Nothing Matches",
                 systemImage: "line.3.horizontal.decrease.circle",
                 description: "Try a different filter.",
                 actionTitle: "Clear Filters",
