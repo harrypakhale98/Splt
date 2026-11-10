@@ -141,9 +141,12 @@ final class RepositoryContext {
     /// Writes an activity row for the current user when the caller has already looked them up.
     /// What you did yourself is not news to you, so the row starts out read and stays off the
     /// unread count. Rows for what other people did arrive through sync, which makes them unread.
-    func log(_ event: ActivityEvent, groupID: GroupID?, actor: PersonID?, id: UUID = UUID()) throws {
+    /// `isNews` is for what the app did on its own, such as adding a recurring expense that came due.
+    func log(
+        _ event: ActivityEvent, groupID: GroupID?, actor: PersonID?, id: UUID = UUID(), isNews: Bool = false
+    ) throws {
         let entry = ActivityEntry(
-            id: id, groupID: groupID, actorID: actor, event: event, createdAt: now(), isRead: actor != nil
+            id: id, groupID: groupID, actorID: actor, event: event, createdAt: now(), isRead: actor != nil && !isNews
         )
         let record = ActivityRecord(entry)
         context.insert(record)

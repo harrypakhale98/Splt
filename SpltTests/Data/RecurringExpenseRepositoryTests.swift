@@ -33,6 +33,14 @@ struct RecurringExpenseRepositoryTests {
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 1)
     }
 
+    @Test func anExpenseTheAppAddedOnItsOwnIsNews() throws {
+        let fixture = try Fixture()
+        try fixture.services.recurring.add(template(fixture))
+        let before = try fixture.services.activity.unreadCount()
+        try fixture.services.recurring.createDueExpenses(through: fixture.clock.start)
+        #expect(try fixture.services.activity.unreadCount() == before + 1)
+    }
+
     @Test func catchesUpOnMissedOccurrencesOnce() throws {
         let fixture = try Fixture()
         try fixture.services.recurring.add(template(fixture, frequency: .weekly, startingDaysAgo: 21))
