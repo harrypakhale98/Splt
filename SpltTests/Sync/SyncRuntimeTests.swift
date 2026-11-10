@@ -1,3 +1,4 @@
+import CloudKit
 import Foundation
 import SpltCore
 import Testing
@@ -90,6 +91,17 @@ struct SyncRuntimeTests {
         await automatic.stop()
     }
 
+    @Test func anInvitationThatFailsInICloudIsExplainedInPlainWords() async throws {
+        let fake = FakeSyncEngine()
+        fake.acceptError = CKError(.networkUnavailable)
+        let runtime = SyncRuntime(makeEngine: { _ in fake })
+        var failures: [String] = []
+        runtime.onInvitationFailed = { failures.append($0) }
+        runtime.receive(ShareInvitation(groupName: "Lisbon"))
+        await runtime.start(services: try DataServices.inMemory())
+        #expect(failures == ["You are offline. Try again when you are back online."])
+    }
+
     @Test func aReplacementEngineIsUsedForPreviews() {
         let runtime = SyncRuntime()
         let fake = FakeSyncEngine()
@@ -157,5 +169,13 @@ struct GroupSharingModelTests {
         #expect(model.prepared == nil)
         model.dismissError()
         #expect(model.phase == .idle)
+    }
+
+    @Test func aFailureInICloudIsExplainedInPlainWords() async {
+        let fake = FakeSyncEngine()
+        fake.shareError = CKError(.zoneNotFound)
+        let model = GroupSharingModel(engine: fake)
+        await model.prepare(group: GroupID())
+        #expect(model.phase == .failed("That group could not be found in iCloud. It may have been deleted or is no longer shared."))
     }
 }

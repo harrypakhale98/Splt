@@ -34,7 +34,7 @@ final class GroupSharingModel {
             prepared = Prepared(groupShare: try await engine.share(group: group, anyoneWithLink: false))
             phase = .idle
         } catch {
-            phase = .failed(error.localizedDescription)
+            phase = .failed(SyncFailure.message(for: error))
         }
     }
 

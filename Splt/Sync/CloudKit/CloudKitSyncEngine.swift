@@ -174,6 +174,8 @@ final class CloudKitSyncEngine: SyncEngine {
     func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {
         guard let value = try services.groups.group(id: group) else { throw SyncError.groupNotFound }
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
+        // a group left over from another account is never uploaded, so it has no zone to share
+        guard !adapter.metadata.isDetached(zoneName: zoneID.zoneName) else { throw SyncError.notInThisAccount }
         let service = backend.shareService
         if zoneID.scope == .sharedDatabase {
             // the system sheet lets a participant remove themselves without leaving the member list,

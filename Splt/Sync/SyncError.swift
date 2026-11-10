@@ -18,6 +18,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
     case noAccount
     /// iCloud is restricted on this device, so an invitation cannot be accepted.
     case restricted
+    /// The group stayed on the device after a switch to another iCloud account and is never uploaded.
+    case notInThisAccount
 
     var errorDescription: String? {
         switch self {
@@ -39,6 +41,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
             String(localized: "Sign in to iCloud in the Settings app, then open the invitation again.")
         case .restricted:
             String(localized: "iCloud is restricted on this device, so shared groups cannot be joined here.")
+        case .notInThisAccount:
+            String(localized: "This group stayed on this device when you switched iCloud accounts. It is not in your iCloud, so it cannot be shared.")
         }
     }
 }

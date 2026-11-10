@@ -52,6 +52,19 @@ struct SyncFailureTests {
         #expect(!message.contains("\u{2014}") && !message.contains("\u{2013}"))
     }
 
+    @Test func aRequestThatFailedIsExplainedWithoutCloudKitWords() {
+        #expect(SyncFailure.message(for: SyncError.invalidInvitation) == "This invitation is not valid any more. Ask for a new one.")
+        #expect(SyncFailure.message(for: CKError(.networkFailure)) == "You are offline. Try again when you are back online.")
+        #expect(SyncFailure.message(for: CKError(.notAuthenticated)) == SyncStatus.noAccount.detail)
+        #expect(SyncFailure.message(for: CKError(.unknownItem)).hasPrefix("That group could not be found in iCloud."))
+        struct Odd: Error {}
+        for error in [CKError(.zoneNotFound), CKError(.permissionFailure), CKError(.internalError), CKError(.quotaExceeded), Odd()] as [any Error] {
+            let message = SyncFailure.message(for: error)
+            #expect(message != error.localizedDescription)
+            #expect(!message.contains("CKError") && !message.lowercased().contains("zone"))
+        }
+    }
+
     @Test func fullStorageSaysWhoseStorageItIs() {
         guard case .error(let mine)? = SyncFailure.quotaExceeded.status(in: .privateDatabase),
               case .error(let owners)? = SyncFailure.quotaExceeded.status(in: .sharedDatabase) else {

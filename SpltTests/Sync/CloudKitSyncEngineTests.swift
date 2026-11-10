@@ -174,6 +174,21 @@ struct CloudKitSyncEngineTests {
         await rig.engine.stop()
     }
 
+    @Test func aGroupLeftOverFromAnotherAccountCannotBeSharedAndSaysWhy() async throws {
+        let rig = try Rig(seed: {
+            var metadata = $0
+            metadata.userRecordName = "_previous"
+            return metadata
+        })
+        await rig.engine.start()
+        #expect(rig.device.store.loadMetadata().isDetached(zoneName: rig.populated.zone))
+        await #expect(throws: SyncError.notInThisAccount) {
+            _ = try await rig.engine.share(group: rig.populated.group.id, anyoneWithLink: false)
+        }
+        #expect(rig.backend.privateDatabase.saveCount == 0)
+        await rig.engine.stop()
+    }
+
     @Test func someoneWhoJoinedIsNotGivenTheSystemInviteSheet() async throws {
         let (rig, engine, zone) = try sharedRig()
         let share = CKShare(recordZoneID: zone)

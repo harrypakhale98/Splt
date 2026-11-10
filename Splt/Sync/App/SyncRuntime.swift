@@ -102,7 +102,7 @@ final class SyncRuntime {
         } catch SyncError.notReady {
             waiting.append(invitation)
         } catch {
-            onInvitationFailed?(error.localizedDescription)
+            onInvitationFailed?(SyncFailure.message(for: error))
         }
     }
 

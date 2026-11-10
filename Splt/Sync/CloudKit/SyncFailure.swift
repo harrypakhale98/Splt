@@ -80,6 +80,30 @@ enum SyncFailure: Equatable, Sendable {
     }
 }
 
+extension SyncFailure {
+    /// Plain words for an alert when something the person asked for failed, such as joining or inviting.
+    /// `status` talks about changes waiting to sync, which is not what went wrong here.
+    static func message(for error: any Error) -> String {
+        if let known = error as? SyncError { return known.localizedDescription }
+        switch SyncFailure(error) {
+        case .offline:
+            return String(localized: "You are offline. Try again when you are back online.")
+        case .noAccount:
+            return SyncStatus.noAccount.detail
+        case .restricted:
+            return SyncStatus.restricted.detail
+        case .quotaExceeded:
+            return String(localized: "Your iCloud storage is full. Free up space and try again.")
+        case .noPermission:
+            return String(localized: "You do not have permission to do that in this group.")
+        case .zoneMissing, .itemMissing:
+            return String(localized: "That group could not be found in iCloud. It may have been deleted or is no longer shared.")
+        case .conflict, .transient, .other:
+            return String(localized: "iCloud could not do that right now. Try again in a moment.")
+        }
+    }
+}
+
 /// Waiting times between attempts: doubles each time, capped, with a longer start for full storage.
 struct BackoffPolicy: Equatable, Sendable {
     var base: TimeInterval = 15
