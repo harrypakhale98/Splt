@@ -293,7 +293,7 @@ private struct Pass {
         // "2 500" is left as two numbers, because in a note that is more often a count and a price.
         let spaced = #"(?<!\b(?:"# + notMoneyBefore.sorted().joined(separator: "|") + #") )\d{1,3}(?: \d{3})+[.,]\d{1,2}"#
         return TextPattern(
-            #"(?<![\p{L}\d.,:/#])(?:(?<pre>"# + words + #")\.?\s?)?(?:(?<sym>[$€£¥₹])\s?)?"#
+            #"(?<![\p{L}\d.,:/#])(?:(?<pre>"# + words + #")\.?\s?)?(?:(?<sym>R\$|[$€£¥₹₩₺₱฿₫])\s?)?"#
                 + "(?<num>" + spaced
                 + #"|\d{1,3}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d{1,3}(?:[,'.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?<k>k(?![\p{L}]))?(?![\d:/%]|[.,]\d)"#
                 + #"(?:\s?(?<word>"# + words + #")(?![\p{L}]))?"#

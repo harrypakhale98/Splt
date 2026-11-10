@@ -91,7 +91,7 @@ enum QuickAddValidator {
     }
 
     private static func amount(_ text: String, currencyCode: String) -> Int64? {
-        let cleaned = text.trimmingCharacters(in: CharacterSet(charactersIn: "$€£¥₹ ").union(.letters))
+        let cleaned = text.trimmingCharacters(in: CharacterSet(charactersIn: "$€£¥₹₩₺₱฿₫ ").union(.letters))
         guard let minor = MinorUnitParser.minorUnits(from: cleaned, currencyCode: currencyCode), minor > 0 else { return nil }
         return minor
     }

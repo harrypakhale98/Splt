@@ -151,4 +151,61 @@ struct IntelligenceEdgeCaseTests {
         // nothing else fits, so the odd number is still offered rather than nothing
         #expect(parse("toll 50xyz").amount == money(5000))
     }
+
+    @Test func anyWrittenCurrencyIsRead() {
+        let ringgit = parse("dinner 500 MYR with Sam")
+        #expect(ringgit.amount == money(50_000, "MYR"))
+        #expect(ringgit.currencyHint == "MYR")
+        #expect(ringgit.title == "Dinner")
+        #expect(parse("MYR 500 dinner").amount == money(50_000, "MYR"))
+        #expect(parse("MYR 500 dinner").title == "Dinner")
+        #expect(parse("kebab 250 TRY").amount == money(25_000, "TRY"))
+    }
+
+    @Test func moreCurrencySymbolsAreRead() {
+        let won = parse("dinner ₩50,000 with Sam")
+        #expect(won.amount == money(50_000, "KRW"))
+        #expect(won.title == "Dinner")
+        #expect(parse("kebab ₺250").amount == money(25_000, "TRY"))
+        #expect(parse("adobo ₱300").amount == money(30_000, "PHP"))
+        #expect(parse("pad thai ฿120").amount == money(12_000, "THB"))
+        #expect(parse("pho ₫90,000").amount == money(90_000, "VND"))
+        let zloty = parse("pierogi 45 zł")
+        #expect(zloty.amount == money(4500, "PLN"))
+        #expect(zloty.title == "Pierogi")
+        let real = parse("feijoada R$ 80")
+        #expect(real.amount == money(8000, "BRL"))
+        #expect(real.title == "Feijoada")
+        #expect(parse("fika 120 kr").amount == money(12_000, "SEK"))
+        #expect(parse("fika 120 kr", code: "NOK").amount == money(12_000, "NOK"))
+    }
+
+    @Test func aYenSignWithDecimalsIsYuan() {
+        #expect(parse("ramen ¥68.50").amount == money(6850, "CNY"))
+        #expect(parse("ramen ¥1200").amount == money(1200, "JPY"))
+        #expect(parse("ramen ¥1,200").amount == money(1200, "JPY"))
+    }
+
+    @Test func capitalisedWordsThatAreAlsoCodesAreNotCurrency() {
+        let buffet = parse("ALL you can eat 30 with Sam")
+        #expect(buffet.amount == money(3000))
+        #expect(buffet.currencyHint == nil)
+        #expect(buffet.title == "ALL you can eat")
+        #expect(parse("TRY the new ramen place 25").amount == money(2500))
+        #expect(parse("TOP floor bar 60").currencyHint == nil)
+        // lowercase next to a number is a word, not a code
+        #expect(parse("try 20 wings 18").currencyHint == nil)
+        #expect(parse("all 3 pizzas 45").amount == money(4500))
+        #expect(parse("pen 3").amount == money(300))
+    }
+
+    @Test func receiptsReadMoreCurrenciesButNotProductNames() {
+        #expect(receipt(["CAFE", "Tea 3.00", "TOTAL MYR 3.00"]).currencyCode == "MYR")
+        #expect(receipt(["CAFE", "Tea 3.00 MYR", "TOTAL 3.00 MYR"]).items.count == 1)
+        #expect(receipt(["CAFE", "Pad Thai ฿120.00", "TOTAL ฿120.00"]).currencyCode == "THB")
+        #expect(receipt(["BAR", "Pierogi 30,00 zł", "Total 30,00 zł"]).currencyCode == "PLN")
+        #expect(receipt(["BAR", "Pierogi 30,00 zł", "Total 30,00 zł"]).items.count == 1)
+        #expect(receipt(["CAFE", "ALL DAY BREAKFAST 9.00", "TOTAL 9.00"]).currencyCode == "USD")
+        #expect(receipt(["OFFICE SHOP", "BLUE PEN 2.50", "MOP 12.99", "TOTAL 15.49"]).currencyCode == "USD")
+    }
 }

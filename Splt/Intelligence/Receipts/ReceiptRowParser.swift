@@ -44,7 +44,7 @@ enum ReceiptPrice {
         var minorUnits: Int64
     }
 
-    private static let currencySymbols = CharacterSet(charactersIn: "$€£¥₹")
+    private static let currencySymbols = CharacterSet(charactersIn: "$€£¥₹₩₺₱฿₫")
     /// Longer digit runs are misreads, and refusing them keeps the receipt's sums far from overflow.
     static let largestPrice: Int64 = 999_999_999_999
 
@@ -85,7 +85,7 @@ enum ReceiptPrice {
     }
 
     private static func isCurrencyCode(_ token: String) -> Bool {
-        token.count == 3 && CurrencyDetector.code(forToken: token, defaultCode: "USD") != nil
+        (token.count == 3 || token.lowercased() == "zł") && CurrencyDetector.code(forToken: token, defaultCode: "USD") != nil
     }
 
     /// A single letter or two printed after a price to mark taxed items, such as T or FN.
@@ -94,7 +94,7 @@ enum ReceiptPrice {
     }
 
     private static func isSymbolOnly(_ token: String) -> Bool {
-        token.unicodeScalars.allSatisfy { currencySymbols.contains($0) || CharacterSet.punctuationCharacters.contains($0) }
+        token == "R$" || token.unicodeScalars.allSatisfy { currencySymbols.contains($0) || CharacterSet.punctuationCharacters.contains($0) }
     }
 
     /// Reads one token as a price. Requires the printed decimals so that "12" or "2x" are not prices.
@@ -113,6 +113,7 @@ enum ReceiptPrice {
             negative = true
             body = String(body.dropLast(sign.count))
         }
+        if body.hasPrefix("R$") { body.removeFirst() }
         body = body.trimmingCharacters(in: currencySymbols)
         for sign in ["-", "\u{2212}", "\u{2013}"] where body.hasPrefix(sign) {
             negative = true

@@ -388,4 +388,12 @@ struct ReceiptRowParserTests {
         #expect(added.total == usdMoney(3600))
         #expect(added.isConsistent)
     }
+
+    @Test func aYenSignWithDecimalsIsYuan() {
+        let parsed = receipt(["Noodle House", "Beef Noodles ¥48.00", "Tea ¥20.00", "Total ¥68.00"])
+        #expect(parsed.currencyCode == "CNY")
+        #expect(parsed.items.map(\.total.minorUnits) == [4800, 2000])
+        #expect(parsed.total?.minorUnits == 6800)
+        #expect(parsed.isConsistent)
+    }
 }
