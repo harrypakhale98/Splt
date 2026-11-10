@@ -22,6 +22,10 @@ final class FakeEngineHandle: SyncEngineHandle {
         databaseChanges += changes
     }
 
+    func remove(pendingRecordZoneChanges changes: [CKSyncEngine.PendingRecordZoneChange]) {
+        recordChanges.removeAll { changes.contains($0) }
+    }
+
     func sendChanges() async throws {
         sendCount += 1
         if let sendError { throw sendError }

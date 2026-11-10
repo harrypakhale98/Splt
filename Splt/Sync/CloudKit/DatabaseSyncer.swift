@@ -6,6 +6,7 @@ import Foundation
 protocol SyncEngineHandle: AnyObject {
     func add(pendingRecordZoneChanges: [CKSyncEngine.PendingRecordZoneChange])
     func add(pendingDatabaseChanges: [CKSyncEngine.PendingDatabaseChange])
+    func remove(pendingRecordZoneChanges: [CKSyncEngine.PendingRecordZoneChange])
     func sendChanges() async throws
     func fetchChanges() async throws
     func cancelOperations() async
@@ -28,6 +29,10 @@ final class CKSyncEngineHandle: SyncEngineHandle {
 
     func add(pendingDatabaseChanges changes: [CKSyncEngine.PendingDatabaseChange]) {
         engine.state.add(pendingDatabaseChanges: changes)
+    }
+
+    func remove(pendingRecordZoneChanges changes: [CKSyncEngine.PendingRecordZoneChange]) {
+        engine.state.remove(pendingRecordZoneChanges: changes)
     }
 
     func sendChanges() async throws {
@@ -217,8 +222,17 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         }
     }
 
+    /// The record to save, or nil when there is nothing to send for it any more. Then the pending save is
+    /// taken out of the engine's state, or it would be kept there and asked about on every send.
     private func record(for id: CKRecord.ID) -> CKRecord? {
-        try? coordinator.adapter.outgoingRecord(for: id)
+        do {
+            if let record = try coordinator.adapter.outgoingRecord(for: id) { return record }
+            engine?.remove(pendingRecordZoneChanges: [.saveRecord(id)])
+            return nil
+        } catch {
+            // the store could not be read, so the change stays pending and is asked about again
+            return nil
+        }
     }
 
     /// Applies one engine event. A failure is shown as a status and never stops the engine.

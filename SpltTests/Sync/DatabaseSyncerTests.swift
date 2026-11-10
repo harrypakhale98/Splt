@@ -117,6 +117,22 @@ struct DatabaseSyncerTests {
         #expect(batch?.recordsToSave.isEmpty ?? true)
     }
 
+    @Test func aPendingSaveWithNothingLeftToSendIsTakenOutOfTheEngine() async throws {
+        let rig = try Rig()
+        try rig.populated.addExpense()
+        try rig.cloud.upload(from: rig.device)
+        let synced = Array(rig.cloud.records.keys)
+        let fresh = try rig.pendingExpenseRecord().recordID
+        let gone = CKRecord.ID(recordName: "Gone", zoneID: fresh.zoneID)
+        rig.syncer.queue(OutgoingPlan(saves: synced + [fresh], deletes: [gone]))
+        #expect(rig.handle.savedRecordIDs.count == synced.count + 1)
+
+        let batch = try #require(await rig.syncer.batch(from: rig.handle.recordChanges, scope: .all))
+        #expect(batch.recordsToSave.map(\.recordID) == [fresh])
+        #expect(rig.handle.savedRecordIDs == [fresh])
+        #expect(rig.handle.deletedRecordIDs == [gone])
+    }
+
     // MARK: State and status
 
     @Test func stateUpdatesArePersistedForTheNextLaunch() throws {
