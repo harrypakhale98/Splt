@@ -23,6 +23,8 @@ final class SyncRuntime {
     @ObservationIgnored private let leftGroups: LeftGroupsStore
     @ObservationIgnored private let invitationRetry: Duration
     @ObservationIgnored private var retry: Task<Void, Never>?
+    @ObservationIgnored private let invitationRetryLimit: Int
+    @ObservationIgnored private var retriesLeft = 0
     @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
 
     /// `makeEngine` replaces the engine that `start` builds, for tests.
@@ -30,11 +32,13 @@ final class SyncRuntime {
         liveServices: @escaping @MainActor () -> DataServices? = { IntentServices.shared.live() },
         leftGroups: LeftGroupsStore = LeftGroupsStore(),
         invitationRetry: Duration = .seconds(2),
+        invitationRetryLimit: Int = 30,
         makeEngine: (@MainActor (DataServices) -> any SyncEngine)? = nil
     ) {
         self.liveServices = liveServices
         self.leftGroups = leftGroups
         self.invitationRetry = invitationRetry
+        self.invitationRetryLimit = invitationRetryLimit
         self.makeEngine = makeEngine
     }
 
@@ -47,6 +51,7 @@ final class SyncRuntime {
         let started = makeEngine?(services) ?? automaticEngine(services: services)
         engine = started
         await started.start()
+        retriesLeft = invitationRetryLimit
         await answerWaiting()
     }
 
@@ -73,12 +78,14 @@ final class SyncRuntime {
     /// Called by the scene delegate. Invitations that arrive before launch finished are kept until sync starts.
     func receive(_ invitation: ShareInvitation) {
         waiting.append(invitation)
+        retriesLeft = invitationRetryLimit
         guard isRunning else { return }
         Task { await answerWaiting() }
     }
 
     /// Answers the invitations that can be answered now. One that sync is not ready for goes back in the
-    /// queue and is tried again shortly: at a cold launch the account is still being checked.
+    /// queue and is tried again shortly: at a cold launch the account is still being checked. After
+    /// about a minute of that it is given up and the person is told.
     private func answerWaiting() async {
         let invitations = waiting
         waiting = []
@@ -86,6 +93,13 @@ final class SyncRuntime {
             await accept(invitation)
         }
         guard !waiting.isEmpty, retry == nil else { return }
+        guard retriesLeft > 0 else {
+            // sync never became ready, so say so instead of trying for ever
+            waiting = []
+            onInvitationFailed?(SyncFailure.message(for: SyncError.notReady))
+            return
+        }
+        retriesLeft -= 1
         retry = Task { [weak self, invitationRetry] in
             try? await Task.sleep(for: invitationRetry)
             self?.retry = nil

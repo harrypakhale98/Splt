@@ -55,6 +55,24 @@ struct SyncRuntimeTests {
         #expect(failures.isEmpty)
     }
 
+    @Test func anInvitationIsGivenUpWithAReasonWhenSyncNeverStarts() async throws {
+        let fake = FakeSyncEngine()
+        fake.acceptError = SyncError.notReady
+        let runtime = SyncRuntime(invitationRetry: .milliseconds(5), invitationRetryLimit: 3, makeEngine: { _ in fake })
+        var failures: [String] = []
+        runtime.onInvitationFailed = { failures.append($0) }
+        runtime.receive(ShareInvitation(groupName: "Lisbon"))
+        await runtime.start(services: try DataServices.inMemory())
+        #expect(await eventually { failures.count == 1 })
+        #expect(failures.first == SyncError.notReady.localizedDescription)
+
+        // it is not tried again behind the person's back once they were told
+        fake.acceptError = nil
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(fake.accepted.isEmpty)
+        #expect(failures.count == 1)
+    }
+
     @Test func anInvitationWaitsWhileICloudCannotBeReachedAndIsAnsweredOnceItCan() async throws {
         let probe = FakeAccountProbe(.unknown)
         let cloudKit = FakeSyncEngine()
