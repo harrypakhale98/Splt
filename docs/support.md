@@ -24,7 +24,7 @@ On your device and in your own iCloud. There is no Splt server, and the develope
 
 ### Why is sync not working?
 
-Open Account in Splt to see the sync status. Check that you are signed in to iCloud on your device and that you have free iCloud storage. Splt keeps changes on the device and uploads them when it can. Sync does not run in the iOS Simulator.
+Open Account in Splt to see the sync status. Check that you are signed in to iCloud on your device and that you have free iCloud storage. A group someone else shared uses their iCloud storage, not yours. Splt keeps changes on the device and uploads them when it can. Sync does not run in the iOS Simulator.
 
 ### Can I move my data out?
 

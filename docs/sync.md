@@ -61,7 +61,7 @@ Inside one group, members are trusted: anyone can edit or delete its expenses, p
 
 - Sharing and push only work on real devices signed in to iCloud. The simulator cannot be used to test them.
 - Everyone needs an Apple ID and iCloud turned on. People without it can still be placeholders.
-- Claiming a placeholder is refused when the placeholder and the real person appear together in one expense, because their shares would need merging by hand.
+- Claiming a placeholder is refused while the placeholder and the real person both paid, or both have a share, in one expense, or one paid the other, because their amounts would need merging by hand. Deleted expenses do not count.
 - Two people editing the same record before either has synced can lose a change, even in different fields: the later edit replaces the whole record. This also applies to a group's member list and a comment's reactions. Separate records, such as two new expenses, never conflict.
 - Receipt photos stay on the device that scanned them. Only the file name syncs.
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
