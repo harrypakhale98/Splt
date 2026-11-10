@@ -545,6 +545,17 @@ struct SyncCoordinatorTests {
         )
         #expect(queue.plans.last?.zonesToDelete == [joiner.sharedZone])
         #expect(joiner.device.adapter.metadata.isKnown(zoneName: joiner.owner.zone))
+
+        // a second refusal is a failure to show and wait on, not another round of the same two tries
+        let before = queue.plans.count
+        try joiner.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [share: CKError(.permissionFailure)], scope: .sharedDatabase
+        )
+        #expect(queue.plans.count == before)
+        guard case .error = joiner.coordinator.status else {
+            Issue.record("expected a failure to show, got \(joiner.coordinator.status)")
+            return
+        }
     }
 
     @Test func aShareThatIsAlreadyGoneHasBeenLeftToo() throws {

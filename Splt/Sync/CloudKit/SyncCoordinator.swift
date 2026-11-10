@@ -114,10 +114,20 @@ final class SyncCoordinator {
         let plan = try adapter.collectOutgoing()
         guard !plan.isEmpty else { return }
         for scope in DatabaseScope.allCases {
-            let part = plan.part(for: scope)
+            var part = plan.part(for: scope)
+            // a group whose share record could not be deleted is left by giving up its zone instead
+            let byZone = part.zonesToLeave.filter { leavingByZone.contains($0.zoneName) }
+            if !byZone.isEmpty {
+                part.zonesToLeave.removeAll { leavingByZone.contains($0.zoneName) }
+                part.zonesToDelete += byZone
+            }
             if !part.isEmpty { queues[scope]?.queue(part) }
         }
     }
+
+    /// Shared groups for which CloudKit refused the delete of the share record. They are left the
+    /// way earlier versions left, and a refusal of that too is a failure like any other.
+    private var leavingByZone: Set<String> = []
 
     /// Remembers that this person is leaving a shared group. The zone is given up once what they
     /// still have to send, such as leaving the member list, has gone out: after that they cannot write to it.
@@ -271,9 +281,10 @@ final class SyncCoordinator {
             if failure == .itemMissing || failure == .zoneMissing {
                 // the share is gone already, so there is nothing left to leave
                 try adapter.zoneDeleteConfirmed(id.zoneID)
-            } else if failure.isRefusal {
+            } else if failure.isRefusal, !leavingByZone.contains(id.zoneID.zoneName) {
                 // Deleting the share record is how CloudKit says a participant leaves. If it will not
                 // have that, give the zone up instead, which is how earlier versions left.
+                leavingByZone.insert(id.zoneID.zoneName)
                 queues[scope]?.queue(OutgoingPlan(zonesToDelete: [id.zoneID]))
             } else {
                 failures.append(failure)
