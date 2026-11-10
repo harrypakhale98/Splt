@@ -345,15 +345,27 @@ struct SyncCoordinatorTests {
         #expect(dirty.contains { $0.recordType == .group })
     }
 
-    @Test func aPurgedZoneIsQueuedForUploadAgain() throws {
+    @Test func aZoneLostToAnEncryptionResetIsQueuedForUploadAgain() throws {
         let rig = try rig()
         rig.coordinator.markReady()
         let cloud = FakeCloud()
         try cloud.upload(from: rig.device)
         let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
-        try rig.coordinator.fetchedZones(modified: [], deleted: [(zone, .purged)])
+        try rig.coordinator.fetchedZones(modified: [], deleted: [(zone, .encryptedDataReset)])
         #expect(rig.privateQueue.plans.count == 1)
         #expect(rig.privateQueue.plans[0].zonesToSave == [zone])
+    }
+
+    @Test func dataDeletedInTheICloudSettingsIsNotSentBack() throws {
+        let rig = try rig()
+        rig.coordinator.markReady()
+        let cloud = FakeCloud()
+        try cloud.upload(from: rig.device)
+        let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
+        let before = rig.privateQueue.plans.count
+        try rig.coordinator.fetchedZones(modified: [], deleted: [(zone, .purged)])
+        #expect(rig.privateQueue.plans.count == before)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
     }
 
     @Test func signingOutShowsNoAccountAndSigningBackInClearsIt() throws {

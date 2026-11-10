@@ -16,9 +16,11 @@ struct ApplyReport {
 
 enum ZoneDeletionReason: Equatable, Sendable {
     case deleted
-    /// The server dropped the zone, for example the user cleared the app's iCloud data.
+    /// The user deleted the app's data in their iCloud storage settings. It must not be sent back.
     case purged
     case encryptedDataReset
+    /// Saves say the zone is missing and a fetch does not say why, so the server lost it.
+    case lost
 }
 
 extension SyncStoreAdapter {
@@ -175,13 +177,30 @@ extension SyncStoreAdapter {
     func zoneDeleted(_ id: CKRecordZone.ID, reason: ZoneDeletionReason) throws -> Bool {
         guard !isImpostor(id) else { return false }
         let zone = id.zoneName
-        defer { updateMetadata { $0.forget(zoneName: zone) } }
-        if reason != .deleted, id.scope == .privateDatabase {
+        guard id.scope == .privateDatabase else {
+            try tracker.retireLocally(zone: zone)
+            updateMetadata { $0.forget(zoneName: zone) }
+            return false
+        }
+        switch reason {
+        case .deleted:
+            try tracker.retireLocally(zone: zone)
+            updateMetadata { $0.forget(zoneName: zone) }
+            return false
+        case .purged:
+            // The person asked iCloud to delete this. The group stays on the device as a local copy,
+            // like one left over from another account, and is never uploaded again.
+            try tracker.markZoneSynced(zone: zone)
+            updateMetadata {
+                $0.forget(zoneName: zone)
+                $0.detachedZones = ($0.detachedZones ?? []).union([zone])
+            }
+            return false
+        case .encryptedDataReset, .lost:
             try tracker.markAllForUpload(zone: zone)
+            updateMetadata { $0.forget(zoneName: zone) }
             return true
         }
-        try tracker.retireLocally(zone: zone)
-        return false
     }
 
     /// A zone this device deleted, or left, is gone from the server. Its records are no longer pending.

@@ -221,6 +221,7 @@ final class SyncCoordinator {
             if outcome.requeue { queues[scope]?.queue(saves: [failed.record.recordID]) }
             if let zone = outcome.recreateZone { queues[scope]?.queue(zonesToSave: [zone]) }
             if let zone = outcome.goneZone { try fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
+            if let zone = outcome.purgedZone { try fetchedZones(modified: [], deleted: [(zone, .purged)]) }
             if outcome.failure != .conflict { failures.append(outcome.failure) }
         }
         for (id, error) in failedDeletes {
@@ -243,7 +244,7 @@ final class SyncCoordinator {
         guard let queue = queues[scope], (try? await queue.fetchChanges()) != nil else { return }
         var needsSend = false
         for zone in zones where adapter.metadata.isKnown(zoneName: zone.zoneName) {
-            needsSend = (try? adapter.zoneDeleted(zone, reason: .purged)) == true || needsSend
+            needsSend = (try? adapter.zoneDeleted(zone, reason: .lost)) == true || needsSend
         }
         if needsSend { try? reconcile() }
     }

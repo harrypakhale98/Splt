@@ -12,6 +12,8 @@ struct SaveFailureOutcome: Equatable {
     var askServerAbout: CKRecordZone.ID?
     /// A shared zone that is gone, treated like a zone the owner deleted.
     var goneZone: CKRecordZone.ID?
+    /// A zone the person deleted in their iCloud storage settings. It is not made again.
+    var purgedZone: CKRecordZone.ID?
 }
 
 extension SyncStoreAdapter {
@@ -106,7 +108,9 @@ extension SyncStoreAdapter {
             outcome.requeue = true
         case .zoneMissing:
             let zone = record.recordID.zoneID
-            if zone.scope == .privateDatabase, metadata.isKnown(zoneName: zone.zoneName) {
+            if error.code == .userDeletedZone, zone.scope == .privateDatabase {
+                outcome.purgedZone = zone
+            } else if zone.scope == .privateDatabase, metadata.isKnown(zoneName: zone.zoneName) {
                 outcome.askServerAbout = zone
             } else if zone.scope == .privateDatabase {
                 outcome.recreateZone = zone

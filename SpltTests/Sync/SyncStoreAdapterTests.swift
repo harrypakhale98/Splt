@@ -444,13 +444,31 @@ struct SyncStoreAdapterTests {
         #expect(!kept.isEmpty)
     }
 
-    @Test func aPurgedPrivateZoneIsUploadedAgainFromTheDevice() throws {
+    @Test func aPrivateZoneTheUserDeletedInICloudStaysLocalAndIsNotUploadedAgain() throws {
         let populated = try PopulatedDevice()
         try populated.addEverythingElse()
         let cloud = FakeCloud()
         try cloud.upload(from: populated.device)
         let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
         let needsSend = try populated.device.adapter.zoneDeleted(zone, reason: .purged)
+        #expect(!needsSend)
+        #expect(try populated.device.services.groups.group(id: populated.group.id) != nil)
+        #expect(populated.device.adapter.metadata.isDetached(zoneName: populated.zone))
+        #expect(try populated.device.adapter.collectOutgoing().isEmpty)
+        // a later edit stays on the device too
+        try populated.addExpense("Lunch", cents: 800)
+        let plan = try populated.device.adapter.collectOutgoing()
+        #expect(plan.zonesToSave.isEmpty)
+        #expect(try names(plan.saves, populated.device, of: .expense).isEmpty)
+    }
+
+    @Test func aPrivateZoneTheServerLostIsUploadedAgainFromTheDevice() throws {
+        let populated = try PopulatedDevice()
+        try populated.addEverythingElse()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        let needsSend = try populated.device.adapter.zoneDeleted(zone, reason: .lost)
         #expect(needsSend)
         #expect(try populated.device.services.groups.group(id: populated.group.id) != nil)
         let plan = try populated.device.adapter.collectOutgoing()
