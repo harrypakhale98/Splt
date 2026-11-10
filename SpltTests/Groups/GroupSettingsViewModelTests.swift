@@ -406,13 +406,39 @@ struct GroupSettingsViewModelTests {
         #expect(model.memberRows.count == 3)
     }
 
-    @Test func theOnlyMemberShouldDeleteInstead() async throws {
+    @Test func aJoinedGroupCanAlwaysBeLeftInTheEnd() async throws {
+        let fixture = try Fixture()
+        // the last one in it
+        let solo = SplitGroup(name: "Solo", currencyCode: "USD", memberIDs: [fixture.me.id])
+        try fixture.services.groups.create(solo)
+        let leftGroups = isolatedLeftGroups()
+        let last = makeModel(fixture, groupID: solo.id, leftGroups: leftGroups)
+        let joined = JoinedSharing(groups: [solo.id, fixture.group.id])
+        await last.loadSharing(using: joined)
+        #expect(last.leaveBlock == nil)
+        #expect(await last.leave(using: joined))
+        #expect(leftGroups.contains(solo.id))
+
+        // already taken off the member list by its owner
+        let tracker = fixture.services.makeChangeTracker()
+        let record = try #require(try GroupRecord.find(recordName: fixture.group.id.description, in: tracker.context))
+        record.memberIDs.removeAll { $0 == fixture.me.id.rawValue }
+        try tracker.save()
+        let removed = makeModel(fixture, leftGroups: leftGroups)
+        await removed.loadSharing(using: joined)
+        #expect(removed.myRow == nil)
+        #expect(removed.leaveBlock == nil)
+        #expect(await removed.leave(using: joined))
+        #expect(leftGroups.contains(fixture.group.id))
+    }
+
+    @Test func aGroupOfYourOwnWithOnlyYouInItIsDeletedNotLeft() async throws {
         let fixture = try Fixture()
         let solo = SplitGroup(name: "Solo", currencyCode: "USD", memberIDs: [fixture.me.id])
         try fixture.services.groups.create(solo)
         let model = makeModel(fixture, groupID: solo.id)
-        await model.loadSharing(using: JoinedSharing(groups: [solo.id]))
-        #expect(model.leaveBlock?.contains("only member") == true)
+        await model.loadSharing(using: LocalGroupSharing())
+        #expect(model.leaveBlock?.contains("Delete this group instead") == true)
     }
 
     @Test func archiveAndRestoreToggle() throws {

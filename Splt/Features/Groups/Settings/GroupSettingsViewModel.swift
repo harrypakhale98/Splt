@@ -264,16 +264,17 @@ final class GroupSettingsViewModel {
     /// settle up check and with you still on the others' member list.
     var canDelete: Bool { isSharedWithMe == false }
 
-    /// Leaving needs the group to be someone else's, you to be square and someone to stay behind.
+    /// Leaving needs the group to be someone else's and you to be square. A group you joined can
+    /// always be left in the end, since it cannot be deleted from here: also when its owner already
+    /// took you off the member list, or when you are the last one in it.
     var leaveBlock: String? {
-        guard let myRow else { return String(localized: "You are not a member of this group.") }
         if isSharedByMe {
             return String(localized: "You shared this group, so you can't leave it. Stop sharing in Invite with iCloud to keep it just for you, or delete it to remove it for everyone.")
         }
         if !canLeave {
             return String(localized: "You can only leave a group someone else shared with you. Delete this group instead.")
         }
-        if memberRows.count < 2 { return String(localized: "You are the only member. Delete the group instead.") }
+        guard let myRow else { return nil }
         if !myRow.balance.isEmpty {
             let amounts = myRow.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
             return myRow.balance.contains { $0.minorUnits > 0 }
@@ -298,16 +299,18 @@ final class GroupSettingsViewModel {
     /// Returns true when you left.
     func leave(using sharing: any GroupSharing) async -> Bool {
         await loadSharing(using: sharing)
-        guard leaveBlock == nil, let myRow else {
+        guard leaveBlock == nil else {
             leaveBlockedMessage = leaveBlock
             return false
         }
-        do {
-            // first, because sync hides the group once it has left, and the others need to see this
-            try groups.removeMember(myRow.person.id, from: groupID)
-        } catch {
-            errorMessage = GroupErrorMessage.text(for: error)
-            return false
+        if let myRow {
+            do {
+                // first, because sync hides the group once it has left, and the others need to see this
+                try groups.removeMember(myRow.person.id, from: groupID)
+            } catch {
+                errorMessage = GroupErrorMessage.text(for: error)
+                return false
+            }
         }
         leftGroups.insert(groupID)
         try? await sharing.leave(groupID: groupID)
