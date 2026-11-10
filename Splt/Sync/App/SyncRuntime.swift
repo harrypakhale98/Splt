@@ -25,6 +25,8 @@ final class SyncRuntime {
     @ObservationIgnored private var retry: Task<Void, Never>?
     @ObservationIgnored private let invitationRetryLimit: Int
     @ObservationIgnored private var retriesLeft = 0
+    /// Groups joined on this device that have not arrived yet. Each is opened when it does.
+    @ObservationIgnored private var awaitingArrival: Set<GroupID> = []
     @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
 
     /// `makeEngine` replaces the engine that `start` builds, for tests.
@@ -120,17 +122,22 @@ final class SyncRuntime {
         }
     }
 
-    /// A group you left and were invited back to belongs in your list again.
+    /// A group you left and were invited back to belongs in your list again. It is opened once it is
+    /// on this device, which after a slow fetch is a little later.
     func groupJoined(_ group: GroupID) {
         leftGroups.remove(group)
+        if let services = liveServices(), (try? services.groups.group(id: group)) == nil {
+            awaitingArrival.insert(group)
+            return
+        }
         onGroupJoined?(group)
     }
 
     /// Changes arrived for a shared group you are a member of, so it is not one you left. You may have
     /// joined it again on another device, or its first fetch failed after the invitation was accepted.
     func groupArrived(_ group: GroupID) {
-        guard leftGroups.contains(group) else { return }
-        leftGroups.remove(group)
+        if leftGroups.contains(group) { leftGroups.remove(group) }
+        if awaitingArrival.remove(group) != nil { onGroupJoined?(group) }
     }
 
     // MARK: Push

@@ -132,7 +132,7 @@ struct SyncRuntimeTests {
         let left = isolatedLeftGroups()
         let group = GroupID()
         left.insert(group)
-        let runtime = SyncRuntime(leftGroups: left)
+        let runtime = SyncRuntime(liveServices: { nil }, leftGroups: left)
         var opened: [GroupID] = []
         runtime.onGroupJoined = { opened.append($0) }
         runtime.groupJoined(group)
@@ -140,11 +140,38 @@ struct SyncRuntimeTests {
         #expect(opened == [group])
     }
 
+    @Test func aGroupJoinedBeforeItHasArrivedIsOpenedWhenItDoes() throws {
+        let services = try DataServices.inMemory()
+        let runtime = SyncRuntime(liveServices: { services }, leftGroups: isolatedLeftGroups())
+        var opened: [GroupID] = []
+        runtime.onGroupJoined = { opened.append($0) }
+        let group = GroupID()
+        runtime.groupJoined(group)
+        #expect(opened.isEmpty)
+        runtime.groupArrived(group)
+        #expect(opened == [group])
+        runtime.groupArrived(group)
+        #expect(opened == [group])
+    }
+
+    @Test func aGroupJoinedThatIsAlreadyHereIsOpenedAtOnce() throws {
+        let services = try DataServices.inMemory()
+        let me = Person(name: "Me", kind: .me, avatarSeed: 1, createdAt: Date())
+        try services.people.add(me)
+        let here = SplitGroup(name: "Lisbon", currencyCode: "USD", memberIDs: [me.id])
+        try services.groups.create(here)
+        let runtime = SyncRuntime(liveServices: { services }, leftGroups: isolatedLeftGroups())
+        var opened: [GroupID] = []
+        runtime.onGroupJoined = { opened.append($0) }
+        runtime.groupJoined(here.id)
+        #expect(opened == [here.id])
+    }
+
     @Test func aGroupYouLeftThatArrivesWithYouInItIsNoLongerHidden() {
         let left = isolatedLeftGroups()
         let group = GroupID()
         left.insert(group)
-        let runtime = SyncRuntime(leftGroups: left)
+        let runtime = SyncRuntime(liveServices: { nil }, leftGroups: left)
         var opened: [GroupID] = []
         runtime.onGroupJoined = { opened.append($0) }
         runtime.groupArrived(group)

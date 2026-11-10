@@ -206,9 +206,10 @@ final class CloudKitSyncEngine: SyncEngine {
         guard let metadata = invitation.metadata else { throw SyncError.invalidInvitation }
         guard metadata.containerIdentifier == backend.containerIdentifier else { throw SyncError.invalidInvitation }
         try await backend.accept(metadata)
-        // the server has accepted, so the join stands even if the group cannot be fetched right now
+        // the server has accepted, so the join stands even if the group cannot be fetched right now:
+        // it arrives with the next fetch
         try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)
-        try await fetchChanges()
+        try? await fetchChanges()
     }
 
     func isSharedByMe(group: GroupID) async -> Bool {
