@@ -128,6 +128,8 @@ private struct RecurringRow: View {
 
     private var statusText: String {
         if !template.isActive { return String(localized: "Paused") }
+        // nothing is added to an archived group, so a date here would be a promise not kept
+        if model.group?.isArchived == true { return String(localized: "Paused while archived") }
         guard let next = model.nextDate(for: template) else { return String(localized: "Finished") }
         return String(localized: "Next \(next.formatted(date: .abbreviated, time: .omitted))")
     }
