@@ -194,6 +194,47 @@ struct DatabaseSyncerTests {
         await syncer.stop()
     }
 
+    /// After its saved state is lost, an engine starts from nothing and the server lists every zone.
+    @Test func aGroupTheServerNoLongerListsStaysAsALocalCopyAndIsNotSentBack() async throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let other = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [populated.me.id])
+        try populated.device.services.groups.create(other)
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        let kept = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        let gone = CKRecordZone.ID(zoneName: other.id.description, ownerName: CKCurrentUserDefaultName)
+        #expect(populated.device.adapter.metadata.isKnown(zoneName: gone.zoneName))
+
+        let coordinator = SyncCoordinator(services: populated.device.services, adapter: populated.device.adapter)
+        let syncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: populated.device.store)
+        let handle = FakeEngineHandle()
+        syncer.start { _, _ in handle }
+        coordinator.attach(syncer, for: .privateDatabase)
+        coordinator.markReady()
+        // a group made on this device after the fetch began is not listed back to it, and is left alone
+        let fresh = SplitGroup(name: "New", currencyCode: "USD", memberIDs: [populated.me.id])
+        try populated.device.services.groups.create(fresh)
+        try cloud.upload(from: populated.device)
+
+        syncer.handle(.fetchedZones(modified: [kept], deleted: []))
+        try await syncer.fetchChanges()
+
+        let metadata = populated.device.adapter.metadata
+        #expect(metadata.isKnown(zoneName: kept.zoneName))
+        #expect(metadata.isKnown(zoneName: fresh.id.description))
+        #expect(!metadata.isKnown(zoneName: gone.zoneName))
+        #expect(metadata.isDetached(zoneName: gone.zoneName))
+        #expect(try populated.device.services.groups.group(id: other.id) != nil)
+        try populated.device.services.groups.setArchived(true, id: other.id)
+        #expect(try populated.device.adapter.collectOutgoing().isEmpty)
+
+        // an ordinary fetch afterwards lists only what changed, and decides nothing
+        try await syncer.fetchChanges()
+        #expect(populated.device.adapter.metadata.isKnown(zoneName: kept.zoneName))
+        await syncer.stop()
+    }
+
     @Test func aZoneThatCouldNotBeFetchedDoesNotReadAsUpToDate() throws {
         let rig = try Rig()
         rig.syncer.handle(.zoneFetchFailed(CKError(.quotaExceeded)))

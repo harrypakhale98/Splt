@@ -163,6 +163,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         let saved = store.loadEngineState(scope).flatMap {
             try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: $0)
         }
+        if saved == nil { coordinator.fetchFromNothingBegan(scope: scope) }
         engine = makeEngine(saved, self)
     }
 
@@ -177,6 +178,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
             guard let self else { return }
             await engine?.cancelOperations()
             guard !Task.isCancelled else { return }
+            coordinator.fetchFromNothingBegan(scope: scope)
             engine = makeEngine(nil, self)
             // what was waiting to be sent went with the old engine, so it is queued again
             try? coordinator.reconcile()
@@ -228,6 +230,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         do {
             try await engine?.fetchChanges()
             coordinator.fetchSucceeded(scope: scope)
+            try? coordinator.fetchFromNothingFinished(scope: scope)
         } catch {
             coordinator.fetchFailed(error, scope: scope)
             if Self.isExpiredToken(error) { startOver() }

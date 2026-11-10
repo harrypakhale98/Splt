@@ -19,6 +19,7 @@ struct CloudKitSyncEngineTests {
         init(seed: (SyncMetadata) -> SyncMetadata = { $0 }) throws {
             populated = try PopulatedDevice()
             populated.device.store.saveMetadata(seed(populated.device.store.loadMetadata()))
+            backend.store = populated.device.store
             engine = CloudKitSyncEngine(
                 backend: backend, services: populated.device.services, store: populated.device.store,
                 connectivity: { AsyncStream { _ in } }, reconcileDelay: .milliseconds(10)

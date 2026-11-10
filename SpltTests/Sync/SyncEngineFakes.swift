@@ -31,9 +31,13 @@ final class FakeEngineHandle: SyncEngineHandle {
         if let sendError { throw sendError }
     }
 
+    /// What a fetch that goes through delivers, for a stand in server that has something to say.
+    var onFetch: (@MainActor () -> Void)?
+
     func fetchChanges() async throws {
         fetchCount += 1
         if let fetchError { throw fetchError }
+        onFetch?()
     }
 
     func cancelOperations() async {
@@ -112,6 +116,9 @@ final class FakeCloudKitBackend: CloudKitBackend {
     let sharedDatabase = FakeShareDatabase()
     var userResult: Result<String, any Error> = .success("_alice")
     private(set) var madeEngines: [DatabaseScope] = []
+    /// The device this server belongs to. With it set, a fetch lists every zone the device knows of,
+    /// the way a server that has lost nothing does for an engine that starts with no saved state.
+    var store: (any SyncStateStore)?
 
     func userRecordName() async throws -> String {
         try userResult.get()
@@ -120,7 +127,14 @@ final class FakeCloudKitBackend: CloudKitBackend {
     func engineFactory(for scope: DatabaseScope) -> DatabaseSyncer.EngineFactory {
         madeEngines.append(scope)
         let handle = scope == .privateDatabase ? privateHandle : sharedHandle
-        return { _, _ in handle }
+        return { [weak self] _, delegate in
+            handle.onFetch = { [weak syncer = delegate as? DatabaseSyncer] in
+                guard let zones = self?.store?.loadMetadata().zones else { return }
+                let listed = zones.filter { $0.value.scope == scope }.map { CKRecordZone.ID(zoneName: $0.key, ownerName: $0.value.ownerName) }
+                if !listed.isEmpty { syncer?.handle(.fetchedZones(modified: listed, deleted: [])) }
+            }
+            return handle
+        }
     }
 
     var shareService: ShareService {

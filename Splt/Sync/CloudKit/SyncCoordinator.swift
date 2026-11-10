@@ -152,10 +152,44 @@ final class SyncCoordinator {
 
     // MARK: Fetched
 
+    /// A fetch that began with no saved state, in which the server lists every zone it holds.
+    private struct FetchFromNothing {
+        /// The zones this device already knew were in iCloud when the fetch began. Only these can be
+        /// found missing: one made here afterwards is not listed back to the device that made it.
+        var known: Set<String>
+        var listed: Set<String> = []
+    }
+
+    /// No entry while fetches are ordinary ones, which only list what changed.
+    private var fetchesFromNothing: [DatabaseScope: FetchFromNothing] = [:]
+
+    /// An engine is about to fetch with no saved state.
+    func fetchFromNothingBegan(scope: DatabaseScope) {
+        let known = adapter.metadata.zones.filter { $0.value.scope == scope }.keys
+        fetchesFromNothing[scope] = FetchFromNothing(known: Set(known))
+    }
+
+    /// That fetch went through. A zone this device knew was in iCloud and that was not listed is gone
+    /// from there, which no event will ever say: deleted on another device while this one could not
+    /// follow, or along with all of the app's iCloud data. It must not be sent back. A group of your
+    /// own stays as a local copy, so nothing is lost here. One somebody else shared is theirs to
+    /// remove, as when the fetch itself says so.
+    func fetchFromNothingFinished(scope: DatabaseScope) throws {
+        guard let fetch = fetchesFromNothing.removeValue(forKey: scope) else { return }
+        for name in fetch.known.subtracting(fetch.listed).sorted() {
+            guard let info = adapter.metadata.zones[name], info.scope == scope else { continue }
+            let zone = CKRecordZone.ID(zoneName: name, ownerName: info.ownerName)
+            try adapter.zoneDeleted(zone, reason: scope == .privateDatabase ? .purged : .deleted)
+        }
+    }
+
     func fetchedZones(
         modified: [CKRecordZone.ID], deleted: [(id: CKRecordZone.ID, reason: ZoneDeletionReason)]
     ) throws {
         modified.forEach(adapter.registerZone)
+        for zone in modified {
+            fetchesFromNothing[zone.scope]?.listed.insert(zone.zoneName)
+        }
         var needsSend = false
         for zone in deleted {
             needsSend = try adapter.zoneDeleted(zone.id, reason: zone.reason) || needsSend
