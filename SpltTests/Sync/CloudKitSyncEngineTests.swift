@@ -161,15 +161,15 @@ struct CloudKitSyncEngineTests {
 
     @Test func sharingBeforeStartIsNotReady() async throws {
         let rig = try Rig()
-        await #expect(throws: SyncError.notReady) { _ = try await rig.engine.share(group: rig.populated.group.id) }
-        await #expect(throws: SyncError.groupNotFound) { _ = try await rig.engine.share(group: GroupID()) }
+        await #expect(throws: SyncError.notReady) { _ = try await rig.engine.share(group: rig.populated.group.id, anyoneWithLink: false) }
+        await #expect(throws: SyncError.groupNotFound) { _ = try await rig.engine.share(group: GroupID(), anyoneWithLink: false) }
     }
 
     @Test func sharingSendsTheZoneFirstThenSavesAZoneWideShare() async throws {
         let rig = try Rig()
         await rig.engine.start()
         #expect(await eventually { rig.backend.privateHandle.fetchCount == 1 })
-        await #expect(throws: FakeBackendError.noContainer) { _ = try await rig.engine.share(group: rig.populated.group.id) }
+        await #expect(throws: FakeBackendError.noContainer) { _ = try await rig.engine.share(group: rig.populated.group.id, anyoneWithLink: false) }
         #expect(rig.backend.privateHandle.sendCount >= 1)
         let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
         #expect(rig.backend.privateDatabase.contains(CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zone)))

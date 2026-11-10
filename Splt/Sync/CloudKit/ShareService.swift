@@ -32,14 +32,19 @@ struct ShareService {
     let sharedDatabase: any ShareDatabase
 
     /// The zone wide share for a group in your private database, created on first use.
-    /// Invitees can read and write, and nobody can join without being invited.
-    func prepare(zoneID: CKRecordZone.ID, title: String) async throws -> CKShare {
+    /// Invitees can read and write. Without `anyoneWithLink` nobody can join without being invited by
+    /// name; with it, anyone who has the link can join, which is what a link or QR code needs.
+    /// A share that is already open is never closed here; the owner does that in the invite sheet.
+    func prepare(zoneID: CKRecordZone.ID, title: String, anyoneWithLink: Bool = false) async throws -> CKShare {
+        let share: CKShare
         if let existing = try await existingShare(zoneID: zoneID, in: privateDatabase) {
-            return existing
+            guard anyoneWithLink, existing.publicPermission == .none else { return existing }
+            share = existing
+        } else {
+            share = CKShare(recordZoneID: zoneID)
+            share[CKShare.SystemFieldKey.title] = title as NSString
         }
-        let share = CKShare(recordZoneID: zoneID)
-        share[CKShare.SystemFieldKey.title] = title as NSString
-        share.publicPermission = .none
+        share.publicPermission = anyoneWithLink ? .readWrite : .none
         guard let saved = try await privateDatabase.saveRecord(share) as? CKShare else {
             throw SyncError.notReady
         }

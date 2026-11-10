@@ -160,18 +160,19 @@ final class CloudKitSyncEngine: SyncEngine {
         }
     }
 
-    func share(group: GroupID) async throws -> GroupShare {
+    func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {
         guard let value = try services.groups.group(id: group) else { throw SyncError.groupNotFound }
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
         let service = backend.shareService
         if zoneID.scope == .sharedDatabase {
             guard let existing = try await service.share(zoneID: zoneID) else { throw SyncError.notShared }
+            if anyoneWithLink, existing.publicPermission == .none { throw SyncError.linkNotOpen }
             return try backend.groupShare(existing, groupName: value.name)
         }
         guard let privateSyncer = syncers.first(where: { $0.scope == .privateDatabase }) else { throw SyncError.notReady }
         try coordinator.reconcile()
         try await privateSyncer.sendChanges()
-        let share = try await service.prepare(zoneID: zoneID, title: value.name)
+        let share = try await service.prepare(zoneID: zoneID, title: value.name, anyoneWithLink: anyoneWithLink)
         return try backend.groupShare(share, groupName: value.name)
     }
 

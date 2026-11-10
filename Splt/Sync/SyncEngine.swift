@@ -10,6 +10,8 @@ struct GroupShare {
 
     /// The link people can open to join, once the share is saved.
     var url: URL? { share.url }
+    /// True when anyone with the link can join, not only the people invited by name.
+    var isOpenToAnyoneWithLink: Bool { share.publicPermission != .none }
 }
 
 /// An invitation a person opened, as the system hands it to the app.
@@ -43,8 +45,9 @@ protocol SyncEngine: AnyObject {
     func sendChanges() async throws
     /// Downloads remote changes now.
     func fetchChanges() async throws
-    /// Prepares the group for the invite sheet, creating the share on first use.
-    func share(group: GroupID) async throws -> GroupShare
+    /// Prepares the group for the invite sheet, creating the share on first use. With
+    /// `anyoneWithLink` the owner's share is opened so its link works for anyone who has it.
+    func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare
     func accept(_ invitation: ShareInvitation) async throws
     /// Leaves a group someone else shared. For the owner this stops sharing and keeps the group.
     func leave(group: GroupID) async throws

@@ -12,7 +12,7 @@ struct SyncRuntimeTests {
         await runtime.start(services: services)
         #expect(runtime.status == .unavailable(.developerBuild))
         await #expect(throws: SyncError.unavailable) {
-            _ = try await runtime.engine.share(group: .init())
+            _ = try await runtime.engine.share(group: .init(), anyoneWithLink: false)
         }
     }
 

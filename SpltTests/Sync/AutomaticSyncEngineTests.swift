@@ -138,7 +138,7 @@ struct NoOpSyncEngineTests {
         let engine = NoOpSyncEngine(reason: .simulator)
         await engine.start()
         #expect(engine.status == .unavailable(.simulator))
-        await #expect(throws: SyncError.unavailable) { try await engine.share(group: GroupID()) }
+        await #expect(throws: SyncError.unavailable) { try await engine.share(group: GroupID(), anyoneWithLink: false) }
         await #expect(throws: SyncError.unavailable) { try await engine.accept(ShareInvitation(groupName: nil)) }
         await #expect(throws: SyncError.unavailable) { try await engine.leave(group: GroupID()) }
         try? await engine.sendChanges()

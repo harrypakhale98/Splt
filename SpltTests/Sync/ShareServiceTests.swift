@@ -36,6 +36,29 @@ struct ShareServiceTests {
         #expect(privateDatabase.saveCount == 1)
     }
 
+    @Test func aLinkShareIsOpenToAnyoneWithTheLink() async throws {
+        let (service, _, _) = make()
+        let share = try await service.prepare(zoneID: zone, title: "Lisbon Trip", anyoneWithLink: true)
+        #expect(share.publicPermission == .readWrite)
+    }
+
+    @Test func askingForALinkOpensAnInviteOnlyShareOnce() async throws {
+        let (service, privateDatabase, _) = make()
+        _ = try await service.prepare(zoneID: zone, title: "Lisbon Trip")
+        let opened = try await service.prepare(zoneID: zone, title: "Lisbon Trip", anyoneWithLink: true)
+        #expect(opened.publicPermission == .readWrite)
+        _ = try await service.prepare(zoneID: zone, title: "Lisbon Trip", anyoneWithLink: true)
+        #expect(privateDatabase.saveCount == 2)
+    }
+
+    @Test func theInviteSheetNeverClosesAnOpenLink() async throws {
+        let (service, privateDatabase, _) = make()
+        _ = try await service.prepare(zoneID: zone, title: "Lisbon Trip", anyoneWithLink: true)
+        let again = try await service.prepare(zoneID: zone, title: "Lisbon Trip")
+        #expect(again.publicPermission == .readWrite)
+        #expect(privateDatabase.saveCount == 1)
+    }
+
     @Test func otherFetchErrorsAreNotMistakenForNoShare() async {
         let (service, privateDatabase, _) = make()
         privateDatabase.fetchError = CKError(.networkUnavailable)

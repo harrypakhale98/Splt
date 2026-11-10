@@ -34,7 +34,7 @@ final class GroupSharingModel {
     func prepare(group: GroupID) async {
         phase = .preparing
         do {
-            prepared = Prepared(groupShare: try await engine.share(group: group))
+            prepared = Prepared(groupShare: try await engine.share(group: group, anyoneWithLink: false))
             phase = .idle
         } catch {
             phase = .failed(error.localizedDescription)

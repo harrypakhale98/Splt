@@ -10,6 +10,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
     case invalidInvitation
     /// Sync is still starting or the account is not ready.
     case notReady
+    /// The group is shared invite-only and only its owner can open the link to anyone.
+    case linkNotOpen
 
     var errorDescription: String? {
         switch self {
@@ -23,6 +25,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
             String(localized: "This invitation is not valid any more. Ask for a new one.")
         case .notReady:
             String(localized: "Sync is still getting ready. Try again in a moment.")
+        case .linkNotOpen:
+            String(localized: "Only the person who shared this group can make a link anyone can join.")
         }
     }
 }

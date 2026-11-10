@@ -76,8 +76,8 @@ final class AutomaticSyncEngine: SyncEngine {
         try await current.fetchChanges()
     }
 
-    func share(group: GroupID) async throws -> GroupShare {
-        try await current.share(group: group)
+    func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {
+        try await current.share(group: group, anyoneWithLink: anyoneWithLink)
     }
 
     func accept(_ invitation: ShareInvitation) async throws {

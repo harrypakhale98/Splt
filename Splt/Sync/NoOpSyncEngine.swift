@@ -22,7 +22,7 @@ final class NoOpSyncEngine: SyncEngine {
     func sendChanges() async throws {}
     func fetchChanges() async throws {}
 
-    func share(group: GroupID) async throws -> GroupShare {
+    func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {
         throw SyncError.unavailable
     }
 

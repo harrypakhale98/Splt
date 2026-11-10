@@ -58,6 +58,9 @@ struct InviteGroupView: View {
                             copyCount += 1
                         }
                     }
+                } footer: {
+                    Text(footer(for: url))
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 }
                 .raisedSection()
             case .failed(let message):
@@ -75,6 +78,15 @@ struct InviteGroupView: View {
         .navigationBarTitleDisplayMode(.inline)
         .haptic(.success, trigger: copyCount)
         .task { await load() }
+    }
+
+    /// The iCloud link lets anyone join; the plain app link only opens the group where it already is.
+    private func footer(for url: URL) -> LocalizedStringKey {
+        if url.scheme == DeepLink.scheme {
+            "Turn on iCloud to invite people. This link only opens the group on a device that already has it."
+        } else {
+            "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join."
+        }
     }
 
     private func load() async {

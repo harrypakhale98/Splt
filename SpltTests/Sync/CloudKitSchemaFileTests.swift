@@ -42,6 +42,14 @@ struct CloudKitSchemaFileTests {
         return types
     }
 
+    /// Production never creates a record type on its own either, so sharing a group fails there unless
+    /// the share type was deployed with the rest.
+    @Test("the share record type is in the file")
+    func fileHasShareType() throws {
+        let text = try String(contentsOf: Self.fileURL, encoding: .utf8)
+        #expect(text.contains("RECORD TYPE cloudkit.share ("))
+    }
+
     @Test("every synced record type and field is in the file with the right type")
     func fileMatchesRecordSchema() throws {
         let types = try Self.fileTypes()

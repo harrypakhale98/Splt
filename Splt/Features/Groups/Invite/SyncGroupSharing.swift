@@ -24,7 +24,7 @@ struct SyncGroupSharing: GroupSharing {
     private static func shareURL(for groupID: GroupID, runtime: SyncRuntime) async throws -> URL? {
         guard runtime.status.isConnected else { return nil }
         do {
-            return try await runtime.engine.share(group: groupID).url
+            return try await runtime.engine.share(group: groupID, anyoneWithLink: true).url
         } catch SyncError.unavailable {
             return nil
         }

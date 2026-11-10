@@ -32,7 +32,7 @@ final class FakeSyncEngine: SyncEngine {
     func sendChanges() async throws { sendCount += 1 }
     func fetchChanges() async throws { fetchCount += 1 }
 
-    func share(group: GroupID) async throws -> GroupShare {
+    func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {
         throw SyncError.unavailable
     }
 
