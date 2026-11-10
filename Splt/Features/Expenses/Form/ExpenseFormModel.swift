@@ -111,6 +111,9 @@ final class ExpenseFormModel {
         return false
     }
 
+    /// A recurring template stores no photo, so offering one there would drop it on Save.
+    var canAttachReceipt: Bool { !isEditingRecurring }
+
     var locale: Locale { dependencies.locale }
     var groupCurrencyCode: String { group?.currencyCode ?? currencyCode }
 

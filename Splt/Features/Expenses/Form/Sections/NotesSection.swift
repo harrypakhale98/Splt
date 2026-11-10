@@ -10,22 +10,24 @@ struct NotesSection: View {
                 TextField("Notes", text: $model.note, prompt: Text("Add a note"), axis: .vertical)
                     .lineLimit(1...6)
 
-                if !model.receipt.isEmpty {
-                    ReceiptAttachmentRow(model: model)
-                } else if model.isEditing {
-                    ReceiptActions(model: model)
-                        .labelStyle(.titleAndIcon)
-                }
-                if model.isScanning {
-                    HStack {
-                        ProgressView()
-                        Text("Reading the receipt")
+                if model.canAttachReceipt {
+                    if !model.receipt.isEmpty {
+                        ReceiptAttachmentRow(model: model)
+                    } else if model.isEditing {
+                        ReceiptActions(model: model)
+                            .labelStyle(.titleAndIcon)
                     }
-                    .accessibilityElement(children: .combine)
+                    if model.isScanning {
+                        HStack {
+                            ProgressView()
+                            Text("Reading the receipt")
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
                 }
             }
         } header: {
-            SectionHeader("Notes and receipt")
+            SectionHeader(model.canAttachReceipt ? "Notes and receipt" : "Notes")
         }
         .raisedSection()
     }

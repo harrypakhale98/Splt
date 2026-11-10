@@ -24,10 +24,12 @@ struct FormChipsRow: View {
                 }
                 chip(.currency, model.currencyCode, "coloncurrencysign.circle")
                 chip(.note, model.note.isEmpty ? String(localized: "Note") : String(localized: "Note added"), "note.text")
-                chip(
-                    .receipt, model.receipt.isEmpty ? String(localized: "Receipt") : String(localized: "Receipt added"),
-                    model.receipt.isEmpty ? "doc.text.viewfinder" : "doc.text.image.fill"
-                )
+                if model.canAttachReceipt {
+                    chip(
+                        .receipt, model.receipt.isEmpty ? String(localized: "Receipt") : String(localized: "Receipt added"),
+                        model.receipt.isEmpty ? "doc.text.viewfinder" : "doc.text.image.fill"
+                    )
+                }
                 if showsRepeat {
                     chip(.repeating, model.repeatChoice.frequency?.shortTitle ?? String(localized: "Repeat"), "repeat")
                 }

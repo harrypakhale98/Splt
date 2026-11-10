@@ -179,6 +179,21 @@ struct ExpenseFormSavingTests {
         #expect(updated.lastCreatedOccurrence == template.lastCreatedOccurrence)
     }
 
+    @Test func aRecurringTemplateOffersNoReceipt() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.newExpense()
+        model.title = "Gym"
+        model.amountText = "30"
+        model.repeatChoice.frequency = .monthly
+        #expect(model.canAttachReceipt)
+        let saved = try model.save()
+        #expect(harness.editor(for: saved.id).canAttachReceipt)
+
+        let template = try #require(try harness.fixture.services.recurring.templates(in: harness.fixture.group.id).first)
+        let editor = ExpenseFormModel(mode: .editRecurring(template), services: harness.fixture.services, dependencies: harness.dependencies)
+        #expect(!editor.canAttachReceipt)
+    }
+
     @Test func duplicatesAreFoundBeforeSaving() throws {
         let harness = try ExpenseFormHarness()
         try harness.fixture.addExpense("Dinner", cents: 6000)
