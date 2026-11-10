@@ -93,6 +93,21 @@ struct RecurringExpenseRepositoryTests {
         #expect(try fixture.services.recurring.createDueExpenses(through: fixture.clock.start).isEmpty)
     }
 
+    @Test func anArchivedGroupGetsNothingUntilItIsRestored() throws {
+        let fixture = try Fixture()
+        try fixture.services.recurring.add(template(fixture, frequency: .daily))
+        try fixture.services.recurring.createDueExpenses(through: fixture.clock.start)
+        try fixture.services.groups.setArchived(true, id: fixture.group.id)
+
+        let later = fixture.clock.start.addingTimeInterval(3 * 86_400)
+        #expect(try fixture.services.recurring.createDueExpenses(through: later).isEmpty)
+        #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 1)
+
+        try fixture.services.groups.setArchived(false, id: fixture.group.id)
+        #expect(try fixture.services.recurring.createDueExpenses(through: later).count == 3)
+        #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 4)
+    }
+
     @Test func templateEditsAreSaved() throws {
         let fixture = try Fixture()
         var value = template(fixture)

@@ -66,7 +66,9 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
         for record in try env.context.fetch(descriptor) {
             guard let template = try? RecurringExpense(record),
                   let groupID = template.groupID,
-                  try env.groupRecord(groupID) != nil else { continue }
+                  let group = try env.groupRecord(groupID) else { continue }
+            // An archived group is put away. What came due meanwhile is caught up when it is restored.
+            if group.isArchived { continue }
             // Anyone in a group can sync a template that started decades ago, and every member's device makes
             // its expenses. Older occurrences are not billed, and a backlog goes a little on each run.
             let oldest = now.addingTimeInterval(-366 * 86_400)
