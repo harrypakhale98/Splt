@@ -233,18 +233,28 @@ struct SyncCoordinatorTests {
         #expect(rig.delays.values == [15, 30, 60])
     }
 
-    @Test func aMissingZoneIsRequestedAgain() async throws {
+    @Test func aMissingZoneIsUploadedAgainWithEveryRecordOfItsGroup() async throws {
         let rig = try rig()
         rig.coordinator.markReady()
+        try rig.populated.addEverythingElse()
         let cloud = FakeCloud()
         try cloud.upload(from: rig.device)
+        let everything = Set(cloud.records.keys)
         try rig.populated.addExpense("Another")
         let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
         try rig.coordinator.sentRecords(
             saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
         )
-        #expect(await eventually { rig.privateQueue.zonesRequested.map(\.zoneName) == [rig.populated.zone] })
-        #expect(rig.privateQueue.savedAgain == [sent.recordID])
+        #expect(await eventually { rig.privateQueue.plans.contains { !$0.zonesToSave.isEmpty } })
+        let plan = try #require(rig.privateQueue.plans.last)
+        #expect(plan.zonesToSave.map(\.zoneName) == [rig.populated.zone])
+        // the group, the people in it and every expense, not only the one whose save failed
+        #expect(Set(plan.saves).isSuperset(of: everything.union([sent.recordID])))
+        #expect(plan.saves.contains { $0.recordName == rig.populated.zone })
+        #expect(plan.saves.contains { $0.recordName == rig.populated.sam.id.description })
+        for id in plan.saves {
+            #expect(try rig.device.adapter.outgoingRecord(for: id) != nil)
+        }
     }
 
     /// An edit that the server refuses because the zone it belongs to is gone.

@@ -217,10 +217,10 @@ final class SyncCoordinator {
         let orphans = try adapter.didSend(saved: saved, deleted: deleted)
         if !orphans.isEmpty { queues[scope]?.queue(OutgoingPlan(deletes: orphans)) }
         var failures: [SyncFailure] = []
-        var missingZones: [CKRecordZone.ID: [CKRecord.ID]] = [:]
+        var missingZones: Set<CKRecordZone.ID> = []
         for failed in failedSaves {
             let outcome = try adapter.saveFailed(record: failed.record, error: failed.error)
-            if let zone = outcome.askServerAbout { missingZones[zone, default: []].append(failed.record.recordID) }
+            if let zone = outcome.askServerAbout { missingZones.insert(zone) }
             if outcome.requeue { queues[scope]?.queue(saves: [failed.record.recordID]) }
             if let zone = outcome.recreateZone { queues[scope]?.queue(zonesToSave: [zone]) }
             if let zone = outcome.goneZone { try fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
@@ -239,15 +239,16 @@ final class SyncCoordinator {
     }
 
     /// A fetch reports a zone deleted elsewhere or lost by the server, and both are handled there. If the zone
-    /// is still known afterwards nothing explains it, so it is made again. If the fetch fails, the changes stay
-    /// dirty and the next attempt asks again.
-    private func settleMissingZones(_ zones: [CKRecordZone.ID: [CKRecord.ID]], scope: DatabaseScope) async {
+    /// is still known afterwards nothing explains it, so it is treated as lost: the whole group is uploaded
+    /// again, never only the records whose save failed. If the fetch fails, the changes stay dirty and the
+    /// next attempt asks again.
+    private func settleMissingZones(_ zones: Set<CKRecordZone.ID>, scope: DatabaseScope) async {
         guard let queue = queues[scope], (try? await queue.fetchChanges()) != nil else { return }
-        for (zone, records) in zones where adapter.metadata.isKnown(zoneName: zone.zoneName) {
-            adapter.updateMetadata { $0.zones[zone.zoneName] = nil }
-            queue.queue(zonesToSave: [zone])
-            queue.queue(saves: records)
+        var needsSend = false
+        for zone in zones where adapter.metadata.isKnown(zoneName: zone.zoneName) {
+            needsSend = (try? adapter.zoneDeleted(zone, reason: .purged)) == true || needsSend
         }
+        if needsSend { try? reconcile() }
     }
 
     private func noteResult(failures: [SyncFailure], scope: DatabaseScope) {
