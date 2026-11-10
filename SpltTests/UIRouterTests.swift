@@ -83,6 +83,35 @@ struct UIRouterTests {
         #expect(router.friendsPath == [.friend(id)])
     }
 
+    @Test func anInvitationGoesWhenTheAddFriendSheetIsSwipedAway() {
+        let router = Router()
+        let invite = FriendInvite(name: "Maya Chen", personID: id)
+        router.open(.invite(invite))
+        #expect(router.sheet == .newFriend)
+        #expect(router.pendingInvite == invite)
+        // a swipe down only clears the sheet binding
+        router.sheet = nil
+        #expect(router.pendingInvite == nil)
+
+        router.present(.newFriend)
+        #expect(router.pendingInvite == nil)
+    }
+
+    @Test func anInvitationSurvivesReplacingAnotherSheet() {
+        let router = Router()
+        let invite = FriendInvite(name: "Maya Chen", personID: id)
+        router.present(.account)
+        router.open(.invite(invite))
+        #expect(router.sheet == .newFriend)
+        #expect(router.pendingInvite == invite)
+
+        let second = FriendInvite(name: "Zoe", personID: nil)
+        router.open(.invite(second))
+        #expect(router.pendingInvite == second)
+        router.open(.group(id))
+        #expect(router.pendingInvite == nil)
+    }
+
     @Test func presentSetsSheet() {
         let router = Router()
         router.present(.newGroup)

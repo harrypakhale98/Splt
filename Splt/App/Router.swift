@@ -7,7 +7,12 @@ import Observation
 @Observable
 final class Router {
     var selectedTab: AppTab = .groups
-    var sheet: AppSheet?
+    var sheet: AppSheet? {
+        didSet {
+            // the invitation belongs to the add friend sheet and goes with it, however it was closed
+            if oldValue == .newFriend, sheet != .newFriend { pendingInvite = nil }
+        }
+    }
     /// True while an open form holds typed work. A link then waits, so it cannot close the form
     /// or the screen under it, and opens once the form is gone.
     var hasUnsavedForm = false {
