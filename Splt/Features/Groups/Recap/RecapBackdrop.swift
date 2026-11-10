@@ -16,6 +16,7 @@ enum RecapBackdrop {
         return members.map { Segment(person: $0, weight: topPayers.contains($0) ? Double(max(members.count, 2)) : 1) }
     }
 
+    @MainActor
     static func strip(for page: RecapPage, members: [PersonID], stats: RecapStats) -> some View {
         let segments = segments(for: page, members: members, stats: stats)
         return ShareStrip(
