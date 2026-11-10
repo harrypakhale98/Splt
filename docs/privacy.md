@@ -13,7 +13,7 @@ If you turn iCloud off, Splt keeps working and keeps everything on the device.
 
 ## Who can see a group
 
-You and the people you invite to that group. An invite is a link that you send yourself, through Messages or any other way you choose. Only people who accept it can see the group's members, expenses, payments and comments. Everyone in a group can add, change and remove what is in it, so invite people you trust.
+You and the people who join that group. There are two ways to invite. Invite with iCloud sends an invitation to the people you choose, and only they can join. Link or QR Code makes a link that anyone who has it can use to join, so send it only to people you trust. You can close the link again in Invite with iCloud, under who can join. People who join can see the group's members, expenses, payments and comments. Everyone in a group can add, change and remove what is in it.
 
 An email address or phone number that you pick from Contacts stays on your device. It is not shared with the group.
 
@@ -31,6 +31,7 @@ When an expense is in another currency than its group, Splt can look up a rate f
 ## Features that use the device
 
 - **Camera.** Receipts are scanned on the device with Apple's frameworks. A receipt photo you keep stays on the device that scanned it and that device's backup. Only its file name syncs.
+- **Photos and files.** When you attach a receipt from your photo library or import a Splitwise file, the system picker hands Splt only the photo or file you choose.
 - **Microphone and speech.** Voice entry is turned into text on the device.
 - **Smart entry and suggestions.** These use Apple's on-device language model when it is available.
 - **Translation.** Comments are translated with Apple's system translation.

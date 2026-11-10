@@ -6,7 +6,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 
 | | | | |
 | --- | --- | --- | --- |
-| ![The Groups tab in dark mode](images/groups-dark.png){: width="180"} | ![The balance orbit for a trip group](images/balance-orbit.png){: width="180"} | ![The add expense sheet with the split bar](images/split-bar.png){: width="180"} | ![The settle up sheet with a partial payment arc](images/settle-up.png){: width="180"} |
+| ![The Groups tab in dark mode](images/groups-dark.png){: width="180"} | ![The balance orbit for a trip group](images/balance-orbit.png){: width="180"} | ![The add expense sheet with the split bar](images/split-bar.png){: width="180"} | ![The settle up sheet with one total and a list of who pays whom](images/settle-up.png){: width="180"} |
 | Groups | Balance orbit | Split bar | Settle up |
 
 ## What you get
@@ -16,8 +16,8 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 - A balance orbit that shows who owes whom, and a settle up that closes the ring
 - Any currency, with reference rates or a rate you set for the trip
 - Quick add from a sentence or your voice, and receipt scanning
-- Group invites through iCloud
-- Export to a spreadsheet or PDF
+- Group invites through iCloud, by link or by QR code
+- Import from Splitwise, and export to a spreadsheet (CSV), PDF or JSON
 - A trip recap for each group
 - Dark mode, large text, VoiceOver and Reduce Motion
 

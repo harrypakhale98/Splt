@@ -38,10 +38,11 @@ No indexes are needed: the app never queries, it only reads zone changes.
 ## Sharing
 
 1. In a group's settings, choose Invite with iCloud. The app creates a zone wide `CKShare` with no public access and shows the system invite sheet. Invitees get read and write access.
-2. A friend you invited opens the link they received. The system hands the app a share invitation, the app accepts it and the group appears in their list. They are added to the member list automatically.
-3. People you added by name before they joined are placeholders. When the real person joins, claim the placeholder: every expense, payment and comment that mentioned the placeholder is rewritten to the real person.
-4. A friend can leave a group from the invite sheet or the group's settings. Their removal reaches the others first, and if they are offline it is sent once they are back.
-5. The person who shared a group cannot leave it, because it lives in their iCloud and CloudKit cannot hand it to someone else. They can stop sharing from the invite sheet, which keeps the group on their own devices and removes it from everyone else's, or delete the group, which removes it for everyone.
+2. Or choose Link or QR Code. The share is then open to anyone who has the link, with read and write access, and the app shows the link and a code to scan. The owner can close it again in the invite sheet, under who can join. Once closed, the app asks before it opens the share again.
+3. A friend you invited opens the link they received. The system hands the app a share invitation, the app accepts it and the group appears in their list. They are added to the member list automatically.
+4. People you added by name before they joined are placeholders. When the real person joins, claim the placeholder: every expense, payment and comment that mentioned the placeholder is rewritten to the real person.
+5. A friend can leave a group from the invite sheet or the group's settings. Their removal reaches the others first, and if they are offline it is sent once they are back.
+6. The person who shared a group cannot leave it, because it lives in their iCloud and CloudKit cannot hand it to someone else. They can stop sharing from the invite sheet, which keeps the group on their own devices and removes it from everyone else's, or delete the group, which removes it for everyone.
 
 ## What a group member can do
 

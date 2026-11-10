@@ -30,6 +30,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Groups
 - Quick add from a sentence, by typing or by voice, and receipt scanning.
 - Settle up in full or in part. Splt never moves money.
 - Invites by link or QR code, and export as a spreadsheet (CSV), PDF or JSON.
+- Import from a Splitwise export.
 
 ## Build
 
