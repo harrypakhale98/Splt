@@ -57,9 +57,25 @@ CloudKit gives everyone in a shared zone write access to the whole zone, and any
 
 Inside one group, members are trusted: anyone can edit or delete its expenses, payments and members. They can also change the name of anyone they share a group with, on the devices of everyone else in that group, because a person record has no owner. Change this only with a real test across accounts: other people's devices upload copies of a person, so the last writer is often not that person.
 
-## Check it on real devices
+## Check it against real iCloud
 
-The tests run sync against stand-ins for CloudKit, and the simulator has no iCloud. Before a release that touches `Splt/Sync`, walk through this with two iPhones on two iCloud accounts, A and B, and a third person C for the link. Watch the sync status under Account on each.
+Most tests run sync against stand-ins for CloudKit, and the simulator has no iCloud. Two checks use the real thing.
+
+### On a Mac, with one account
+
+`SpltTests/Sync/LiveCloudKitTests.swift` runs the real engine against the real container in the Development environment. It needs an Apple silicon Mac that is signed in to iCloud and your team selected for signing, and it deletes what it makes.
+
+```sh
+TEST_RUNNER_SPLT_LIVE_ICLOUD=1 xcodebuild test -project Splt.xcodeproj -scheme Splt \
+  -destination 'platform=macOS,arch=arm64,variant=Designed for iPad' \
+  -only-testing:SpltTests/LiveCloudKitTests
+```
+
+It uploads a group with every kind of record, downloads it into a second store and compares the two, sends edits, settles a conflict each way, deletes an expense, shares the group for invited people and then by link, and deletes the group. Each change is checked on the server and on a store that starts from nothing. It is not looked for on the store next to the one that made it, because CloudKit does not report a zone as changed to the device that changed it, and here both stores are one device.
+
+### On two iPhones, with two accounts
+
+What one Mac cannot show is a change arriving from another device, and sharing between two people. Before a release that touches `Splt/Sync`, walk through this with two iPhones on two iCloud accounts, A and B, and a third person C for the link. Watch the sync status under Account on each.
 
 1. A invites B with Invite with iCloud. B accepts once with the app closed and once with it open. The group opens on B, and B is on A's member list once.
 2. A and B edit the same expense while offline, then go online. Both end up with the same version.
