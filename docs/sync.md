@@ -71,7 +71,7 @@ TEST_RUNNER_SPLT_LIVE_ICLOUD=1 xcodebuild test -project Splt.xcodeproj -scheme S
   -only-testing:SpltTests/LiveCloudKitTests
 ```
 
-It first checks that the app, as this build and this Mac really are, picks iCloud and comes up to date. Then it uploads a group with every kind of record, downloads it into a second store and compares the two, sends edits, settles a conflict each way, deletes an expense, shares the group for invited people and then by link, and deletes the group. Each change is checked on the server and on a store that starts from nothing. It is not looked for on the store next to the one that made it, because CloudKit does not report a zone as changed to the device that changed it, and here both stores are one device.
+It first checks that the app, as this build and this Mac really are, picks iCloud and comes up to date. Then it uploads a group with every kind of record, downloads it into a second store and compares the two, sends edits, settles a conflict each way, deletes an expense, shares the group for invited people and then by link, and deletes the group. A second case drops a store's saved engine state and checks that it catches up from nothing, keeps its other group in step, and does not send back a group that was deleted meanwhile. Each change is checked on the server and on a store that starts from nothing. It is not looked for on the store next to the one that made it, because CloudKit does not report a zone as changed to the device that changed it, and here both stores are one device.
 
 ### On two iPhones, with two accounts
 
@@ -96,6 +96,6 @@ What one Mac cannot show is a change arriving from another device, and sharing b
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
 - After you delete Splt's data in the iCloud storage settings, your groups stay on each device as local copies and are not uploaded again. Groups you make afterwards sync as usual.
 - Closing a link does not take the people it removed off the group's member list. Remove them in the group's settings, or invite them again by name.
-- A device that stays offline for a very long time may have to refetch everything. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
+- A device that stays offline for a very long time may have to refetch everything. A group deleted elsewhere in the meantime is removed there too while iCloud still remembers the deletion. After that it stays on that device as a local copy and is not uploaded again. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
 - Deleting a shared group as its owner removes it for everyone.
 - A group is stored in its owner's iCloud. When the owner's storage is full, nobody can upload changes to that group, and the app tells the others it is the owner's storage. Changes stay on each device and sync once space is available.

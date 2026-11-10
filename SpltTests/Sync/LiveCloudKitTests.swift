@@ -174,6 +174,73 @@ struct LiveCloudKitTests {
         await cleanUp(zone, container: container, devices: devices)
     }
 
+    /// A store whose engine has lost what it had saved fetches everything again. It has to pick up
+    /// what changed meanwhile, keep its other groups in step, and not send back a group that was
+    /// deleted while it could not follow.
+    @Test func aStoreThatStartsOverCatchesUpAndDoesNotBringBackADeletedGroup() async throws {
+        let container = try #require(container, "this build has no iCloud container: run a signed build")
+        let base = Date().timeIntervalSince1970 - 3600
+        let populated = try PopulatedDevice(start: base)
+        try populated.addExpense("Dinner")
+        let trip = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [populated.me.id])
+        try populated.device.services.groups.create(trip)
+        let a = Device(local: populated.device, container: container)
+        let b = try freshDevice(start: base + 600, container: container)
+        let flat = populated.group.id
+        let flatZone = CKRecordZone.ID(zoneName: flat.description, ownerName: CKCurrentUserDefaultName)
+        let tripZone = CKRecordZone.ID(zoneName: trip.id.description, ownerName: CKCurrentUserDefaultName)
+        let database = CKContainer(identifier: container).privateCloudDatabase
+        var devices = [a, b]
+
+        do {
+            await a.engine.start()
+            try await a.push()
+            await b.engine.start()
+            #expect(await b.receives {
+                try b.services.groups.group(id: trip.id) != nil && !b.services.expenses.expenses(in: flat).isEmpty
+            }, "the two groups never reached B")
+
+            // while A cannot follow, B edits an expense in one group and deletes the other group
+            var expense = try #require(try b.services.expenses.expenses(in: flat).first)
+            expense.title = "Edited while A was away"
+            try b.services.expenses.update(expense)
+            try b.services.groups.delete(id: trip.id)
+            try await b.push()
+            await #expect(throws: CKError.self) { _ = try await database.recordZone(for: tripZone) }
+
+            // A's engine loses its saved state and a new one starts from nothing on the same store
+            await a.engine.stop()
+            for scope in DatabaseScope.allCases { a.local.store.saveEngineState(nil, scope: scope) }
+            let again = Device(local: a.local, container: container)
+            devices.append(again)
+            await again.engine.start()
+            #expect(await again.receives {
+                try again.services.expenses.expense(id: expense.id)?.title == "Edited while A was away"
+            }, "the edit made meanwhile never arrived")
+
+            // the group that is still in iCloud stays in step with it
+            let metadata = a.local.store.loadMetadata()
+            #expect(metadata.isKnown(zoneName: flatZone.zoneName))
+            #expect(!metadata.isDetached(zoneName: flatZone.zoneName))
+            // The deleted one is not sent back. While iCloud still remembers the deletion it is removed
+            // here as well; after that it would stay as a local copy.
+            #expect(!metadata.isKnown(zoneName: tripZone.zoneName))
+            if try again.services.groups.group(id: trip.id) != nil {
+                #expect(metadata.isDetached(zoneName: tripZone.zoneName))
+                try again.services.groups.setArchived(true, id: trip.id)
+            }
+            try? await again.engine.sendChanges()
+            try? await again.engine.sendChanges()
+            await #expect(throws: CKError.self) { _ = try await database.recordZone(for: tripZone) }
+        } catch {
+            await cleanUp(tripZone, container: container, devices: devices)
+            await cleanUp(flatZone, container: container, devices: [])
+            throw error
+        }
+        await cleanUp(tripZone, container: container, devices: devices)
+        await cleanUp(flatZone, container: container, devices: [])
+    }
+
     private func freshDevice(start: TimeInterval, container: String) throws -> Device {
         let local = try SyncDevice(start: start)
         try local.services.people.ensureMe(name: "Me")
