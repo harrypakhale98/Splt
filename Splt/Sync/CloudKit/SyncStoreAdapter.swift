@@ -172,6 +172,8 @@ final class SyncStoreAdapter {
             return nil
         }
         let zone = id.zoneID.zoneName
+        // a group kept as a local copy sends nothing, also not what was queued before it became one
+        guard !metadata.isDetached(zoneName: zone) else { return nil }
         if type == .person {
             guard model.deletedAt == nil, (model as? PersonRecord)?.hasNameToShare != false else { return nil }
             let queued = metadata.personQueue.contains(PersonCopyKey(zoneName: zone, recordName: id.recordName))

@@ -358,6 +358,30 @@ struct SyncStoreAdapterTests {
         #expect(outcome.askServerAbout == nil)
     }
 
+    @Test func aGroupKeptAsALocalCopySendsNothingAndItsZoneIsNotMadeAgain() throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        // a rename is waiting to go out as a person copy when the zone turns out to be gone
+        var sam = populated.sam
+        sam.name = "Samuel"
+        try populated.device.services.people.update(sam)
+        let waiting = try populated.device.adapter.collectOutgoing().saves
+        #expect(!waiting.isEmpty)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        try populated.device.adapter.zoneDeleted(zone, reason: .purged)
+
+        for id in waiting {
+            #expect(try populated.device.adapter.outgoingRecord(for: id) == nil)
+        }
+        let stray = CKRecord(recordType: "Person", recordID: CKRecord.ID(recordName: populated.sam.id.description, zoneID: zone))
+        let outcome = try populated.device.adapter.saveFailed(record: stray, error: CKError(.zoneNotFound))
+        #expect(outcome.recreateZone == nil)
+        #expect(!outcome.requeue)
+        #expect(populated.device.adapter.metadata.isDetached(zoneName: populated.zone))
+    }
+
     @Test func aSaveIntoAZoneThatWasNeverMadeMakesItFirst() throws {
         let populated = try PopulatedDevice()
         try populated.addExpense()

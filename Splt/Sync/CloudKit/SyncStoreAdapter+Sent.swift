@@ -113,9 +113,11 @@ extension SyncStoreAdapter {
             } else if zone.scope == .privateDatabase, metadata.isKnown(zoneName: zone.zoneName) {
                 outcome.askServerAbout = zone
             } else if zone.scope == .privateDatabase {
-                // A group deleted here took its zone with it. A save that was still on its way when that
-                // happened must not bring the zone back with one stray record in it.
-                if let group = try GroupRecord.find(recordName: zone.zoneName, in: tracker.context), group.deletedAt == nil {
+                // A group deleted here took its zone with it, and one kept as a local copy has no zone on
+                // purpose. A save that was still on its way must not bring either zone back with one
+                // stray record in it.
+                if !metadata.isDetached(zoneName: zone.zoneName),
+                   let group = try GroupRecord.find(recordName: zone.zoneName, in: tracker.context), group.deletedAt == nil {
                     outcome.recreateZone = zone
                     outcome.requeue = true
                 }
