@@ -157,6 +157,98 @@ struct ReferenceRewriterTests {
         #expect(try world.tracker.pendingChanges().count == dirtyBefore)
     }
 
+    @Test func aDeletedExpenseWithBothPeopleDoesNotBlockAndStillRestores() throws {
+        let world = try world()
+        let services = world.populated.device.services
+        let me = world.populated.me.id
+        let both = Expense(
+            groupID: world.populated.group.id, title: "Both", total: usdAmount(3000),
+            date: world.populated.device.clock.start,
+            payers: [world.hana.id: usdAmount(1000), world.casey.id: usdAmount(2000)],
+            split: .equal(participants: [me, world.hana.id, world.casey.id])
+        )
+        try services.expenses.add(both)
+        try services.expenses.delete(id: both.id)
+        let cloud = FakeCloud()
+        try cloud.upload(from: world.populated.device)
+
+        let result = try ReferenceRewriter(tracker: world.tracker)
+            .rewrite(from: world.hana.id.rawValue, to: world.casey.id.rawValue)
+        guard case .rewritten = result else {
+            Issue.record("a deleted expense blocked the rewrite")
+            return
+        }
+        #expect(try world.mentions().contains(world.hana.id.description) == false)
+        let pending = try world.tracker.pendingChanges().first { $0.recordName == both.id.description }
+        #expect(pending?.operation == .save)
+
+        try services.expenses.restore(id: both.id)
+        let restored = try #require(try services.expenses.expenses(in: world.populated.group.id).first { $0.id == both.id })
+        try restored.validate()
+        #expect(restored.payers == [world.casey.id: usdAmount(3000)])
+        #expect(try restored.netBalances() == [world.casey.id: usdAmount(1000), me: usdAmount(-1000)])
+    }
+
+    @Test func anUndonePaymentBetweenBothPeopleDoesNotBlock() throws {
+        let world = try world()
+        let services = world.populated.device.services
+        let group = world.populated.group.id
+        let payment = Payment(
+            groupID: group, payer: world.hana.id, receiver: world.casey.id, amount: usdAmount(700),
+            date: world.populated.device.clock.start
+        )
+        try services.payments.record(payment)
+        try services.payments.undo(id: payment.id)
+
+        let result = try ReferenceRewriter(tracker: world.tracker)
+            .rewrite(from: world.hana.id.rawValue, to: world.casey.id.rawValue)
+        guard case .rewritten = result else {
+            Issue.record("an undone payment blocked the rewrite")
+            return
+        }
+        #expect(try world.mentions().contains(world.hana.id.description) == false)
+
+        // brought back, it is a payment to oneself, which moves no money
+        let before = try services.groups.balances(for: group).netBalances
+        try services.payments.restore(id: payment.id)
+        #expect(try services.groups.balances(for: group).netBalances == before)
+    }
+
+    @Test func recordsOfADeletedGroupDoNotBlockAndAreNotUploaded() throws {
+        let world = try world()
+        let services = world.populated.device.services
+        let old = SplitGroup(
+            name: "Old trip", currencyCode: "USD", memberIDs: [world.populated.me.id, world.hana.id, world.casey.id]
+        )
+        try services.groups.create(old)
+        let both = Expense(
+            groupID: old.id, title: "Both", total: usdAmount(1000), date: world.populated.device.clock.start,
+            paidBy: world.populated.me.id, split: .equal(participants: [world.hana.id, world.casey.id])
+        )
+        try services.expenses.add(both)
+        let cloud = FakeCloud()
+        try cloud.upload(from: world.populated.device)
+        try services.groups.delete(id: old.id)
+        // an expense that reached this device after its group was deleted here
+        let late = ExpenseRecord(Expense(
+            groupID: old.id, title: "Late", total: usdAmount(1000), date: world.populated.device.clock.start,
+            paidBy: world.populated.me.id, split: .equal(participants: [world.hana.id, world.casey.id])
+        ))
+        world.tracker.context.insert(late)
+        try world.tracker.save()
+
+        let result = try ReferenceRewriter(tracker: world.tracker)
+            .rewrite(from: world.hana.id.rawValue, to: world.casey.id.rawValue)
+        guard case .rewritten = result else {
+            Issue.record("a deleted group blocked the rewrite")
+            return
+        }
+        let pending = try world.tracker.pendingChanges()
+        #expect(pending.first { $0.recordName == both.id.description }?.operation == .delete)
+        #expect(!pending.contains { $0.recordName == late.recordName })
+        #expect(try Expense(late).netBalances()[world.casey.id] == usdAmount(-1000))
+    }
+
     @Test func rewritingAnUnmentionedPersonChangesNothing() throws {
         let world = try world()
         let result = try ReferenceRewriter(tracker: world.tracker).rewrite(from: UUID(), to: UUID())
