@@ -89,6 +89,12 @@ struct DebtSimplifierTests {
         #expect(throws: DebtSimplifierError.self) { try DebtSimplifier.greedy(input) }
     }
 
+    @Test func rejectsABalanceTooLargeToPayBack() {
+        let input = balances([.min, .max, 1])
+        #expect(throws: DebtSimplifierError.amountOutOfRange) { try DebtSimplifier.simplify(input) }
+        #expect(throws: DebtSimplifierError.amountOutOfRange) { try DebtSimplifier.greedy(input) }
+    }
+
     @Test func settlesEachCurrencySeparately() throws {
         let debts = try DebtSimplifier.simplify([
             "USD": balances([500, -500], code: "USD"),

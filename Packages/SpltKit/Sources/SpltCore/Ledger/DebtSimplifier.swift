@@ -15,6 +15,8 @@ public enum DebtSimplifier {
             guard amount.currencyCode == currencyCode else {
                 throw DebtSimplifierError.mixedCurrencies(currencyCode, amount.currencyCode)
             }
+            // The smallest 64 bit number has no positive twin, so it cannot be paid back.
+            guard amount.minorUnits != .min else { throw DebtSimplifierError.amountOutOfRange }
             units[person] = amount.minorUnits
             difference += Int128(amount.minorUnits)
         }
@@ -34,8 +36,11 @@ public enum DebtSimplifier {
     /// The plain greedy answer, without the exact search. Mostly useful for comparison.
     public static func greedy(_ balances: [PersonID: Money]) throws -> [Debt] {
         guard let currencyCode = balances.values.first?.currencyCode else { return [] }
-        for amount in balances.values where amount.currencyCode != currencyCode {
-            throw DebtSimplifierError.mixedCurrencies(currencyCode, amount.currencyCode)
+        for amount in balances.values {
+            guard amount.currencyCode == currencyCode else {
+                throw DebtSimplifierError.mixedCurrencies(currencyCode, amount.currencyCode)
+            }
+            guard amount.minorUnits != .min else { throw DebtSimplifierError.amountOutOfRange }
         }
         return debts(from: GreedySettlement.transfers(for: balances.mapValues(\.minorUnits)), currencyCode: currencyCode)
     }

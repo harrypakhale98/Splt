@@ -4,4 +4,6 @@ public enum DebtSimplifierError: Error, Equatable, Sendable {
     case mixedCurrencies(String, String)
     /// The balances do not add up to zero, so they cannot be settled between these people.
     case balancesDoNotSumToZero(currencyCode: String, difference: Int64)
+    /// A balance is too large to turn into a payment.
+    case amountOutOfRange
 }
