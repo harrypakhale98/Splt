@@ -83,12 +83,12 @@ final class DoubleSubmitUITests: XCTestCase {
         let settings = app.buttons["Group Settings"].firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 5), visibleControls(in: app))
         settings.tap()
-        let field = app.textFields["Add by name"]
+        let field = app.textFields["Add by Name"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         reveal(field, in: app)
         field.tap()
         field.typeText("Zed")
-        app.buttons["Add"].firstMatch.doubleTap()
+        app.buttons["Add Member"].firstMatch.doubleTap()
         XCTAssertTrue(app.staticTexts["Zed"].waitForExistence(timeout: 5))
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 1))
         XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label == 'Zed'")).count, 1)
