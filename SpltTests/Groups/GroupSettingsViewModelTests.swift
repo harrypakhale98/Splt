@@ -388,12 +388,14 @@ struct GroupSettingsViewModelTests {
         try fixture.addExpense(cents: 1000, paidBy: fixture.priya, splitBetween: [fixture.sam.id])
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
+        let joined = JoinedSharing(groups: [fixture.group.id])
+        await model.loadSharing(using: joined)
         #expect(try #require(model.myRow).balance.isEmpty)
 
         let block = try #require(model.leaveBlock)
         #expect(block.contains("debts with other members"))
-        #expect(await model.leave(using: LocalGroupSharing()) == false)
-        #expect(model.blockedMessage == block)
+        #expect(await model.leave(using: joined) == false)
+        #expect(model.leaveBlockedMessage == block)
         #expect(!leftGroups.contains(fixture.group.id))
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
 
