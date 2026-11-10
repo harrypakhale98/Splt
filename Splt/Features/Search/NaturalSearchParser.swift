@@ -240,6 +240,8 @@ struct NaturalSearchParser {
     private func readCategory(_ tokens: inout [Token], into filter: inout SearchFilter) {
         for index in tokens.indices where !tokens[index].used {
             let word = tokens[index].folded
+            // "show me dinners" asks to see dinners, not for a show
+            if SearchVocabulary.stopWords.contains(word) { continue }
             let lemma = Self.lemma(of: word)
             guard let category = SearchVocabulary.categoryWords[lemma] ?? SearchVocabulary.categoryWords[word] else { continue }
             filter.category = category

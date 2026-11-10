@@ -140,6 +140,9 @@ struct NaturalSearchParserTests {
         let filter = parser().parse("show me all pizza Maya paid in March")
         #expect(filter.terms == ["pizza"])
         #expect(filter.payer == maya.id)
+        #expect(filter.category == nil)
+        #expect(parser().parse("show me dinners").category == .dining)
+        #expect(parser().parse("tickets to a show").category == .entertainment)
     }
 }
 
