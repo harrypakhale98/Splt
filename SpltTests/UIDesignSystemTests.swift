@@ -65,8 +65,11 @@ struct UIMoneyFormattingTests {
     }
 
     @Test func amountKeepsItsScaleInCurrenciesShownWithoutDecimals() {
-        #expect(MoneyFormatting.string(Money(minorUnits: 150_000, currencyCode: "HUF"), locale: us) == "HUF\u{00A0}1,500")
-        #expect(MoneyFormatting.string(Money(minorUnits: 1_500_000, currencyCode: "IQD"), locale: us) == "IQD\u{00A0}1,500")
+        // Whether a whole amount carries its zeros depends on the system's currency data. Its scale must not.
+        let forints = MoneyFormatting.string(Money(minorUnits: 150_000, currencyCode: "HUF"), locale: us)
+        #expect(["HUF\u{00A0}1,500", "HUF\u{00A0}1,500.00"].contains(forints))
+        let dinars = MoneyFormatting.string(Money(minorUnits: 1_500_000, currencyCode: "IQD"), locale: us)
+        #expect(["IQD\u{00A0}1,500", "IQD\u{00A0}1,500.000"].contains(dinars))
         #expect(MoneyFormatting.string(Money(minorUnits: 1_550, currencyCode: "HUF"), locale: us) == "HUF\u{00A0}15.50")
     }
 
