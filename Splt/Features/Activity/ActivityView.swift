@@ -56,6 +56,7 @@ private struct ActivityContent: View {
                                 }
                             }
                             .swipeActions(edge: .trailing) { paymentAction(for: entry) }
+                            .onAppear { model.loadMore(after: entry) }
                         }
                     }
                 } header: {
@@ -109,7 +110,9 @@ private struct ActivityContent: View {
             EmptyStateView(
                 title: "Nothing matches",
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: "Try a different filter."
+                description: "Try a different filter.",
+                actionTitle: "Clear Filters",
+                action: { model.clearFilters() }
             )
         }
     }

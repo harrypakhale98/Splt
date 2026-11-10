@@ -41,6 +41,58 @@ struct ActivityModelTests {
         #expect(model.filterGroups.isEmpty)
     }
 
+    @Test func aFilterOnAGroupThatDropsOutOfTheMenuIsCleared() throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000)
+        let leftGroups = isolatedLeftGroups()
+        let model = ActivityModel(services: fixture.services, calendar: calendar, leftGroups: leftGroups)
+        model.groupFilter = fixture.group.id
+        model.refresh()
+        #expect(model.groupFilter == fixture.group.id)
+        #expect(!model.visibleEntries.isEmpty)
+
+        leftGroups.insert(fixture.group.id)
+        model.refresh()
+        #expect(model.groupFilter == nil)
+        #expect(!model.isFiltering)
+        #expect(!model.visibleEntries.isEmpty)
+    }
+
+    @Test func clearingFiltersShowsEverythingAgain() throws {
+        let (_, model, _) = try scene()
+        model.typeFilter = .payments
+        model.groupFilter = GroupID()
+        #expect(model.isFiltering)
+        #expect(model.sections.isEmpty)
+        model.clearFilters()
+        #expect(!model.isFiltering)
+        #expect(model.visibleEntries.count == model.entries.count)
+    }
+
+    @Test func reachingTheEndLoadsOlderEntries() throws {
+        let fixture = try Fixture()
+        for title in ["Dinner", "Taxi", "Snacks", "Coffee", "Lunch"] {
+            fixture.clock.advance(by: 60)
+            try fixture.addExpense(title, cents: 900)
+        }
+        let total = try fixture.services.activity.entries(in: nil, limit: 100).count
+        #expect(total >= 5)
+        let model = ActivityModel(services: fixture.services, calendar: calendar, pageSize: 2)
+        #expect(model.entries.count == 2)
+        // a row that is not the last one loads nothing
+        model.loadMore(after: try #require(model.entries.first))
+        #expect(model.entries.count == 2)
+
+        var loaded = 2
+        while loaded < total {
+            model.loadMore(after: try #require(model.entries.last))
+            loaded = min(loaded + 2, total)
+            #expect(model.entries.count == loaded)
+        }
+        model.loadMore(after: try #require(model.entries.last))
+        #expect(model.entries.count == total)
+    }
+
     @Test func groupsEntriesByDay() throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000)

@@ -43,13 +43,21 @@ final class ActivityModel {
     @ObservationIgnored private var refreshScheduled = false
     @ObservationIgnored private var sentences: [UUID: String] = [:]
     @ObservationIgnored private var sentenceLocale: Locale?
+    @ObservationIgnored private let pageSize: Int
+    /// How many entries are asked for. It grows by a page each time the list is scrolled to its end.
+    @ObservationIgnored private var limit: Int
 
     static let pageSize = 300
 
-    init(services: DataServices, calendar: Calendar = .current, leftGroups: LeftGroupsStore = LeftGroupsStore()) {
+    init(
+        services: DataServices, calendar: Calendar = .current, leftGroups: LeftGroupsStore = LeftGroupsStore(),
+        pageSize: Int = ActivityModel.pageSize
+    ) {
         self.services = services
         self.calendar = calendar
         self.leftGroups = leftGroups
+        self.pageSize = pageSize
+        limit = pageSize
         observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
@@ -63,7 +71,7 @@ final class ActivityModel {
             groups = Dictionary(
                 try services.groups.groups(includeArchived: true).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
             )
-            entries = try services.activity.entries(in: nil, limit: Self.pageSize)
+            entries = try services.activity.entries(in: nil, limit: limit)
             paymentActions = try loadPaymentActions()
         } catch {
             errorMessage = String(localized: "Something went wrong. Please try again.")
@@ -74,8 +82,21 @@ final class ActivityModel {
             .filter { $0.kind != .friend && !leftGroups.contains($0.id) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         unreadCount = entries.filter { !$0.isRead }.count
-        rebuildVisible()
+        if let groupFilter, !filterGroups.contains(where: { $0.id == groupFilter }) {
+            // the menu no longer lists this group, so the filter could not be taken off there
+            self.groupFilter = nil
+        } else {
+            rebuildVisible()
+        }
         didLoad = true
+    }
+
+    /// Loads the next page once the last entry shown is on screen. Older events exist only when
+    /// the store returned as many as were asked for.
+    func loadMore(after entry: ActivityEntry) {
+        guard entry.id == visibleEntries.last?.id, entries.count >= limit else { return }
+        limit += pageSize
+        refresh()
     }
 
     // MARK: Showing
