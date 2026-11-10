@@ -35,6 +35,9 @@ struct RuleBasedQuickAddParser: QuickAddParsing {
             draft.amount = Money(minorUnits: amount.minorUnits, currencyCode: amount.explicitCode ?? code)
         }
         draft.title = pass.title()
+        if draft.title.isEmpty, let word = pass.returnGuessedFirstName() {
+            draft.title = word
+        }
         draft.participantNames = pass.participants
         draft.payer = pass.payer
         draft.splitHint = splitHint(pass: pass, explicitEqual: explicitEqual, code: code)
@@ -80,6 +83,8 @@ private struct Pass {
     var payer: QuickAddPayer?
     var adjustments: [Entry] = []
     var exactShares: [Entry] = []
+    /// The payer's name when its first word was only guessed from a capital letter.
+    private var guessedPayer: (first: String, last: String, full: String)?
 
     init(text: String, resolver: NameResolver) {
         self.text = text
@@ -185,6 +190,9 @@ private struct Pass {
                 if let first = match.group(named: "first", in: text),
                    let full = resolver.fullName(first, typed),
                    let firstRange = Range(match.range(withName: "first"), in: text) {
+                    if resolver.matchingCandidate(for: full) == nil {
+                        guessedPayer = (first, last, full)
+                    }
                     name = full
                     start = firstRange.lowerBound
                 }
@@ -194,6 +202,17 @@ private struct Pass {
                 return
             }
         }
+    }
+
+    /// "Padel Sam paid 40" leaves no other word for a title, so Padel is what was paid for and Sam paid.
+    /// Returns the word that goes back to the title, or nil when the payer's name was not a guess.
+    mutating func returnGuessedFirstName() -> String? {
+        guard let guess = guessedPayer else { return nil }
+        guessedPayer = nil
+        payer = .person(guess.last)
+        participants.removeAll { $0.folded == guess.full.folded }
+        addParticipant(guess.last)
+        return guess.first.sentenceCased
     }
 
     // MARK: Who shared it

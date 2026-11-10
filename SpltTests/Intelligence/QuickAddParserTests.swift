@@ -140,4 +140,29 @@ struct QuickAddParserTests {
         #expect(parse("spent 40 on 3 pizzas").amount?.minorUnits == 4000)
         #expect(parse("spent 40 on 3 pizzas").title == "3 pizzas")
     }
+
+    @Test func aCapitalisedWordBeforeThePayerIsNotAFirstName() {
+        let camping = parser.parseNow("Camping Sam paid 120", context: QuickAddContext(candidateNames: ["Sam"]))
+        #expect(camping.payer == .person("Sam"))
+        #expect(camping.participantNames == ["Sam"])
+        #expect(camping.title == "Camping")
+        #expect(camping.amount?.minorUnits == 12_000)
+
+        let padel = parser.parseNow("Padel Sam paid 40", context: QuickAddContext())
+        #expect(padel.payer == .person("Sam"))
+        #expect(padel.participantNames == ["Sam"])
+        #expect(padel.title == "Padel")
+    }
+
+    @Test func twoWordNamesStillReadAsOnePerson() {
+        let members = QuickAddContext(candidateNames: ["Mary Ann", "Noah Quinn", "Ann"])
+        let paid = parser.parseNow("Mary Ann paid 40 for lunch", context: members)
+        #expect(paid.payer == .person("Mary Ann"))
+        #expect(paid.title == "Lunch")
+        #expect(parser.parseNow("dinner 60 with Noah Quinn and Mary Ann", context: members).participantNames == ["Noah Quinn", "Mary Ann"])
+        // someone new, written in full, with other words left for the title
+        let fresh = parse("Jordan Lee paid 40 for dinner")
+        #expect(fresh.payer == .person("Jordan Lee"))
+        #expect(fresh.title == "Dinner")
+    }
 }

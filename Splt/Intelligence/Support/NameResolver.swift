@@ -60,10 +60,11 @@ struct NameResolver: Sendable {
     }
 
     /// A two word name: a group member written in full, or two capitalised words that are both plausible names.
+    /// When the second word alone is already a member, the first is not part of the name: "Camping Sam".
     func fullName(_ first: String, _ second: String) -> String? {
         if let candidate = matchingCandidate(for: "\(first) \(second)") { return candidate }
         guard first.first?.isUppercase == true, second.first?.isUppercase == true,
-              matchingCandidate(for: first) == nil,
+              matchingCandidate(for: first) == nil, matchingCandidate(for: second) == nil,
               plausibleName(first) != nil, plausibleName(second) != nil else { return nil }
         return "\(first.sentenceCased) \(second.sentenceCased)"
     }
