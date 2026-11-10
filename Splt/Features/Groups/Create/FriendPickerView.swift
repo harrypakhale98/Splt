@@ -6,6 +6,8 @@ struct FriendPickerView: View {
     let friends: [Person]
     let isSelected: (Person) -> Bool
     let toggle: (Person) -> Void
+    /// False for a row a tap would not change, so it neither reacts nor plays the haptic.
+    var canToggle: (Person) -> Bool = { _ in true }
 
     @State private var changeCount = 0
 
@@ -29,6 +31,7 @@ struct FriendPickerView: View {
                             }
                         }
                     }
+                    .disabled(!canToggle(friend))
                     .accessibilityAddTraits(isSelected(friend) ? .isSelected : [])
                 }
             }

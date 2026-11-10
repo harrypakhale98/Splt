@@ -243,7 +243,7 @@ final class GroupSettingsViewModel {
 
     /// Adds a friend from the picker. Removing stays a swipe on the member list, where a
     /// "settle up first" message can be seen; the picker sits over it and would hide that alert.
-    func toggleFriend(_ person: Person) {
+    func addFriend(_ person: Person) {
         guard !isMember(person) else { return }
         addMember(person)
     }

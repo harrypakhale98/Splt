@@ -270,10 +270,12 @@ private struct GroupSettingsForm: View {
                         .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 if !model.friends.isEmpty {
-                    // the same picker as New Group; each tap adds or removes the friend straight away
+                    // the same picker as New Group. A tap adds the friend straight away. Someone already in
+                    // the group is ticked and can't be tapped, because removing is a swipe on the member list.
                     NavigationLink {
                         FriendPickerView(
-                            friends: model.friends, isSelected: { model.isMember($0) }, toggle: { model.toggleFriend($0) }
+                            friends: model.friends, isSelected: { model.isMember($0) }, toggle: { model.addFriend($0) },
+                            canToggle: { !model.isMember($0) }
                         )
                     } label: {
                         Label("Add from Friends", systemImage: "person.2")
