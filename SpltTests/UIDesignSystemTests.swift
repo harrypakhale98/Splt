@@ -7,8 +7,6 @@ import Testing
 struct PluralTextTests {
     @Test func oneReadsAsOne() {
         let name = "Sam", one = 1, none = 0, two = 2
-        #expect(String(localized: "\(one) people") == "1 person")
-        #expect(String(localized: "\(two) people") == "2 people")
         #expect(String(localized: "\(name) imported \(one) expenses") == "Sam imported 1 expense")
         #expect(String(localized: "\(name) imported \(one) expenses and \(none) payments") == "Sam imported 1 expense and 0 payments")
         #expect(String(localized: "\(name) imported \(two) expenses and \(one) payments") == "Sam imported 2 expenses and 1 payment")

@@ -33,7 +33,20 @@
         }
       }
     },
+    "%@ %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld%%"
+          }
+        }
+      }
+    },
     "%@ (You)" : {
+
+    },
+    "%@ (left)" : {
 
     },
     "%@ added %@" : {
@@ -59,7 +72,7 @@
     "%@ archived the group" : {
 
     },
-    "%@ are not in this group, so they were left out." : {
+    "%@ aren't in this group, so they were left out." : {
 
     },
     "%@ changed the %@" : {
@@ -125,6 +138,9 @@
         }
       }
     },
+    "%@ each" : {
+
+    },
     "%@ edited %@" : {
       "localizations" : {
         "en" : {
@@ -141,6 +157,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ for the same amount was added on %2$@."
+          }
+        }
+      }
+    },
+    "%@ gets back %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ gets back %2$@"
           }
         }
       }
@@ -229,9 +255,6 @@
         }
       }
     },
-    "%@ invited you to split costs on Splt." : {
-
-    },
     "%@ is already in this group." : {
 
     },
@@ -247,9 +270,6 @@
           }
         }
       }
-    },
-    "%@ is not in this group, so they were left out." : {
-
     },
     "%@ is owed" : {
 
@@ -277,21 +297,50 @@
     "%@ is settled up" : {
 
     },
+    "%@ isn't in this group, so they were left out." : {
+
+    },
     "%@ isn't installed or can't be opened here. You can copy the amount to use somewhere else, or record the payment now and pay later." : {
 
     },
+    "%@ joined %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ joined %2$@"
+          }
+        }
+      }
+    },
+    "%@ joined the group" : {
+
+    },
+    "%@ left %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ left %2$@"
+          }
+        }
+      }
+    },
     "%@ left a comment" : {
+
+    },
+    "%@ left the group" : {
 
     },
     "%@ left to assign" : {
 
     },
-    "%@ may still owe you %@. Tap to send a friendly nudge." : {
+    "%@ may still owe you %@. Send %@ a reminder." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ may still owe you %2$@. Tap to send a friendly nudge."
+            "value" : "%1$@ may still owe you %2$@. Send %3$@ a reminder."
           }
         }
       }
@@ -397,9 +446,6 @@
     "%@ pays you" : {
 
     },
-    "%@ per tap. The difference comes from or goes to the next person." : {
-
-    },
     "%@ percent" : {
 
     },
@@ -452,6 +498,9 @@
     "%@ shares" : {
 
     },
+    "%@ still has debts with other members. Settle up before removing them." : {
+
+    },
     "%@ to %@" : {
       "localizations" : {
         "en" : {
@@ -487,6 +536,26 @@
     "%@ will still be owed" : {
 
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · page %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · page %2$lld of %3$lld"
+          }
+        }
+      }
+    },
     "%@, %@" : {
 
     },
@@ -520,18 +589,18 @@
         }
       }
     },
-    "%@, settled up" : {
-
-    },
-    "%@, shared groups: %@" : {
+    "%@, refund %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@, shared groups: %2$@"
+            "value" : "%1$@, refund %2$@"
           }
         }
       }
+    },
+    "%@, settled up" : {
+
     },
     "%@: owes you %@" : {
       "localizations" : {
@@ -562,28 +631,6 @@
     "%lld new updates in your groups." : {
 
     },
-    "%lld people" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld person"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld people"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld people paid" : {
 
     },
@@ -600,6 +647,9 @@
     "%lld percent of what is owed" : {
 
     },
+    "%lld shares" : {
+      "comment" : "A person's share count on the split bar"
+    },
     "%lld, including you" : {
 
     },
@@ -607,6 +657,9 @@
 
     },
     "+%lld" : {
+
+    },
+    "+%lld more" : {
 
     },
     "0" : {
@@ -633,9 +686,6 @@
       }
     },
     "@username" : {
-
-    },
-    "A gentle reminder about %@" : {
 
     },
     "A new expense is added automatically %@, starting after this one." : {
@@ -671,7 +721,10 @@
         }
       }
     },
-    "Across All Groups" : {
+    "Account, iCloud sync needs attention" : {
+
+    },
+    "Across all groups" : {
 
     },
     "Activity" : {
@@ -687,6 +740,9 @@
       }
     },
     "Add" : {
+
+    },
+    "Add ${title} for ${amount}" : {
 
     },
     "Add %@" : {
@@ -719,7 +775,7 @@
     "Add Item" : {
 
     },
-    "Add Items" : {
+    "Add Member" : {
 
     },
     "Add Recurring Expense" : {
@@ -770,6 +826,9 @@
     "Add the person's real name as a friend first." : {
 
     },
+    "Add what you paid and see who owes whom." : {
+
+    },
     "Added %@, %@, to %@." : {
       "localizations" : {
         "en" : {
@@ -805,9 +864,6 @@
     "Adjustments" : {
 
     },
-    "Airplane" : {
-
-    },
     "All" : {
 
     },
@@ -817,25 +873,22 @@
     "All Categories" : {
 
     },
-    "All Currencies" : {
-
-    },
     "All Groups" : {
-
-    },
-    "All Square" : {
 
     },
     "All assigned" : {
 
     },
+    "All currencies" : {
+
+    },
     "All settled up" : {
 
     },
-    "All square" : {
+    "Allow Anyone with the Link" : {
 
     },
-    "Allow camera access in Settings, or ask your friend to send the invite link instead." : {
+    "Allow camera access in Settings, or ask your friend for the invite link." : {
 
     },
     "Also %@" : {
@@ -877,7 +930,13 @@
     "Anyone" : {
 
     },
+    "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join." : {
+
+    },
     "Apple Cash" : {
+
+    },
+    "Apply" : {
 
     },
     "Archive" : {
@@ -895,55 +954,49 @@
     "Assign %@ to someone." : {
 
     },
-    "Assign each item to people and the bar fills in." : {
-
-    },
     "Assign each item to the people who shared it. Tax, tip and discounts are spread in proportion." : {
 
     },
     "Assign items to people and the bar fills in." : {
 
     },
-    "Bag" : {
-
-    },
-    "Balance View" : {
-
-    },
     "Balances" : {
-
-    },
-    "Balloon" : {
 
     },
     "Bank Transfer" : {
 
     },
-    "Beach umbrella" : {
+    "Bar" : {
 
     },
-    "Bed" : {
-
-    },
-    "Bicycle" : {
+    "Beach" : {
 
     },
     "Biggest: %@" : {
 
     },
+    "Bike" : {
+
+    },
     "Block" : {
+
+    },
+    "Block %@?" : {
 
     },
     "Blocked" : {
 
     },
-    "Book" : {
+    "Blocked people also stay out of search and reminders on this device." : {
 
     },
-    "Briefcase" : {
+    "Block…" : {
 
     },
-    "Buildings" : {
+    "Books" : {
+
+    },
+    "Both ways" : {
 
     },
     "Bus" : {
@@ -955,7 +1008,16 @@
     "Busiest month: %@, %@" : {
 
     },
-    "By Category" : {
+    "By Person" : {
+
+    },
+    "By category" : {
+
+    },
+    "By category in %@" : {
+
+    },
+    "By group" : {
 
     },
     "By item" : {
@@ -967,13 +1029,13 @@
     "Camera" : {
 
     },
-    "Can't Add Friends" : {
+    "Camping" : {
 
     },
-    "Can't Create Groups" : {
+    "Can't Invite Yet" : {
 
     },
-    "Can't Import" : {
+    "Can't Leave" : {
 
     },
     "Can't Open %@" : {
@@ -985,13 +1047,13 @@
     "Can't Remove" : {
 
     },
-    "Can't Settle Up" : {
-
-    },
     "Cancel" : {
 
     },
     "Car" : {
+
+    },
+    "Card" : {
 
     },
     "Cash" : {
@@ -1007,6 +1069,15 @@
 
     },
     "Changes are saved on this device and will sync when you are back online." : {
+
+    },
+    "Check the spelling or try a different search." : {
+
+    },
+    "Checking" : {
+
+    },
+    "Checking your iCloud account." : {
 
     },
     "Choose Another File" : {
@@ -1030,10 +1101,16 @@
     "Choose what to settle with %@." : {
 
     },
+    "Choose who paid" : {
+
+    },
     "Choose who paid." : {
 
     },
     "Choose who to split with." : {
+
+    },
+    "City" : {
 
     },
     "Clear" : {
@@ -1054,13 +1131,19 @@
         }
       }
     },
-    "Coffee cup" : {
+    "Coffee" : {
+
+    },
+    "Collapsed" : {
 
     },
     "Combines debts so the group settles with as few payments as possible." : {
 
     },
     "Come back here and choose the file." : {
+
+    },
+    "Come back to record it once it's sent." : {
 
     },
     "Comments" : {
@@ -1072,7 +1155,7 @@
     "Copy Amount" : {
 
     },
-    "Could Not Save" : {
+    "Copy Link" : {
 
     },
     "Couldn't Add Friend" : {
@@ -1097,6 +1180,9 @@
 
     },
     "Couldn't Record Payment" : {
+
+    },
+    "Couldn't Save" : {
 
     },
     "Couldn't Save Name" : {
@@ -1141,31 +1227,25 @@
     "Create a group in Splt first." : {
 
     },
-    "Credit card" : {
-
-    },
     "Currency" : {
 
     },
-    "Currency or code" : {
-      "comment" : "Search field prompt in the currency list",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Currency or code"
-          }
-        }
-      }
+    "Currency or Code" : {
+
     },
     "Custom Range" : {
+
+    },
+    "Custom Range…" : {
 
     },
     "Daily" : {
 
     },
     "Date" : {
+
+    },
+    "Day" : {
 
     },
     "Day %lld, %@" : {
@@ -1199,10 +1279,10 @@
     "Delete" : {
 
     },
-    "Delete %@" : {
+    "Delete Expense" : {
 
     },
-    "Delete Expense" : {
+    "Delete Expense?" : {
 
     },
     "Delete Group" : {
@@ -1211,10 +1291,7 @@
     "Delete Group?" : {
 
     },
-    "Delete this expense?" : {
-
-    },
-    "Delete this recurring expense?" : {
+    "Delete Recurring Expense?" : {
 
     },
     "Deleted" : {
@@ -1238,7 +1315,13 @@
     "Dining" : {
 
     },
-    "Dinner 60 with Sam and Priya" : {
+    "Dinner" : {
+
+    },
+    "Dinner 60" : {
+
+    },
+    "Dinner 60 with %@" : {
 
     },
     "Direct expenses" : {
@@ -1247,10 +1330,26 @@
     "Discard Changes" : {
 
     },
-    "Discard this expense?" : {
+    "Discard Expense?" : {
 
     },
     "Discount" : {
+
+    },
+    "Doesn't include %@ in %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Doesn't include %1$@ in %2$@."
+          }
+        }
+      }
+    },
+    "Doesn't include %@ in other currencies." : {
+
+    },
+    "Doesn't include spending in %@." : {
 
     },
     "Done" : {
@@ -1265,13 +1364,10 @@
     "Drinks" : {
 
     },
-    "Dumbbell" : {
-
-    },
     "Duplicate" : {
 
     },
-    "Each Person Pays" : {
+    "Each person pays" : {
 
     },
     "Each person pays in proportion to their shares, for example 2 shares for a couple and 1 for a single person." : {
@@ -1331,9 +1427,6 @@
     "Enter what each person owes. The amounts must add up to the total." : {
 
     },
-    "Enter your name to make an invite link and a code." : {
-
-    },
     "Entertainment" : {
 
     },
@@ -1370,10 +1463,10 @@
     "Everyone" : {
 
     },
-    "Everyone Else" : {
+    "Everyone Is Hidden" : {
 
     },
-    "Everyone Is Hidden" : {
+    "Everyone else" : {
 
     },
     "Everyone has paid a similar amount." : {
@@ -1401,22 +1494,19 @@
     "Exact amounts" : {
 
     },
+    "Expanded" : {
+
+    },
     "Expense" : {
 
     },
     "Expense Not Found" : {
 
     },
-    "Expense Unavailable" : {
-
-    },
     "Expense deleted" : {
 
     },
     "Expenses" : {
-
-    },
-    "Expenses Unavailable" : {
 
     },
     "Expenses and payments from your groups will show up here." : {
@@ -1446,15 +1536,6 @@
     "Export" : {
 
     },
-    "Export as JSON" : {
-
-    },
-    "Export as PDF" : {
-
-    },
-    "Export as Spreadsheet (CSV)" : {
-
-    },
     "Export from Splitwise" : {
 
     },
@@ -1468,31 +1549,16 @@
         }
       }
     },
-    "Feedback" : {
-      "comment" : "Settings section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Feedback"
-          }
-        }
-      }
-    },
     "Fill In" : {
 
     },
-    "Filled in %@. Check it below." : {
+    "Filled in %@. Check it above." : {
 
     },
     "Film" : {
 
     },
     "Filter" : {
-
-    },
-    "Find friends, groups and expenses, or ask in your own words." : {
 
     },
     "Finding the exchange rate" : {
@@ -1507,7 +1573,7 @@
     "Finished" : {
 
     },
-    "Fork and knife" : {
+    "Food" : {
 
     },
     "Friend" : {
@@ -1571,13 +1637,10 @@
     "Fuel" : {
 
     },
-    "Fuel pump" : {
-
-    },
     "Full" : {
 
     },
-    "Game controller" : {
+    "Games" : {
 
     },
     "General" : {
@@ -1601,9 +1664,6 @@
     "Give at least one person a share." : {
 
     },
-    "Graduation cap" : {
-
-    },
     "Groceries" : {
 
     },
@@ -1619,9 +1679,6 @@
         }
       }
     },
-    "Group Currency" : {
-
-    },
     "Group Name" : {
 
     },
@@ -1629,6 +1686,9 @@
 
     },
     "Group Settings" : {
+
+    },
+    "Group currency" : {
 
     },
     "Groups" : {
@@ -1646,6 +1706,9 @@
     "Groups and Members" : {
 
     },
+    "Gym" : {
+
+    },
     "Haptics" : {
       "comment" : "Setting that turns vibration feedback on or off",
       "extractionState" : "manual",
@@ -1658,31 +1721,28 @@
         }
       }
     },
-    "Hasn't joined yet" : {
-
-    },
     "Health" : {
 
     },
     "Heart" : {
 
     },
-    "Hi %@, a gentle nudge from Splt: you owe me %@ for %@. No rush, whenever suits you. Thank you!" : {
+    "Hi %@, a reminder that I'm owed %@ for %@. Thanks." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Hi %1$@, a gentle nudge from Splt: you owe me %2$@ for %3$@. No rush, whenever suits you. Thank you!"
+            "value" : "Hi %1$@, a reminder that I'm owed %2$@ for %3$@. Thanks."
           }
         }
       }
     },
-    "Hi %@, a gentle nudge from Splt: you owe me %@ from our shared expenses. No rush, whenever suits you. Thank you!" : {
+    "Hi %@, a reminder that I'm owed %@ from our shared expenses. Thanks." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Hi %1$@, a gentle nudge from Splt: you owe me %2$@ from our shared expenses. No rush, whenever suits you. Thank you!"
+            "value" : "Hi %1$@, a reminder that I'm owed %2$@ from our shared expenses. Thanks."
           }
         }
       }
@@ -1691,9 +1751,6 @@
 
     },
     "Hidden and Blocked" : {
-
-    },
-    "Hidden people stay out of the list. Blocked people also stay out of search and reminders. This only changes what you see on this device." : {
 
     },
     "Hide" : {
@@ -1711,9 +1768,6 @@
     "Home" : {
 
     },
-    "House" : {
-
-    },
     "How much was it?" : {
 
     },
@@ -1724,9 +1778,6 @@
 
     },
     "Importing it again would add every expense twice, so it is turned off." : {
-
-    },
-    "In %@" : {
 
     },
     "In %@, you are owed %@ and owe %@." : {
@@ -1765,7 +1816,7 @@
     "In a Week" : {
 
     },
-    "In the File" : {
+    "In the file" : {
 
     },
     "Invitation" : {
@@ -1775,9 +1826,6 @@
 
     },
     "Invite with iCloud" : {
-
-    },
-    "Inviting people needs iCloud, which this build of Splt can't use." : {
 
     },
     "It leaves everyone's balances. You can undo this right after." : {
@@ -1795,6 +1843,12 @@
     "JSON" : {
 
     },
+    "Join %@ on Splt" : {
+
+    },
+    "Join %@ on Splt." : {
+
+    },
     "Keep Editing" : {
 
     },
@@ -1805,9 +1859,6 @@
 
     },
     "Laughing" : {
-
-    },
-    "Leaf" : {
 
     },
     "Leave Group" : {
@@ -1853,6 +1904,12 @@
     "Link copied" : {
 
     },
+    "Link or QR Code" : {
+
+    },
+    "Lisbon Trip" : {
+
+    },
     "List" : {
 
     },
@@ -1874,10 +1931,10 @@
     "Mark All Read" : {
 
     },
-    "Match People" : {
+    "Match each Splitwise member to someone you already split with, or add them as a new person." : {
 
     },
-    "Match each Splitwise member to someone you already split with, or add them as a new person." : {
+    "Match people" : {
 
     },
     "Members" : {
@@ -1889,6 +1946,9 @@
     "Merge %@?" : {
 
     },
+    "Merge With…" : {
+
+    },
     "Merge into %@" : {
 
     },
@@ -1896,6 +1956,9 @@
 
     },
     "Microphone access is off for Splt. Turn it on in Settings, or type instead." : {
+
+    },
+    "Month" : {
 
     },
     "Month by month" : {
@@ -1916,13 +1979,13 @@
     "More than one person here is called %@. Choose who you mean below." : {
 
     },
-    "Most of this group went to %@." : {
+    "Most of the money on this trip went on %@." : {
 
     },
-    "Most of this trip went to %@." : {
+    "Most of this group's spending went on %@." : {
 
     },
-    "Most of your shared spending went to %@." : {
+    "Most of your shared spending went on %@." : {
 
     },
     "Mountains" : {
@@ -1934,10 +1997,16 @@
     "Name" : {
 
     },
+    "Nature" : {
+
+    },
     "Needs Attention" : {
 
     },
-    "Net Balances" : {
+    "Net" : {
+
+    },
+    "Net balances" : {
 
     },
     "Never" : {
@@ -1997,9 +2066,6 @@
         }
       }
     },
-    "No Expenses" : {
-
-    },
     "No Friends Yet" : {
       "comment" : "Empty state title on the Friends tab",
       "extractionState" : "manual",
@@ -2024,16 +2090,13 @@
         }
       }
     },
-    "No Receipt" : {
+    "No Recap Yet" : {
 
     },
     "No Recurring Expenses" : {
 
     },
-    "No Results" : {
-
-    },
-    "No Totals Yet" : {
+    "No Results for “%@”" : {
 
     },
     "No exchange rate for %@ yet. The amount stays in %@." : {
@@ -2046,17 +2109,10 @@
         }
       }
     },
-    "No exchange rate is saved for %@. The amount is kept in %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No exchange rate is saved for %1$@. The amount is kept in %2$@."
-          }
-        }
-      }
-    },
     "No expenses" : {
+
+    },
+    "No expenses match these filters." : {
 
     },
     "No iCloud Account" : {
@@ -2065,7 +2121,7 @@
     "Nobody Hidden" : {
 
     },
-    "Nobody owes anybody. Enjoy it." : {
+    "Nobody owes anything." : {
 
     },
     "Nobody paid" : {
@@ -2075,9 +2131,6 @@
 
     },
     "None" : {
-
-    },
-    "Not Available" : {
 
     },
     "Not Now" : {
@@ -2101,21 +2154,11 @@
     "Notes" : {
 
     },
-    "Notes and Receipt" : {
+    "Notes and receipt" : {
 
     },
     "Nothing Matches" : {
 
-    },
-    "Nothing matches “%@”. Check the spelling, or ask a question such as “%@”." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Nothing matches “%1$@”. Check the spelling, or ask a question such as “%2$@”."
-          }
-        }
-      }
     },
     "Nothing owed between you and %@." : {
 
@@ -2138,10 +2181,19 @@
         }
       }
     },
+    "Notifications are turned off in the Settings app." : {
+
+    },
     "Number pad" : {
 
     },
     "OK" : {
+
+    },
+    "Off" : {
+
+    },
+    "Off in Simulator" : {
 
     },
     "Offline" : {
@@ -2165,6 +2217,18 @@
     "Only people who haven't joined Splt can be merged." : {
 
     },
+    "Only people you invited can join this group. A link or QR code lets anyone who has it join and add expenses." : {
+
+    },
+    "Only the person who shared this group can invite people with iCloud." : {
+
+    },
+    "Only the person who shared this group can make a link anyone can join." : {
+
+    },
+    "Only you get this notification." : {
+
+    },
     "Open %@ Website" : {
 
     },
@@ -2175,9 +2239,6 @@
 
     },
     "Open your Splitwise account on the web." : {
-
-    },
-    "Opens %@ so you can send the money. Come back and tap Record Payment when it's done." : {
 
     },
     "Opens Splt ready to settle up with a friend." : {
@@ -2201,7 +2262,7 @@
     "Options" : {
 
     },
-    "Orbit" : {
+    "Options for %@" : {
 
     },
     "Other" : {
@@ -2211,6 +2272,9 @@
 
     },
     "Over %@" : {
+
+    },
+    "Owes you" : {
 
     },
     "PDF" : {
@@ -2258,10 +2322,22 @@
         }
       }
     },
-    "Paid by Person" : {
+    "Paid by %lld people" : {
+
+    },
+    "Paid by person" : {
+
+    },
+    "Paid by person in %@" : {
+
+    },
+    "Paid by you" : {
 
     },
     "Paid with" : {
+
+    },
+    "Paid: %@" : {
 
     },
     "Part of a recurring expense" : {
@@ -2270,7 +2346,7 @@
     "Partial" : {
 
     },
-    "Party popper" : {
+    "Party" : {
 
     },
     "Pause" : {
@@ -2279,16 +2355,10 @@
     "Paused" : {
 
     },
-    "Paw print" : {
-
-    },
     "Pay with %@" : {
 
     },
     "PayPal" : {
-
-    },
-    "Payment Recorded" : {
 
     },
     "Payment undone" : {
@@ -2300,7 +2370,7 @@
     "People" : {
 
     },
-    "People who don't have Splt yet are added by name. They can join later." : {
+    "People without the app are added by name and can join later." : {
 
     },
     "People you add to a group show up here next time." : {
@@ -2327,10 +2397,22 @@
     "Pin Exchange Rate" : {
 
     },
-    "Possible Matches" : {
+    "Plane" : {
+
+    },
+    "Possible Duplicate" : {
+
+    },
+    "Possible matches" : {
+
+    },
+    "Preferences" : {
 
     },
     "Preparing %@" : {
+
+    },
+    "Preparing invite" : {
 
     },
     "Price" : {
@@ -2340,6 +2422,9 @@
 
     },
     "QR code that adds %@ as a friend" : {
+
+    },
+    "QR code to join %@" : {
 
     },
     "Quarterly" : {
@@ -2378,6 +2463,16 @@
     "Record Payment" : {
 
     },
+    "Recorded %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recorded %1$@ · %2$@"
+          }
+        }
+      }
+    },
     "Recorded %lld payments" : {
 
     },
@@ -2385,9 +2480,6 @@
 
     },
     "Recurring Expenses" : {
-
-    },
-    "Recurring Unavailable" : {
 
     },
     "Refund" : {
@@ -2399,13 +2491,16 @@
     "Remind %@" : {
 
     },
-    "Remind Me" : {
+    "Remind me" : {
+
+    },
+    "Reminder about %@" : {
 
     },
     "Reminder set for %@" : {
 
     },
-    "Reminders need Notifications turned on in Splt's settings." : {
+    "Reminders need notifications turned on in Account." : {
 
     },
     "Remove" : {
@@ -2424,6 +2519,12 @@
 
     },
     "Repeat" : {
+
+    },
+    "Repeats" : {
+
+    },
+    "Restart the app and try again." : {
 
     },
     "Restore" : {
@@ -2447,10 +2548,13 @@
     "Revolut" : {
 
     },
-    "Runner" : {
+    "Running" : {
 
     },
-    "Sailboat" : {
+    "Sailing" : {
+
+    },
+    "Sam owes you" : {
 
     },
     "Save" : {
@@ -2471,7 +2575,7 @@
     "Scan a Friend's Code" : {
 
     },
-    "Scan a receipt and the items fly onto the people who shared them." : {
+    "Scan a receipt to split it by item." : {
 
     },
     "Scanned %lld items. Tap people under each item to assign it." : {
@@ -2521,6 +2625,9 @@
     "Scanning Isn't Available" : {
 
     },
+    "School" : {
+
+    },
     "Search" : {
       "comment" : "Title of the search screen",
       "extractionState" : "manual",
@@ -2529,18 +2636,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search"
-          }
-        }
-      }
-    },
-    "Search Splt" : {
-      "comment" : "Empty state title on the search screen",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search Splt"
           }
         }
       }
@@ -2566,21 +2661,6 @@
     "Sending and receiving changes." : {
 
     },
-    "Settings" : {
-      "comment" : "Settings screen title and row",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
-          }
-        }
-      }
-    },
-    "Settle" : {
-
-    },
     "Settle Up" : {
 
     },
@@ -2588,6 +2668,12 @@
 
     },
     "Settle up first. This person still owes or is owed money in the group." : {
+
+    },
+    "Settle up with ${friend}" : {
+
+    },
+    "Settled" : {
 
     },
     "Settled up" : {
@@ -2614,7 +2700,13 @@
     "Share Invite Link" : {
 
     },
+    "Share Link" : {
+
+    },
     "Shared by %@" : {
+
+    },
+    "Shared expenses" : {
 
     },
     "Shares" : {
@@ -2623,34 +2715,25 @@
     "Shopping" : {
 
     },
-    "Shopping cart" : {
-
-    },
     "Show" : {
-
-    },
-    "Show Bar" : {
 
     },
     "Show List" : {
 
     },
+    "Show Orbit" : {
+
+    },
     "Show Welcome Tour" : {
 
     },
-    "Show bar" : {
+    "Show as Bar" : {
+
+    },
+    "Show as List" : {
 
     },
     "Show in Friends" : {
-
-    },
-    "Show list" : {
-
-    },
-    "Show the code to a friend, or send the link. They tap it to add you." : {
-
-    },
-    "Showing" : {
 
     },
     "Showing the fewest payments that settle the group." : {
@@ -2662,31 +2745,31 @@
     "Shows the breakdown" : {
 
     },
-    "Sign in to iCloud in the Settings app to invite people." : {
+    "Shows these expenses" : {
 
     },
     "Sign in to iCloud in the Settings app to share groups with friends." : {
 
     },
+    "Sign in to iCloud in the Settings app, then open the invitation again." : {
+
+    },
     "Simplify Debts" : {
 
     },
-    "Skier" : {
+    "Skiing" : {
 
     },
     "Skip" : {
 
     },
-    "Snowflake" : {
+    "Snow" : {
 
     },
     "Someone" : {
 
     },
-    "Someone can be removed once they are settled up. Swipe a member to remove them." : {
-
-    },
-    "Something Went Wrong" : {
+    "Someone can be removed once they are settled up." : {
 
     },
     "Something went wrong. Please try again." : {
@@ -2703,6 +2786,12 @@
           }
         }
       }
+    },
+    "Spending by day" : {
+
+    },
+    "Spending by month" : {
+
     },
     "Spending on this group is spread across %@ and %@." : {
 
@@ -2728,17 +2817,7 @@
     "Split bar" : {
 
     },
-    "Split between %lld people, %@ each." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Split between %1$lld people, %2$@ each."
-          }
-        }
-      }
-    },
-    "Split between %lld people." : {
+    "Split bills with friends" : {
 
     },
     "Split equally after adding or taking off an amount for some people." : {
@@ -2748,9 +2827,6 @@
 
     },
     "Split with" : {
-
-    },
-    "Split with people, not spreadsheets" : {
 
     },
     "Splitwise Import" : {
@@ -2765,13 +2841,7 @@
     "Splt can't find that group." : {
 
     },
-    "Splt could not open its data. Restart the app and try again." : {
-
-    },
     "Splt couldn't open its data." : {
-
-    },
-    "Splt couldn't open its storage." : {
 
     },
     "Splt couldn't open that file. Choose a CSV exported from Splitwise." : {
@@ -2795,16 +2865,10 @@
     "Splt group with %@" : {
 
     },
-    "Splt isn't allowed to send notifications. You can change this in the Settings app." : {
+    "Sports" : {
 
     },
-    "Splt only sees the contacts you pick." : {
-
-    },
-    "Splt reads the file on this device. Nothing is uploaded, and your Splitwise group stays as it is." : {
-
-    },
-    "Sports court" : {
+    "Spreadsheet (CSV)" : {
 
     },
     "Standard" : {
@@ -2820,9 +2884,6 @@
 
     },
     "Still to assign" : {
-
-    },
-    "Stop" : {
 
     },
     "Stop dictating" : {
@@ -2864,10 +2925,16 @@
         }
       }
     },
+    "Sync is off while testing. Your groups stay on this device." : {
+
+    },
     "Sync is still getting ready. Try again in a moment." : {
 
     },
     "Sync ran into a problem. Your changes are safe on this device and will be sent later." : {
+
+    },
+    "Sync runs on iPhone. In the Simulator, your groups stay on this device." : {
 
     },
     "Syncing" : {
@@ -2879,13 +2946,16 @@
     "Tax" : {
 
     },
-    "Tax, Tip and Discount" : {
+    "Tax, tip and discount" : {
 
     },
-    "Tent" : {
+    "That code isn't an invite." : {
 
     },
     "That did not work. Try again." : {
+
+    },
+    "That group could not be found in iCloud. It may have been deleted or is no longer shared." : {
 
     },
     "That group could not be found." : {
@@ -2898,12 +2968,6 @@
 
     },
     "That invite is from you." : {
-
-    },
-    "That is the story of %@." : {
-
-    },
-    "That isn't a Splt invite." : {
 
     },
     "That isn't an amount Splt can add." : {
@@ -2933,6 +2997,9 @@
     "The amount must be more than zero." : {
 
     },
+    "The app only sees the contacts you pick." : {
+
+    },
     "The biggest one" : {
 
     },
@@ -2942,7 +3009,13 @@
     "The file has no expenses or payments that Splt can import." : {
 
     },
+    "The file is read on this device and nothing is uploaded." : {
+
+    },
     "The group or expense may have been removed." : {
+
+    },
+    "The group owner's iCloud storage is full. Your changes are safe on this device and will sync once they free up space." : {
 
     },
     "The payments are %@ too high." : {
@@ -2951,7 +3024,13 @@
     "The percentages are %@ over 100%%." : {
 
     },
+    "The recap appears once the group has expenses." : {
+
+    },
     "The receipt is attached, but no items could be read. Add them by hand." : {
+
+    },
+    "The receipt photo could not be opened." : {
 
     },
     "The receipt photo is not on this device." : {
@@ -2969,7 +3048,7 @@
     "They appear in the same expense or payment, so Splt can't combine them automatically. Edit or delete that item first." : {
 
     },
-    "They don't need the app yet. Splt keeps their name until they join." : {
+    "They stay out of your friends, search and reminders on this device." : {
 
     },
     "This Month" : {
@@ -2978,7 +3057,7 @@
     "This amount does not fit the currency. Check the decimals." : {
 
     },
-    "This build of Splt runs without iCloud, so your data stays on this device." : {
+    "This copy was built without iCloud, so your groups stay on this device." : {
 
     },
     "This doesn't look like a Splitwise CSV export. %@" : {
@@ -2996,10 +3075,10 @@
     "This group may have been deleted." : {
 
     },
-    "This invitation is not valid any more. Ask for a new one." : {
+    "This group stayed on this device when you switched iCloud accounts. It is not in your iCloud, so it cannot be shared." : {
 
     },
-    "This looks like a duplicate" : {
+    "This invitation is not valid any more. Ask for a new one." : {
 
     },
     "This person is part of the recurring expense “%@”. Change or delete it first." : {
@@ -3017,7 +3096,7 @@
     "Thumbs up" : {
 
     },
-    "Ticket" : {
+    "Tickets" : {
 
     },
     "Tip" : {
@@ -3047,7 +3126,13 @@
     "Tomorrow" : {
 
     },
+    "Total" : {
+
+    },
     "Total Spent" : {
+
+    },
+    "Total Spent in %@" : {
 
     },
     "Total spent" : {
@@ -3057,6 +3142,9 @@
 
     },
     "Totals appear once the group has expenses." : {
+
+    },
+    "Train" : {
 
     },
     "Tram" : {
@@ -3080,7 +3168,16 @@
     "Try a different filter." : {
 
     },
+    "Try asking" : {
+
+    },
     "Turn On Notifications" : {
+
+    },
+    "Turn on iCloud to invite people. This link only opens the group on a device that already has it." : {
+
+    },
+    "Turn on iCloud to invite people; a link only opens the group on a device that already has it." : {
 
     },
     "Twice a Month" : {
@@ -3161,6 +3258,9 @@
     "View Receipt" : {
 
     },
+    "View balance with ${friend}" : {
+
+    },
     "Watch the Recap" : {
 
     },
@@ -3176,10 +3276,10 @@
     "Where it went" : {
 
     },
-    "Who Owes Whom" : {
+    "Who do you want to settle up with?" : {
 
     },
-    "Who do you want to settle up with?" : {
+    "Who owes whom" : {
 
     },
     "Who paid the most" : {
@@ -3188,16 +3288,16 @@
     "Who's in" : {
 
     },
-    "Wine glass" : {
-
-    },
     "Wise" : {
 
     },
     "With %@" : {
 
     },
-    "With Friends" : {
+    "With friends" : {
+
+    },
+    "Work" : {
 
     },
     "Yearly" : {
@@ -3224,9 +3324,6 @@
     "You and %@ are settled up." : {
 
     },
-    "You are all settled up" : {
-
-    },
     "You are all settled up." : {
 
     },
@@ -3236,7 +3333,7 @@
     "You are not involved" : {
 
     },
-    "You are owed" : {
+    "You are offline. Try again when you are back online." : {
 
     },
     "You are owed %@" : {
@@ -3251,22 +3348,6 @@
         }
       }
     },
-    "You are owed %@ and you owe %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "You are owed %1$@ and you owe %2$@."
-          }
-        }
-      }
-    },
-    "You are owed %@." : {
-
-    },
-    "You are owed %@. Settle up before leaving." : {
-
-    },
     "You are part of the recurring expense “%@”. Change or delete it before leaving." : {
 
     },
@@ -3276,13 +3357,22 @@
     "You are the only member. Delete the group instead." : {
 
     },
-    "You blocked this person, so Splt won't remind you about them." : {
+    "You blocked this person, so there's no reminder." : {
+
+    },
+    "You can only leave a group someone else shared with you. Delete this group instead." : {
 
     },
     "You can pay me with %@." : {
 
     },
-    "You get a quiet notification on your device. Nothing is sent to anyone." : {
+    "You do not have permission to do that in this group." : {
+
+    },
+    "You get back %@" : {
+
+    },
+    "You joined this group, so you can't delete it. Leave it instead." : {
 
     },
     "You no longer have permission to change a shared group. Your changes are kept on this device." : {
@@ -3319,6 +3409,9 @@
     "You owe %@. Settle up before leaving." : {
 
     },
+    "You owe Priya" : {
+
+    },
     "You owe friends %@." : {
 
     },
@@ -3347,19 +3440,38 @@
     "You spent together" : {
 
     },
+    "You still have debts with other members. Settle up before leaving." : {
+
+    },
     "You stop seeing this group. The others keep it." : {
 
     },
-    "You're offline. Connect to the internet to invite people." : {
+    "You're owed" : {
 
     },
-    "Your Balance" : {
+    "You're owed %@ and you owe %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You're owed %1$@ and you owe %2$@."
+          }
+        }
+      }
+    },
+    "You're owed %@." : {
+
+    },
+    "You're owed %@. Settle up before leaving." : {
 
     },
     "Your Name" : {
 
     },
     "Your Profile" : {
+
+    },
+    "Your balance" : {
 
     },
     "Your friends are hidden or blocked. Bring them back from the list below." : {
@@ -3371,10 +3483,13 @@
     "Your groups are in sync across your devices and the people you share with." : {
 
     },
+    "Your iCloud storage is full. Free up space and try again." : {
+
+    },
     "Your iCloud storage is full. Free up space or buy more in Settings and Splt will finish syncing. Your changes are safe on this device." : {
 
     },
-    "Your name" : {
+    "Your name couldn't be saved. Try again." : {
 
     },
     "Your name is what friends see. You can change both later." : {
@@ -3405,12 +3520,6 @@
     "^[%lld expense](inflect: true) over ^[%lld month](inflect: true)" : {
 
     },
-    "^[%lld friend](inflect: true)" : {
-
-    },
-    "^[%lld group](inflect: true)" : {
-
-    },
     "^[%lld member](inflect: true)" : {
 
     },
@@ -3419,6 +3528,26 @@
     },
     "^[%lld person](inflect: true)" : {
 
+    },
+    "^[%lld person](inflect: true), ^[%lld expense](inflect: true), ^[%lld day](inflect: true)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld person](inflect: true), ^[%2$lld expense](inflect: true), ^[%3$lld day](inflect: true)."
+          }
+        }
+      }
+    },
+    "^[%lld person](inflect: true), ^[%lld expense](inflect: true), ^[%lld month](inflect: true)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld person](inflect: true), ^[%2$lld expense](inflect: true), ^[%3$lld month](inflect: true)."
+          }
+        }
+      }
     },
     "^[%lld row](inflect: true) skipped" : {
 
@@ -3445,6 +3574,9 @@
 
     },
     "discount %@" : {
+
+    },
+    "equal" : {
 
     },
     "even" : {
@@ -3483,19 +3615,16 @@
         }
       }
     },
+    "iCloud could not do that right now. Try again in a moment." : {
+
+    },
     "iCloud is restricted on this device, so groups stay on this device." : {
 
     },
-    "iCloud is restricted on this device, so you can't invite people." : {
+    "iCloud is restricted on this device, so shared groups cannot be joined here." : {
 
     },
     "iCloud sync is not available in this build." : {
-
-    },
-    "iCloud sync isn't available in this build. Your groups stay on this device." : {
-
-    },
-    "iCloud sync needs attention before you can invite people. Open Account to see why." : {
 
     },
     "is owed %@" : {
@@ -3507,7 +3636,13 @@
     "location" : {
 
     },
+    "minus %@" : {
+
+    },
     "name@bank" : {
+
+    },
+    "not involved" : {
 
     },
     "notes" : {
@@ -3538,6 +3673,12 @@
 
     },
     "receipt" : {
+
+    },
+    "refund %@" : {
+
+    },
+    "refund received by %@" : {
 
     },
     "rent over 500" : {
@@ -3589,6 +3730,9 @@
     "split by shares" : {
 
     },
+    "split it, covering %@ of the bills each" : {
+
+    },
     "split with adjustments" : {
 
     },
@@ -3613,7 +3757,7 @@
     "username" : {
 
     },
-    "you are owed" : {
+    "you" : {
 
     },
     "you lent" : {
@@ -3628,7 +3772,10 @@
     "you owe %@" : {
 
     },
-    "·" : {
+    "you're owed" : {
+
+    },
+    "€1,650.07" : {
 
     }
   },
