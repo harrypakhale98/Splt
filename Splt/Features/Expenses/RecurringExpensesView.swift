@@ -77,6 +77,10 @@ private struct RecurringExpensesScreen: View {
         .sheet(isPresented: $adding, onDismiss: model.reload) {
             ExpenseFormView(mode: .add(groupID: model.groupID, prefill: ExpenseDraft(repeats: .monthly)))
         }
+        .closingSheetsOnLink {
+            editing = nil
+            adding = false
+        }
         .confirmationDialog(
             "Delete this recurring expense?", isPresented: Binding(
                 get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }

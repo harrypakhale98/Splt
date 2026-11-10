@@ -27,6 +27,7 @@ struct ReceiptSection: View {
                             .fullScreenCover(isPresented: $showsFullScreen) {
                                 FullScreenReceiptView(fileName: fileName, store: store)
                             }
+                            .closingSheetsOnLink { showsFullScreen = false }
                         } else {
                             Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
                                 .foregroundStyle(Ink.secondary)

@@ -74,6 +74,10 @@ private struct ExpenseDetailScreen: View {
                 ExpenseFormView(mode: .add(groupID: groupID, prefill: model.duplicateDraft))
             }
         }
+        .closingSheetsOnLink {
+            showsEditor = false
+            showsDuplicate = false
+        }
         .translationPresentation(isPresented: Binding(
             get: { translating != nil }, set: { if !$0 { translating = nil } }
         ), text: translating ?? "")
