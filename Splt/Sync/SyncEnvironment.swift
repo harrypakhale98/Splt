@@ -21,7 +21,9 @@ enum NoOpReason: Equatable, Sendable {
 
     var status: SyncStatus {
         switch self {
-        case .simulator, .preview, .testing, .missingEntitlement: .unavailable
+        case .simulator: .unavailable(.simulator)
+        case .preview, .testing: .unavailable(.developerBuild)
+        case .missingEntitlement: .unavailable(.notSetUp)
         case .noAccount: .noAccount
         case .restricted: .restricted
         case .accountUnavailable: .offline

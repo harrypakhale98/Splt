@@ -40,8 +40,8 @@ final class AutomaticSyncEngine: SyncEngine {
         self.accountChanges = accountChanges
         self.recheckInterval = recheckInterval
         self.makeCloudKitEngine = makeCloudKitEngine
-        self.status = .unavailable
-        self.broadcaster = StatusBroadcaster(initial: .unavailable)
+        self.status = .unavailable(.starting)
+        self.broadcaster = StatusBroadcaster(initial: .unavailable(.starting))
     }
 
     var statusUpdates: AsyncStream<SyncStatus> { broadcaster.updates() }

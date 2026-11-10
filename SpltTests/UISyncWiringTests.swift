@@ -7,7 +7,7 @@ import Testing
 struct UISyncStatusPresentationTests {
     @Test func onlyAnErrorMarksTheAccountButton() {
         #expect(SyncStatusPresentation.needsAttention(.error("iCloud storage is full.")))
-        for status: SyncStatus in [.idle, .syncing, .offline, .noAccount, .restricted, .unavailable] {
+        for status: SyncStatus in [.idle, .syncing, .offline, .noAccount, .restricted, .unavailable(.simulator)] {
             #expect(!SyncStatusPresentation.needsAttention(status))
         }
     }
@@ -18,8 +18,21 @@ struct UISyncStatusPresentationTests {
         #expect(text.contains("Settings"))
     }
 
-    @Test func unavailableBuildsSayDataStaysOnTheDevice() {
-        #expect(SyncStatusPresentation.detail(for: .unavailable).contains("device"))
+    @Test func eachReasonForBeingOffSaysWhyAndWhereTheDataIs() {
+        let reasons: [SyncStatus.UnavailableReason] = [.simulator, .developerBuild, .notSetUp]
+        let details = reasons.map { SyncStatusPresentation.detail(for: .unavailable($0)) }
+        for detail in details {
+            #expect(detail.contains("device"))
+        }
+        #expect(Set(details).count == reasons.count)
+        #expect(SyncStatusPresentation.detail(for: .unavailable(.simulator)).contains("iPhone"))
+    }
+
+    @Test func eachReasonMapsToItsOwnStatus() {
+        #expect(NoOpReason.simulator.status == .unavailable(.simulator))
+        #expect(NoOpReason.testing.status == .unavailable(.developerBuild))
+        #expect(NoOpReason.preview.status == .unavailable(.developerBuild))
+        #expect(NoOpReason.missingEntitlement.status == .unavailable(.notSetUp))
     }
 
     @Test func errorsShowTheirOwnMessage() {
@@ -27,7 +40,10 @@ struct UISyncStatusPresentationTests {
     }
 
     @Test func everyStatusHasTitleDetailAndSymbol() {
-        let all: [SyncStatus] = [.idle, .syncing, .offline, .noAccount, .restricted, .error("x"), .unavailable]
+        let all: [SyncStatus] = [
+            .idle, .syncing, .offline, .noAccount, .restricted, .error("x"),
+            .unavailable(.starting), .unavailable(.simulator), .unavailable(.developerBuild), .unavailable(.notSetUp),
+        ]
         for status in all {
             #expect(!status.title.isEmpty)
             #expect(!SyncStatusPresentation.detail(for: status).isEmpty)
@@ -70,7 +86,7 @@ struct UISyncGroupSharingTests {
 
     @Test func leavingDoesNothingWhenNotConnected() async throws {
         let engine = FakeSyncEngine()
-        engine.report(.unavailable)
+        engine.report(.unavailable(.simulator))
         let runtime = SyncRuntime()
         runtime.use(engine)
 

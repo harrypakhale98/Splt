@@ -42,8 +42,8 @@ struct SyncEngineSelectorTests {
     }
 
     @Test func buildsWithoutSyncReportUnavailable() {
-        #expect(NoOpReason.simulator.status == .unavailable)
-        #expect(NoOpReason.missingEntitlement.status == .unavailable)
+        #expect(NoOpReason.simulator.status == .unavailable(.simulator))
+        #expect(NoOpReason.missingEntitlement.status == .unavailable(.notSetUp))
         #expect(NoOpReason.restricted.status == .restricted)
     }
 }

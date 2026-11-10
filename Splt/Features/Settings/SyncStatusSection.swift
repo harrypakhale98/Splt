@@ -6,8 +6,6 @@ enum SyncStatusPresentation {
         switch status {
         case .noAccount:
             String(localized: "To share groups with friends, open the Settings app, tap your name, choose iCloud and turn it on. Until then your groups stay on this device.")
-        case .unavailable:
-            String(localized: "iCloud sync isn't available in this build. Your groups stay on this device.")
         default:
             status.detail
         }
@@ -72,7 +70,7 @@ struct SyncStatusSectionContent: View {
 }
 
 #Preview("Unavailable") {
-    Form { SyncStatusSectionContent(status: .unavailable) }
+    Form { SyncStatusSectionContent(status: .unavailable(.simulator)) }
 }
 
 #Preview("Error") {

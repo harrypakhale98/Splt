@@ -33,7 +33,7 @@ struct AutomaticSyncEngineTests {
         let (engine, probe, made) = make(environment: environment)
         await engine.start()
         #expect(engine.choice == .noOp(.simulator))
-        #expect(engine.status == .unavailable)
+        #expect(engine.status == .unavailable(.simulator))
         #expect(probe.requests.isEmpty)
         #expect(made.engines.isEmpty)
         await engine.stop()
@@ -137,7 +137,7 @@ struct NoOpSyncEngineTests {
     @Test func startsQuietlyAndRefusesSharing() async {
         let engine = NoOpSyncEngine(reason: .simulator)
         await engine.start()
-        #expect(engine.status == .unavailable)
+        #expect(engine.status == .unavailable(.simulator))
         await #expect(throws: SyncError.unavailable) { try await engine.share(group: GroupID()) }
         await #expect(throws: SyncError.unavailable) { try await engine.accept(ShareInvitation(groupName: nil)) }
         await #expect(throws: SyncError.unavailable) { try await engine.leave(group: GroupID()) }
@@ -177,7 +177,10 @@ struct StatusBroadcasterTests {
 @Suite("Sync status")
 struct SyncStatusTests {
     @Test func everyStatusHasFriendlyText() {
-        let all: [SyncStatus] = [.idle, .syncing, .offline, .noAccount, .restricted, .error("Storage is full."), .unavailable]
+        let all: [SyncStatus] = [
+            .idle, .syncing, .offline, .noAccount, .restricted, .error("Storage is full."),
+            .unavailable(.starting), .unavailable(.simulator), .unavailable(.developerBuild), .unavailable(.notSetUp),
+        ]
         for status in all {
             #expect(!status.title.isEmpty)
             #expect(!status.detail.isEmpty)
@@ -190,6 +193,6 @@ struct SyncStatusTests {
         #expect(SyncStatus.idle.isConnected)
         #expect(SyncStatus.syncing.isConnected)
         #expect(!SyncStatus.offline.isConnected)
-        #expect(!SyncStatus.unavailable.isConnected)
+        #expect(!SyncStatus.unavailable(.notSetUp).isConnected)
     }
 }
