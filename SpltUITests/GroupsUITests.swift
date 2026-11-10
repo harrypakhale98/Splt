@@ -21,8 +21,7 @@ final class GroupsUITests: XCTestCase {
         name.tap()
         name.typeText("Weekend Away")
         XCTAssertTrue(app.buttons["Create"].isEnabled)
-        let keyboardDone = app.keyboards.buttons["Done"]
-        if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
+        tapKeyboardDone(in: app)
 
         let member = app.textFields["Add by Name"]
         reveal(member, in: app)

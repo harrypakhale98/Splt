@@ -1,6 +1,16 @@
 import XCTest
 
 extension XCTestCase {
+    /// Taps Done on the keyboard when it is up. The key exists while the keyboard is still sliding
+    /// in or out, when a tap on it fails, so this waits until it can be tapped.
+    @MainActor
+    func tapKeyboardDone(in app: XCUIApplication) {
+        let done = app.keyboards.buttons["Done"]
+        guard done.waitForExistence(timeout: 3) else { return }
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: done)
+        if XCTWaiter.wait(for: [hittable], timeout: 3) == .completed { done.tap() }
+    }
+
     /// Launches the app on an empty store (`-uitesting`) or the sample trip (`-sampledata`).
     @MainActor
     func launchApp(
@@ -145,8 +155,7 @@ extension XCTestCase {
         XCTAssertTrue(groupName.waitForExistence(timeout: 5))
         groupName.tap()
         groupName.typeText(name)
-        let keyboardDone = app.keyboards.buttons["Done"]
-        if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
+        tapKeyboardDone(in: app)
 
         let memberField = app.textFields["Add by Name"]
         for member in members {

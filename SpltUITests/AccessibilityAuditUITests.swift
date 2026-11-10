@@ -173,8 +173,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         openTab("Groups", in: app)
         app.buttons["Create Group"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Group"].waitForExistence(timeout: 5))
-        let keyboardDone = app.keyboards.buttons["Done"]
-        if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
+        tapKeyboardDone(in: app)
         audit(app, "New group")
         app.buttons["Cancel"].firstMatch.tap()
 
