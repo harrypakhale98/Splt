@@ -19,6 +19,20 @@ struct UIPreferencesTests {
         #expect(preferences.defaultCurrencyCode == Preferences.systemCurrencyCode)
     }
 
+    @Test(arguments: [
+        ("en_IN", "INR"), ("en_AU", "AUD"), ("en_CA", "CAD"), ("en_GB", "GBP"), ("en_US", "USD"),
+        ("en_DE", "EUR"), ("en_JP", "JPY"), ("en_AE", "AED"), ("en_SG", "SGD"), ("en_BR", "BRL"),
+        // the app is English only, so a phone set to Hindi in India reads as English (India)
+        ("hi_IN", "INR"), ("fr_CA", "CAD"),
+    ])
+    func theDefaultCurrencyFollowsThePhonesRegion(identifier: String, currency: String) {
+        #expect(Preferences.currencyCode(for: Locale(identifier: identifier)) == currency)
+    }
+
+    @Test func aLocaleWithoutARegionFallsBackToDollars() {
+        #expect(Preferences.currencyCode(for: Locale(identifier: "en")) == "USD")
+    }
+
     @Test func valuesPersistAcrossInstances() {
         let store = makeStore()
         let first = Preferences(store: store)

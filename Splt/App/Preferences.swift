@@ -22,7 +22,15 @@ struct Preferences: DynamicProperty {
         _onboardingCompleted = AppStorage(wrappedValue: false, Key.onboardingCompleted, store: store)
     }
 
+    /// The currency of the phone's region, so a phone set to India starts in rupees and one set to
+    /// Australia in Australian dollars. The app is English only, but iOS keeps the region, so this
+    /// still works when the phone's language is one Splt doesn't offer.
     static var systemCurrencyCode: String {
-        Locale.current.currency?.identifier ?? "USD"
+        currencyCode(for: .current)
+    }
+
+    /// The currency for a locale's region, or US dollars when the locale has no region.
+    static func currencyCode(for locale: Locale) -> String {
+        locale.currency?.identifier ?? "USD"
     }
 }
