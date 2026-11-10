@@ -13,7 +13,7 @@ If you turn iCloud off, Splt keeps working and keeps everything on the device.
 
 ## Who can see a group
 
-You and the people who join that group. There are two ways to invite. Invite with iCloud sends an invitation to the people you choose, and only they can join. Link or QR Code makes a link that anyone who has it can use to join, so send it only to people you trust. You can close the link again in Invite with iCloud, under who can join. People who join can see the group's members, expenses, payments and comments. Everyone in a group can add, change and remove what is in it.
+You and the people who join that group. There are two ways to invite. Invite with iCloud sends an invitation to the people you choose, and only they can join. Link or QR Code makes a link that anyone who has it can use to join, so send it only to people you trust. You can close the link again in Invite with iCloud, under who can join, which also removes the people who joined through it. People who join can see the group's members, expenses, payments and comments. Everyone in a group can add, change and remove what is in it.
 
 An email address or phone number that you pick from Contacts stays on your device. It is not shared with the group.
 
@@ -45,7 +45,7 @@ Exporting a group as CSV, PDF or JSON creates a file on your device. It goes whe
 
 ## Deleting your data
 
-Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Deleting the app removes what it stored on the device.
+Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Your groups then stay on your devices as local copies and are not uploaded again. Deleting the app removes what it stored on the device.
 
 ## Children
 

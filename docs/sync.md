@@ -38,7 +38,7 @@ No indexes are needed: the app never queries, it only reads zone changes.
 ## Sharing
 
 1. In a group's settings, choose Invite with iCloud. The app creates a zone wide `CKShare` with no public access and shows the system invite sheet. Invitees get read and write access.
-2. Or choose Link or QR Code. The share is then open to anyone who has the link, with read and write access, and the app shows the link and a code to scan. The owner can close it again in the invite sheet, under who can join. Once closed, the app asks before it opens the share again.
+2. Or choose Link or QR Code. The share is then open to anyone who has the link, with read and write access, and the app shows the link and a code to scan. The owner can close it again in the invite sheet, under who can join. CloudKit then removes everyone who joined through the link, so the group disappears from their devices; people invited by name stay. Once closed, the app asks before it opens the share again.
 3. A friend you invited opens the link they received. The system hands the app a share invitation, the app accepts it and the group appears in their list. They are added to the member list automatically.
 4. People you added by name before they joined are placeholders. When the real person joins, claim the placeholder: every expense, payment and comment that mentioned the placeholder is rewritten to the real person.
 5. A friend leaves a group with Leave Group in the group's settings. Their removal from the member list reaches the others first, and if they are offline it is sent once they are back. The system invite sheet is only shown to the person who shared the group, because its Remove Me option would leave the share without leaving the member list.
@@ -57,6 +57,19 @@ CloudKit gives everyone in a shared zone write access to the whole zone, and any
 
 Inside one group, members are trusted: anyone can edit or delete its expenses, payments and members. They can also change the name of anyone they share a group with, on the devices of everyone else in that group, because a person record has no owner. Change this only with a real test across accounts: other people's devices upload copies of a person, so the last writer is often not that person.
 
+## Check it on real devices
+
+The tests run sync against stand-ins for CloudKit, and the simulator has no iCloud. Before a release that touches `Splt/Sync`, walk through this with two iPhones on two iCloud accounts, A and B, and a third person C for the link. Watch the sync status under Account on each.
+
+1. A invites B with Invite with iCloud. B accepts once with the app closed and once with it open. The group opens on B, and B is on A's member list once.
+2. A and B edit the same expense while offline, then go online. Both end up with the same version.
+3. B taps Leave Group. B is gone from A's member list and from A's invite sheet, and B shows no sync error. A invites B again and the history comes back.
+4. A makes a link and C joins with it. A sets the invite sheet to invited people only: the group leaves C's phone. A opens the link again and C joins again.
+5. A invites B by name and then opens the link. B still has the group.
+6. A stops sharing: the group leaves B's phone and stays on A's. A shares again, then deletes the group: it leaves B's phone.
+7. On A, open Settings, iCloud, Manage Account Storage, Splt, and delete its data. A's groups stay on A's phone and are not uploaded again.
+8. Tap an invite link with the app closed and the phone in airplane mode, then go online within a minute. The group opens.
+
 ## Known limits
 
 - Sharing and push only work on real devices signed in to iCloud. The simulator cannot be used to test them.
@@ -65,6 +78,8 @@ Inside one group, members are trusted: anyone can edit or delete its expenses, p
 - Two people editing the same record before either has synced can lose a change, even in different fields: the later edit replaces the whole record. This also applies to a group's member list and a comment's reactions. Separate records, such as two new expenses, never conflict.
 - Receipt photos stay on the device that scanned them. Only the file name syncs.
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
+- After you delete Splt's data in the iCloud storage settings, your groups stay on each device as local copies and are not uploaded again. Groups you make afterwards sync as usual.
+- Closing a link does not take the people it removed off the group's member list. Remove them in the group's settings, or invite them again by name.
 - A device that stays offline for a very long time may have to refetch everything. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
 - Deleting a shared group as its owner removes it for everyone.
 - A group is stored in its owner's iCloud. When the owner's storage is full, nobody can upload changes to that group, and the app tells the others it is the owner's storage. Changes stay on each device and sync once space is available.
