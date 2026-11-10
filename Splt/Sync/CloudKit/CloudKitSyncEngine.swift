@@ -205,6 +205,9 @@ final class CloudKitSyncEngine: SyncEngine {
         guard !syncers.isEmpty else { throw SyncError.notReady }
         guard let metadata = invitation.metadata else { throw SyncError.invalidInvitation }
         guard metadata.containerIdentifier == backend.containerIdentifier else { throw SyncError.invalidInvitation }
+        // The person who shared the group opened their own link, to try it or by mistake. There is
+        // nothing to accept, and asking CloudKit to would only come back as an error.
+        guard metadata.participantRole != .owner else { return }
         try await backend.accept(metadata)
         // the server has accepted, so the join stands even if the group cannot be fetched right now:
         // it arrives with the next fetch

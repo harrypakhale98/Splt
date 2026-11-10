@@ -152,6 +152,12 @@ struct LiveCloudKitTests {
             #expect(share.isOpenToAnyoneWithLink)
             #expect(try await !b.engine.isSharedInviteOnly(group: group))
             #expect(await b.engine.isSharedByMe(group: group))
+            // the owner opening their own link has nothing to accept, and it is not an error
+            let metadata = try await CKContainer(identifier: container).shareMetadata(for: try #require(share.url))
+            #expect(metadata.participantRole == .owner)
+            try await b.engine.accept(ShareInvitation(metadata: metadata))
+            #expect(try b.services.groups.group(id: group) != nil)
+            #expect(await b.engine.isSharedByMe(group: group))
             // asking again without the link hands back the same share and does not close it
             let again = try await b.engine.share(group: group, anyoneWithLink: false)
             #expect(again.url == share.url)
