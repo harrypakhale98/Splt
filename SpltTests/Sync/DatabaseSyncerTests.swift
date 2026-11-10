@@ -165,6 +165,35 @@ struct DatabaseSyncerTests {
         #expect(rig.coordinator.status == .idle)
     }
 
+    @Test func anExpiredChangeTokenStartsAgainFromNothing() async throws {
+        let populated = try PopulatedDevice()
+        let coordinator = SyncCoordinator(services: populated.device.services, adapter: populated.device.adapter)
+        let syncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: populated.device.store)
+        let first = FakeEngineHandle(), second = FakeEngineHandle()
+        first.fetchError = CKError(.changeTokenExpired)
+        var made = 0
+        syncer.start { _, _ in
+            made += 1
+            return made == 1 ? first : second
+        }
+        coordinator.attach(syncer, for: .privateDatabase)
+        coordinator.markReady()
+        populated.device.store.saveEngineState(Data([1]), scope: .privateDatabase)
+
+        await #expect(throws: CKError.self) { try await syncer.fetchChanges() }
+        #expect(await eventually { second.fetchCount == 1 })
+        #expect(made == 2)
+        #expect(first.cancelCount == 1)
+        #expect(populated.device.store.loadEngineState(.privateDatabase) == nil)
+
+        // a second expiry in the same run is only reported, so nothing can go round in circles
+        second.fetchError = CKError(.changeTokenExpired)
+        await #expect(throws: CKError.self) { try await syncer.fetchChanges() }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(made == 2)
+        await syncer.stop()
+    }
+
     @Test func aZoneThatCouldNotBeFetchedDoesNotReadAsUpToDate() throws {
         let rig = try Rig()
         rig.syncer.handle(.zoneFetchFailed(CKError(.quotaExceeded)))

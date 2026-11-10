@@ -138,6 +138,10 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     /// A fetched batch could not be stored. The engine has moved past it, so no state is kept from here on
     /// and the next launch fetches everything again.
     private var lostFetchedChanges = false
+    /// Kept so that a new engine can be made when the saved state turns out to be too old to use.
+    private var makeEngine: EngineFactory?
+    private var hasStartedOver = false
+    private var startingOver: Task<Void, Never>?
 
     init(scope: DatabaseScope, coordinator: SyncCoordinator, store: any SyncStateStore) {
         self.scope = scope
@@ -154,14 +158,39 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
 
     var hasSavedState: Bool { store.loadEngineState(scope) != nil }
 
-    func start(makeEngine: EngineFactory) {
+    func start(makeEngine: @escaping EngineFactory) {
+        self.makeEngine = makeEngine
         let saved = store.loadEngineState(scope).flatMap {
             try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: $0)
         }
         engine = makeEngine(saved, self)
     }
 
+    /// CloudKit says the change token in the saved state is too old to go on from, which the engine
+    /// does not recover from by itself. The state is dropped and a new engine fetches everything
+    /// again. Once per run, so a server that keeps saying it cannot cause a loop.
+    private func startOver() {
+        guard !hasStartedOver, let makeEngine else { return }
+        hasStartedOver = true
+        store.saveEngineState(nil, scope: scope)
+        startingOver = Task { [weak self] in
+            guard let self else { return }
+            await engine?.cancelOperations()
+            guard !Task.isCancelled else { return }
+            engine = makeEngine(nil, self)
+            // what was waiting to be sent went with the old engine, so it is queued again
+            try? coordinator.reconcile()
+            try? await fetchChanges()
+        }
+    }
+
+    private static func isExpiredToken(_ error: any Error) -> Bool {
+        (error as? CKError)?.code == .changeTokenExpired
+    }
+
     func stop() async {
+        startingOver?.cancel()
+        startingOver = nil
         await engine?.cancelOperations()
         engine = nil
     }
@@ -201,6 +230,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
             coordinator.fetchSucceeded(scope: scope)
         } catch {
             coordinator.fetchFailed(error, scope: scope)
+            if Self.isExpiredToken(error) { startOver() }
             throw error
         }
     }
@@ -285,6 +315,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         case .zoneFetchFailed(let error):
             // a group that did not arrive must not read as up to date
             coordinator.fetchFailed(error, scope: scope)
+            if Self.isExpiredToken(error) { startOver() }
         }
     }
 }
