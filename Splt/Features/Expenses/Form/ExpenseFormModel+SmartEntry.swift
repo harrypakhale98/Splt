@@ -204,8 +204,10 @@ extension ExpenseFormModel {
         defer { isScanning = false }
         let scanner = dependencies.scanner(currencyCode)
         let parsed = await scanner.scan(images.compactMap(Self.cgImage))
+        // The items come from every page, so the photo kept with them shows every page too.
+        let photo = images.count > 1 ? await Task.detached { ReceiptStore.stitched(images) }.value : nil
         guard !Task.isCancelled else { return }
-        receipt.pendingImage = images.first
+        receipt.pendingImage = photo ?? images.first
         apply(receipt: parsed)
     }
 

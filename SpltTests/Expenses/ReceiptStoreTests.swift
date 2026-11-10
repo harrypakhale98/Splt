@@ -38,6 +38,58 @@ struct ReceiptStoreTests {
         #expect(max(image.size.width, image.size.height) * image.scale <= CGFloat(ReceiptStore.maximumPixels))
     }
 
+    private func page(width: CGFloat, height: CGFloat, color: UIColor) -> Data {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).jpegData(withCompressionQuality: 0.9) { context in
+            color.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        }
+    }
+
+    /// The red, green and blue of the pixel at a point counted from the top left, each 0 to 255.
+    private func color(of image: CGImage, x: Int, y: Int) throws -> [Int] {
+        let pixel = try #require(image.cropping(to: CGRect(x: x, y: y, width: 1, height: 1)))
+        let context = try #require(CGContext(
+            data: nil, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ))
+        context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        let bytes = try #require(context.data).assumingMemoryBound(to: UInt8.self)
+        return (0..<3).map { Int(bytes[$0]) }
+    }
+
+    @Test func pagesOfAScanAreJoinedTopToBottom() throws {
+        let first = page(width: 400, height: 600, color: .red)
+        let second = page(width: 200, height: 150, color: .blue)
+        let data = try #require(ReceiptStore.stitched([first, second]))
+        let image = try #require(UIImage(data: data)?.cgImage)
+        // the narrow page is drawn as wide as the first, so it is 300 tall
+        #expect(image.width == 400)
+        #expect(image.height == 900)
+        let top = try color(of: image, x: 200, y: 300)
+        let bottom = try color(of: image, x: 200, y: 750)
+        #expect(top[0] > 200 && top[2] < 60)
+        #expect(bottom[2] > 200 && bottom[0] < 60)
+    }
+
+    @Test func aLongScanIsScaledDownToWhatOnePhotoMayHold() throws {
+        let pages = (0..<3).map { _ in page(width: 2_000, height: 2_000, color: .orange) }
+        let data = try #require(ReceiptStore.stitched(pages))
+        let image = try #require(UIImage(data: data)?.cgImage)
+        #expect(image.width * image.height <= ReceiptStore.maximumPixels * ReceiptStore.maximumPixels)
+        #expect(image.width > 1_100)
+        #expect(abs(image.height - image.width * 3) <= 3)
+    }
+
+    @Test func oneReadablePageIsKeptAsItIs() {
+        let only = page(width: 300, height: 400, color: .orange)
+        #expect(ReceiptStore.stitched([only]) == only)
+        #expect(ReceiptStore.stitched([Data("not an image".utf8), only]) == only)
+        #expect(ReceiptStore.stitched([Data("not an image".utf8)]) == nil)
+        #expect(ReceiptStore.stitched([]) == nil)
+    }
+
     @Test func unreadableDataIsRejected() {
         #expect(ReceiptStore.compressed(Data("not an image".utf8)) == nil)
     }

@@ -1,6 +1,7 @@
 import Foundation
 import SpltCore
 import Testing
+import UIKit
 @testable import Splt
 
 @Suite("Expense form smart entry")
@@ -143,6 +144,32 @@ struct ExpenseFormSmartEntryTests {
         discount.apply(receipt: receipt)
         #expect(discount.split.discountText == "2.00")
         #expect(discount.split.taxText.isEmpty)
+    }
+
+    private struct BlankScanner: ReceiptScanning {
+        func scan(_ images: [CGImage]) async -> ParsedReceipt { ParsedReceipt(currencyCode: "USD") }
+    }
+
+    private func page(height: CGFloat) -> Data {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 200, height: height), format: format).jpegData(withCompressionQuality: 0.9) { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 200, height: height))
+        }
+    }
+
+    @Test func aScanOfSeveralPagesKeepsEveryPageInThePhoto() async throws {
+        let harness = try ExpenseFormHarness()
+        var dependencies = harness.dependencies
+        dependencies.scanner = { _ in BlankScanner() }
+        let model = ExpenseFormModel(
+            mode: .add(groupID: harness.fixture.group.id, prefill: nil), services: harness.fixture.services, dependencies: dependencies
+        )
+        await model.importReceipt(pages: [page(height: 300), page(height: 200)])
+        let photo = try #require(model.receipt.pendingImage.flatMap { UIImage(data: $0)?.cgImage })
+        #expect(photo.width == 200)
+        #expect(photo.height == 500)
     }
 
     @Test func aReceiptWithNoItemsOnlyAddsANotice() throws {

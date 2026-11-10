@@ -24,6 +24,45 @@ struct ReceiptStore: Sendable {
         jpeg(from: data, maximumPixels: maximumPixels, quality: 0.8)
     }
 
+    /// Joins the pages of one scan, top to bottom, into a single photo, as an expense keeps one receipt.
+    /// Every page is drawn as wide as the widest. Together they hold no more pixels than one photo may
+    /// (`maximumPixels` squared), so a long scan is scaled down rather than squeezed to an unreadable strip.
+    /// Nil when no page can be read.
+    static func stitched(_ pages: [Data]) -> Data? {
+        let readable = pages.compactMap { data -> (data: Data, image: CGImage)? in
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil), image.width > 0, image.height > 0 else { return nil }
+            return (data, image)
+        }
+        guard readable.count > 1 else { return readable.first?.data }
+        let images = readable.map(\.image)
+
+        var width = Double(images.map(\.width).max() ?? 0)
+        var heights = images.map { Double($0.height) * width / Double($0.width) }
+        let pixels = width * heights.reduce(0, +)
+        let limit = Double(maximumPixels * maximumPixels)
+        if pixels > limit {
+            let factor = (limit / pixels).squareRoot()
+            width *= factor
+            heights = heights.map { $0 * factor }
+        }
+        let rows = heights.map { max(Int($0), 1) }
+        let size = (width: max(Int(width), 1), height: rows.reduce(0, +))
+        guard let context = CGContext(
+            data: nil, width: size.width, height: size.height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .high
+        // The context counts up from the bottom, and the first page goes at the top.
+        var top = size.height
+        for (image, row) in zip(images, rows) {
+            top -= row
+            context.draw(image, in: CGRect(x: 0, y: top, width: size.width, height: row))
+        }
+        return context.makeImage().flatMap { encoded($0, quality: 0.8) }
+    }
+
     /// Writes already compressed image data and its thumbnail. Returns the file name to store on the expense.
     func save(_ imageData: Data) throws -> String {
         let name = UUID().uuidString + ".jpg"
@@ -93,6 +132,10 @@ struct ReceiptStore: Sendable {
             kCGImageSourceThumbnailMaxPixelSize: maximumPixels
         ]
         guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return encoded(image, quality: quality)
+    }
+
+    private static func encoded(_ image: CGImage, quality: Double) -> Data? {
         let output = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(output, UTType.jpeg.identifier as CFString, 1, nil) else {
             return nil
