@@ -100,12 +100,16 @@ struct GroupsListViewModelTests {
         #expect(model.active.map(\.group.id) == [fixture.group.id])
     }
 
-    @Test func archivedGroupsStayOutOfTheTotals() throws {
+    @Test func archivedGroupsStillCountInTheTotalsAsTheyDoForFriends() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)
         let model = GroupsListViewModel(services: fixture.services, leftGroups: isolatedLeftGroups())
         model.archive(fixture.group.id)
-        #expect(model.totals.isSettled)
+        #expect(model.archived.map(\.group.id) == [fixture.group.id])
+        #expect(model.totals.owedToYou == [usdAmount(2000)])
+        #expect(model.totals.youOwe.isEmpty)
+        fixture.services.friendsStore.refresh()
+        #expect(fixture.services.friendsStore.totals == model.totals)
     }
 
     @Test func deleteRemovesTheGroup() throws {

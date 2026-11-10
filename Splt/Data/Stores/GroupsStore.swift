@@ -45,7 +45,7 @@ final class GroupsStore {
                     lastActivity: try activity.entries(in: group.id, limit: 1).first?.createdAt
                 )
             }
-            totals = BalanceTotals(amounts: summaries.filter { !$0.group.isArchived }.flatMap(\.myBalance))
+            totals = BalanceTotals(amounts: summaries.flatMap(\.myBalance))
             didFailToLoad = false
         } catch {
             didFailToLoad = true

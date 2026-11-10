@@ -51,9 +51,10 @@ final class GroupsListViewModel {
     var archived: [GroupSummary] { matching(listed.filter(\.group.isArchived)) }
     var hasResults: Bool { !active.isEmpty || !archived.isEmpty }
 
-    /// What you owe and are owed across the groups that are not archived, whatever the search says.
+    /// What you owe and are owed across the groups, whatever the search says. Archived groups count:
+    /// putting a group away does not settle it, and the Friends tab counts the same money.
     var totals: BalanceTotals {
-        BalanceTotals(amounts: listed.filter { !$0.group.isArchived }.flatMap(\.myBalance))
+        BalanceTotals(amounts: listed.flatMap(\.myBalance))
     }
 
     func archive(_ id: GroupID) {

@@ -45,7 +45,7 @@ struct StoresTests {
         #expect(store.summaries.count == 2)
     }
 
-    @Test func archivedGroupsStayOutOfTheTotals() throws {
+    @Test func archivedGroupsStillCountInTheTotals() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)
         try fixture.services.groups.setArchived(true, id: fixture.group.id)
@@ -53,7 +53,7 @@ struct StoresTests {
         store.refresh()
         #expect(store.summaries.count == 1)
         #expect(store.summaries.first?.group.isArchived == true)
-        #expect(store.totals.isSettled)
+        #expect(store.totals.owedToYou == [usdAmount(2000)])
     }
 
     @Test func groupsStoreRefreshesItselfAfterASave() async throws {
