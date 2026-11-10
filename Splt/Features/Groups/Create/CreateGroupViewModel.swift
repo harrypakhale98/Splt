@@ -84,7 +84,12 @@ final class CreateGroupViewModel {
     func addMember(named rawName: String, contactHint: String? = nil) -> Bool {
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !containsName(trimmed) else { return false }
-        members.append(MemberDraft(name: trimmed, contactHint: contactHint))
+        // the same name as a friend is that friend, as in group settings
+        if let friend = friends.first(where: { Self.sameName($0.name, trimmed) }) {
+            members.append(MemberDraft(person: friend))
+        } else {
+            members.append(MemberDraft(name: trimmed, contactHint: contactHint))
+        }
         return true
     }
 
@@ -111,7 +116,12 @@ final class CreateGroupViewModel {
     }
 
     private func containsName(_ candidate: String) -> Bool {
-        members.contains { $0.name.compare(candidate, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }
+        members.contains { Self.sameName($0.name, candidate) }
+    }
+
+    private static func sameName(_ lhs: String, _ rhs: String) -> Bool {
+        lhs.trimmingCharacters(in: .whitespacesAndNewlines)
+            .compare(rhs, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
     }
 
     // MARK: Saving

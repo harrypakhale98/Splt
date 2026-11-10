@@ -88,6 +88,22 @@ struct CreateGroupViewModelTests {
         #expect(!model.isSelected(fixture.sam))
     }
 
+    @Test func aTypedNameOfAFriendIsThatFriend() throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture.services)
+        model.name = "Dinner club"
+        #expect(model.addMember(named: "  sám "))
+        #expect(model.isSelected(fixture.sam))
+        #expect(!model.addMember(named: "Sam"))
+        model.addContacts([MemberDraft(name: "PRIYA", contactHint: "priya@example.com")])
+        let peopleBefore = try fixture.services.people.allPeople().count
+
+        let id = try model.create()
+        let group = try #require(try fixture.services.groups.group(id: id))
+        #expect(group.memberIDs == [fixture.me.id, fixture.sam.id, fixture.priya.id])
+        #expect(try fixture.services.people.allPeople().count == peopleBefore)
+    }
+
     @Test func removingAMemberDropsItFromTheList() throws {
         let model = makeModel(try DataServices.inMemory())
         model.addMember(named: "Alex")
