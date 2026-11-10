@@ -50,7 +50,8 @@ final class LaunchTests: XCTestCase {
         // The setting persists on the simulator, so pin it for this launch rather than assume it.
         let app = launchApp("-sampledata", extra: ["-preferences.notificationsEnabled", "NO"])
         openTab("Friends", in: app)
-        let friend = element(labelStartingWith: "Hana Sato", in: app)
+        // Remind is offered only for a friend who owes you
+        let friend = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maya Chen, owes you'")).firstMatch
         reveal(friend, in: app)
         friend.swipeLeft()
         app.buttons["Remind"].firstMatch.tap()
