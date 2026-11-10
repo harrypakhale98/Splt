@@ -17,9 +17,12 @@ If you regenerate the project with XcodeGen, `project.yml` already points at the
 
 CloudKit creates record types on the fly in the Development environment, but TestFlight and App Store builds use Production, which has no types until you deploy them.
 
-1. Run a debug build on a device and use the app once: create a group, add an expense, record a payment, add a comment, add a recurring expense and share a group. That creates every record type.
-2. Open the CloudKit Dashboard, choose the container, then Schema. Check that these record types exist: `Person`, `Group`, `Expense`, `Payment`, `Comment`, `Activity`, `RecurringExpense`.
-3. Choose Deploy Schema Changes and confirm. Do this again whenever a release adds a field (see `RecordSchema.swift`).
+1. Open the CloudKit Dashboard, choose the container and stay in Development.
+2. Choose Import Schema and pick `Config/CloudKitSchema.ckdb`. It holds every record type and every field the app can write, including the ones it only sets sometimes. Running the app once is not enough, because Development only learns a field the first time a value is saved in it.
+3. Under Record Types, check that `Person`, `Group`, `Expense`, `Payment`, `Comment`, `Activity` and `RecurringExpense` are there.
+4. Choose Deploy Schema Changes and confirm, then switch to Production and check the same types.
+
+When a release adds a field to `RecordSchema.swift`, add it to `Config/CloudKitSchema.ckdb` too (a test fails until you do), then import and deploy again before the release ships. Deploying only adds, so it is safe to repeat.
 
 No indexes are needed: the app never queries, it only reads zone changes.
 
