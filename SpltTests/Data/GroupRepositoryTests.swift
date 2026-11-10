@@ -67,6 +67,40 @@ struct GroupRepositoryTests {
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.sam.id) == true)
     }
 
+    /// I pay for Priya and Sam pays for me: I net to zero but still owe Sam and am owed by Priya.
+    private func addCrossingDebts(_ fixture: Fixture) throws {
+        try fixture.addExpense(cents: 1000, paidBy: fixture.me, splitBetween: [fixture.priya.id])
+        try fixture.addExpense(cents: 1000, paidBy: fixture.sam, splitBetween: [fixture.me.id])
+    }
+
+    @Test func aNetOfZeroWithDebtsLeftIsRefusedWhenDebtsAreNotSimplified() throws {
+        let fixture = try Fixture(simplifies: false)
+        try addCrossingDebts(fixture)
+        #expect(try fixture.services.groups.balances(for: fixture.group.id).net(for: fixture.me.id).isEmpty)
+        #expect(throws: DataError.memberStillHasBalance(fixture.me.id)) {
+            try fixture.services.groups.removeMember(fixture.me.id, from: fixture.group.id)
+        }
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
+
+        try fixture.services.payments.settle(
+            Debt(debtor: fixture.me.id, creditor: fixture.sam.id, amount: usdAmount(1000)),
+            in: fixture.group.id, date: fixture.clock.start, note: ""
+        )
+        try fixture.services.payments.settle(
+            Debt(debtor: fixture.priya.id, creditor: fixture.me.id, amount: usdAmount(1000)),
+            in: fixture.group.id, date: fixture.clock.start, note: ""
+        )
+        try fixture.services.groups.removeMember(fixture.me.id, from: fixture.group.id)
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == false)
+    }
+
+    @Test func aNetOfZeroIsEnoughWhenDebtsAreSimplified() throws {
+        let fixture = try Fixture(simplifies: true)
+        try addCrossingDebts(fixture)
+        try fixture.services.groups.removeMember(fixture.me.id, from: fixture.group.id)
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == false)
+    }
+
     @Test func deletingAGroupRemovesItsContentFromQueries() throws {
         let fixture = try Fixture()
         let expense = try fixture.addExpense()

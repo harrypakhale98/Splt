@@ -12,11 +12,14 @@ final class GroupSettingsViewModel {
         var isMe: Bool
         /// Positive means the person is owed. Empty when square.
         var balance: [Money]
+        /// False when the net is zero but debts with single members remain, in a group that does
+        /// not simplify debts.
+        var isSquare = true
         /// A recurring expense that would keep charging the person, which has to change first.
         var recurringExpense: String?
 
         var id: PersonID { person.id }
-        var canRemove: Bool { !isMe && balance.isEmpty && recurringExpense == nil }
+        var canRemove: Bool { !isMe && balance.isEmpty && isSquare && recurringExpense == nil }
     }
 
     let groupID: GroupID
@@ -99,6 +102,7 @@ final class GroupSettingsViewModel {
         memberRows = try people.people(ids: current.memberIDs).map { person in
             MemberRow(
                 person: person, isMe: person.id == me, balance: balances.net(for: person.id),
+                isSquare: balances.isSquare(person.id),
                 recurringExpense: try groups.recurringExpenseTitle(involving: person.id, in: groupID)
             )
         }
@@ -181,6 +185,9 @@ final class GroupSettingsViewModel {
     func removalBlock(for row: MemberRow) -> String? {
         guard !row.balance.isEmpty else {
             let name = row.person.name
+            if !row.isSquare {
+                return String(localized: "\(name) still has debts with other members. Settle up before removing them.")
+            }
             return row.recurringExpense.map {
                 String(localized: "\(name) is part of the recurring expense “\($0)”. Change or delete it before removing them.")
             }
@@ -258,6 +265,9 @@ final class GroupSettingsViewModel {
             return myRow.balance.contains { $0.minorUnits > 0 }
                 ? String(localized: "You're owed \(amounts). Settle up before leaving.")
                 : String(localized: "You owe \(amounts). Settle up before leaving.")
+        }
+        if !myRow.isSquare {
+            return String(localized: "You still have debts with other members. Settle up before leaving.")
         }
         if let title = myRow.recurringExpense {
             return String(localized: "You are part of the recurring expense “\(title)”. Change or delete it before leaving.")

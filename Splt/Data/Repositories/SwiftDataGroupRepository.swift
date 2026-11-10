@@ -86,8 +86,10 @@ final class SwiftDataGroupRepository: GroupRepository {
     func removeMember(_ person: PersonID, from group: GroupID) throws {
         guard let record = try env.groupRecord(group) else { throw DataError.notFound("group \(group)") }
         guard record.memberIDs.contains(person.rawValue) else { return }
-        let ledger = try env.ledger(forGroup: group)
-        guard ledger.balances(of: person).isEmpty else { throw DataError.memberStillHasBalance(person) }
+        let balances = GroupBalances(
+            groupID: group, ledger: try env.ledger(forGroup: group), simplifiesDebts: record.simplifiesDebts
+        )
+        guard balances.isSquare(person) else { throw DataError.memberStillHasBalance(person) }
         if let title = try recurringExpenseTitle(involving: person, in: group) {
             throw DataError.memberOnRecurringExpense(title)
         }

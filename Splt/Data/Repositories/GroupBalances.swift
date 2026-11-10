@@ -21,4 +21,11 @@ struct GroupBalances: Sendable {
     func net(for person: PersonID) -> [Money] {
         ledger.balances(of: person)
     }
+
+    /// True when the person can go without leaving a debt behind. A group that does not simplify
+    /// debts settles pair by pair, so a net of zero is not enough there.
+    func isSquare(_ person: PersonID) -> Bool {
+        guard ledger.balances(of: person).isEmpty else { return false }
+        return simplifiesDebts || ledger.balances(with: person).isEmpty
+    }
 }

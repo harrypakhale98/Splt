@@ -343,6 +343,29 @@ struct GroupSettingsViewModelTests {
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
     }
 
+    @Test func aNetOfZeroWithDebtsLeftBlocksLeavingAndRemoving() async throws {
+        let fixture = try Fixture(simplifies: false)
+        try fixture.addExpense(cents: 1000, paidBy: fixture.me, splitBetween: [fixture.priya.id])
+        try fixture.addExpense(cents: 1000, paidBy: fixture.sam, splitBetween: [fixture.me.id])
+        try fixture.addExpense(cents: 1000, paidBy: fixture.priya, splitBetween: [fixture.sam.id])
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        #expect(try #require(model.myRow).balance.isEmpty)
+
+        let block = try #require(model.leaveBlock)
+        #expect(block.contains("debts with other members"))
+        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(model.blockedMessage == block)
+        #expect(!leftGroups.contains(fixture.group.id))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
+
+        let row = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
+        #expect(!row.canRemove)
+        model.remove(row)
+        #expect(try #require(model.blockedMessage).contains("Sam still has debts"))
+        #expect(model.memberRows.count == 3)
+    }
+
     @Test func theOnlyMemberShouldDeleteInstead() throws {
         let fixture = try Fixture()
         let solo = SplitGroup(name: "Solo", currencyCode: "USD", memberIDs: [fixture.me.id])
