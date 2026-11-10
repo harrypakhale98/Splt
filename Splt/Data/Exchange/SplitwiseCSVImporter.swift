@@ -21,7 +21,21 @@ enum SplitwiseCSVImporter {
     ) throws -> SplitwiseImport {
         let rows = CSVText.rows(text)
         guard let header = rows.first else { throw DataError.unreadableCSV("The file is empty.") }
-        let columns = try columnMap(header)
+        let calendar = calendar(timeZone)
+        let columns: Columns
+        var byPosition = false
+        switch namedColumns(header) {
+        case .success(let named):
+            columns = named
+        case .failure(let error):
+            // The names are in the language of the Splitwise account, the order is not. Without
+            // the English names, a file with enough columns and a date in the first is read by position.
+            guard header.count > fixedColumns.count,
+                  rows.dropFirst().contains(where: { date(($0.first ?? "").trimmingCharacters(in: .whitespaces), calendar: calendar) != nil })
+            else { throw error }
+            columns = Columns()
+            byPosition = true
+        }
 
         var known: [String: PersonID] = [:]
         for (name, id) in knownPeople { known[normalized(name)] = id }
@@ -37,7 +51,6 @@ enum SplitwiseCSVImporter {
         var result = SplitwiseImport(
             memberNames: memberOrder.map(\.name), members: members, expenses: [], payments: [], warnings: []
         )
-        let calendar = calendar(timeZone)
 
         for (offset, row) in rows.dropFirst().enumerated() {
             let line = offset + 2
@@ -48,6 +61,8 @@ enum SplitwiseCSVImporter {
             if description.isEmpty && cell(columns.cost).isEmpty { continue }
             if cell(columns.cost).isEmpty,
                description.caseInsensitiveCompare(GroupCSVExporter.totalBalanceLabel) == .orderedSame { continue }
+            // the closing row has another label in another language, but still no date and no cost
+            if byPosition, cell(columns.cost).isEmpty, cell(columns.date).isEmpty { continue }
 
             func skip(_ message: String) {
                 result.warnings.append(ImportWarning(line: line, message: message))
@@ -168,17 +183,25 @@ enum SplitwiseCSVImporter {
         return (paid, shares)
     }
 
-    private struct Columns {
-        var date = 0, description = 0, category = 0, cost = 0, currency = 0
+    /// Where the fixed columns are. The defaults are the order Splitwise writes them in.
+    struct Columns {
+        var date = 0, description = 1, category = 2, cost = 3, currency = 4
         var firstMember: Int { max(date, description, category, cost, currency) + 1 }
     }
 
-    private static func columnMap(_ header: [String]) throws -> Columns {
+    /// The fixed columns of a header, by their English names or else by position. Nil when the
+    /// header has too few columns to be an export.
+    static func columns(in header: [String]) -> Columns? {
+        if case .success(let named) = namedColumns(header) { return named }
+        return header.count > fixedColumns.count ? Columns() : nil
+    }
+
+    private static func namedColumns(_ header: [String]) -> Result<Columns, DataError> {
         let names = header.map { normalized($0) }
         var columns = Columns()
         for name in fixedColumns {
             guard let index = names.firstIndex(of: name) else {
-                throw DataError.unreadableCSV("The header has no \(name) column.")
+                return .failure(.unreadableCSV("The header has no \(name) column."))
             }
             switch name {
             case "date": columns.date = index
@@ -188,7 +211,7 @@ enum SplitwiseCSVImporter {
             default: columns.currency = index
             }
         }
-        return columns
+        return .success(columns)
     }
 
     private static func normalized(_ text: String) -> String {

@@ -5,7 +5,6 @@ import SpltCore
 /// Reading, naming and fingerprinting a Splitwise export before anything is imported.
 enum SplitwiseFile {
     private static let maximumBytes = 20_000_000
-    private static let fixedColumns = ["date", "description", "category", "cost", "currency"]
 
     struct Unreadable: Error {}
 
@@ -66,10 +65,8 @@ enum SplitwiseFile {
     static func renamingMembers(in text: String, to names: [String: String]) -> String? {
         var rows = CSVText.rows(text)
         guard var header = rows.first else { return nil }
-        let lowered = header.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
-        let indices = fixedColumns.compactMap { lowered.firstIndex(of: $0) }
-        guard indices.count == fixedColumns.count, let last = indices.max() else { return nil }
-        for column in (last + 1)..<max(header.count, last + 1) {
+        guard let first = SplitwiseCSVImporter.columns(in: header)?.firstMember else { return nil }
+        for column in first..<max(header.count, first) {
             let key = CSVText.restored(header[column].trimmingCharacters(in: .whitespacesAndNewlines))
             if let replacement = names[key] { header[column] = replacement }
         }

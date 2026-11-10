@@ -168,6 +168,37 @@ struct SplitwiseCSVImporterTests {
         }
     }
 
+    @Test func aHeaderInAnotherLanguageIsReadByPosition() throws {
+        let text = [
+            "Fecha,Descripción,Categoría,Coste,Moneda,Ana,Ben,Cy",
+            "2025-03-14,Cena,Restaurantes,30.00,USD,20.00,-10.00,-10.00",
+            "",
+            ",Saldo total,,,USD,20.00,-10.00,-10.00"
+        ].joined(separator: "\n")
+        let result = try SplitwiseCSVImporter.parse(text, groupID: group, timeZone: utc)
+        #expect(result.memberNames == ["Ana", "Ben", "Cy"])
+        #expect(result.warnings.isEmpty)
+        let expense = try #require(result.expenses.first)
+        #expect(result.expenses.count == 1)
+        #expect(expense.title == "Cena")
+        #expect(expense.total == usdAmount(3000))
+        #expect(expense.payers == [try #require(result.members["Ana"]): usdAmount(3000)])
+    }
+
+    @Test func otherTablesAreStillRefused() {
+        // enough columns, but nothing in the first one is a date
+        #expect(throws: DataError.unreadableCSV("The header has no date column.")) {
+            try SplitwiseCSVImporter.parse("a,b,c,d,e,f,g\n1,2,3,4,5,6,7\n", groupID: group, timeZone: utc)
+        }
+        #expect(throws: DataError.self) {
+            try SplitwiseCSVImporter.parse("Fecha,Descripción,Categoría,Coste,Moneda,Ana\n", groupID: group, timeZone: utc)
+        }
+        // too few columns to hold a member
+        #expect(throws: DataError.self) {
+            try SplitwiseCSVImporter.parse("Fecha,Descripción,Categoría,Coste,Moneda\n2025-03-14,Cena,x,30.00,USD\n", groupID: group, timeZone: utc)
+        }
+    }
+
     @Test func mapsSplitwiseCategoryNames() {
         #expect(SplitwiseCategoryMap.category(for: "Dining out") == .dining)
         #expect(SplitwiseCategoryMap.category(for: "Groceries") == .groceries)

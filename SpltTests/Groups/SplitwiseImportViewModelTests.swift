@@ -342,6 +342,12 @@ struct SplitwiseFileTests {
         #expect(SplitwiseFile.renamingMembers(in: "no header here", to: [:]) == nil)
     }
 
+    @Test func renamingFindsTheMembersOfAHeaderInAnotherLanguage() throws {
+        let text = "Fecha,Descripción,Categoría,Coste,Moneda,Ana,Ben\n2025-03-14,Cena,General,10.00,USD,5.00,-5.00\n"
+        let renamed = try #require(SplitwiseFile.renamingMembers(in: text, to: ["Ana": "Anastasia"]))
+        #expect(CSVText.rows(renamed)[0] == ["Fecha", "Descripción", "Categoría", "Coste", "Moneda", "Anastasia", "Ben"])
+    }
+
     @Test func historyRemembersFiles() {
         let history = SplitwiseImportHistory(defaults: UserDefaults(suiteName: "splt.tests.\(UUID().uuidString)")!)
         let id = GroupID()
