@@ -111,17 +111,20 @@ extension ExpenseFormModel {
     func switchGroup(to id: GroupID) {
         guard case .add = mode, id != group?.id,
               let next = try? services.groups.group(id: id) else { return }
-        let previousCurrency = group?.currencyCode
+        // A currency picked by hand or read from a receipt stays. One that only followed the old group follows the new one.
+        let chosenCurrency = currencyCode != group?.currencyCode ? currencyCode : nil
         do {
             try configure(group: next, extra: [])
         } catch {
             return
         }
-        if currencyCode != previousCurrency { currencyCode = next.currencyCode }
+        if let chosenCurrency { currencyCode = chosenCurrency }
         participants = Set(members.map(\.id))
         payer = PayerState()
         payer.single = members.contains { $0.id == me?.id } ? me?.id : members.first?.id
-        split = SplitEditorState()
+        // The items, tax, tip and discount belong to the bill, not to the group. Only who owes what starts over.
+        split.keepPeople([])
+        if split.method != .itemized { split.method = .equal }
     }
 
     static let lastGroupKey = "expenses.lastGroupID"

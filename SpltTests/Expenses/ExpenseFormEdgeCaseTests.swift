@@ -126,6 +126,52 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.availableGroups.map(\.id) == [harness.fixture.group.id])
     }
 
+    @Test func movingToAnotherGroupKeepsTheChosenCurrencyAndTheItems() throws {
+        let harness = try ExpenseFormHarness()
+        let trip = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [harness.me, harness.priya])
+        try harness.fixture.services.groups.create(trip)
+        let model = harness.newExpense()
+        model.changeCurrency(to: "EUR")
+        var parsed = ParsedReceipt(currencyCode: "EUR")
+        func euros(_ cents: Int64) -> Money { Money(minorUnits: cents, currencyCode: "EUR") }
+        parsed.items = [
+            ReceiptLineItem(name: "Pasta", quantity: 1, unitPrice: nil, total: euros(1800)),
+            ReceiptLineItem(name: "Wine", quantity: 1, unitPrice: nil, total: euros(900))
+        ]
+        parsed.tax = euros(200)
+        parsed.tip = euros(300)
+        parsed.total = euros(3200)
+        model.apply(receipt: parsed)
+        model.assign(harness.sam, to: model.split.items[0].id)
+
+        model.switchGroup(to: trip.id)
+        #expect(model.group?.id == trip.id)
+        #expect(model.currencyCode == "EUR")
+        #expect(model.total == euros(3200))
+        #expect(model.split.method == .itemized)
+        #expect(model.split.items.map(\.name) == ["Pasta", "Wine"])
+        #expect(model.split.items.map(\.amountText) == ["18.00", "9.00"])
+        #expect(model.split.items.allSatisfy { $0.assignees.isEmpty })
+        #expect(model.split.taxText == "2.00")
+        #expect(model.split.tipText == "3.00")
+        #expect(model.participants == [harness.me, harness.priya])
+    }
+
+    @Test func movingToAnotherGroupTakesItsCurrencyAndAnEqualSplit() throws {
+        let harness = try ExpenseFormHarness()
+        let trip = SplitGroup(name: "Trip", currencyCode: "EUR", memberIDs: [harness.me, harness.priya])
+        try harness.fixture.services.groups.create(trip)
+        let model = harness.filledDinner()
+        model.selectMethod(.exact)
+        #expect(model.split.exact[harness.sam] == "20.00")
+
+        model.switchGroup(to: trip.id)
+        #expect(model.currencyCode == "EUR")
+        #expect(model.split.method == .equal)
+        #expect(model.split.exact.isEmpty)
+        #expect(model.issue == nil)
+    }
+
     @Test func aDuplicatedRefundKeepsItsTotal() throws {
         let harness = try ExpenseFormHarness()
         let refund = Expense(
