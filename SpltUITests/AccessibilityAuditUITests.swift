@@ -127,10 +127,14 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["Group Settings"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Group Settings"].waitForExistence(timeout: 5))
         audit(app, "Group settings")
-        app.buttons["Cancel"].firstMatch.tap()
+        // changes there apply at once, so the sheet has Done and no Cancel
+        app.buttons["Done"].firstMatch.tap()
 
-        app.buttons["More"].firstMatch.tap()
-        app.buttons["Recap"].firstMatch.tap()
+        // the recap opens from the bottom of Totals
+        selectSegment("Totals", in: app)
+        let recap = app.buttons["Watch the Recap"].firstMatch
+        reveal(recap, in: app)
+        recap.tap()
         XCTAssertTrue(app.buttons["Close"].firstMatch.waitForExistence(timeout: 5))
         audit(app, "Recap")
         app.buttons["Close"].firstMatch.tap()
