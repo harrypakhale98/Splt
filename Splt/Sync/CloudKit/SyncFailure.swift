@@ -43,12 +43,22 @@ enum SyncFailure: Equatable, Sendable {
     static let genericMessage = String(localized: "Sync ran into a problem. Your changes are safe on this device and will be sent later.")
 
     /// What Settings should show, or nil when the failure does not need to be surfaced.
-    var status: SyncStatus? {
+    /// For a failure that has no database, such as one at start, this is the wording for your own iCloud.
+    var status: SyncStatus? { status(in: .privateDatabase) }
+
+    /// The same for a failure from one database. A group someone else shared is stored in their iCloud,
+    /// so full storage there is theirs to fix.
+    func status(in scope: DatabaseScope) -> SyncStatus? {
         switch self {
         case .conflict, .zoneMissing, .itemMissing, .transient: nil
         case .offline: .offline
         case .quotaExceeded:
-            .error(String(localized: "Your iCloud storage is full. Free up space or buy more in Settings and Splt will finish syncing. Your changes are safe on this device."))
+            switch scope {
+            case .privateDatabase:
+                .error(String(localized: "Your iCloud storage is full. Free up space or buy more in Settings and Splt will finish syncing. Your changes are safe on this device."))
+            case .sharedDatabase:
+                .error(String(localized: "The group owner's iCloud storage is full. Your changes are safe on this device and will sync once they free up space."))
+            }
         case .noAccount: .noAccount
         case .restricted: .restricted
         case .noPermission:

@@ -51,6 +51,24 @@ struct SyncFailureTests {
         #expect(message.contains("storage"))
         #expect(!message.contains("\u{2014}") && !message.contains("\u{2013}"))
     }
+
+    @Test func fullStorageSaysWhoseStorageItIs() {
+        guard case .error(let mine)? = SyncFailure.quotaExceeded.status(in: .privateDatabase),
+              case .error(let owners)? = SyncFailure.quotaExceeded.status(in: .sharedDatabase) else {
+            Issue.record("expected an error status")
+            return
+        }
+        #expect(mine.hasPrefix("Your iCloud storage is full."))
+        #expect(owners.hasPrefix("The group owner's iCloud storage is full."))
+        #expect(!owners.contains("buy more"))
+
+        var machine = SyncStatusMachine()
+        machine.failed(.quotaExceeded, source: .init(scope: .sharedDatabase, isSending: true))
+        #expect(machine.status == .error(owners))
+        machine.failed(.quotaExceeded, source: .init(scope: .privateDatabase, isSending: true))
+        machine.succeeded(source: .init(scope: .sharedDatabase, isSending: true))
+        #expect(machine.status == .error(mine))
+    }
 }
 
 @Suite("Backoff")

@@ -1,6 +1,6 @@
 # Sync
 
-Splt syncs through your own iCloud with `CKSyncEngine`. There is no server to run and nothing to pay for: storage counts against each person's iCloud quota and CloudKit is free for apps.
+Splt syncs through your own iCloud with `CKSyncEngine`. There is no server to run and nothing to pay for: a group is stored in the iCloud of the person who created it and counts against their storage, also for what the people they shared it with add, and CloudKit is free for apps.
 
 Builds without the iCloud entitlement (the simulator, previews, tests, unsigned CI builds) use a no-op engine and run fully offline.
 
@@ -67,4 +67,4 @@ Inside one group, members are trusted: anyone can edit or delete its expenses, p
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
 - A device that stays offline for a very long time may have to refetch everything. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
 - Deleting a shared group as its owner removes it for everyone.
-- A full iCloud storage stops uploads for that person. Changes stay on the device and sync once space is available.
+- A group is stored in its owner's iCloud. When the owner's storage is full, nobody can upload changes to that group, and the app tells the others it is the owner's storage. Changes stay on each device and sync once space is available.

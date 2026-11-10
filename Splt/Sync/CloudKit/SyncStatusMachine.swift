@@ -21,7 +21,7 @@ struct SyncStatusMachine: Equatable, Sendable {
     }
 
     mutating func failed(_ failure: SyncFailure, source: Source) {
-        guard let status = failure.status else { return }
+        guard let status = failure.status(in: source.scope) else { return }
         problems[source] = status
     }
 
