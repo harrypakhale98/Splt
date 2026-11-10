@@ -15,6 +15,19 @@ struct SplitBarPresentationTests {
         )
     }
 
+    @Test func aDividerPastTheEndOfAShrunkenBarHasNoNeighbors() {
+        let three = [segment("Ana", weight: 1), segment("Ben", weight: 1), segment("Cy", weight: 1)]
+        var data = SplitBarData(method: .equal, segments: three, scale: 3, total: nil, canDrag: true)
+        #expect(data.neighbors(of: 1)?.map(\.person.name) == ["Ben", "Cy"])
+        #expect(data.neighbors(of: 2) == nil)
+        #expect(data.neighbors(of: -1) == nil)
+
+        // the last divider was held when someone left the split
+        data.segments.removeLast()
+        #expect(data.neighbors(of: 1) == nil)
+        #expect(data.neighbors(of: 0)?.count == 2)
+    }
+
     // MARK: Layout
 
     @Test func widthsFollowTheWeightsAndFillTheBar() {

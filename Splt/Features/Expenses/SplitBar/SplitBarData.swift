@@ -22,4 +22,11 @@ struct SplitBarData: Equatable {
     var canDrag: Bool
 
     var weights: [Int64] { segments.map(\.weight) }
+
+    /// The two segments either side of a divider, or nil when the bar has no such divider.
+    /// A bar can lose people while a divider is still held.
+    func neighbors(of divider: Int) -> [SplitBarSegment]? {
+        guard divider >= 0, divider + 1 < segments.count else { return nil }
+        return Array(segments[divider...(divider + 1)])
+    }
 }

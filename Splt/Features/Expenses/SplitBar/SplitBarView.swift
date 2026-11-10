@@ -18,6 +18,8 @@ struct SplitBarView: View {
     @Environment(\.layoutDirection) private var layoutDirection
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draggingDivider: Int?
+    /// True while a finger is on the bar. It clears itself when a drag is cancelled, which `onEnded` never hears about.
+    @GestureState private var isDragging = false
     @State private var detentCount = 0
     @State private var lastSnap: SplitBarDetent.Kind?
     /// The callout's measured width, so it can be kept inside the bar at either end.
@@ -40,13 +42,20 @@ struct SplitBarView: View {
                     }
                     handleGrip(layout: layout, width: width)
                 }
-                if let divider = draggingDivider, divider + 1 < layout.visual.count {
-                    callout(divider: divider, x: layout.visual[divider + 1], width: width, palette: palette)
+                if let divider = draggingDivider, let pair = data.neighbors(of: divider), layout.visual.indices.contains(divider + 1) {
+                    callout(pair: pair, x: layout.visual[divider + 1], width: width, palette: palette)
                 }
             }
             .coordinateSpace(name: barSpace)
         }
         .frame(height: height)
+        .onChange(of: isDragging) { _, dragging in
+            guard !dragging else { return }
+            Motion.perform(Motion.quick) { draggingDivider = nil }
+            lastSnap = nil
+        }
+        // the divider that was held may be gone, or stand between other people now
+        .onChange(of: data.segments.count) { draggingDivider = nil }
         .haptics(.detent, trigger: detentCount)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Split bar")
@@ -114,9 +123,11 @@ struct SplitBarView: View {
             .contentShape(DividerZones(positions: positions, reach: 22))
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .named(barSpace))
+                    .updating($isDragging) { _, dragging, _ in dragging = true }
                     .onChanged { value in
                         guard let divider = draggingDivider
-                            ?? SplitBarLayout.nearest(to: value.startLocation.x, in: positions) else { return }
+                            ?? SplitBarLayout.nearest(to: value.startLocation.x, in: positions),
+                            data.neighbors(of: divider) != nil else { return }
                         if draggingDivider != divider {
                             Motion.perform(Motion.quick) { draggingDivider = divider }
                         }
@@ -126,18 +137,13 @@ struct SplitBarView: View {
                             lastSnap = result.snappedTo
                         }
                     }
-                    .onEnded { _ in
-                        Motion.perform(Motion.quick) { draggingDivider = nil }
-                        lastSnap = nil
-                    }
             )
             .accessibilityHidden(true)
     }
 
     /// The floating label above the divider being dragged: both neighbors and what they get.
-    private func callout(divider: Int, x: CGFloat, width: CGFloat, palette: [PersonID: Color]) -> some View {
-        let pair = Array(data.segments[divider...(divider + 1)])
-        return Group {
+    private func callout(pair: [SplitBarSegment], x: CGFloat, width: CGFloat, palette: [PersonID: Color]) -> some View {
+        Group {
             HStack(spacing: 12) {
                 ForEach(pair) { segment in
                     let label = SplitBarLabels.make(method: data.method, segment: segment, scale: data.scale, wide: true, locale: locale)
