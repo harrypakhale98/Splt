@@ -18,27 +18,29 @@ extension ExpenseFormModel {
 
     /// The segment weights as basis points of the whole bar, whatever the method.
     func barFractions() -> [Int64] {
+        SplitBarMath.scaled(barProportions(), to: SplitBarMath.basisPoints)
+    }
+
+    /// Each person's part in the method's own unit, before any rounding to the bar's scale.
+    private func barProportions() -> [Int64] {
         let people = barPeople
-        guard !people.isEmpty else { return [] }
-        let raw: [Int64]
         switch split.method {
         case .equal:
-            raw = Array(repeating: 1, count: people.count)
+            return Array(repeating: 1, count: people.count)
         case .percentage:
-            raw = people.map { AmountInput.basisPoints(split.percent[$0.id, default: ""], locale: locale) ?? 0 }
+            return people.map { AmountInput.basisPoints(split.percent[$0.id, default: ""], locale: locale) ?? 0 }
         case .exact:
             // A refund has negative shares. The bar shows proportions, so it uses their size.
             let allowNegative = total?.isNegative == true
-            raw = people.map {
+            return people.map {
                 abs(AmountInput.money(split.exact[$0.id, default: ""], currencyCode: currencyCode, locale: locale, allowNegative: allowNegative)?.minorUnits ?? 0)
             }
         case .shares:
-            raw = people.map { AmountInput.hundredths(split.weights[$0.id, default: "1"], locale: locale) ?? 0 }
+            return people.map { AmountInput.hundredths(split.weights[$0.id, default: "1"], locale: locale) ?? 0 }
         case .adjustment, .itemized:
             let byPerson = Dictionary(uniqueKeysWithValues: sharePreview.map { ($0.person.id, abs($0.amount.minorUnits)) })
-            raw = people.map { byPerson[$0.id] ?? 0 }
+            return people.map { byPerson[$0.id] ?? 0 }
         }
-        return SplitBarMath.scaled(raw, to: SplitBarMath.basisPoints)
     }
 
     /// The data for the bar, or nil when nobody is in the split yet.
@@ -54,7 +56,8 @@ extension ExpenseFormModel {
         case .exact, .adjustment:
             if let total, total.minorUnits > 0 {
                 scale = total.minorUnits
-                weights = SplitBarMath.scaled(barFractions(), to: scale)
+                // Straight from the amounts: through basis points, a drag would rewrite everyone's cents.
+                weights = SplitBarMath.scaled(barProportions(), to: scale)
             } else {
                 scale = SplitBarMath.basisPoints
                 weights = barFractions()
@@ -69,7 +72,12 @@ extension ExpenseFormModel {
 
         var amounts: [Money]?
         if let total {
-            if method == .exact, total.minorUnits > 0 {
+            // The calculator's shares when the split is complete, so the bar says what will be charged.
+            let shares = Dictionary(uniqueKeysWithValues: sharePreview.map { ($0.person.id, $0.amount) })
+            let real = people.compactMap { shares[$0.id] }
+            if real.count == people.count {
+                amounts = real
+            } else if scale == total.minorUnits, method == .exact || method == .adjustment {
                 amounts = weights.map { Money(minorUnits: $0, currencyCode: total.currencyCode) }
             } else {
                 amounts = SplitBarMath.amounts(for: method == .shares ? weights : barFractions(), total: total)

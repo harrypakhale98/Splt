@@ -238,6 +238,165 @@ struct ExpenseFormSplitBarTests {
         #expect(model.selectedItemID == model.split.items.first?.id)
     }
 
+    // MARK: The bar says what the expense really charges
+
+    /// The bar's amounts are the calculator's shares, and they add up to the total.
+    private func expectBarShowsRealShares(_ model: ExpenseFormModel, sourceLocation: SourceLocation = #_sourceLocation) throws {
+        let data = try #require(model.barData, sourceLocation: sourceLocation)
+        let real = Dictionary(uniqueKeysWithValues: model.sharePreview.map { ($0.person.id, $0.amount) })
+        #expect(real.count == data.segments.count, sourceLocation: sourceLocation)
+        for segment in data.segments {
+            #expect(segment.amount == real[segment.id], sourceLocation: sourceLocation)
+        }
+        #expect(data.segments.compactMap(\.amount).map(\.minorUnits).reduce(0, +) == model.total?.minorUnits, sourceLocation: sourceLocation)
+        #expect(model.issue == nil, sourceLocation: sourceLocation)
+    }
+
+    private func share(of person: PersonID, in model: ExpenseFormModel) -> Int64? {
+        model.sharePreview.first { $0.person.id == person }?.amount.minorUnits
+    }
+
+    @Test func anEqualBarShowsTheRealShares() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "300"
+        let data = try #require(model.barData)
+        #expect(data.segments.map(\.amount) == [usd(10_000), usd(10_000), usd(10_000)])
+        model.amountText = "1000"
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func anAdjustBarWithNoAdjustmentsSaysEven() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "1000"
+        model.selectMethod(.adjustment)
+        let data = try #require(model.barData)
+        for segment in data.segments { #expect(segment.adjustment?.isZero == true) }
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func anExactBarKeepsTheTypedCents() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "1234.56"
+        model.selectMethod(.exact)
+        model.split.exact = [harness.me: "100.01", harness.sam: "200.02", harness.priya: "934.53"]
+        let data = try #require(model.barData)
+        let byPerson = Dictionary(uniqueKeysWithValues: data.segments.map { ($0.id, $0.amount?.minorUnits) })
+        #expect(byPerson[harness.me] == 10001)
+        #expect(byPerson[harness.sam] == 20002)
+        #expect(byPerson[harness.priya] == 93453)
+        #expect(data.weights.reduce(0, +) == 123_456)
+    }
+
+    @Test func draggingAnExactDividerLeavesTheThirdPersonAlone() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "300"
+        model.selectMethod(.exact)
+        let order = try #require(model.barData).segments.map(\.id)
+        model.split.exact = [order[0]: "100.01", order[1]: "99.98", order[2]: "100.01"]
+        model.dragDivider(0, toFraction: 0.4, thresholdBasisPoints: 1)
+        #expect(model.split.exact[order[0]] == "120.00")
+        #expect(model.split.exact[order[1]] == "79.99")
+        #expect(model.split.exact[order[2]] == "100.01")
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func anExactStepLeavesTheThirdPersonAlone() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "1234.56"
+        model.selectMethod(.exact)
+        let order = try #require(model.barData).segments.map(\.id)
+        model.split.exact = [order[0]: "100.01", order[1]: "200.02", order[2]: "934.53"]
+        #expect(model.adjustShare(of: order[0], increase: true))
+        #expect(model.split.exact[order[0]] == "101.01")
+        #expect(model.split.exact[order[1]] == "199.02")
+        #expect(model.split.exact[order[2]] == "934.53")
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func anAdjustDragAndStepLeaveTheThirdPersonAlone() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "300"
+        model.selectMethod(.adjustment)
+        let order = try #require(model.barData).segments.map(\.id)
+        model.split.adjustments = [order[0]: "10.01", order[2]: "-10.03"]
+        let third = try #require(share(of: order[2], in: model))
+        try expectBarShowsRealShares(model)
+
+        model.dragDivider(0, toFraction: 0.4, thresholdBasisPoints: 1)
+        #expect(share(of: order[0], in: model) == 12_000)
+        #expect(share(of: order[2], in: model) == third)
+        try expectBarShowsRealShares(model)
+
+        #expect(model.adjustShare(of: order[0], increase: true))
+        #expect(share(of: order[0], in: model) == 12_100)
+        #expect(share(of: order[2], in: model) == third)
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func aPercentDragAndStepLeaveTheThirdPersonAlone() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "300"
+        model.selectMethod(.percentage)
+        let order = try #require(model.barData).segments.map(\.id)
+        model.split.percent = [order[0]: "33.35", order[1]: "33.32", order[2]: "33.33"]
+        let third = try #require(share(of: order[2], in: model))
+
+        model.dragDivider(0, toFraction: 0.4, thresholdBasisPoints: 1)
+        #expect(model.split.percent[order[0]] == "40")
+        #expect(model.split.percent[order[2]] == "33.33")
+        #expect(share(of: order[2], in: model) == third)
+        try expectBarShowsRealShares(model)
+
+        #expect(model.adjustShare(of: order[0], increase: true))
+        #expect(model.split.percent[order[0]] == "41")
+        #expect(model.split.percent[order[2]] == "33.33")
+        #expect(share(of: order[2], in: model) == third)
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func aSharesDragAndStepShowTheRealShares() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "300"
+        model.selectMethod(.shares)
+        let order = try #require(model.barData).segments.map(\.id)
+
+        // The first two trade shares; the third keeps a third of the bill.
+        model.dragDivider(0, toFraction: 0.5)
+        #expect(share(of: order[0], in: model) == 15_000)
+        #expect(share(of: order[2], in: model) == 10_000)
+        try expectBarShowsRealShares(model)
+
+        #expect(model.adjustShare(of: order[0], increase: true))
+        try expectBarShowsRealShares(model)
+    }
+
+    @Test func draggingOrSteppingAnEqualBarShowsTheRealShares() throws {
+        let harness = try ExpenseFormHarness()
+        let dragged = harness.filledDinner()
+        dragged.amountText = "300"
+        let order = try #require(dragged.barData).segments.map(\.id)
+        dragged.dragDivider(0, toFraction: 0.4, thresholdBasisPoints: 1)
+        #expect(dragged.split.method == .percentage)
+        #expect(dragged.split.percent[order[0]] == "40")
+        #expect(dragged.split.percent[order[2]] == "33.33")
+        try expectBarShowsRealShares(dragged)
+
+        let stepped = harness.filledDinner()
+        stepped.amountText = "300"
+        #expect(stepped.adjustShare(of: order[0], increase: true))
+        #expect(stepped.split.percent[order[0]] == "34.34")
+        #expect(stepped.split.percent[order[2]] == "33.33")
+        try expectBarShowsRealShares(stepped)
+    }
+
     @Test func aRefundSplitByExactAmountsDrawsItsRealProportions() throws {
         let harness = try ExpenseFormHarness()
         let fixture = harness.fixture
