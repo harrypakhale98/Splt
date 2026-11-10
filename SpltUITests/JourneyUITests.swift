@@ -88,7 +88,7 @@ final class JourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["All settled up"].waitForExistence(timeout: 10))
 
         let undo = app.buttons["Undo"].firstMatch
-        XCTAssertTrue(undo.waitForExistence(timeout: 10))
+        XCTAssertTrue(waitUntilHittable(undo), "the undo banner never came out from behind the closing sheet")
         undo.tap()
         XCTAssertTrue(app.staticTexts["Payment undone"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["All settled up"].exists)

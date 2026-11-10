@@ -33,7 +33,7 @@ final class SettleUITests: XCTestCase {
 
         // the banner keeps the undo after the sheet closes
         let undo = app.buttons["Undo"].firstMatch
-        XCTAssertTrue(undo.waitForExistence(timeout: 10))
+        XCTAssertTrue(waitUntilHittable(undo), "the undo banner never came out from behind the closing sheet")
         undo.tap()
         XCTAssertTrue(app.staticTexts["Payment undone"].waitForExistence(timeout: 10))
     }
@@ -65,7 +65,7 @@ final class SettleUITests: XCTestCase {
 
         // the sheet closes by itself and the banner keeps the undo
         let undo = app.buttons["Undo"].firstMatch
-        XCTAssertTrue(undo.waitForExistence(timeout: 10))
+        XCTAssertTrue(waitUntilHittable(undo), "the undo banner never came out from behind the closing sheet")
         undo.doubleTap()
         XCTAssertTrue(app.staticTexts["Payment undone"].waitForExistence(timeout: 10))
 

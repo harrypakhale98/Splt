@@ -1,14 +1,20 @@
 import XCTest
 
 extension XCTestCase {
-    /// Taps Done on the keyboard when it is up. The key exists while the keyboard is still sliding
-    /// in or out, when a tap on it fails, so this waits until it can be tapped.
+    /// True once the element can really be tapped. Something that already exists behind a sheet that
+    /// is still closing, or on a keyboard that is still sliding, would take the tap somewhere else.
+    @MainActor
+    func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND isHittable == true"), object: element)
+        return XCTWaiter.wait(for: [hittable], timeout: timeout) == .completed
+    }
+
+    /// Taps Done on the keyboard when it is up.
     @MainActor
     func tapKeyboardDone(in app: XCUIApplication) {
         let done = app.keyboards.buttons["Done"]
         guard done.waitForExistence(timeout: 3) else { return }
-        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: done)
-        if XCTWaiter.wait(for: [hittable], timeout: 3) == .completed { done.tap() }
+        if waitUntilHittable(done, timeout: 3) { done.tap() }
     }
 
     /// Launches the app on an empty store (`-uitesting`) or the sample trip (`-sampledata`).
