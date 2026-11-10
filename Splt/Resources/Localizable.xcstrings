@@ -930,7 +930,10 @@
     "Anyone" : {
 
     },
-    "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join." : {
+    "Anyone with this link can join and add expenses. Only the person who shared this group can stop that." : {
+
+    },
+    "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join. That also removes everyone who joined with the link." : {
 
     },
     "Apple Cash" : {
@@ -2355,6 +2358,9 @@
     "Paused" : {
 
     },
+    "Paused while archived" : {
+
+    },
     "Pay with %@" : {
 
     },
@@ -3072,10 +3078,10 @@
     "This group is not shared." : {
 
     },
-    "This group may have been deleted." : {
+    "This group is only on this device. It is not in your iCloud, so it cannot be shared." : {
 
     },
-    "This group stayed on this device when you switched iCloud accounts. It is not in your iCloud, so it cannot be shared." : {
+    "This group may have been deleted." : {
 
     },
     "This invitation is not valid any more. Ask for a new one." : {
@@ -3327,9 +3333,6 @@
     "You are all settled up." : {
 
     },
-    "You are not a member of this group." : {
-
-    },
     "You are not involved" : {
 
     },
@@ -3352,9 +3355,6 @@
 
     },
     "You are settled up in %@." : {
-
-    },
-    "You are the only member. Delete the group instead." : {
 
     },
     "You blocked this person, so there's no reminder." : {
