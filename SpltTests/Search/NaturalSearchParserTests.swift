@@ -144,6 +144,24 @@ struct NaturalSearchParserTests {
         #expect(parser().parse("show me dinners").category == .dining)
         #expect(parser().parse("tickets to a show").category == .entertainment)
     }
+
+    @Test func aNumberAfterAnAmountWordIsNotAYear() {
+        let rent = parser().parse("rent over 2000")
+        #expect(rent.minAmount == 2000)
+        #expect(rent.period == nil)
+        #expect(rent.category == .rent)
+        let both = parser().parse("rent over 2000 in 2025")
+        #expect(both.minAmount == 2000)
+        #expect(both.period == day(2025, 1, 1)..<day(2026, 1, 1))
+    }
+
+    @Test func yearsAreStillReadBesideAmounts() {
+        #expect(parser().parse("dinners in 2025").period == day(2025, 1, 1)..<day(2026, 1, 1))
+        let over = parser().parse("over 50 in 2025")
+        #expect(over.minAmount == 50)
+        #expect(over.period == day(2025, 1, 1)..<day(2026, 1, 1))
+        #expect(parser().parse("hotel march 2024 under 300").period == day(2024, 3, 1)..<day(2024, 4, 1))
+    }
 }
 
 @Suite("Search filter")

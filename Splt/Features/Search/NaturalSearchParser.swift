@@ -17,8 +17,9 @@ struct NaturalSearchParser {
     func parse(_ query: String) -> SearchFilter {
         var tokens = Self.tokens(in: query)
         var filter = SearchFilter()
-        readPeriod(&tokens, into: &filter)
+        // amounts first, so the 2000 in "rent over 2000" is taken before it can be read as a year
         readAmounts(&tokens, into: &filter)
+        readPeriod(&tokens, into: &filter)
         readPeople(&tokens, into: &filter)
         readCategory(&tokens, into: &filter)
         filter.terms = tokens.filter { !$0.used && !SearchVocabulary.stopWords.contains($0.folded) }.map(\.text)
