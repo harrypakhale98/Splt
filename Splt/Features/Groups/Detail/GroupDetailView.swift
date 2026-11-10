@@ -116,6 +116,13 @@ private struct GroupDetailContent: View {
         .sheet(item: $settleRoute) { route in
             SettleUpSheet(route: route)
         }
+        .closingSheetsOnLink {
+            showsRecap = false
+            showsAddExpense = false
+            showsSettings = false
+            showsCustomRange = false
+            settleRoute = nil
+        }
         .navigationDestination(isPresented: $showsActivity) {
             GroupActivityView(entries: model.activity, text: model.activityText)
         }

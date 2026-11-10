@@ -91,6 +91,7 @@ private struct FriendsContent: View {
         .sheet(item: $remindTarget) { target in
             RemindSheet(friend: target.person, owed: target.owed, groupNames: target.groupNames)
         }
+        .closingSheetsOnLink { remindTarget = nil }
     }
 
     @ViewBuilder

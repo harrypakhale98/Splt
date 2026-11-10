@@ -83,6 +83,11 @@ private struct FriendDetailContent: View {
                 }
             }
         }
+        .closingSheetsOnLink {
+            expenseTarget = nil
+            showsRemind = false
+            showsMerge = false
+        }
         .alert("Rename", isPresented: $showsRename) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }

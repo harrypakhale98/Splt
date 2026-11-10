@@ -18,6 +18,9 @@ final class Router {
         }
     }
     @ObservationIgnored private var waitingLink: DeepLink?
+    /// Counts the links that were opened. A screen watches it to close the sheets it presents
+    /// itself, which the router cannot reach, so a link never opens out of sight under one.
+    private(set) var openedLinks = 0
     /// The welcome tour, shown on first launch and from Account.
     var showsOnboarding = false
     private var showsTourAfterSheet = false
@@ -85,11 +88,14 @@ final class Router {
         return true
     }
 
+    /// Shows what a link points at. The router's own sheet is closed here and the sheets screens
+    /// present themselves close through `closingSheetsOnLink`, unless a form holds unsaved work.
     func open(_ link: DeepLink) {
         guard !hasUnsavedForm else {
             waitingLink = link
             return
         }
+        openedLinks += 1
         switch link {
         case .group(let id):
             sheet = nil

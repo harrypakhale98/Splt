@@ -126,6 +126,28 @@ struct UIRouterTests {
         #expect(router.groupsPath == [.group(id)])
     }
 
+    @Test func anOpenedLinkTellsScreensToCloseTheirOwnSheets() {
+        let router = Router()
+        #expect(router.openedLinks == 0)
+        router.open(.group(id))
+        #expect(router.openedLinks == 1)
+        router.open(.activity)
+        router.open(.addExpense)
+        #expect(router.openedLinks == 3)
+        #expect(!router.open(URL(string: "splt://unknown")!))
+        #expect(router.openedLinks == 3)
+    }
+
+    @Test func aWaitingLinkClosesNothingUntilTheFormIsGone() {
+        let router = Router()
+        router.hasUnsavedForm = true
+        router.open(.friend(id))
+        #expect(router.openedLinks == 0)
+        router.hasUnsavedForm = false
+        #expect(router.openedLinks == 1)
+        #expect(router.friendsPath == [.friend(id)])
+    }
+
     @Test func onlyTheLatestLinkIsKeptWhileAFormIsOpen() {
         let router = Router()
         router.sheet = .addExpense

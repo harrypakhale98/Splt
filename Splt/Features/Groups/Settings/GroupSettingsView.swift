@@ -10,12 +10,15 @@ struct GroupSettingsView: View {
     var isPushed = false
 
     @Environment(\.dataServices) private var services
+    @Environment(Router.self) private var router: Router?
 
     var body: some View {
         if isPushed {
             content
         } else {
             NavigationStack { content }
+                // set by the form below; cleared here because the form also disappears under a pushed picker
+                .onDisappear { router?.hasUnsavedForm = false }
         }
     }
 
@@ -37,6 +40,7 @@ private struct GroupSettingsForm: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.groupSharing) private var sharing
     @Environment(\.locale) private var locale
+    @Environment(Router.self) private var router: Router?
     @State private var model: GroupSettingsViewModel
     @State private var showsContacts = false
     @State private var showsDeleteConfirmation = false
@@ -73,6 +77,10 @@ private struct GroupSettingsForm: View {
         // a swipe would drop a saveable edit, so only Done closes it then; an edit that can't be
         // saved (an empty name) can still be swiped away, so the sheet never traps you
         .interactiveDismissDisabled(model.hasFieldEdits && model.canSave)
+        // a link waits for the same edits instead of closing the sheet over them
+        .onChange(of: model.hasFieldEdits && model.canSave, initial: true) { _, unsaved in
+            router?.hasUnsavedForm = unsaved
+        }
         .onAppear { model.locale = locale }
         .task { await model.loadSharing(using: sharing) }
         .sheet(isPresented: $showsContacts) {

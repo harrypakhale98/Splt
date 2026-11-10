@@ -36,6 +36,10 @@ private struct SettleFlowModifier: ViewModifier {
                 Text("Choose what to settle with \(request.friendName).")
             }
             .sheet(item: $route) { SettleUpSheet(route: $0) }
+            .closingSheetsOnLink {
+                route = nil
+                request = nil
+            }
     }
 
     private var dialogBinding: Binding<Bool> {

@@ -97,6 +97,10 @@ private struct GroupsListContent: View {
         .sheet(item: $settingsGroup) { group in
             GroupSettingsView(groupID: group.id, onGroupRemoved: { model.refresh() })
         }
+        .closingSheetsOnLink {
+            showsImport = false
+            settingsGroup = nil
+        }
         .onAppear { model.refresh() }
         .task(id: model.listedIDs) { await model.loadSharing(using: sharing) }
         .confirmationDialog(
