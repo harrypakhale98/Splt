@@ -157,6 +157,33 @@ struct ReferenceRewriterTests {
         #expect(try world.tracker.pendingChanges().count == dirtyBefore)
     }
 
+    @Test func someoneWhoOnlyPaidOrOnlyAddedTheExpenseDoesNotBlock() throws {
+        let world = try world()
+        let services = world.populated.device.services
+        // Hana paid and Casey has a share: after the merge one person paid and has a share, which is fine.
+        let lunch = Expense(
+            groupID: world.populated.group.id, title: "Lunch", total: usdAmount(1000),
+            date: world.populated.device.clock.start, paidBy: world.hana.id,
+            split: .equal(participants: [world.populated.me.id, world.casey.id])
+        )
+        try services.expenses.add(lunch)
+        // Casey only added this one, and Hana has a share in it.
+        let record = try #require(try ExpenseRecord.find(recordName: world.dinner.id.description, in: world.tracker.context))
+        record.createdByID = world.casey.id.rawValue
+        try world.tracker.save()
+
+        let result = try ReferenceRewriter(tracker: world.tracker)
+            .rewrite(from: world.hana.id.rawValue, to: world.casey.id.rawValue)
+        guard case .rewritten = result else {
+            Issue.record("expected a rewrite, got \(result)")
+            return
+        }
+        #expect(try !world.mentions().contains(world.hana.id.description))
+        let merged = try #require(try services.expenses.expense(id: lunch.id))
+        #expect(merged.payers.keys.map(\.self) == [world.casey.id])
+        #expect(try merged.shares().share(for: world.casey.id) == usdAmount(500))
+    }
+
     @Test func aDeletedExpenseWithBothPeopleDoesNotBlockAndStillRestores() throws {
         let world = try world()
         let services = world.populated.device.services

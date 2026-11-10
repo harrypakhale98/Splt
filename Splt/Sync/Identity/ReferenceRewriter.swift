@@ -5,7 +5,7 @@ import SwiftData
 enum RewriteResult: Equatable, Sendable {
     /// The number of records that were rewritten and marked for upload.
     case rewritten(Int)
-    /// Both ids appear in the same record, so merging them would need to combine amounts. Nothing was changed.
+    /// Both people pay, or both have a share, in the same record, so merging them would need to combine amounts. Nothing was changed.
     /// Only records that can still be seen count: not deleted ones, and not those of a deleted group.
     case blocked(records: Int)
 }
@@ -16,8 +16,22 @@ enum RewriteResult: Equatable, Sendable {
 struct ReferenceRewriter {
     let tracker: ChangeTracker
 
-    /// Records whose amounts are keyed by person: two ids in one of them would have to be added together.
+    /// Records whose amounts are keyed by person: two ids in one of them may have to be added together.
     private static let blocksMerge: Set<SyncRecordType> = [.expense, .payment, .recurringExpense]
+
+    /// True when the two people hold amounts side by side in one record: both paid, both have a share,
+    /// or one paid the other. Someone who is only its creator or in its history is simply renamed.
+    private static func sharesAnAmount(_ fields: SyncFields, type: SyncRecordType, old: String, new: String) -> Bool {
+        guard blocksMerge.contains(type) else { return false }
+        if type == .payment {
+            let ends = Set([fields.string("payerID"), fields.string("receiverID")].compactMap { $0?.uppercased() })
+            return ends == [old, new]
+        }
+        return ["payers", "split"].contains { key in
+            guard let data = fields.data(key) else { return false }
+            return UUIDScanner.uuids(in: data).isSuperset(of: [old, new])
+        }
+    }
 
     @discardableResult
     func rewrite(from old: UUID, to new: UUID) throws -> RewriteResult {
@@ -31,7 +45,7 @@ struct ReferenceRewriter {
             guard fields.referencedUUIDs.contains(oldText) else { continue }
             let bothPresent = fields.referencedUUIDs.contains(newText)
             let isGroup = record.recordType == .group
-            if bothPresent && Self.blocksMerge.contains(record.recordType) {
+            if bothPresent && Self.sharesAnAmount(fields, type: record.recordType, old: oldText, new: newText) {
                 // A deleted record cannot be edited out of the way, so it must not block.
                 if try record.deletedAt == nil && !isInDeletedGroup(record) {
                     blocked += 1
