@@ -15,11 +15,7 @@ struct FriendsView: View {
                 if let services {
                     FriendsContent(services: services)
                 } else {
-                    EmptyStateView(
-                        title: "No Friends Yet",
-                        systemImage: "person.2",
-                        description: "Splt couldn't open its storage."
-                    )
+                    EmptyStateView.dataUnavailable
                 }
             }
             .navigationTitle("Friends")
@@ -88,6 +84,9 @@ private struct FriendsContent: View {
             }
         }
         .task(id: model.summaries) { await model.cancelRemindersForFriendsWhoOweNothing() }
+        .onReceive(NotificationCenter.default.publisher(for: FriendVisibilityStore.didChange)) { _ in
+            model.visibilityDidChange()
+        }
         .settleFlow($settleRequest)
         .sheet(item: $remindTarget) { target in
             RemindSheet(friend: target.person, owed: target.owed, groupNames: target.groupNames)
@@ -109,12 +108,12 @@ private struct FriendsContent: View {
                                 Button("Settle Up", systemImage: "checkmark.circle") {
                                     settleRequest = model.settleRequest(for: summary)
                                 }
-                                .tint(Ink.owed)
+                                .tint(Ink.text)
                             }
                         }
                         .swipeActions(edge: .trailing) {
                             Button("Hide", systemImage: "eye.slash") {
-                                model.setState(.hidden, for: summary.id)
+                                Motion.perform { model.setState(.hidden, for: summary.id) }
                             }
                             .tint(Ink.secondary)
                             if summary.balance.contains(where: \.isPositive) {
@@ -146,25 +145,29 @@ private struct FriendsContent: View {
                 remindTarget = RemindTarget(summary: summary, model: model)
             }
         }
-        Button("Hide", systemImage: "eye.slash") { model.setState(.hidden, for: summary.id) }
-        Button("Block", systemImage: "nosign", role: .destructive) { model.setState(.blocked, for: summary.id) }
+        Button("Hide", systemImage: "eye.slash") {
+            Motion.perform { model.setState(.hidden, for: summary.id) }
+        }
+        Button("Block", systemImage: "nosign", role: .destructive) {
+            Motion.perform { model.setState(.blocked, for: summary.id) }
+        }
     }
 
     @ViewBuilder
     private func emptyState(_ sections: FriendSections) -> some View {
         if model.hasNoFriends {
             EmptyStateView(
-                title: "No Friends Yet",
+                title: "No friends yet",
                 systemImage: "person.2",
                 description: "Add friends to split bills and see who owes what.",
                 actionTitle: "Add Friend",
                 action: { router.present(.newFriend) }
             )
         } else if sections.isEmpty, !model.query.isEmpty {
-            ContentUnavailableView.search(text: model.query)
+            EmptyStateView.search(query: model.query)
         } else if sections.isEmpty {
             EmptyStateView(
-                title: "Everyone Is Hidden",
+                title: "Everyone is hidden",
                 systemImage: "eye.slash",
                 description: "Your friends are hidden or blocked. Bring them back from the list below."
             )

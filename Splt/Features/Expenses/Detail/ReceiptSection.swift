@@ -5,31 +5,40 @@ struct ReceiptSection: View {
     let model: ExpenseDetailModel
     private let store = ReceiptStore.standard
     @State private var showsFullScreen = false
+    /// Whether the photo file is here, checked once per file rather than on every redraw.
+    @State private var isOnDevice = true
 
     var body: some View {
         if let fileName = model.receiptFileName {
             Section {
                 RaisedRows {
-                    if store.exists(fileName) {
-                        Button {
-                            showsFullScreen = true
-                        } label: {
-                            HStack {
-                                ReceiptThumbnail(fileName: fileName, store: store, side: 88)
-                                Text("View Receipt")
-                                Spacer()
-                                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    .foregroundStyle(Ink.secondary)
-                                    .accessibilityHidden(true)
+                    Group {
+                        if isOnDevice {
+                            Button {
+                                showsFullScreen = true
+                            } label: {
+                                HStack {
+                                    ReceiptThumbnail(fileName: fileName, store: store, side: 88)
+                                    Text("View Receipt")
+                                    Spacer()
+                                }
                             }
+                            .accessibilityHint("Opens the receipt photo full screen")
+                            .fullScreenCover(isPresented: $showsFullScreen) {
+                                FullScreenReceiptView(fileName: fileName, store: store)
+                            }
+                        } else {
+                            Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
+                                .foregroundStyle(Ink.secondary)
                         }
-                        .accessibilityHint("Opens the receipt photo full screen")
-                        .fullScreenCover(isPresented: $showsFullScreen) {
-                            FullScreenReceiptView(fileName: fileName, store: store)
+                    }
+                    .task(id: fileName) {
+                        // the photo can arrive by sync while the expense is open, so look again until it does
+                        while !Task.isCancelled {
+                            isOnDevice = store.exists(fileName)
+                            if isOnDevice { break }
+                            try? await Task.sleep(for: .seconds(2))
                         }
-                    } else {
-                        Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
-                            .foregroundStyle(Ink.secondary)
                     }
                 }
             } header: {
@@ -44,7 +53,9 @@ struct FullScreenReceiptView: View {
     let store: ReceiptStore
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The photo, decoded once when the viewer opens rather than on every pinch.
+    @State private var image: UIImage?
+    @State private var didLoad = false
     @State private var scale: CGFloat = 1
     @State private var baseScale: CGFloat = 1
     @State private var offset: CGSize = .zero
@@ -53,7 +64,7 @@ struct FullScreenReceiptView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let data = store.image(named: fileName), let image = UIImage(data: data) {
+                if let image {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
@@ -65,12 +76,14 @@ struct FullScreenReceiptView: View {
                         .accessibilityLabel("Receipt photo")
                         .accessibilityHint("Double tap to reset the zoom")
                         .accessibilityAddTraits(.isImage)
-                } else {
+                } else if didLoad {
                     EmptyStateView(
                         title: "Receipt Unavailable",
                         systemImage: "doc.text.image",
                         description: "The receipt photo could not be opened."
                     )
+                } else {
+                    Color.clear
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -83,6 +96,14 @@ struct FullScreenReceiptView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
         }
         .preferredColorScheme(.dark)
+        .task(id: fileName) {
+            let store = store, fileName = fileName
+            image = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+                guard let data = store.image(named: fileName), let image = UIImage(data: data) else { return nil }
+                return image.preparingForDisplay() ?? image
+            }.value
+            didLoad = true
+        }
     }
 
     private var magnify: some Gesture {
@@ -104,7 +125,6 @@ struct FullScreenReceiptView: View {
     }
 
     private func reset() {
-        let change = { scale = 1; baseScale = 1; offset = .zero; baseOffset = .zero }
-        if reduceMotion { change() } else { withAnimation(.snappy, change) }
+        Motion.perform(Motion.snappy) { scale = 1; baseScale = 1; offset = .zero; baseOffset = .zero }
     }
 }

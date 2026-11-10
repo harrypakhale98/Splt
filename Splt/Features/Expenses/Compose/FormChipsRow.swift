@@ -3,6 +3,8 @@ import SwiftUI
 
 enum FormSheet: String, Identifiable {
     case category, date, note, receipt, repeating, currency, more
+    /// The receipt items alone, opened from the items tray.
+    case items
 
     var id: String { rawValue }
 }

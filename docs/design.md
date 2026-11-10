@@ -37,6 +37,8 @@ Use `Typeface`. Serif is for figures and screen titles, and the system sans is f
 | --- | --- |
 | `Typeface.hero` | The one big number, through `HeroAmount` |
 | `Typeface.figure` | Amounts in rows, tabular |
+| `Typeface.display` | The welcome tour's titles |
+| `Typeface.title` | A serif title in the content, such as a group's name |
 | `Typeface.heading` | Serif section or card heading |
 
 Use Dynamic Type styles for all other text. Use two weights at most in a view.
@@ -50,7 +52,7 @@ Use Dynamic Type styles for all other text. Use two weights at most in a view.
 
 ## Depth
 
-Paper is the bottom level, cards sit on it, and system glass floats above both. `Splt/DesignSystem/CardSurface.swift` holds every value.
+Paper is the bottom level, cards sit on it, and system glass floats above both. `Splt/DesignSystem/CardSurface.swift` holds every value. Corners come from three sizes only: `Depth.cardRadius` for cards and raised rows, `Depth.controlRadius` for buttons, tiles and fields, and `Depth.thumbnailRadius` for photos.
 
 | Helper | Use |
 | --- | --- |

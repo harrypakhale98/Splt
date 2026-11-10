@@ -33,7 +33,9 @@ struct SettleStage: View {
     var onStep: (Int) -> Void
 
     @ScaledMetric(relativeTo: .body) private var scaledDiameter: CGFloat = 40
-    @State private var lastDetent: Int?
+    /// Set by the first few points of a drag. Only a sideways drag moves the knob, so scrolling the sheet doesn't.
+    /// Resets by itself when the drag ends or the scroll view takes it over.
+    @GestureState private var track = DragTrack()
 
     private let baseDiameter: CGFloat = 40
     private let inset: CGFloat = 14
@@ -84,7 +86,8 @@ struct SettleStage: View {
             avatar(receiver, at: end)
         }
         .contentShape(Rectangle())
-        .gesture(isAdjustable && contraction == 0 ? drag(geometry) : nil)
+        // Simultaneous, so a vertical drag that starts here still scrolls the sheet.
+        .simultaneousGesture(isAdjustable && contraction == 0 ? drag(geometry) : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(payer.name) pays \(receiver.name)"))
         .accessibilityValue(isAdjustable ? Text("\(Int((fraction * 100).rounded())) percent of what is owed") : Text(""))
@@ -110,18 +113,35 @@ struct SettleStage: View {
 
     private func drag(_ geometry: SettleArcGeometry) -> some Gesture {
         DragGesture(minimumDistance: 0)
-            .onChanged { value in
-                let span = max(geometry.end.x - geometry.start.x, 1)
-                let value = Double((value.location.x - geometry.start.x) / span)
-                let share = min(max(value, 0), 1)
-                onFraction(share)
-                let detent = Int((share * 4).rounded())
-                if detent != lastDetent {
-                    lastDetent = detent
+            .updating($track) { value, track, _ in
+                let moved = hypot(value.translation.width, value.translation.height)
+                if track.isSideways == nil {
+                    // wait for a real movement before deciding, so a vertical scroll never moves the amount
+                    guard moved >= 6 else { return }
+                    track.isSideways = abs(value.translation.width) > abs(value.translation.height)
+                }
+                guard track.isSideways == true else { return }
+                let detent = apply(value.location, geometry)
+                if detent != track.detent {
+                    track.detent = detent
                     Haptics.play(.detent)
                 }
             }
-            .onEnded { _ in lastDetent = nil }
+            .onEnded { value in
+                // a tap jumps the knob to where the finger landed
+                if hypot(value.translation.width, value.translation.height) < 6 {
+                    _ = apply(value.location, geometry)
+                    Haptics.play(.detent)
+                }
+            }
+    }
+
+    /// Sets the amount from a point on the stage and returns the nearest quarter, for the detent haptic.
+    private func apply(_ location: CGPoint, _ geometry: SettleArcGeometry) -> Int {
+        let span = max(geometry.end.x - geometry.start.x, 1)
+        let share = min(max(Double((location.x - geometry.start.x) / span), 0), 1)
+        onFraction(share)
+        return Int((share * 4).rounded())
     }
 
     // MARK: Group
@@ -199,4 +219,9 @@ struct SettleArcShape: Shape {
         path.addQuadCurve(to: curve.to, control: curve.control)
         return path
     }
+}
+
+private struct DragTrack {
+    var isSideways: Bool?
+    var detent: Int?
 }

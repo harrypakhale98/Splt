@@ -28,7 +28,7 @@ struct GroupInviteSection: View {
                 NavigationLink {
                     InviteGroupView(groupID: groupID, groupName: groupName)
                 } label: {
-                    Label("Invite with Link or QR Code", systemImage: "qrcode")
+                    Label("Link or QR Code", systemImage: "qrcode")
                 }
             }
         } header: {
@@ -36,7 +36,7 @@ struct GroupInviteSection: View {
                 .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
             if !runtime.status.isConnected {
-                Text("Turn on iCloud to invite people straight from Splt. The link only opens this group on a device that already has it.")
+                Text("Turn on iCloud to invite people; a link only opens the group on a device that already has it.")
                     .padding(.horizontal, Depth.pageMargin + 4)
             }
         }

@@ -69,7 +69,7 @@ struct SharePreviewSection: View {
                             AvatarView(person: row.person, members: model.members.map(\.id), size: 28)
                             Text(model.displayName(for: row.person.id))
                             Spacer(minLength: 8)
-                            MoneyLabel(money: row.amount)
+                            MoneyLabel(money: row.amount).font(Typeface.figure)
                         }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(

@@ -69,8 +69,9 @@ extension EnvironmentValues {
 enum SettleTiming {
     private static let slow = ProcessInfo.processInfo.arguments.contains("-slowfeedback")
 
-    /// The check mark, before the sheet closes by itself.
-    static let confirmation: Duration = slow ? .seconds(60) : .seconds(2)
+    /// The settled sheet, before it closes by itself. Nothing on it needs to be caught by a test,
+    /// since the undo banner that follows lasts.
+    static let confirmation: Duration = slow ? .seconds(3) : .seconds(2)
     /// The undo banner.
     static let banner: Duration = slow ? .seconds(120) : .seconds(8)
 }

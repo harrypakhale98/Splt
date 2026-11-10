@@ -4,7 +4,7 @@ import SwiftUI
 /// Dark mode leans on the lighter sheet and the lit edge, because shadows barely show there.
 /// Increase Contrast swaps the soft shadow and lit edge for a plain outline.
 struct RaisedSurface: View {
-    var radius: CGFloat = 14
+    var radius: CGFloat = Depth.cardRadius
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
@@ -111,6 +111,13 @@ enum Depth {
     /// The space between a card's edge and the content of a row.
     static let rowPadding = EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
 
+    /// The corner of every card, whether it is a `cardSurface()` or a run of `raisedRow()`s.
+    static let cardRadius: CGFloat = 24
+    /// The corner of smaller boxes on the page or on a card: buttons, tiles, chips, fields.
+    static let controlRadius: CGFloat = 14
+    /// The corner of a small picture, such as a receipt thumbnail.
+    static let thumbnailRadius: CGFloat = 8
+
     /// Warm ink, so shadows look like they fall on paper rather than on grey.
     static let warmShadow = Color(red: 42.0 / 255, green: 33.0 / 255, blue: 24.0 / 255)
 
@@ -126,7 +133,7 @@ enum Depth {
 
 extension View {
     /// The rare raised surface: a sheet of card stock with gentle corners.
-    func cardSurface(radius: CGFloat = 14) -> some View {
+    func cardSurface(radius: CGFloat = Depth.cardRadius) -> some View {
         background { RaisedSurface(radius: radius) }
     }
 
@@ -138,7 +145,7 @@ extension View {
     /// In a grouped List, also put `raisedSection()` on the section.
     func raisedRow(
         _ position: RaisedPosition = .only,
-        radius: CGFloat = 24,
+        radius: CGFloat = Depth.cardRadius,
         padding: EdgeInsets = Depth.rowPadding
     ) -> some View {
         listRowInsets(
@@ -156,9 +163,12 @@ extension View {
     /// Lifts just the card when a raised row's context menu opens, rather than the whole row.
     /// Apply directly before `contextMenu`.
     func raisedContextMenuShape(padding: EdgeInsets = Depth.rowPadding) -> some View {
+        // Growing a rounded rectangle grows its corner by the same amount, so start that much
+        // tighter to land on the card's own corner.
         contentShape(
             .contextMenuPreview,
-            RoundedRectangle(cornerRadius: 24, style: .continuous).inset(by: -padding.leading)
+            RoundedRectangle(cornerRadius: max(0, Depth.cardRadius - padding.leading), style: .continuous)
+                .inset(by: -padding.leading)
         )
     }
 
@@ -209,7 +219,7 @@ private struct SolidDisc: ViewModifier {
                     )
                 }
                 .shadow(
-                    color: .black.opacity(isDark ? 0.6 : 0.22),
+                    color: isDark ? Color.black.opacity(0.6) : Depth.warmShadow.opacity(0.22),
                     radius: max(0.5, diameter * 0.03),
                     y: max(0.5, diameter * 0.025)
                 )

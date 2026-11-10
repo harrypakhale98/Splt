@@ -22,21 +22,16 @@ struct GroupSettingsView: View {
     @ViewBuilder
     private var content: some View {
         if let services {
-            GroupSettingsForm(
-                groupID: groupID, services: services, showsCancel: !isPushed, onGroupRemoved: onGroupRemoved
-            )
+            GroupSettingsForm(groupID: groupID, services: services, onGroupRemoved: onGroupRemoved)
         } else {
-            EmptyStateView(
-                title: "Group Not Found",
-                systemImage: "person.3",
-                description: "Splt couldn't open its storage."
-            )
+            EmptyStateView.dataUnavailable
         }
     }
 }
 
+/// Members, archive and exports take effect as soon as they are tapped, so there is no Cancel to
+/// suggest otherwise. Done saves the name, symbol, currency and trip fields.
 private struct GroupSettingsForm: View {
-    let showsCancel: Bool
     let onGroupRemoved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -48,8 +43,7 @@ private struct GroupSettingsForm: View {
     @State private var showsLeaveConfirmation = false
     @State private var newMemberName = ""
 
-    init(groupID: GroupID, services: DataServices, showsCancel: Bool, onGroupRemoved: @escaping () -> Void) {
-        self.showsCancel = showsCancel
+    init(groupID: GroupID, services: DataServices, onGroupRemoved: @escaping () -> Void) {
         self.onGroupRemoved = onGroupRemoved
         _model = State(initialValue: GroupSettingsViewModel(groupID: groupID, services: services))
     }
@@ -71,16 +65,14 @@ private struct GroupSettingsForm: View {
         .navigationTitle("Group Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if showsCancel {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", role: .cancel) { dismiss() }
-                }
-            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done", action: save)
                     .disabled(!model.canSave)
             }
         }
+        // a swipe would drop a saveable edit, so only Done closes it then; an edit that can't be
+        // saved (an empty name) can still be swiped away, so the sheet never traps you
+        .interactiveDismissDisabled(model.hasFieldEdits && model.canSave)
         .onAppear { model.locale = locale }
         .sheet(isPresented: $showsContacts) {
             ContactPicker { drafts in
@@ -230,12 +222,12 @@ private struct GroupSettingsForm: View {
             RaisedRows {
                 ForEach(model.memberRows) { row in
                     HStack(spacing: 12) {
-                        AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
+                        AvatarView(person: row.person, size: 28)
                         VStack(alignment: .leading) {
                             Text(row.isMe ? String(localized: "You") : row.person.name)
                             if row.person.isPlaceholder {
                                 Text("Hasn't joined yet")
-                                    .font(.footnote)
+                                    .font(.subheadline)
                                     .foregroundStyle(Ink.secondary)
                             }
                         }
@@ -250,19 +242,24 @@ private struct GroupSettingsForm: View {
                     }
                 }
                 HStack {
-                    TextField("Add by name", text: $newMemberName)
+                    TextField("Add by Name", text: $newMemberName)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                         .onSubmit(addTypedMember)
                     Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
                         .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                        .accessibilityLabel("Add Member")
                         .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                if !model.friendsToAdd.isEmpty {
-                    Menu {
-                        ForEach(model.friendsToAdd) { friend in
-                            Button(friend.name) { model.addMember(friend) }
-                        }
+                if !model.friends.isEmpty {
+                    // the same picker as New Group; each tap adds or removes the friend straight away
+                    NavigationLink {
+                        FriendPickerView(
+                            friends: model.friends, isSelected: { model.isMember($0) }, toggle: { model.toggleFriend($0) }
+                        )
                     } label: {
                         Label("Add from Friends", systemImage: "person.2")
                     }
@@ -275,7 +272,7 @@ private struct GroupSettingsForm: View {
             SectionHeader("Members")
                 .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
-            Text("Someone can be removed once they are settled up. Swipe a member to remove them.")
+            Text("Someone can be removed once they are settled up.")
                 .padding(.horizontal, Depth.pageMargin + 4)
         }
         .raisedSection()
@@ -284,15 +281,10 @@ private struct GroupSettingsForm: View {
     private var exportSection: some View {
         Section {
             RaisedRows {
-                ForEach(GroupExportKind.allCases) { kind in
-                    GroupExportRow(kind: kind, state: model.exportState(kind)) {
-                        Task { await model.prepareExport(kind) }
-                    }
+                GroupExportRow(state: { model.exportState($0) }) { kind in
+                    Task { await model.prepareExport(kind) }
                 }
             }
-        } header: {
-            SectionHeader("Export")
-                .padding(.horizontal, Depth.pageMargin + 4)
         }
         .raisedSection()
     }

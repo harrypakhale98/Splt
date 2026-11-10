@@ -16,6 +16,8 @@ final class SearchModel {
     private(set) var recents: [String] = []
     private(set) var me: Person?
     private(set) var peopleByID: [PersonID: Person] = [:]
+    /// Everyone known, for naming payers in expense rows. Built once per search, not per row.
+    private(set) var knownPeople: [Person] = []
     private(set) var hasSearched = false
 
     @ObservationIgnored private let services: DataServices
@@ -65,6 +67,7 @@ final class SearchModel {
         do {
             let known = try services.people.allPeople()
             peopleByID = Dictionary(known.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            knownPeople = known
             me = known.first(where: \.isMe)
             let base = try services.search.search(text, limit: Self.resultLimit)
             let blocked = visibility.ids(in: .blocked)

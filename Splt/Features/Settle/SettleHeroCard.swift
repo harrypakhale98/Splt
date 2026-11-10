@@ -28,11 +28,17 @@ struct SettleHeroCard: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(Text("Amount \(MoneyFormatting.magnitudeString(shownAmount, locale: locale))"))
             }
-            if ceremony.finished {
-                Text(model.remaining == nil ? String(localized: "All square") : String(localized: "still owed"))
-                    .font(.subheadline.weight(.medium))
+            if !ceremony.rolled, let otherTotals {
+                Text("Also \(otherTotals)")
+                    .font(Typeface.figure)
                     .foregroundStyle(Ink.secondary)
-                    .transition(.opacity)
+                    .multilineTextAlignment(.center)
+            }
+            if ceremony.finished {
+                Text(model.remaining == nil ? String(localized: "Settled up") : String(localized: "still owed"))
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
+                    .motionTransition(.opacity)
             } else if !ceremony.rolled, let remaining = model.remaining {
                 Text("\(MoneyFormatting.magnitudeString(remaining, locale: locale)) will still be owed")
                     .font(.footnote)
@@ -43,6 +49,14 @@ struct SettleHeroCard: View {
         .frame(maxWidth: .infinity)
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .accessibilityElement(children: .contain)
+    }
+
+    /// The other currencies of a whole group, which the one big figure can't hold.
+    private var otherTotals: String? {
+        guard model.amount == nil, model.totals.count > 1 else { return nil }
+        return ListFormatter.localizedString(
+            byJoining: model.totals.dropFirst().map { MoneyFormatting.magnitudeString($0, locale: locale) }
+        )
     }
 
     private var caption: some View {

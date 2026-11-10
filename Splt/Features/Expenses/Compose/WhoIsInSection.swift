@@ -16,6 +16,7 @@ struct WhoIsInSection: View {
                 Spacer()
                 if model.split.method != .itemized {
                     Button(allIn ? "None" : "Everyone") {
+                        Haptics.play(.tick)
                         if allIn { model.participants = [] } else { model.selectEveryone() }
                         onChange()
                     }
@@ -91,8 +92,10 @@ struct WhoIsInSection: View {
 }
 
 /// A small avatar and a name. Selected people are in ink with a check and an underline,
-/// and the others are dimmed, so the state never rests on color alone.
-private struct PersonToggle: View {
+/// and the others are dimmed, so the state never rests on color alone. The name keeps one
+/// weight so a row of these never shifts as people are picked. Use it for every
+/// "who's in" or "who had it" picker.
+struct PersonToggle: View {
     let person: Person
     /// What the chip says: "You" for the person using the app.
     let name: String
@@ -101,21 +104,25 @@ private struct PersonToggle: View {
     var action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            // The tick plays from the tap, not the state change, so Everyone and None don't tick once per person.
+            Haptics.play(.tick)
+            action()
+        } label: {
             VStack(spacing: 2) {
                 HStack(spacing: 6) {
                     AvatarView(person: person, members: members, size: 24)
                         .opacity(isSelected ? 1 : 0.4)
                     Text(name)
-                        .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                        .font(.subheadline)
                         .foregroundStyle(isSelected ? Ink.text : Ink.secondary)
                         .lineLimit(1)
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(Ink.text)
-                            .accessibilityHidden(true)
-                    }
+                    // Always laid out, so the chip keeps its width when the check comes and goes.
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                        .opacity(isSelected ? 1 : 0)
+                        .accessibilityHidden(true)
                 }
                 Rectangle()
                     .fill(isSelected ? Ink.text : Color.clear)
@@ -129,6 +136,5 @@ private struct PersonToggle: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
-        .haptics(.tick, trigger: isSelected)
     }
 }

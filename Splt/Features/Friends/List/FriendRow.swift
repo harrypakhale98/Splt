@@ -1,7 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// A friend with what they owe you or what you owe them, one line per currency.
+/// A friend with what they owe you or what you owe them, one line per currency. The section header
+/// already says the direction, so a caption only appears when money goes both ways.
 struct FriendRow: View {
     let summary: FriendSummary
 
@@ -24,6 +25,7 @@ struct FriendRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityValue(lines.isEmpty ? Text("Settled up") : Text(verbatim: ""))
     }
 
     private var nameText: some View {
@@ -34,17 +36,17 @@ struct FriendRow: View {
 
     @ViewBuilder
     private func balanceBlock(_ lines: [BalanceLine]) -> some View {
-        if lines.isEmpty {
-            Text("Settled up")
-                .font(.subheadline)
-                .foregroundStyle(Ink.secondary)
-        } else {
+        if !lines.isEmpty {
+            let isMixed = lines.contains { $0.direction == .owed } && lines.contains { $0.direction == .owes }
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                 ForEach(lines) { line in
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(caption(for: line.direction))
-                            .font(.footnote)
-                            .foregroundStyle(Ink.secondary)
+                        if isMixed {
+                            Text(caption(for: line.direction))
+                                .font(.footnote)
+                                .foregroundStyle(Ink.secondary)
+                                .accessibilityHidden(true)
+                        }
                         Text(MoneyFormatting.string(line.money, locale: locale, showsSign: false))
                             .font(Typeface.figure)
                             .foregroundStyle(Ink.direction(of: line.money.minorUnits))

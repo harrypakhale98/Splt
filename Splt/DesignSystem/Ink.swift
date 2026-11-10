@@ -81,6 +81,9 @@ enum Typeface {
     /// A serif title set in the content, such as a group's name above its figure.
     static let title = Font.system(.title, design: .serif)
 
+    /// The largest serif title, for full-screen moments such as the welcome tour.
+    static let display = Font.system(.largeTitle, design: .serif)
+
     /// Sets screen titles in the serif face. Call once at launch.
     @MainActor
     static func installNavigationTitles() {
@@ -100,7 +103,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let isPressed = configuration.isPressed
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous)
         let isRaised = isEnabled && contrast != .increased
         let isDark = colorScheme == .dark
         return configuration.label
@@ -120,7 +123,7 @@ struct PrimaryButtonStyle: ButtonStyle {
                         }
                     }
                     .shadow(
-                        color: isRaised ? .black.opacity(isDark ? 0.5 : 0.2) : .clear,
+                        color: isRaised ? (isDark ? Color.black.opacity(0.5) : Depth.warmShadow.opacity(0.2)) : .clear,
                         radius: isPressed ? 1 : 4,
                         y: isPressed ? 1 : 3
                     )
@@ -142,9 +145,9 @@ struct QuietButtonStyle: ButtonStyle {
             .buttonLabelPadding()
             .frame(maxWidth: .infinity, minHeight: 52)
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline)
+                RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous).strokeBorder(Ink.hairline)
             }
-            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous))
             .pressEffect(isPressed: configuration.isPressed)
     }
 }
@@ -213,8 +216,8 @@ struct ShareStrip: View {
     VStack(alignment: .leading, spacing: 20) {
         Text("€1,650.07").font(Typeface.hero(size: 52))
         ShareStrip(colors: (0..<6).map { PersonPalette.color(at: $0 * 2) })
-        Button("Settle up") {}.buttonStyle(PrimaryButtonStyle())
-        Button("Add expense") {}.buttonStyle(QuietButtonStyle())
+        Button("Settle Up") {}.buttonStyle(PrimaryButtonStyle())
+        Button("Add Expense") {}.buttonStyle(QuietButtonStyle())
     }
     .padding()
     .background(Ink.paper)

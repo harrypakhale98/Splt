@@ -26,7 +26,7 @@ struct ItemizedSplitEditor: View {
                 Button {
                     model.addItem()
                 } label: {
-                    Label("Add Item", systemImage: "plus.circle")
+                    Label("Add Item", systemImage: "plus")
                 }
             }
         } header: {
@@ -86,7 +86,8 @@ private struct ItemRow: View {
             ) { person in
                 model.assign(person, to: item.id)
             }
-            Button(item.assignees.count == model.members.count ? "Clear" : "Everyone") {
+            Button(item.assignees.count == model.members.count ? "None" : "Everyone") {
+                Haptics.play(.tick)
                 model.assignEveryone(to: item.id)
             }
             .buttonStyle(.borderless)

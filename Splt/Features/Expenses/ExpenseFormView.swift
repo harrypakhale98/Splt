@@ -12,13 +12,9 @@ struct ExpenseFormView: View {
             ExpenseFormScreen(mode: mode, services: services)
         } else {
             NavigationStack {
-                EmptyStateView(
-                    title: "Data Unavailable",
-                    systemImage: "exclamationmark.triangle",
-                    description: "Splt couldn't open its data. Restart the app and try again."
-                )
-                .navigationTitle("Expense")
-                .navigationBarTitleDisplayMode(.inline)
+                EmptyStateView.dataUnavailable
+                    .navigationTitle("Expense")
+                    .navigationBarTitleDisplayMode(.inline)
             }
         }
     }
@@ -71,7 +67,7 @@ private struct ExpenseFormScreen: View {
         } message: {
             Text(duplicateMessage)
         }
-        .alert("Could Not Save", isPresented: Binding(get: { model.saveError != nil }, set: { if !$0 { model.saveError = nil } })) {
+        .alert("Couldn't Save", isPresented: Binding(get: { model.saveError != nil }, set: { if !$0 { model.saveError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(model.saveError ?? "")
@@ -83,7 +79,7 @@ private struct ExpenseFormScreen: View {
         }
         .sheet(item: $fineTune) { selection in
             FineTuneSheet(model: model, personID: selection.id) { fineTune = nil }
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .haptics(.success, trigger: model.saveCount)
@@ -100,22 +96,26 @@ private struct ExpenseFormScreen: View {
                 }
                 VStack(spacing: 8) {
                     AmountHero(model: model, keypadOpen: keypadOpen && !typeSize.isAccessibilitySize) {
-                        Motion.perform(.snappy) { keypadOpen.toggle() }
+                        Motion.perform(Motion.snappy) { keypadOpen.toggle() }
                         focus = nil
                     }
                     TitleField(model: model, focus: $focus)
-                    PaidByMenu(model: model) { keypadOpen = false }
+                    PaidByMenu(model: model) { closeKeypad() }
                 }
-                WhoIsInSection(model: model) { keypadOpen = false }
+                WhoIsInSection(model: model) { closeKeypad() }
                 if model.split.method == .itemized {
-                    ItemsTray(model: model) { sheet = .more }
+                    ItemsTray(model: model) {
+                        closeKeypad()
+                        focus = nil
+                        sheet = .items
+                    }
                 }
                 SplitBarSection(model: model, onFineTune: { fineTune = PersonSelection(id: $0) }) {
-                    keypadOpen = false
+                    closeKeypad()
                     focus = nil
                 }
                 FormChipsRow(model: model) { opened in
-                    keypadOpen = false
+                    closeKeypad()
                     focus = nil
                     sheet = opened
                 }
@@ -132,7 +132,7 @@ private struct ExpenseFormScreen: View {
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: model.refreshKey) { model.refreshDuplicates() }
         .onChange(of: model.amountText) { model.refollowPayments() }
-        .onChange(of: focus) { _, new in if new != nil { keypadOpen = false } }
+        .onChange(of: focus) { _, new in if new != nil { closeKeypad() } }
         .safeAreaBar(edge: .bottom) {
             VStack(spacing: 8) {
                 if keypadOpen && !typeSize.isAccessibilitySize {
@@ -143,7 +143,7 @@ private struct ExpenseFormScreen: View {
                         )
                     }
                     .padding(.horizontal, 20)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .motionTransition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 SaveBar(summary: model.summaryLine, hint: saveHint, canSave: model.canSave) {
                     if model.possibleDuplicates.isEmpty { save() } else { confirmsDuplicate = true }
@@ -210,6 +210,12 @@ private struct ExpenseFormScreen: View {
         guard let match = model.possibleDuplicates.first else { return "" }
         let date = match.date.formatted(date: .abbreviated, time: .omitted)
         return String(localized: "\(match.title) for the same amount was added on \(date).")
+    }
+
+    /// Lowers the number pad with the same motion that raised it, so the save bar slides rather than jumps.
+    private func closeKeypad() {
+        guard keypadOpen else { return }
+        Motion.perform(Motion.snappy) { keypadOpen = false }
     }
 
     private func save() {

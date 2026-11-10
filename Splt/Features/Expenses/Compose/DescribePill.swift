@@ -12,10 +12,7 @@ struct DescribePill: View {
         VStack(spacing: 8) {
             VStack(spacing: 0) {
                 HStack(spacing: 10) {
-                    TextField(
-                        "Describe it", text: $model.describeText,
-                        prompt: Text("Dinner 60 with Sam and Priya"), axis: .vertical
-                    )
+                    TextField("Describe it", text: $model.describeText, prompt: example, axis: .vertical)
                     .lineLimit(1...3)
                     .submitLabel(.go)
                     .focused(focus, equals: .describe)
@@ -36,14 +33,36 @@ struct DescribePill: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
-            if !model.unmatchedNames.isEmpty {
-                let names = model.unmatchedNames.formatted(.list(type: .and))
-                Label("\(names) is not in this group, so they were left out.", systemImage: "person.fill.questionmark")
+            if let unmatched {
+                Label(unmatched, systemImage: "person.fill.questionmark")
                     .font(.footnote)
                     .foregroundStyle(Ink.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
+        }
+        .onChange(of: focus.wrappedValue) { _, new in
+            if new != nil, new != .describe { dictation.cancel() }
+        }
+        .onDisappear { dictation.cancel() }
+    }
+
+    /// An example built from the group's own people, so it shows how to name them.
+    private var example: Text {
+        let others = model.members.filter { $0.id != model.me?.id }.prefix(2)
+        let names = others.compactMap { $0.name.split(separator: " ").first.map(String.init) }
+        guard !names.isEmpty else { return Text("Dinner 60") }
+        return Text("Dinner 60 with \(names.formatted(.list(type: .and)))")
+    }
+
+    /// The names the description used that aren't in the group, as one sentence.
+    private var unmatched: String? {
+        let names = model.unmatchedNames
+        switch names.count {
+        case 0: return nil
+        case 1: return String(localized: "\(names[0]) isn't in this group, so they were left out.")
+        default:
+            return String(localized: "\(names.formatted(.list(type: .and))) aren't in this group, so they were left out.")
         }
     }
 
@@ -56,10 +75,12 @@ struct DescribePill: View {
                 .font(.body.weight(.medium))
                 .frame(minHeight: 44)
         } else {
-            HStack(spacing: 14) {
+            HStack(spacing: 0) {
                 if DictationController.isSupported {
                     Button(action: toggleDictation) {
                         Image(systemName: dictation.isListening ? "stop.circle.fill" : "mic")
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
                     .accessibilityLabel(dictation.isListening ? "Stop dictating" : "Dictate")
                 }

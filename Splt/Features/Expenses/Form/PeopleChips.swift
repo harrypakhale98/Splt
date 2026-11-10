@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// People as toggle buttons that wrap across lines. Selected people are filled.
+/// People as toggle buttons that wrap across lines, in the same style as "Who's in".
 struct PeopleChips: View {
     let people: [Person]
     let selected: Set<PersonID>
@@ -12,7 +12,7 @@ struct PeopleChips: View {
         let ids = people.map(\.id)
         FlowLayout(spacing: 8) {
             ForEach(people) { person in
-                PersonChip(person: person, members: ids, isSelected: selected.contains(person.id)) {
+                PersonToggle(person: person, name: person.name, members: ids, isSelected: selected.contains(person.id)) {
                     toggle(person.id)
                 }
             }

@@ -17,11 +17,7 @@ struct CreateGroupView: View {
                     dismiss()
                 })
             } else {
-                EmptyStateView(
-                    title: "Can't Create Groups",
-                    systemImage: "exclamationmark.triangle",
-                    description: "Splt couldn't open its storage."
-                )
+                EmptyStateView.dataUnavailable
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", role: .cancel) { dismiss() }
@@ -40,6 +36,7 @@ private struct CreateGroupForm: View {
     @State private var newMemberName = ""
     @State private var showsContacts = false
     @State private var errorMessage: String?
+    @State private var didFocusName = false
     @FocusState private var nameFocused: Bool
     @FocusState private var memberFocused: Bool
 
@@ -82,10 +79,6 @@ private struct CreateGroupForm: View {
                             Label(template.title, systemImage: template.systemImage).tag(template)
                         }
                     }
-                    if model.template == .trip {
-                        DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
-                        DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
-                    }
                     NavigationLink {
                         GroupCurrencyPickerView(selection: $model.currencyCode)
                     } label: {
@@ -94,6 +87,20 @@ private struct CreateGroupForm: View {
                 }
             }
             .raisedSection()
+
+            // laid out as in Group Settings: the dates get their own section
+            if model.template == .trip {
+                Section {
+                    RaisedRows {
+                        DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
+                        DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
+                    }
+                } header: {
+                    SectionHeader("Trip")
+                        .padding(.horizontal, Depth.pageMargin + 4)
+                }
+                .raisedSection()
+            }
 
             membersSection
 
@@ -129,7 +136,12 @@ private struct CreateGroupForm: View {
         } message: {
             Text(errorMessage ?? "")
         }
-        .onAppear { nameFocused = true }
+        .onAppear {
+            // only the first time: coming back from a picker shouldn't pull the keyboard up again
+            guard !didFocusName else { return }
+            didFocusName = true
+            nameFocused = true
+        }
     }
 
     private var membersSection: some View {
@@ -139,19 +151,25 @@ private struct CreateGroupForm: View {
                     if let me = model.me {
                         AvatarView(person: me, size: 28)
                     } else {
-                        AvatarView(name: String(localized: "You"), size: 28)
+                        AvatarView(name: String(localized: "You"), hue: PersonPalette.meIndex, size: 28)
                     }
                     Text("You")
                 }
                 .accessibilityElement(children: .combine)
                 ForEach(model.members) { member in
                     HStack(spacing: 12) {
-                        AvatarView(name: member.name, size: 28)
+                        // a person keeps the hue they will have everywhere; a new name stays neutral
+                        // until it is created, since its hue is only assigned then
+                        if let id = member.existingID {
+                            AvatarView(name: member.name, id: id, size: 28)
+                        } else {
+                            DraftAvatar(name: member.name)
+                        }
                         VStack(alignment: .leading) {
                             Text(member.name)
                             if let hint = member.contactHint {
                                 Text(hint)
-                                    .font(.footnote)
+                                    .font(.subheadline)
                                     .foregroundStyle(Ink.secondary)
                             }
                         }
@@ -167,13 +185,17 @@ private struct CreateGroupForm: View {
                 }
 
                 HStack {
-                    TextField("Add by name", text: $newMemberName)
+                    TextField("Add by Name", text: $newMemberName)
                         .focused($memberFocused)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                         .onSubmit(addTypedMember)
                     Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
                         .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                        .accessibilityLabel("Add Member")
                         .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 NavigationLink {
@@ -191,7 +213,7 @@ private struct CreateGroupForm: View {
             SectionHeader("Members")
                 .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
-            Text("People who don't have Splt yet are added by name. They can join later.")
+            Text("People without the app are added by name and can join later.")
                 .padding(.horizontal, Depth.pageMargin + 4)
         }
         .raisedSection()
@@ -214,6 +236,28 @@ private struct CreateGroupForm: View {
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)
         }
+    }
+}
+
+/// A neutral disc for a name that isn't a person yet.
+private struct DraftAvatar: View {
+    let name: String
+
+    @ScaledMetric(relativeTo: .body) private var scaled: CGFloat = 28
+
+    var body: some View {
+        let diameter = AvatarView.diameter(scaled: scaled, base: 28)
+        Circle()
+            .fill(Ink.tertiary)
+            .frame(width: diameter, height: diameter)
+            .overlay {
+                Text(AvatarStyle.initials(for: name))
+                    .font(.system(size: diameter * 0.4))
+                    .foregroundStyle(Ink.text)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+            }
+            .accessibilityHidden(true)
     }
 }
 

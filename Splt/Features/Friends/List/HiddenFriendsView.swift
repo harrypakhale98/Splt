@@ -19,7 +19,9 @@ struct HiddenFriendsView: View {
                             }
                             Spacer(minLength: 8)
                             Menu {
-                                Button("Show in Friends", systemImage: "eye") { model.setState(nil, for: summary.id) }
+                                Button("Show in Friends", systemImage: "eye") {
+                                    Motion.perform { model.setState(nil, for: summary.id) }
+                                }
                                 if model.state(of: summary.id) == .blocked {
                                     Button("Unblock", systemImage: "hand.raised.slash") { model.setState(.hidden, for: summary.id) }
                                 } else {
@@ -28,13 +30,16 @@ struct HiddenFriendsView: View {
                             } label: {
                                 Label("Options", systemImage: "ellipsis.circle")
                                     .labelStyle(.iconOnly)
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(Rectangle())
                             }
+                            .accessibilityLabel("Options for \(summary.person.name)")
                         }
                         .accessibilityElement(children: .combine)
                     }
                 }
             } footer: {
-                Text("Hidden people stay out of the list. Blocked people also stay out of search and reminders. This only changes what you see on this device.")
+                Text("Blocked people also stay out of search and reminders on this device.")
             }
         }
         .listStyle(.plain)
@@ -43,7 +48,7 @@ struct HiddenFriendsView: View {
         .overlay {
             if model.hiddenSummaries.isEmpty {
                 EmptyStateView(
-                    title: "Nobody Hidden",
+                    title: "Nobody hidden",
                     systemImage: "eye",
                     description: "People you hide or block show up here."
                 )

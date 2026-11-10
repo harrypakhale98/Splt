@@ -31,13 +31,14 @@ struct NetPosition: Equatable, Sendable {
 /// The hero of the Groups and Friends tabs: one big number for where you stand, a quiet sentence,
 /// and a strip of who the money is between.
 struct NetPositionHero: View {
-    /// What the number covers, such as "Across All Groups" or "With Friends".
-    var scope: LocalizedStringKey = "Your Balance"
+    /// What the number covers, such as "Across all groups" or "With friends".
+    var scope: LocalizedStringKey = "Your balance"
     let totals: BalanceTotals
     var owedBy: [Person] = []
     var owedTo: [Person] = []
 
     @Environment(\.locale) private var locale
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = HeroAmount.baseSize
 
     private var position: NetPosition { NetPosition(totals: totals) }
 
@@ -69,12 +70,12 @@ struct NetPositionHero: View {
             HeroAmount(primary)
             if !position.others.isEmpty {
                 Text("Also \(otherAmounts)")
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline)
                     .monospacedDigit()
             }
         } else {
             Text("All settled up")
-                .font(Typeface.hero(size: 44))
+                .font(Typeface.hero(size: min(heroSize, HeroAmount.maxSize)))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .letterpress()
@@ -91,7 +92,7 @@ struct NetPositionHero: View {
         let owed = ListFormatter.localizedString(byJoining: totals.owedToYou.map { MoneyFormatting.magnitudeString($0, locale: locale) })
         let owe = ListFormatter.localizedString(byJoining: totals.youOwe.map { MoneyFormatting.magnitudeString($0, locale: locale) })
         switch (totals.owedToYou.isEmpty, totals.youOwe.isEmpty) {
-        case (true, true): return String(localized: "Nobody owes anybody. Enjoy it.")
+        case (true, true): return String(localized: "Nobody owes anything.")
         case (false, true): return String(localized: "You're owed \(owed).")
         case (true, false): return String(localized: "You owe \(owe).")
         case (false, false): return String(localized: "You're owed \(owed) and you owe \(owe).")

@@ -24,7 +24,7 @@ final class GroupsUITests: XCTestCase {
         let keyboardDone = app.keyboards.buttons["Done"]
         if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
 
-        let member = app.textFields["Add by name"]
+        let member = app.textFields["Add by Name"]
         reveal(member, in: app)
         member.tap()
         member.typeText("Alex\n")

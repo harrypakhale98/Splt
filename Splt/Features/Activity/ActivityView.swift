@@ -14,11 +14,7 @@ struct ActivityView: View {
                 if let services {
                     ActivityContent(services: services)
                 } else {
-                    EmptyStateView(
-                        title: "No Activity Yet",
-                        systemImage: "list.bullet.rectangle",
-                        description: "Splt couldn't open its storage."
-                    )
+                    EmptyStateView.dataUnavailable
                 }
             }
             .navigationTitle("Activity")
@@ -97,7 +93,7 @@ private struct ActivityContent: View {
     private var emptyState: some View {
         if model.entries.isEmpty, model.didLoad {
             EmptyStateView(
-                title: "No Activity Yet",
+                title: "No activity yet",
                 systemImage: "list.bullet.rectangle",
                 description: "Expenses and payments from your groups will show up here.",
                 actionTitle: "Add Expense",
@@ -105,7 +101,7 @@ private struct ActivityContent: View {
             )
         } else if model.sections.isEmpty, model.didLoad {
             EmptyStateView(
-                title: "Nothing Matches",
+                title: "Nothing matches",
                 systemImage: "line.3.horizontal.decrease.circle",
                 description: "Try a different filter."
             )

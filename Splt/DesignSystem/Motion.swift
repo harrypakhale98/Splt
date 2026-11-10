@@ -10,6 +10,8 @@ enum Motion {
     static let quick = Animation.snappy(duration: 0.2)
     /// Things arriving on screen.
     static let settle = Animation.spring(duration: 0.45, bounce: 0.1)
+    /// A slow reveal for a moment worth watching, such as a recap or the orbit.
+    static let reveal = Animation.smooth(duration: 0.9)
 
     /// The animation to use, or nil to skip it when motion is reduced.
     static func animation(_ animation: Animation, reduceMotion: Bool) -> Animation? {

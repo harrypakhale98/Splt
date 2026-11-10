@@ -16,7 +16,7 @@ struct SplitMethodSwitcher: View {
             if typeSize.isAccessibilitySize {
                 scrolling
             } else {
-                Picker("Split method", selection: Binding(get: { selection }, set: { onSelect($0) })) {
+                Picker("Split method", selection: Binding(get: { selection }, set: { select($0) })) {
                     ForEach(order) { method in
                         Text(method.shortTitle).tag(method)
                     }
@@ -25,7 +25,13 @@ struct SplitMethodSwitcher: View {
                 .accessibilityIdentifier("split-method")
             }
         }
-        .haptics(.tick, trigger: selection)
+    }
+
+    /// The tick plays from the tap, so a method change made by dragging the bar only gets the bar's detent.
+    private func select(_ method: SplitMethod) {
+        guard method != selection else { return }
+        Haptics.play(.tick)
+        onSelect(method)
     }
 
     private var scrolling: some View {
@@ -46,7 +52,7 @@ struct SplitMethodSwitcher: View {
     @ViewBuilder
     private func button(for method: SplitMethod) -> some View {
         let isSelected = method == selection
-        Button { onSelect(method) } label: {
+        Button { select(method) } label: {
             Text(method.shortTitle)
                 .font(.body.weight(isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? Ink.text : Ink.secondary)

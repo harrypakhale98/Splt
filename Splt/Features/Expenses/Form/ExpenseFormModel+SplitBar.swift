@@ -1,5 +1,6 @@
 import Foundation
 import SpltCore
+import SwiftUI
 
 extension ExpenseFormModel {
     // MARK: What the bar shows
@@ -98,7 +99,8 @@ extension ExpenseFormModel {
     @discardableResult
     func dragDivider(_ divider: Int, toFraction fraction: Double, thresholdBasisPoints: Int64 = 150) -> SplitBarDrag? {
         guard let data = barData, data.canDrag else { return nil }
-        if split.method == .equal { selectMethod(.percentage) }
+        // Leaving an equal split turns it into percentages; the switcher slides across rather than jumping.
+        if split.method == .equal { Motion.perform(Motion.snappy) { selectMethod(.percentage) } }
         let fraction = min(max(fraction, 0), 1)
         let count = data.segments.count
 
@@ -247,7 +249,8 @@ extension ExpenseFormModel {
     func adjustShare(of person: PersonID, increase: Bool) -> Bool {
         guard let data = barData, let index = data.segments.firstIndex(where: { $0.id == person }),
               data.segments.count > 1 else { return false }
-        if split.method == .equal { selectMethod(.percentage) }
+        // Leaving an equal split turns it into percentages; the switcher slides across rather than jumping.
+        if split.method == .equal { Motion.perform(Motion.snappy) { selectMethod(.percentage) } }
         guard let current = barData else { return false }
         let sign: Int64 = increase ? 1 : -1
 

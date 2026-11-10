@@ -1,5 +1,6 @@
 import SpltCore
 import SwiftUI
+import Synchronization
 import UIKit
 
 /// Shows an amount with tabular digits.
@@ -62,12 +63,20 @@ enum MoneyFormatting {
     }
 
     static func fractionDigits(for currencyCode: String, locale: Locale = .current) -> Int {
+        let key = "\(currencyCode)|\(locale.identifier)"
+        if let cached = fractionDigitsCache.withLock({ $0[key] }) { return cached }
         let formatter = NumberFormatter()
         formatter.locale = locale
         formatter.numberStyle = .currency
         formatter.currencyCode = currencyCode
-        return formatter.maximumFractionDigits
+        let digits = formatter.maximumFractionDigits
+        fractionDigitsCache.withLock { $0[key] = digits }
+        return digits
     }
+
+    /// Building a NumberFormatter is slow, and every amount on screen asks, so remember the answer
+    /// per currency and locale.
+    private static let fractionDigitsCache = Mutex<[String: Int]>([:])
 }
 
 #Preview {

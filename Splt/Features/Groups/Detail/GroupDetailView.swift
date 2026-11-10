@@ -11,12 +11,8 @@ struct GroupDetailView: View {
         if let services {
             GroupDetailContent(groupID: groupID, services: services)
         } else {
-            EmptyStateView(
-                title: "Group Not Found",
-                systemImage: "person.3",
-                description: "Splt couldn't open its storage."
-            )
-            .navigationBarTitleDisplayMode(.inline)
+            EmptyStateView.dataUnavailable
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -34,10 +30,8 @@ private struct GroupDetailContent: View {
     @State private var showsCustomRange = false
     @State private var settleRoute: SettleRoute?
     @State private var summary: String?
-    @State private var condenseProgress = 0.0
+    @State private var condensed = false
     @State private var showsRecap = false
-
-    private var condensed: Bool { condenseProgress > 0.85 }
 
     init(groupID: GroupID, services: DataServices) {
         _model = State(initialValue: GroupDetailViewModel(groupID: groupID, services: services))
@@ -65,11 +59,11 @@ private struct GroupDetailContent: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .listSectionSpacing(10)
                 .paperBackground()
-                .onScrollGeometryChange(for: Double.self) { geometry in
-                    let offset = geometry.contentOffset.y + geometry.contentInsets.top
-                    return min(max(offset / 220, 0), 1)
-                } action: { _, progress in
-                    condenseProgress = progress
+                // only crossing the line writes state, so scrolling doesn't redraw the screen every frame
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top > 187
+                } action: { _, isPast in
+                    condensed = isPast
                 }
                 .modifier(ExpenseSearch(isOn: model.segment == .expenses, text: $model.filter.query))
                 .toolbar { toolbar }
@@ -85,9 +79,6 @@ private struct GroupDetailContent: View {
         .onChange(of: model.filter.query) {
             if !model.filter.query.isEmpty { model.segment = .expenses }
         }
-        .onChange(of: model.filter.period) {
-            if model.filter.period == .custom { showsCustomRange = true }
-        }
         .task(id: model.insightInput) {
             guard let input = model.insightInput else {
                 summary = nil
@@ -98,6 +89,8 @@ private struct GroupDetailContent: View {
         .fullScreenCover(isPresented: $showsRecap) {
             if let group = model.group, let stats = model.recapStats {
                 TripRecapStoryView(group: group, stats: stats, members: group.memberIDs, summary: summary)
+            } else {
+                RecapUnavailable()
             }
         }
         .sheet(isPresented: $showsAddExpense) {
@@ -107,7 +100,11 @@ private struct GroupDetailContent: View {
             GroupSettingsView(groupID: model.groupID, onGroupRemoved: { dismiss() })
         }
         .sheet(isPresented: $showsCustomRange) {
-            DateRangeSheet(start: $model.filter.customStart, end: $model.filter.customEnd)
+            DateRangeSheet(start: model.filter.customStart, end: model.filter.customEnd) { start, end in
+                model.filter.customStart = start
+                model.filter.customEnd = end
+                model.filter.period = .custom
+            }
         }
         .sheet(item: $settleRoute) { route in
             SettleUpSheet(route: route)
@@ -173,19 +170,17 @@ private struct GroupDetailContent: View {
         }
         if model.expenses.isEmpty {
             Section {
-                EmptyStateView(
-                    title: "No Expenses",
-                    systemImage: "tray",
-                    description: "Add the first expense to start splitting.",
-                    actionTitle: "Add Expense",
-                    action: { showsAddExpense = true }
-                )
-                .listRowBackground(Color.clear)
+                GroupPaperNote("Add the first expense to start splitting.")
             }
         } else if sections.isEmpty {
             Section {
-                ContentUnavailableView.search(text: model.filter.query)
-                    .listRowBackground(Color.clear)
+                let query = model.filter.query.trimmingCharacters(in: .whitespacesAndNewlines)
+                if query.isEmpty {
+                    GroupPaperNote("No expenses match these filters.")
+                } else {
+                    EmptyStateView.search(query: query)
+                        .listRowBackground(Color.clear)
+                }
             }
         } else {
             ForEach(sections) { section in
@@ -193,10 +188,7 @@ private struct GroupDetailContent: View {
                     RaisedRows {
                         ForEach(section.expenses) { expense in
                             NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                                GroupExpenseRow(
-                                    expense: expense, currentPerson: model.me?.id,
-                                    people: model.members, members: model.group?.memberIDs ?? []
-                                )
+                                GroupExpenseRow(expense: expense, summary: model.rowSummary(for: expense))
                             }
                         }
                     }
@@ -247,10 +239,6 @@ private struct GroupDetailContent: View {
             Button("Activity", systemImage: "list.bullet.rectangle") {
                 showsActivity = true
             }
-            Button("Recap", systemImage: "play.rectangle") {
-                showsRecap = true
-            }
-            .disabled(model.recapStats == nil)
             Button("Recurring Expenses", systemImage: "arrow.triangle.2.circlepath") {
                 router.push(.recurringExpenses(model.groupID.rawValue))
             }
@@ -276,8 +264,18 @@ private struct GroupDetailContent: View {
                     Label(category.title, systemImage: category.symbolName).tag(Optional(category))
                 }
             }
-            Picker("Date", selection: $model.filter.period) {
-                ForEach(ExpenseFilter.Period.allCases) { Text($0.title).tag($0) }
+            Picker("Date", selection: presetPeriod) {
+                ForEach(ExpenseFilter.Period.allCases.filter { $0 != .custom }) { Text($0.title).tag(Optional($0)) }
+            }
+            // a button rather than a picker choice, so the range can be opened again and Cancel changes nothing
+            Button {
+                showsCustomRange = true
+            } label: {
+                if model.filter.period == .custom {
+                    Label("Custom Range…", systemImage: "checkmark")
+                } else {
+                    Text("Custom Range…")
+                }
             }
             if model.filter.isFiltering {
                 Button("Clear Filters", systemImage: "xmark.circle", role: .destructive) {
@@ -292,6 +290,14 @@ private struct GroupDetailContent: View {
                     : "line.3.horizontal.decrease.circle"
             )
         }
+    }
+
+    /// The preset periods. Nil while a custom range is applied, so no preset shows as chosen.
+    private var presetPeriod: Binding<ExpenseFilter.Period?> {
+        Binding(
+            get: { model.filter.period == .custom ? nil : model.filter.period },
+            set: { if let period = $0 { model.filter.period = period } }
+        )
     }
 
     private var errorBinding: Binding<Bool> {
@@ -313,20 +319,18 @@ private struct ExpenseSearch: ViewModifier {
     }
 }
 
-/// Two dates for the custom filter period.
+/// Two dates for the custom filter period. Nothing changes until Apply.
 private struct DateRangeSheet: View {
-    @Binding var start: Date
-    @Binding var end: Date
+    let onApply: (Date, Date) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var draftStart: Date
     @State private var draftEnd: Date
 
-    init(start: Binding<Date>, end: Binding<Date>) {
-        _start = start
-        _end = end
-        _draftStart = State(initialValue: start.wrappedValue)
-        _draftEnd = State(initialValue: end.wrappedValue)
+    init(start: Date, end: Date, onApply: @escaping (Date, Date) -> Void) {
+        self.onApply = onApply
+        _draftStart = State(initialValue: start)
+        _draftEnd = State(initialValue: end)
     }
 
     var body: some View {
@@ -349,14 +353,53 @@ private struct DateRangeSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
-                        start = draftStart
-                        end = max(draftEnd, draftStart)
+                        onApply(draftStart, max(draftEnd, draftStart))
                         dismiss()
                     }
                 }
             }
         }
         .presentationDetents([.medium])
+    }
+}
+
+/// One plain sentence on paper, for a list with nothing in it yet.
+struct GroupPaperNote: View {
+    let text: LocalizedStringKey
+
+    init(_ text: LocalizedStringKey) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Ink.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
+}
+
+/// Shown if the recap opens without anything to tell, so the cover can always be closed.
+private struct RecapUnavailable: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            EmptyStateView(
+                title: "No Recap Yet",
+                systemImage: "play.rectangle",
+                description: "The recap appears once the group has expenses."
+            )
+            .paperBackground()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
     }
 }
 

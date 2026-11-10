@@ -13,11 +13,7 @@ struct SplitwiseImportView: View {
         if let services {
             SplitwiseImportContent(services: services, onImported: onImported)
         } else {
-            EmptyStateView(
-                title: "Can't Import",
-                systemImage: "exclamationmark.triangle",
-                description: "Splt couldn't open its storage."
-            )
+            EmptyStateView.dataUnavailable
             .navigationTitle("Import from Splitwise")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -106,17 +102,20 @@ private struct SplitwiseImportContent: View {
                 SectionHeader("Export from Splitwise")
                     .padding(.horizontal, Depth.pageMargin + 4)
             } footer: {
-                Text("Splt reads the file on this device. Nothing is uploaded, and your Splitwise group stays as it is.")
+                Text("The file is read on this device and nothing is uploaded.")
                     .padding(.horizontal, Depth.pageMargin + 4)
             }
             .raisedSection()
             Section {
-                Button("Choose CSV File", systemImage: "doc.badge.plus") {
+                // the screen's one main action
+                Button("Choose CSV File") {
                     showsPicker = true
                 }
-                .raisedRow()
+                .buttonStyle(PrimaryButtonStyle())
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
-            .raisedSection()
         }
     }
 
@@ -174,7 +173,12 @@ private struct SplitwiseImportContent: View {
                         LabeledContent("Expenses") { Text(preview.expenseCount, format: .number).monospacedDigit() }
                         LabeledContent("Payments") { Text(preview.paymentCount, format: .number).monospacedDigit() }
                         ForEach(preview.totals, id: \.currencyCode) { total in
-                            LabeledContent("Total Spent") { MoneyLabel(money: total) }
+                            // name the currency when there are several, so the rows can be told apart
+                            if preview.totals.count > 1 {
+                                LabeledContent("Total Spent in \(total.currencyCode)") { MoneyLabel(money: total).font(Typeface.figure) }
+                            } else {
+                                LabeledContent("Total Spent") { MoneyLabel(money: total).font(Typeface.figure) }
+                            }
                         }
                     }
                 } header: {

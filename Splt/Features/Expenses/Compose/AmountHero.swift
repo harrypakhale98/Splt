@@ -20,11 +20,12 @@ struct AmountHero: View {
                     Text(shown.isEmpty ? "0" : shown)
                         .font(Typeface.hero(size: min(size, 80)))
                         .monospacedDigit()
-                        .foregroundStyle(shown.isEmpty ? Ink.tertiary : Ink.text)
+                        .foregroundStyle(shown.isEmpty ? Ink.secondary : Ink.text)
                         .lineLimit(1)
                         .minimumScaleFactor(0.4)
                         .contentTransition(.numericText())
                         .motion(Motion.quick, value: model.amountText)
+                        .letterpress()
                     if keypadOpen {
                         Rectangle()
                             .fill(Ink.text)
@@ -61,12 +62,19 @@ struct AmountHero: View {
 
     private var shown: String { AmountKeypad.display(model.amountText, locale: locale) }
 
+    /// Currency symbols already looked up, by locale and currency, so a keypress never builds a formatter.
+    @MainActor private static var symbols: [String: String] = [:]
+
     private var symbol: String {
+        let key = locale.identifier + "|" + model.currencyCode
+        if let cached = Self.symbols[key] { return cached }
         let formatter = NumberFormatter()
         formatter.locale = locale
         formatter.numberStyle = .currency
         formatter.currencyCode = model.currencyCode
-        return formatter.currencySymbol ?? model.currencyCode
+        let symbol = formatter.currencySymbol ?? model.currencyCode
+        Self.symbols[key] = symbol
+        return symbol
     }
 
     @ViewBuilder

@@ -2,25 +2,26 @@ import SwiftUI
 import VisionKit
 
 /// Reads a QR code with the camera. Shows a plain message where the camera cannot scan.
+/// `onCode` returns false to reject a code and keep scanning.
 struct QRScannerView: View {
-    let onCode: (String) -> Void
+    let onCode: (String) -> Bool
 
     var body: some View {
         if DataScannerViewController.isSupported, DataScannerViewController.isAvailable {
             ScannerRepresentable(onCode: onCode)
                 .ignoresSafeArea()
         } else {
-            ContentUnavailableView(
-                "Scanning Isn't Available",
+            EmptyStateView(
+                title: "Scanning isn't available",
                 systemImage: "qrcode.viewfinder",
-                description: Text("Allow camera access in Settings, or ask your friend to send the invite link instead.")
+                description: "Allow camera access in Settings, or ask your friend for the invite link."
             )
         }
     }
 }
 
 private struct ScannerRepresentable: UIViewControllerRepresentable {
-    let onCode: (String) -> Void
+    let onCode: (String) -> Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(onCode: onCode)
@@ -50,10 +51,10 @@ private struct ScannerRepresentable: UIViewControllerRepresentable {
 
     @MainActor
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        private let onCode: (String) -> Void
+        private let onCode: (String) -> Bool
         private var handled = false
 
-        init(onCode: @escaping (String) -> Void) {
+        init(onCode: @escaping (String) -> Bool) {
             self.onCode = onCode
         }
 
@@ -62,7 +63,8 @@ private struct ScannerRepresentable: UIViewControllerRepresentable {
             for case .barcode(let code) in addedItems {
                 if let text = code.payloadStringValue {
                     handled = true
-                    onCode(text)
+                    // A rejected code leaves the scanner ready for the next one.
+                    handled = onCode(text)
                     return
                 }
             }

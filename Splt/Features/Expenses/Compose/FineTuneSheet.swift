@@ -29,10 +29,6 @@ struct FineTuneSheet: View {
                             stepButton(systemImage: "minus", label: "Less", increase: false)
                             stepButton(systemImage: "plus", label: "More", increase: true)
                         }
-                        Text(model.barStepDescription + " per tap. The difference comes from or goes to the next person.")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.secondary)
-                            .multilineTextAlignment(.center)
                     }
                     if model.split.method != .itemized {
                         Button("Take \(model.displayName(for: segment.id)) Out of the Split", role: .destructive) {

@@ -61,18 +61,6 @@ enum Haptics {
 extension View {
     /// Plays a palette haptic when `trigger` changes, unless Haptics is off in Settings.
     func haptics<T: Equatable>(_ kind: HapticKind, trigger: T) -> some View {
-        modifier(PaletteHaptic(kind: kind, trigger: trigger))
-    }
-}
-
-private struct PaletteHaptic<T: Equatable>: ViewModifier {
-    let kind: HapticKind
-    let trigger: T
-    private let preferences = Preferences()
-
-    func body(content: Content) -> some View {
-        content.sensoryFeedback(kind.feedback, trigger: trigger) { _, _ in
-            preferences.hapticsEnabled
-        }
+        haptic(kind.feedback, trigger: trigger)
     }
 }

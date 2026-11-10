@@ -11,6 +11,9 @@ struct FriendVisibilityStore {
         case blocked
     }
 
+    /// Posted after any change, so screens that list friends can refresh.
+    static let didChange = Notification.Name("FriendVisibilityStore.didChange")
+
     private static let key = "friends.visibility"
     private let defaults: UserDefaults
 
@@ -30,6 +33,7 @@ struct FriendVisibilityStore {
         var copy = table
         copy[id.description] = state?.rawValue
         defaults.set(copy, forKey: Self.key)
+        NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
 
     func ids(in state: State) -> Set<PersonID> {

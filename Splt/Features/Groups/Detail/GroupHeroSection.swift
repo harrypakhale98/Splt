@@ -66,26 +66,43 @@ struct GroupHeroSection: View {
             Text("All settled up")
                 .font(Typeface.heading)
         } else {
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(totals.owedToYou, id: \.currencyCode) { amount in
-                    line("You're owed", money: amount)
+            let lines = balanceLines
+            let main = lines.first { $0.money.currencyCode == group.currencyCode } ?? lines[0]
+            VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(main.caption)
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                    HeroAmount(main.money, showsSign: false)
                 }
-                ForEach(totals.youOwe, id: \.currencyCode) { amount in
-                    line("You owe", money: amount)
+                .accessibilityElement(children: .combine)
+                // one big figure per screen: other currencies sit under it as quiet lines
+                ForEach(lines.filter { $0.id != main.id }) { line in
+                    HStack(spacing: 6) {
+                        Text(line.caption)
+                            .font(.subheadline)
+                            .foregroundStyle(Ink.secondary)
+                        Text(MoneyFormatting.string(line.money, locale: locale))
+                            .font(Typeface.figure)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
     }
 
-    private func line(_ caption: LocalizedStringKey, money: Money) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(caption)
-                .font(.subheadline)
-                .foregroundStyle(Ink.secondary)
-            HeroAmount(money, showsSign: false)
-        }
-        .accessibilityElement(children: .combine)
+    /// Every currency you are owed or owe, owed first. Not empty unless you are settled.
+    private var balanceLines: [HeroLine] {
+        totals.owedToYou.map { HeroLine(isOwed: true, money: $0) } + totals.youOwe.map { HeroLine(isOwed: false, money: $0) }
     }
+}
+
+private struct HeroLine: Identifiable {
+    var isOwed: Bool
+    var money: Money
+
+    var id: String { "\(isOwed)-\(money.currencyCode)" }
+    var caption: LocalizedStringKey { isOwed ? "You're owed" : "You owe" }
 }
 
 #if DEBUG

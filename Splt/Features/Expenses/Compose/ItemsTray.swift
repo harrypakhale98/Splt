@@ -6,15 +6,13 @@ struct ItemsTray: View {
     @Bindable var model: ExpenseFormModel
     var onEdit: () -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 SectionHeader("Items")
                 Spacer()
                 Button("Edit Items", action: onEdit)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline)
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(.rect)
             }
@@ -28,7 +26,7 @@ struct ItemsTray: View {
                     model.addItem()
                     onEdit()
                 } label: {
-                    Label("Add Items", systemImage: "plus")
+                    Label("Add Item", systemImage: "plus")
                         .frame(minHeight: 44)
                 }
             } else {
@@ -37,7 +35,7 @@ struct ItemsTray: View {
                         pill(for: item)
                     }
                 }
-                .animation(reduceMotion ? nil : Motion.snappy, value: model.split.items)
+                .motion(Motion.snappy, value: model.split.items)
             }
         }
     }
@@ -65,14 +63,14 @@ struct ItemsTray: View {
                         .accessibilityHidden(true)
                 } else {
                     AvatarStack(people, members: model.members.map(\.id), size: 22, limit: 3, ring: Ink.paper)
-                        .transition(.scale)
+                        .motionTransition(.scale)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(minHeight: 44)
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous)
                     .strokeBorder(selected ? Ink.text : Ink.hairline, lineWidth: selected ? 1.5 : 1)
             }
             .contentShape(.rect)

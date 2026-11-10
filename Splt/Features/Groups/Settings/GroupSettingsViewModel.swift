@@ -2,8 +2,8 @@ import Foundation
 import Observation
 import SpltCore
 
-/// The state behind the group settings sheet. Text fields and dates are saved together with `save()`;
-/// members, archive, leave and delete act straight away.
+/// The state behind the group settings sheet. Text fields and dates are saved together with `save()`,
+/// which the sheet's one button, Done, calls; members, archive, leave and delete act straight away.
 @MainActor
 @Observable
 final class GroupSettingsViewModel {
@@ -34,6 +34,8 @@ final class GroupSettingsViewModel {
     private(set) var symbol = ""
     private(set) var memberRows: [MemberRow] = []
     private(set) var friendsToAdd: [Person] = []
+    /// Everyone you split with, in the group or not, for the friend picker.
+    private(set) var friends: [Person] = []
     private(set) var didLoad = false
 
     @ObservationIgnored private let groups: any GroupRepository
@@ -95,7 +97,8 @@ final class GroupSettingsViewModel {
             MemberRow(person: person, isMe: person.id == me, balance: balances.net(for: person.id))
         }
         let members = Set(current.memberIDs)
-        friendsToAdd = try people.friends().filter { !members.contains($0.id) }
+        friends = try people.friends()
+        friendsToAdd = friends.filter { !members.contains($0.id) }
     }
 
     private static func suggestedRateCurrency(excluding code: String) -> String {
@@ -120,6 +123,23 @@ final class GroupSettingsViewModel {
         if isTrip, tripEnd < tripStart { return false }
         if isTrip, pinsRate, rate == nil || rateCurrencyCode == currencyCode { return false }
         return true
+    }
+
+    /// True when a field differs from what is saved, so the sheet isn't swiped away with the edit lost.
+    var hasFieldEdits: Bool {
+        guard let group else { return false }
+        if trimmedName != group.name || symbol != group.symbol || currencyCode.uppercased() != group.currencyCode {
+            return true
+        }
+        guard isTrip else { return false }
+        if let start = group.tripStart, start != tripStart { return true }
+        if let end = group.tripEnd, end != tripEnd { return true }
+        if pinsRate != (group.pinnedRate != nil) { return true }
+        if let pinned = group.pinnedRate, pinsRate {
+            let other = pinned.from == group.currencyCode ? pinned.to : pinned.from
+            return other != rateCurrencyCode || rate != pinned.rate
+        }
+        return false
     }
 
     func chooseSymbol(_ value: String) {
@@ -183,6 +203,17 @@ final class GroupSettingsViewModel {
 
     func addMember(_ person: Person) {
         perform { try groups.addMember(person.id, to: groupID) }
+    }
+
+    func isMember(_ person: Person) -> Bool {
+        memberRows.contains { $0.id == person.id }
+    }
+
+    /// Adds a friend from the picker. Removing stays a swipe on the member list, where a
+    /// "settle up first" message can be seen; the picker sits over it and would hide that alert.
+    func toggleFriend(_ person: Person) {
+        guard !isMember(person) else { return }
+        addMember(person)
     }
 
     // MARK: Group actions

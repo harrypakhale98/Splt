@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// Asks a friend to pay you back: share a friendly message, or schedule a reminder for yourself.
+/// Asks a friend to pay you back: share a short message, or schedule a reminder for yourself.
 struct RemindSheet: View {
     let friend: Person
     /// What the friend owes you, one amount per currency.
@@ -25,22 +25,33 @@ struct RemindSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Message") {
-                    Text(message)
-                        .textSelection(.enabled)
-                    ShareLink(item: message) {
-                        Label("Send Reminder", systemImage: "paperplane")
-                    }
-                }
                 Section {
-                    ForEach(ReminderDelay.allCases) { delay in
-                        Button(delay.title) { schedule(delay) }
+                    RaisedRows {
+                        Text(message)
+                            .textSelection(.enabled)
+                        ShareLink(item: message) {
+                            Label("Send Reminder", systemImage: "paperplane")
+                        }
                     }
                 } header: {
-                    Text("Remind Me")
+                    SectionHeader("Message")
+                        .padding(.horizontal, Depth.pageMargin + 4)
+                }
+                .raisedSection()
+                Section {
+                    RaisedRows {
+                        ForEach(ReminderDelay.allCases) { delay in
+                            Button(delay.title) { schedule(delay) }
+                        }
+                    }
+                } header: {
+                    SectionHeader("Remind me")
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 } footer: {
                     footer
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 }
+                .raisedSection()
             }
             .paperBackground()
             .navigationTitle("Remind \(ReminderMessage.firstName(friend.name))")
@@ -61,7 +72,7 @@ struct RemindSheet: View {
                 }
                 Button("Not Now", role: .cancel) {}
             } message: {
-                Text("Reminders need Notifications turned on in Splt's settings.")
+                Text("Reminders need notifications turned on in Account.")
             }
         }
         .presentationDetents([.medium, .large])
@@ -71,13 +82,13 @@ struct RemindSheet: View {
     private var footer: some View {
         switch outcome {
         case .scheduled(let date):
-            Label("Reminder set for \(date.formatted(date: .abbreviated, time: .shortened))", systemImage: "checkmark.circle")
+            Text("Reminder set for \(date.formatted(date: .abbreviated, time: .shortened))")
         case .notAllowed:
-            Text("Splt isn't allowed to send notifications. You can change this in the Settings app.")
+            Text("Notifications are turned off in the Settings app.")
         case .blocked:
-            Text("You blocked this person, so Splt won't remind you about them.")
+            Text("You blocked this person, so there's no reminder.")
         default:
-            Text("You get a quiet notification on your device. Nothing is sent to anyone.")
+            Text("Only you get this notification.")
         }
     }
 

@@ -10,11 +10,7 @@ struct AddFriendView: View {
             AddFriendContent(services: services)
         } else {
             NavigationStack {
-                EmptyStateView(
-                    title: "Can't Add Friends",
-                    systemImage: "exclamationmark.triangle",
-                    description: "Splt couldn't open its storage."
-                )
+                EmptyStateView.dataUnavailable
             }
         }
     }
@@ -79,11 +75,12 @@ private struct AddFriendContent: View {
             } label: {
                 Label("Add \(invite.name)", systemImage: "person.badge.plus")
             }
+            .raisedRow()
         } header: {
-            Text("Invitation")
-        } footer: {
-            Text("\(invite.name) invited you to split costs on Splt.")
+            SectionHeader("Invitation")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var nameSection: some View {
@@ -96,14 +93,17 @@ private struct AddFriendContent: View {
                     .submitLabel(.done)
                     .focused($nameFocused)
                     .onSubmit(addByName)
+                // Borderless, so tapping the field's row doesn't press it.
                 Button("Add", action: addByName)
+                    .buttonStyle(.borderless)
                     .disabled(!model.canAddByName)
             }
+            .raisedRow()
         } header: {
-            Text("Add by Name")
-        } footer: {
-            Text("They don't need the app yet. Splt keeps their name until they join.")
+            SectionHeader("Add by name")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var contactsSection: some View {
@@ -113,50 +113,58 @@ private struct AddFriendContent: View {
             } label: {
                 Label("Choose from Contacts", systemImage: "person.crop.circle.badge.plus")
             }
+            .raisedRow()
         } footer: {
-            Text("Splt only sees the contacts you pick.")
+            Text("The app only sees the contacts you pick.")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var inviteSection: some View {
         @Bindable var model = model
 
         return Section {
-            TextField("Your name", text: $model.inviteName)
+            TextField("Your Name", text: $model.inviteName)
                 .textContentType(.givenName)
+                .raisedRow()
+            // The code is a card of its own, so it sits on paper between the two cards.
             if let invite = model.myInvite {
                 InviteQRCode(invite: invite)
+                    .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
-                ShareLink(item: invite.shareMessage) {
-                    Label("Share Invite Link", systemImage: "square.and.arrow.up")
+                    .listRowSeparator(.hidden)
+            }
+            RaisedRows {
+                if let invite = model.myInvite {
+                    ShareLink(item: invite.shareMessage) {
+                        Label("Share Invite Link", systemImage: "square.and.arrow.up")
+                    }
+                }
+                Button {
+                    scanMessage = nil
+                    showsScanner = true
+                } label: {
+                    Label("Scan a Friend's Code", systemImage: "qrcode.viewfinder")
                 }
             }
-            Button {
-                scanMessage = nil
-                showsScanner = true
-            } label: {
-                Label("Scan a Friend's Code", systemImage: "qrcode.viewfinder")
-            }
         } header: {
-            Text("Invite")
-        } footer: {
-            if model.myInvite == nil {
-                Text("Enter your name to make an invite link and a code.")
-            } else {
-                Text("Show the code to a friend, or send the link. They tap it to add you.")
-            }
+            SectionHeader("Invite")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var scannerSheet: some View {
         NavigationStack {
             QRScannerView { text in
-                if let invite = QRInviteScan.invite(from: text) {
-                    showsScanner = false
-                    if let result = model.accept(invite) { finish([result]) }
-                } else {
-                    scanMessage = String(localized: "That isn't a Splt invite.")
+                guard let invite = QRInviteScan.invite(from: text) else {
+                    scanMessage = String(localized: "That code isn't an invite.")
+                    return false
                 }
+                showsScanner = false
+                if let result = model.accept(invite) { finish([result]) }
+                return true
             }
             .navigationTitle("Scan Code")
             .navigationBarTitleDisplayMode(.inline)

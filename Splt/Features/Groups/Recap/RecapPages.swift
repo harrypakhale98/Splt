@@ -32,7 +32,7 @@ private struct RecapNumber: View {
             .lineLimit(1)
             .minimumScaleFactor(0.4)
             .contentTransition(.numericText(value: Double(shown.minorUnits)))
-            .animation(reduceMotion ? nil : .smooth(duration: 1.0), value: active)
+            .motion(Motion.reveal, value: active)
             .accessibilityLabel(hidden ? String(localized: "Amount hidden") : MoneyFormatting.magnitudeString(money, locale: locale))
     }
 }
@@ -52,7 +52,7 @@ struct RecapTotalPage: View {
                 .minimumScaleFactor(0.6)
             RecapTitle(text: "You spent together")
             RecapNumber(money: stats.total, hidden: hidesAmounts, active: active, size: 68)
-            Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
+            Text(recapSpan(stats))
                 .font(.headline)
                 .foregroundStyle(Ink.secondary)
         }
@@ -90,12 +90,12 @@ struct RecapDaysPage: View {
             }
             .chartYScale(domain: 0...(max(stats.slices.map { chartValue($0.total) }.max() ?? 1, 1) * 1.1))
             .frame(height: 220)
-            .animation(reduceMotion ? nil : .smooth(duration: 0.9), value: active)
+            .motion(Motion.reveal, value: active)
             if let busiest = stats.busiest {
-                Text("Busiest \(stats.bucket == .day ? "day" : "month"): \(busiest.start.formatted(stats.bucket == .day ? .dateTime.weekday(.abbreviated).month(.abbreviated).day() : .dateTime.month(.wide))), \(recapAmount(busiest.total, hidden: hidesAmounts, locale: locale))")
+                Text(busiestLine(busiest))
                     .font(.headline)
             }
-            Text("About \(recapAmount(stats.average, hidden: hidesAmounts, locale: locale)) a \(stats.bucket == .day ? "day" : "month") on average")
+            Text(averageLine)
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
         }
@@ -105,6 +105,31 @@ struct RecapDaysPage: View {
     private func chartValue(_ money: Money) -> Double {
         NSDecimalNumber(decimal: money.decimalValue).doubleValue
     }
+
+    // one whole sentence per bucket, so each can be translated with its own grammar
+    private func busiestLine(_ busiest: RecapStats.Slice) -> LocalizedStringKey {
+        let amount = recapAmount(busiest.total, hidden: hidesAmounts, locale: locale)
+        if stats.bucket == .day {
+            let date = busiest.start.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(locale))
+            return "Busiest day: \(date), \(amount)"
+        }
+        let date = busiest.start.formatted(.dateTime.month(.wide).locale(locale))
+        return "Busiest month: \(date), \(amount)"
+    }
+
+    private var averageLine: LocalizedStringKey {
+        let amount = recapAmount(stats.average, hidden: hidesAmounts, locale: locale)
+        if stats.bucket == .day { return "About \(amount) a day on average" }
+        return "About \(amount) a month on average"
+    }
+}
+
+/// How many expenses over how many days or months, each bucket its own sentence with its own plural.
+func recapSpan(_ stats: RecapStats) -> LocalizedStringKey {
+    if stats.bucket == .day {
+        return "^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) day](inflect: true)"
+    }
+    return "^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) month](inflect: true)"
 }
 
 struct RecapBiggestPage: View {
@@ -118,10 +143,6 @@ struct RecapBiggestPage: View {
         if let biggest = stats.biggest {
             VStack(alignment: .leading, spacing: 14) {
                 RecapTitle(text: "The biggest one")
-                Image(systemName: biggest.category.symbolName)
-                    .font(.title)
-                    .foregroundStyle(Ink.secondary)
-                    .accessibilityHidden(true)
                 Text(biggest.title)
                     .font(.system(.largeTitle, design: .serif))
                     .minimumScaleFactor(0.6)
@@ -170,7 +191,7 @@ struct RecapPayerPage: View {
                         Rectangle()
                             .fill(color)
                             .frame(width: proxy.size.width * (active || reduceMotion ? min(CGFloat(payer.percent) / 100, 1) : 0))
-                            .animation(reduceMotion ? nil : .smooth(duration: 1.0), value: active)
+                            .motion(Motion.reveal, value: active)
                     }
                 }
                 .frame(height: 6)
@@ -211,7 +232,7 @@ struct RecapCategoriesPage: View {
                 .accessibilityValue("\(share.percent)%")
             }
             .frame(height: 210)
-            .animation(reduceMotion ? nil : .smooth(duration: 0.9), value: active)
+            .motion(Motion.reveal, value: active)
             VStack(spacing: 10) {
                 ForEach(Array(stats.categories.enumerated()), id: \.element.id) { index, share in
                     HStack(spacing: 10) {
@@ -247,14 +268,29 @@ struct RecapSummaryPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text(summary ?? String(localized: "That is the story of \(group.name)."))
-                .font(.system(.largeTitle, design: .serif))
-                .minimumScaleFactor(0.6)
-                .opacity(active || reduceMotion ? 1 : 0)
-                .offset(y: active || reduceMotion ? 0 : 12)
-                .animation(reduceMotion ? nil : .smooth(duration: 0.8), value: active)
+            Group {
+                if let summary {
+                    Text(summary)
+                } else {
+                    Text(facts)
+                }
+            }
+            .font(.system(.largeTitle, design: .serif))
+            .minimumScaleFactor(0.6)
+            .opacity(active || reduceMotion ? 1 : 0)
+            .offset(y: active || reduceMotion ? 0 : 12)
+            .motion(Motion.reveal, value: active)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// A plain line of counts, for when the on-device summary has nothing to say.
+    private var facts: LocalizedStringKey {
+        let people = group.memberIDs.count
+        if stats.bucket == .day {
+            return "^[\(people) person](inflect: true), ^[\(stats.expenseCount) expense](inflect: true), ^[\(stats.dayCount) day](inflect: true)."
+        }
+        return "^[\(people) person](inflect: true), ^[\(stats.expenseCount) expense](inflect: true), ^[\(stats.dayCount) month](inflect: true)."
     }
 }
 
@@ -272,7 +308,7 @@ struct RecapShareCard: View {
             Text(recapAmount(stats.total, hidden: hidesAmounts))
                 .font(Typeface.hero(size: 54))
                 .monospacedDigit()
-            Text("^[\(stats.expenseCount) expense](inflect: true) over ^[\(stats.dayCount) \(stats.bucket == .day ? "day" : "month")](inflect: true)")
+            Text(recapSpan(stats))
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
             Chart(stats.slices) { slice in
@@ -286,15 +322,16 @@ struct RecapShareCard: View {
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
             .frame(height: 90)
+            // plain ledger rows: what on the left, the figure on the right
             VStack(alignment: .leading, spacing: 6) {
                 if let top = stats.categories.first {
-                    Label("\(top.category.title), \(top.percent)%", systemImage: top.category.symbolName)
+                    ledgerRow(Text(top.category.title), figure: "\(top.percent)%")
                 }
                 if let payer = stats.topPayer {
-                    Label("\(payer.name) paid \(payer.percent)%", systemImage: "creditcard")
+                    ledgerRow(Text("Paid by \(payer.name)"), figure: "\(payer.percent)%")
                 }
                 if let biggest = stats.biggest {
-                    Label("Biggest: \(biggest.title)", systemImage: "star")
+                    ledgerRow(Text("Biggest: \(biggest.title)"), figure: recapAmount(biggest.amount, hidden: hidesAmounts))
                 }
             }
             .font(.subheadline)
@@ -313,6 +350,16 @@ struct RecapShareCard: View {
         .background(Ink.paper)
         .overlay(alignment: .top) {
             ShareStrip(colors: group.memberIDs.map { PersonPalette.color(for: $0) }, height: 8)
+        }
+    }
+
+    private func ledgerRow(_ label: Text, figure: String) -> some View {
+        HStack(spacing: 8) {
+            label
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text(figure)
+                .monospacedDigit()
         }
     }
 }

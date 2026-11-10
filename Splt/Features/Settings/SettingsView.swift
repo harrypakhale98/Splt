@@ -1,9 +1,12 @@
 import SwiftUI
+import UserNotifications
 
 /// The preference, sync, import and about sections. They sit on the Account screen, and
 /// `SettingsView` shows the same sections on their own when a route asks for settings.
 struct SettingsSections: View {
     @Environment(Router.self) private var router
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var notificationsBlocked = false
     private let preferences = Preferences()
 
     var body: some View {
@@ -19,8 +22,31 @@ struct SettingsSections: View {
                 }
                 Toggle("Haptics", isOn: preferences.$hapticsEnabled)
                 Toggle("Notifications", isOn: preferences.$notificationsEnabled)
+                    .task(id: preferences.notificationsEnabled) { await checkNotifications() }
+                    .onChange(of: scenePhase) { _, phase in
+                        if phase == .active { Task { await checkNotifications() } }
+                    }
+            }
+        } header: {
+            SectionHeader("Preferences")
+        } footer: {
+            if notificationsBlocked {
+                // turning the toggle on can't work until notifications are allowed in the Settings app
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Notifications are turned off in the Settings app.")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.secondary)
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                        Link("Open Settings", destination: url)
+                            .font(.footnote)
+                            .foregroundStyle(Ink.text)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                }
             }
         }
+        .paperSection()
 
         SyncStatusSection()
 
@@ -29,12 +55,9 @@ struct SettingsSections: View {
                 NavigationLink("Import from Splitwise") {
                     SplitwiseImportView()
                 }
-                Button("Show Welcome Tour") {
-                    router.showWelcomeTour()
-                }
-                .foregroundStyle(Ink.text)
-                .accessibilityIdentifier("account.welcomeTour")
             }
+        } header: {
+            SectionHeader("Import")
         }
 
         Section {
@@ -45,10 +68,28 @@ struct SettingsSections: View {
                 }
                 Link("Source Code", destination: AppInfo.sourceCodeURL)
                     .foregroundStyle(Ink.text)
+                Button("Show Welcome Tour") {
+                    router.showWelcomeTour()
+                }
+                .foregroundStyle(Ink.text)
+                .accessibilityIdentifier("account.welcomeTour")
             }
         } header: {
             SectionHeader("About")
         }
+    }
+
+    private func checkNotifications() async {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        notificationsBlocked = status == .denied
+    }
+}
+
+extension View {
+    /// Keeps a List section's header and footer on the paper. In a sheet they default to a lighter shade.
+    func paperSection() -> some View {
+        listRowBackground(Ink.paper)
+            .listSectionSeparator(.hidden)
     }
 }
 

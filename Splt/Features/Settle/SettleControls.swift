@@ -59,7 +59,7 @@ struct SettleControls: View {
                         .accessibilityLabel("Amount to pay in \(model.fullAmount?.currencyCode ?? "")")
                     stepButton("plus", label: "More", steps: 1)
                 }
-                .transition(.opacity)
+                .motionTransition(.opacity)
             }
             if let footer = amountMessage {
                 Text(footer)
@@ -110,9 +110,7 @@ struct SettleControls: View {
     /// The payments of a whole group as a plain list of who pays whom.
     private var plan: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Payments")
-                .font(.footnote)
-                .foregroundStyle(Ink.secondary)
+            SectionHeader("Payments")
                 .padding(.bottom, 4)
             ForEach(model.route.debts, id: \.self) { debt in
                 let layout = typeSize.isAccessibilitySize
@@ -176,7 +174,7 @@ struct SettleControls: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(QuietButtonStyle())
-                Text("Opens \(model.method.title) so you can send the money. Come back and tap Record Payment when it's done.")
+                Text("Come back to record it once it's sent.")
                     .font(.footnote)
                     .foregroundStyle(Ink.secondary)
                     .multilineTextAlignment(.center)

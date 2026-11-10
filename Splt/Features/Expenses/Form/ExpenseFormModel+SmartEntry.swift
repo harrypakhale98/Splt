@@ -58,7 +58,7 @@ extension ExpenseFormModel {
         applySplitHint(draft.splitHint, member: member, unmatched: &unmatched, filled: &filled)
 
         unmatchedNames = unmatched
-        filledNotice = String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it below.")
+        filledNotice = String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it above.")
     }
 
     private func applyPayer(

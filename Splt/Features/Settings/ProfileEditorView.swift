@@ -4,8 +4,10 @@ import SwiftUI
 /// Your name and the payment details that go into reminders you send.
 struct ProfileEditorView: View {
     @Environment(\.dataServices) private var services
+    @Environment(\.dismiss) private var dismiss
     @Bindable var profile: AccountProfile
 
+    @State private var savedByDone = false
     @State private var errorMessage: String?
     @State private var summary = AccountSummary()
     @FocusState private var nameFocused: Bool
@@ -22,14 +24,14 @@ struct ProfileEditorView: View {
 
             Section {
                 RaisedRows {
-                    TextField("Name", text: $profile.displayName, prompt: Text("Your name"))
+                    TextField("Name", text: $profile.displayName, prompt: Text("Your Name"))
                         .font(Typeface.heading)
                         .foregroundStyle(Ink.text)
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                         .focused($nameFocused)
-                        .onSubmit(commit)
+                        .onSubmit { commit() }
                         .accessibilityIdentifier("profile.name")
                 }
             } header: {
@@ -37,9 +39,7 @@ struct ProfileEditorView: View {
             } footer: {
                 note("Friends see this name in groups and when you invite them. It stays on your devices.")
             }
-            // a section header or footer in a sheet defaults to a lighter shade than the paper behind it
-            .listRowBackground(Ink.paper)
-            .listSectionSeparator(.hidden)
+            .paperSection()
 
             Section {
                 RaisedRows {
@@ -50,8 +50,7 @@ struct ProfileEditorView: View {
             } footer: {
                 note("Optional. Added to reminders you send so friends know how to pay you. Splt never sends money.")
             }
-            .listRowBackground(Ink.paper)
-            .listSectionSeparator(.hidden)
+            .paperSection()
         }
         .listStyle(.plain)
         .listRowSeparatorTint(Ink.hairline)
@@ -59,7 +58,18 @@ struct ProfileEditorView: View {
         .paperBackground()
         .navigationTitle("Your Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .onDisappear(perform: commit)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
+                    if commit() {
+                        savedByDone = true
+                        dismiss()
+                    }
+                }
+            }
+        }
+        // going back without Done still keeps what was typed
+        .onDisappear { if !savedByDone { commit() } }
         .task { summary = AccountSummary.load(from: services) }
         .alert("Couldn't Save Name", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
@@ -84,13 +94,17 @@ struct ProfileEditorView: View {
         }
     }
 
-    private func commit() {
+    /// Saves while the screen is still up, so a failure can show its alert.
+    @discardableResult
+    private func commit() -> Bool {
         profile.save()
-        guard let services else { return }
+        guard let services else { return true }
         do {
             try profile.applyName(to: services.people)
+            return true
         } catch {
-            errorMessage = String(localized: "Something went wrong. Please try again.")
+            errorMessage = String(localized: "Your name couldn't be saved. Try again.")
+            return false
         }
     }
 
@@ -103,25 +117,35 @@ private struct HandleField: View {
     let profile: AccountProfile
     let method: SettleMethod
 
-    @State private var text = ""
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var text: String
+
+    init(profile: AccountProfile, method: SettleMethod) {
+        self.profile = profile
+        self.method = method
+        _text = State(initialValue: profile.handle(for: method))
+    }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: method.symbol)
-                .font(.title3)
-                .foregroundStyle(Ink.text)
-                .frame(width: 32)
-                .accessibilityHidden(true)
+        // at accessibility sizes the field goes under its label, so neither is cut short
+        let stacked = typeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             Text(method.handleTitle)
             TextField(method.handleTitle, text: $text, prompt: Text(method.handlePrompt))
-                .multilineTextAlignment(.trailing)
+                .multilineTextAlignment(stacked ? .leading : .trailing)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(method == .zelle ? .emailAddress : .asciiCapable)
                 .foregroundStyle(Ink.secondary)
                 .onChange(of: text) { profile.setHandle(text, for: method) }
+                // picks up a handle changed elsewhere while this screen stays in the stack
+                .onChange(of: profile.handle(for: method)) { _, saved in
+                    if saved != text { text = saved }
+                }
         }
-        .onAppear { text = profile.handle(for: method) }
     }
 }
 

@@ -15,7 +15,7 @@ struct GroupBalancesSection: View {
     let onSettle: (Debt) -> Void
 
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverOn
-        @State private var chosenMode: Mode?
+    @State private var chosenMode: Mode?
     @State private var chosenCurrency: String?
 
     private var mode: Mode { chosenMode ?? (voiceOverOn ? .list : .orbit) }
@@ -27,14 +27,23 @@ struct GroupBalancesSection: View {
         ))
     }
 
-    private var modePicker: some View {
-        Picker("Balance View", selection: Binding(get: { mode }, set: { chosenMode = $0 })) {
-            Text("Orbit").tag(Mode.orbit)
-            Text("List").tag(Mode.list)
+    /// One quiet text button that swaps the ring for the list, so no second segmented control
+    /// sits under the screen's own.
+    private var modeButton: some View {
+        Button {
+            Motion.perform { chosenMode = mode == .orbit ? .list : .orbit }
+        } label: {
+            if mode == .orbit {
+                Text("Show List")
+            } else {
+                Text("Show Orbit")
+            }
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .accessibilityLabel("Balance View")
+        .buttonStyle(.borderless)
+        .font(.footnote)
+        .foregroundStyle(Ink.text)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 
     private var currency: String {
@@ -44,50 +53,27 @@ struct GroupBalancesSection: View {
 
     var body: some View {
         Section {
-            VStack(spacing: 12) {
-                VStack(spacing: 12) {
-                    modePicker
-                    if model.balanceCurrencies.count > 1 {
-                        Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
-                            ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
-                        }
+            if mode == .orbit {
+                if model.balanceCurrencies.count > 1 {
+                    Picker("Currency", selection: Binding(get: { currency }, set: { chosenCurrency = $0 })) {
+                        ForEach(model.balanceCurrencies, id: \.self) { Text($0).tag($0) }
                     }
+                    .raisedRow()
                 }
-                .padding(.horizontal, 8)
-                if mode == .orbit {
-                    Divider().overlay(Ink.hairline)
-                    BalanceOrbitView(
-                        board: model.orbitBoard(currency: currency),
-                        members: model.group?.memberIDs ?? [],
-                        onSettle: onSettle
-                    )
-                    .padding(.vertical, 4)
-                }
-            }
-            .raisedRow(padding: EdgeInsets(top: 12, leading: 8, bottom: 12, trailing: 8))
-        }
-        .raisedSection()
-
-        Section {
-            simplifyToggle
-                .raisedRow(padding: EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
-        } footer: {
-            Group {
-                if model.simplifiesDebts {
-                    Text("Showing the fewest payments that settle the group.")
-                } else {
-                    Text("Showing what each person owes each other person directly.")
-                }
-            }
-            .padding(.horizontal, Depth.pageMargin + 4)
-        }
-        .raisedSection()
-
-        if mode == .list {
-            Section {
+                // the ring holds the screen's big figure, so it sits on paper rather than in a card
+                BalanceOrbitView(
+                    board: model.orbitBoard(currency: currency),
+                    members: model.group?.memberIDs ?? [],
+                    onSettle: onSettle
+                )
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            } else {
                 RaisedRows {
                     if model.transfers.isEmpty {
-                        Text("Everyone is settled up")
+                        Text("Settled up")
                             .foregroundStyle(Ink.secondary)
                     } else {
                         ForEach(model.transfers, id: \.self) { debt in
@@ -103,25 +89,45 @@ struct GroupBalancesSection: View {
                         }
                     }
                 }
-            } header: {
+            }
+        } header: {
+            HStack(alignment: .center) {
                 SectionHeader("Who owes whom")
+                Spacer()
+                modeButton
+            }
+            .textCase(nil)
+            .padding(.horizontal, Depth.pageMargin + 4)
+        }
+        .raisedSection()
+
+        Section {
+            simplifyToggle
+                .raisedRow()
+        } footer: {
+            Group {
+                if model.simplifiesDebts {
+                    Text("Showing the fewest payments that settle the group.")
+                } else {
+                    Text("Showing what each person owes each other person directly.")
+                }
+            }
+            .padding(.horizontal, Depth.pageMargin + 4)
+        }
+        .raisedSection()
+
+        if mode == .list, model.netRows.contains(where: { !$0.isSettled }) {
+            Section {
+                RaisedRows {
+                    ForEach(model.netRows) { row in
+                        NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id, members: model.group?.memberIDs ?? [])
+                    }
+                }
+            } header: {
+                SectionHeader("Net balances")
                     .padding(.horizontal, Depth.pageMargin + 4)
             }
             .raisedSection()
-
-            if model.netRows.contains(where: { !$0.isSettled }) {
-                Section {
-                    RaisedRows {
-                        ForEach(model.netRows) { row in
-                            NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id, members: model.group?.memberIDs ?? [])
-                        }
-                    }
-                } header: {
-                    SectionHeader("Net balances")
-                        .padding(.horizontal, Depth.pageMargin + 4)
-                }
-                .raisedSection()
-            }
         }
     }
 }
@@ -150,6 +156,10 @@ private struct TransferRow: View {
                     .foregroundStyle(involvesMe ? Ink.direction(of: displayAmount.minorUnits) : Ink.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Ink.tertiary)
+                    .accessibilityHidden(true)
             }
             .contentShape(Rectangle())
         }
@@ -188,22 +198,29 @@ private struct NetBalanceRowView: View {
                 Text("Settled up")
                     .foregroundStyle(Ink.secondary)
             } else {
-                Text(row.amounts.map(caption(for:)).joined(separator: " \u{B7} "))
-                    .monospacedDigit()
-                    .foregroundStyle(Ink.secondary)
-                    .multilineTextAlignment(.trailing)
+                VStack(alignment: .trailing, spacing: 2) {
+                    ForEach(row.amounts, id: \.currencyCode) { amount in
+                        caption(for: amount)
+                    }
+                }
+                .monospacedDigit()
+                .foregroundStyle(Ink.secondary)
+                .multilineTextAlignment(.trailing)
             }
         }
         .accessibilityElement(children: .combine)
     }
 
-    private func caption(for amount: Money) -> String {
-        let value = MoneyFormatting.magnitudeString(amount)
+    /// The words stay grey and the figure takes the direction's color, as in the transfer rows.
+    private func caption(for amount: Money) -> Text {
+        let value = Text(MoneyFormatting.magnitudeString(amount))
+            .font(Typeface.figure)
+            .foregroundStyle(Ink.direction(of: amount.minorUnits))
         switch (amount.minorUnits > 0, isMe) {
-        case (true, true): return String(localized: "are owed \(value)")
-        case (true, false): return String(localized: "is owed \(value)")
-        case (false, true): return String(localized: "owe \(value)")
-        case (false, false): return String(localized: "owes \(value)")
+        case (true, true): return Text("are owed \(value)")
+        case (true, false): return Text("is owed \(value)")
+        case (false, true): return Text("owe \(value)")
+        case (false, false): return Text("owes \(value)")
         }
     }
 }

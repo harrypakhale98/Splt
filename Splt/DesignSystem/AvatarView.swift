@@ -13,7 +13,7 @@ struct AvatarView: View {
     @ScaledMetric private var scaledDiameter: CGFloat
     private let baseDiameter: CGFloat
 
-    init(name: String, size: CGFloat = 40, showsInitials: Bool = true) {
+    init(name: String, size: CGFloat = 28, showsInitials: Bool = true) {
         self.name = name
         self.showsInitials = showsInitials
         personID = nil
@@ -22,7 +22,7 @@ struct AvatarView: View {
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
 
-    init(name: String, id: PersonID, members: [PersonID] = [], size: CGFloat = 40, showsInitials: Bool = true) {
+    init(name: String, id: PersonID, members: [PersonID] = [], size: CGFloat = 28, showsInitials: Bool = true) {
         self.name = name
         self.showsInitials = showsInitials
         personID = id
@@ -32,7 +32,7 @@ struct AvatarView: View {
     }
 
     /// An avatar in a given hue, for you before your person exists.
-    init(name: String, hue: Int, size: CGFloat = 40, showsInitials: Bool = true) {
+    init(name: String, hue: Int, size: CGFloat = 28, showsInitials: Bool = true) {
         self.name = name
         self.showsInitials = showsInitials
         personID = nil
@@ -41,7 +41,7 @@ struct AvatarView: View {
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
 
-    init(person: Person, members: [PersonID] = [], size: CGFloat = 40, showsInitials: Bool = true) {
+    init(person: Person, members: [PersonID] = [], size: CGFloat = 28, showsInitials: Bool = true) {
         self.init(name: person.name, id: person.id, members: members, size: size, showsInitials: showsInitials)
     }
 

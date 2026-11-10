@@ -15,36 +15,39 @@ struct GroupTotalsSection: View {
     var body: some View {
         if model.totals.isEmpty {
             Section {
-                EmptyStateView(
-                    title: "No Totals Yet",
-                    systemImage: "chart.bar",
-                    description: "Totals appear once the group has expenses."
-                )
-                .listRowBackground(Color.clear)
+                GroupPaperNote("Totals appear once the group has expenses.")
             }
         } else {
             let members = model.group?.memberIDs ?? []
-            ForEach(model.totals) { totals in
+            let all = model.totals
+            let isMixed = all.count > 1
+            if let primary = model.primaryTotals {
                 Section {
-                    hero(totals)
+                    hero(primary, others: all.filter { $0.id != primary.id })
                         .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                 }
-
+            }
+            ForEach(all) { totals in
                 if totals.byPerson.contains(where: { $0.paid.minorUnits > 0 }) {
                     Section {
                         let colors = OrbitColors(members: members)
                         RaisedRows {
                             SpendingBarChart(
                                 bars: totals.byPerson.filter { $0.paid.minorUnits > 0 }.map {
-                                    SpendingBar(label: $0.name, money: $0.paid, color: colors.color(for: $0.personID))
+                                    SpendingBar(
+                                        id: "person-\($0.personID.rawValue.uuidString)", label: $0.name,
+                                        money: $0.paid, color: colors.color(for: $0.personID)
+                                    )
                                 }
                             )
                         }
                     } header: {
-                        SectionHeader("Paid by person")
-                            .padding(.horizontal, Depth.pageMargin + 4)
+                        Group {
+                            if isMixed { SectionHeader("Paid by person in \(totals.currencyCode)") } else { SectionHeader("Paid by person") }
+                        }
+                        .padding(.horizontal, Depth.pageMargin + 4)
                     }
                     .raisedSection()
                 }
@@ -52,13 +55,19 @@ struct GroupTotalsSection: View {
                     Section {
                         RaisedRows {
                             SpendingBarChart(
-                                bars: totals.byCategory.filter { $0.amount.minorUnits > 0 }
-                                    .map { SpendingBar(label: $0.category.title, money: $0.amount, color: nil) }
+                                bars: totals.byCategory.filter { $0.amount.minorUnits > 0 }.map {
+                                    SpendingBar(
+                                        id: "category-\($0.category.rawValue)", label: $0.category.title,
+                                        money: $0.amount, color: nil
+                                    )
+                                }
                             )
                         }
                     } header: {
-                        SectionHeader("By category")
-                            .padding(.horizontal, Depth.pageMargin + 4)
+                        Group {
+                            if isMixed { SectionHeader("By category in \(totals.currencyCode)") } else { SectionHeader("By category") }
+                        }
+                        .padding(.horizontal, Depth.pageMargin + 4)
                     }
                     .raisedSection()
                 }
@@ -85,7 +94,8 @@ struct GroupTotalsSection: View {
         }
     }
 
-    private func hero(_ totals: GroupTotals) -> some View {
+    /// The one big figure for the main currency, with any other currency as a quiet line under it.
+    private func hero(_ totals: GroupTotals, others: [GroupTotals]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Total spent")
                 .font(.subheadline)
@@ -95,7 +105,16 @@ struct GroupTotalsSection: View {
             Text("^[\(totals.expenseCount) expense](inflect: true) in \(totals.currencyCode)")
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
-            if let summary, totals.currencyCode == model.primaryTotals?.currencyCode {
+            ForEach(others) { other in
+                HStack(spacing: 6) {
+                    Text(MoneyFormatting.string(other.total, locale: locale))
+                        .font(Typeface.figure)
+                    Text("^[\(other.expenseCount) expense](inflect: true) in \(other.currencyCode)")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                }
+            }
+            if let summary {
                 Text(summary)
                     .font(.body)
                     .padding(.top, 10)
@@ -109,12 +128,12 @@ struct GroupTotalsSection: View {
 }
 
 struct SpendingBar: Identifiable, Equatable {
+    /// The person or category the bar stands for. Two people can share a name, so the name is only the label.
+    var id: String
     var label: String
     var money: Money
     /// A person's color, or nil to use the accent.
     var color: Color?
-
-    var id: String { label }
 
     /// Chart axes need a floating point value. This is for drawing only; stored amounts stay in minor units.
     var chartValue: Double {
@@ -130,7 +149,7 @@ private struct SpendingBarChart: View {
     var body: some View {
         let largest = bars.map(\.chartValue).max() ?? 1
         Chart(bars) { bar in
-            BarMark(x: .value("Amount", bar.chartValue), y: .value("Name", bar.label), height: .fixed(14))
+            BarMark(x: .value("Amount", bar.chartValue), y: .value("Name", bar.id), height: .fixed(14))
                 .cornerRadius(2)
                 .foregroundStyle(bar.color ?? Ink.text)
                 .annotation(position: .top, alignment: .leading, spacing: 4) {

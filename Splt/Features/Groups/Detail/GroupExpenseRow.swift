@@ -36,18 +36,13 @@ struct ExpenseRowSummary: Equatable {
 /// One expense in a group: a quiet category glyph, who paid with their color, and what it means for you.
 struct GroupExpenseRow: View {
     let expense: Expense
-    let currentPerson: PersonID?
-    let people: [Person]
-    let members: [PersonID]
+    /// Worked out once by the screen's model, not on every redraw.
+    let summary: ExpenseRowSummary
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
 
     var body: some View {
-        let summary = ExpenseRowSummary(
-            expense: expense, currentPerson: currentPerson,
-            names: Dictionary(people.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
-        )
         let layout = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 12))
@@ -59,9 +54,8 @@ struct GroupExpenseRow: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(expense.title)
-                    .font(.body.weight(.medium))
+                    .font(.body)
                     .lineLimit(2)
-                    .layoutPriority(1)
                 HStack(spacing: 6) {
                     payerMarkers(summary.payers)
                     Text(summary.payerText)
@@ -69,8 +63,12 @@ struct GroupExpenseRow: View {
                         .foregroundStyle(Ink.secondary)
                 }
             }
+            // the title takes the room first, so short names stay on one line
+            .layoutPriority(1)
             if !typeSize.isAccessibilitySize { Spacer(minLength: 8) }
+            // amounts keep their natural width rather than squeezing the title
             trailing(summary)
+                .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .ignore)
@@ -92,7 +90,7 @@ struct GroupExpenseRow: View {
                         .minimumScaleFactor(0.75)
                         .foregroundStyle(Ink.direction(of: net.minorUnits))
                 } else {
-                    Text("Not involved")
+                    Text("not involved")
                         .font(.caption)
                         .foregroundStyle(Ink.secondary)
                 }
@@ -105,7 +103,7 @@ struct GroupExpenseRow: View {
         HStack(spacing: -3) {
             ForEach(ids.prefix(3), id: \.self) { id in
                 Circle()
-                    .fill(PersonPalette.color(for: id, in: members))
+                    .fill(PersonPalette.color(for: id))
                     .frame(width: 10, height: 10)
                     .overlay { Circle().strokeBorder(Ink.paper, lineWidth: 1.5) }
             }

@@ -58,7 +58,7 @@ struct ReminderTests {
         #expect(!text.contains("Chen"))
         #expect(text.contains("$12.50"))
         #expect(text.contains("\u{20AC}3.00"))
-        #expect(text.contains("No rush"))
+        #expect(text.contains("a reminder that I'm owed"))
     }
 
     @Test func messageNamesASingleGroup() {

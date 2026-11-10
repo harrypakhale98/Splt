@@ -6,12 +6,13 @@ struct SymbolPickerView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    private let columns = [GridItem(.adaptive(minimum: 60), spacing: 12)]
+    private let columns = [GridItem(.adaptive(minimum: 60), spacing: 8)]
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(GroupSymbols.all, id: \.self) { symbol in
+                    let isSelected = symbol == selection
                     Button {
                         selection = symbol
                         dismiss()
@@ -19,23 +20,25 @@ struct SymbolPickerView: View {
                         Image(systemName: symbol)
                             .font(.title2)
                             .frame(maxWidth: .infinity, minHeight: 56)
-                            .foregroundStyle(symbol == selection ? Ink.paper : Ink.text)
-                            .background(
-                                symbol == selection ? Ink.text : Color.clear,
-                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            )
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline)
+                            .foregroundStyle(isSelected ? Ink.paper : Ink.text)
+                            .background {
+                                if isSelected {
+                                    RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous).fill(Ink.text)
+                                }
                             }
+                            .contentShape(RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(symbol.replacingOccurrences(of: ".fill", with: "").replacingOccurrences(of: ".", with: " "))
-                    .accessibilityAddTraits(symbol == selection ? .isSelected : [])
+                    .accessibilityLabel(GroupSymbols.label(for: symbol))
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
-            .padding()
+            .padding(12)
+            // one card for the grid, rather than a hand-drawn box around every symbol
+            .cardSurface()
+            .padding(Depth.pageMargin)
         }
-        .background(Ink.paper.ignoresSafeArea())
+        .paperBackground()
         .navigationTitle("Symbol")
         .navigationBarTitleDisplayMode(.inline)
     }

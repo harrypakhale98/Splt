@@ -6,7 +6,6 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dataServices) private var services
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var page = 0
     @State private var profile = AccountProfile.shared
@@ -24,13 +23,12 @@ struct OnboardingView: View {
                         .tag(1)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .motion(.smooth, value: page)
 
                 Button(action: advance) {
                     Text(page == lastPage ? "Start Splitting" : "Continue")
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                .padding(.horizontal, 24)
+                .padding(.horizontal, OnboardingLayout.margin)
                 .padding(.vertical, 16)
                 .accessibilityIdentifier("onboarding.continue")
             }
@@ -44,7 +42,6 @@ struct OnboardingView: View {
             }
             .paperBackground()
         }
-        .interactiveDismissDisabled(page == lastPage)
         .accessibilityIdentifier("onboarding")
     }
 
@@ -52,7 +49,7 @@ struct OnboardingView: View {
         if page == lastPage {
             finish()
         } else {
-            withAnimation(Motion.animation(.smooth, reduceMotion: reduceMotion)) { page += 1 }
+            Motion.perform(.smooth) { page += 1 }
         }
     }
 
@@ -64,20 +61,25 @@ struct OnboardingView: View {
     }
 }
 
+/// One edge for the whole tour, matching the cards and the rest of the app.
+private enum OnboardingLayout {
+    static let margin = Depth.pageMargin
+}
+
 private struct OnboardingBeat: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 ShareStrip(colors: (0..<5).map { PersonPalette.color(at: $0 * 2) }, height: 4)
-                Text("Split with people, not spreadsheets")
-                    .font(.system(.largeTitle, design: .serif))
+                Text("Split bills with friends")
+                    .font(Typeface.display)
                     .foregroundStyle(Ink.text)
                     .accessibilityAddTraits(.isHeader)
-                Text("Add what you paid, and Splt works out who owes whom.")
+                Text("Add what you paid and see who owes whom.")
                     .font(.title3)
                     .foregroundStyle(Ink.secondary)
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, OnboardingLayout.margin)
             .padding(.top, 48)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -90,53 +92,45 @@ private struct SetupBeat: View {
     let preferences: Preferences
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                ShareStrip(colors: [PersonPalette.color(at: PersonPalette.meIndex)], height: 4)
-                Text("Make it yours")
-                    .font(.system(.largeTitle, design: .serif))
-                    .foregroundStyle(Ink.text)
-                    .accessibilityAddTraits(.isHeader)
-                Text("Your name is what friends see. You can change both later.")
-                    .font(.title3)
-                    .foregroundStyle(Ink.secondary)
-
-                VStack(spacing: 0) {
-                    Divider().overlay(Ink.hairline)
-                    TextField("Your name", text: $profile.displayName, prompt: Text("Your name"))
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 24) {
+                    ShareStrip(colors: [PersonPalette.color(at: PersonPalette.meIndex)], height: 4)
+                    Text("Make it yours")
+                        .font(Typeface.display)
+                        .foregroundStyle(Ink.text)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Your name is what friends see. You can change both later.")
                         .font(.title3)
+                        .foregroundStyle(Ink.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .listRowInsets(EdgeInsets(top: 48, leading: OnboardingLayout.margin, bottom: 16, trailing: OnboardingLayout.margin))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+
+            Section {
+                RaisedRows {
+                    TextField("Your Name", text: $profile.displayName, prompt: Text("Your Name"))
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
-                        .frame(minHeight: 56)
                         .accessibilityIdentifier("onboarding.name")
-                    Divider().overlay(Ink.hairline)
                     NavigationLink {
                         CurrencyPickerView()
                     } label: {
-                        HStack {
-                            Text("Default Currency")
-                                .foregroundStyle(Ink.text)
-                            Spacer()
-                            Text(CurrencyCatalog.name(for: preferences.defaultCurrencyCode))
-                                .foregroundStyle(Ink.secondary)
-                                .multilineTextAlignment(.trailing)
-                            Image(systemName: "chevron.right")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(Ink.tertiary)
-                                .accessibilityHidden(true)
-                        }
-                        .frame(minHeight: 56)
+                        LabeledContent(
+                            "Default Currency",
+                            value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
+                        )
                     }
-                    .buttonStyle(.plain)
-                    Divider().overlay(Ink.hairline)
                 }
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 48)
-            .padding(.bottom, 24)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
     }

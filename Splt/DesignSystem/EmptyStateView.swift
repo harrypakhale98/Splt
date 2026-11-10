@@ -24,11 +24,31 @@ struct EmptyStateView: View {
                 Button(actionTitle, action: action)
                     .buttonStyle(PrimaryButtonStyle())
                     .frame(minWidth: 240)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, Depth.pageMargin)
             }
         }
         // this view doesn't scroll, so larger text would push the button under the tab bar
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+}
+
+extension EmptyStateView {
+    /// A search that found nothing.
+    static func search(query: String) -> EmptyStateView {
+        EmptyStateView(
+            title: "No results for “\(query)”",
+            systemImage: "magnifyingglass",
+            description: "Check the spelling or try a different search."
+        )
+    }
+
+    /// The store couldn't be opened, so there is nothing to show. Use on any screen that needs it.
+    static var dataUnavailable: EmptyStateView {
+        EmptyStateView(
+            title: "Can't open your data",
+            systemImage: "exclamationmark.triangle",
+            description: "Restart the app and try again."
+        )
     }
 }
 

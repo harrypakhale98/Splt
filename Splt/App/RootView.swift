@@ -1,9 +1,22 @@
 import SwiftUI
 
 struct RootView: View {
-    @Environment(Router.self) private var router
     @Environment(\.dataServices) private var services
+
+    var body: some View {
+        // the unread store is made with the tabs, so the Activity badge is there on the first frame
+        RootTabs(services: services)
+            .id(services.map { ObjectIdentifier($0) })
+    }
+}
+
+private struct RootTabs: View {
+    @Environment(Router.self) private var router
     @State private var unread: UnreadActivityStore?
+
+    init(services: DataServices?) {
+        _unread = State(initialValue: services.map { UnreadActivityStore(services: $0) })
+    }
 
     var body: some View {
         @Bindable var router = router
@@ -26,9 +39,6 @@ struct RootView: View {
         .tabBarMinimizeBehavior(.onScrollDown)
         .generatesRecurringExpenses()
         .settleUndoBanner()
-        .task {
-            if unread == nil, let services { unread = UnreadActivityStore(services: services) }
-        }
         .sheet(item: $router.sheet, onDismiss: router.sheetDidDismiss) { sheet in
             switch sheet {
             case .newGroup:

@@ -1,33 +1,18 @@
 import SwiftUI
 
-/// What was recorded, with a way to take it back.
+/// One quiet line under the settled hero: when the payment was recorded and how. Undo lives on the
+/// banner that follows the sheet.
 struct SettleDoneCard: View {
     let model: SettleModel
-    let finished: Bool
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.largeTitle)
-                .imageScale(.large)
-                .foregroundStyle(Ink.text)
-                .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? false : finished)
-                .accessibilityHidden(true)
-            Text("Payment Recorded")
-                .font(Typeface.heading)
-            if let receipt = model.receipt {
-                Text(receipt.message)
-                    .font(.body)
-                    .foregroundStyle(Ink.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            Button("Undo") { model.undo() }
-                .buttonStyle(QuietButtonStyle())
+        if model.receipt != nil {
+            Text("Recorded \(model.date.formatted(.dateTime.day().month(.abbreviated))) \u{00B7} \(model.method.title)")
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
         }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .transition(.opacity)
     }
 }

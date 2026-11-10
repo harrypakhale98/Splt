@@ -1,5 +1,6 @@
 import CoreSpotlight
 import SpltCore
+import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -36,21 +37,25 @@ enum GroupSpotlight {
             ? String(localized: "Splt group")
             : String(localized: "Splt group with \(memberNames.joined(separator: ", "))")
         attributes.keywords = [group.name, "Splt", "group"] + memberNames
-        attributes.thumbnailData = thumbnail(symbol: group.symbol, color: UIColor(GroupAppearance.color(for: group.id)))
+        attributes.thumbnailData = thumbnail(symbol: group.symbol)
         let item = CSSearchableItem(
             uniqueIdentifier: identifier(for: group.id), domainIdentifier: domain, attributeSet: attributes
         )
         return item
     }
 
-    private static func thumbnail(symbol: String, color: UIColor) -> Data? {
+    /// The group's glyph in ink on paper, like it looks in the app. Color is kept for people.
+    private static func thumbnail(symbol: String) -> Data? {
+        let light = UITraitCollection(userInterfaceStyle: .light)
+        let paper = UIColor(Ink.paper).resolvedColor(with: light)
+        let ink = UIColor(Ink.text).resolvedColor(with: light)
         let size = CGSize(width: 120, height: 120)
         let image = UIGraphicsImageRenderer(size: size).image { context in
-            color.setFill()
-            UIBezierPath(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: 28).fill()
-            let configuration = UIImage.SymbolConfiguration(pointSize: 56, weight: .semibold)
+            paper.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            let configuration = UIImage.SymbolConfiguration(pointSize: 56, weight: .regular)
             guard let glyph = UIImage(systemName: symbol, withConfiguration: configuration)?
-                .withTintColor(.white, renderingMode: .alwaysOriginal) else { return }
+                .withTintColor(ink, renderingMode: .alwaysOriginal) else { return }
             let origin = CGPoint(x: (size.width - glyph.size.width) / 2, y: (size.height - glyph.size.height) / 2)
             glyph.draw(at: origin)
         }

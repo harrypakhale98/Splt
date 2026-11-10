@@ -14,6 +14,17 @@ enum CurrencyCatalog {
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
+    /// The same list as `options(locale:)`, built once per locale. Pickers ask on every keystroke.
+    @MainActor
+    static func cachedOptions(locale: Locale = .current) -> [CurrencyOption] {
+        if let cached = cache[locale.identifier] { return cached }
+        let built = options(locale: locale)
+        cache[locale.identifier] = built
+        return built
+    }
+
+    @MainActor private static var cache: [String: [CurrencyOption]] = [:]
+
     static func name(for code: String, locale: Locale = .current) -> String {
         locale.localizedString(forCurrencyCode: code) ?? code
     }

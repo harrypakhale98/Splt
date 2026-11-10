@@ -30,8 +30,6 @@ final class SettleUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Settle Up"].exists)
         record.tap()
 
-        XCTAssertTrue(app.staticTexts["Payment Recorded"].waitForExistence(timeout: 10))
-        app.buttons["Done"].tap()
 
         // the banner keeps the undo after the sheet closes
         let undo = app.buttons["Undo"].firstMatch

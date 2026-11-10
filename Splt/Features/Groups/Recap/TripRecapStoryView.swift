@@ -1,6 +1,8 @@
 import Charts
 import SpltCore
 import SwiftUI
+import UIKit
+import UniformTypeIdentifiers
 
 /// A full screen, swipeable look back at a group's spending: the total, day by day, the biggest
 /// expense, who paid most, where it went and a sentence about it. It can be shared as a picture.
@@ -15,7 +17,6 @@ struct TripRecapStoryView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var page = 0
     @State private var hidesAmounts = false
-    @State private var sharedImage: Image?
 
     private var pages: [RecapPage] {
         var result: [RecapPage] = [.total, .days]
@@ -57,7 +58,6 @@ struct TripRecapStoryView: View {
             }
         }
         .overlay(alignment: .bottom) { footer }
-        .task(id: hidesAmounts) { renderShareCard() }
         .accessibilityAction(.escape) { dismiss() }
     }
 
@@ -107,17 +107,18 @@ struct TripRecapStoryView: View {
             .font(.subheadline)
     }
 
-    @ViewBuilder
+    /// The card is drawn only once someone picks where to share it, not while the recap plays.
     private var shareButton: some View {
-        if let sharedImage {
-            ShareLink(item: sharedImage, preview: SharePreview(group.name, image: sharedImage)) {
-                Label("Share", systemImage: "square.and.arrow.up")
-                    .labelStyle(.iconOnly)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
+        ShareLink(
+            item: RecapShareImage(group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts),
+            preview: SharePreview(group.name)
+        ) {
+            Label("Share", systemImage: "square.and.arrow.up")
+                .labelStyle(.iconOnly)
+                .frame(width: 44, height: 44)
         }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
     }
 
     // MARK: Pages
@@ -133,13 +134,29 @@ struct TripRecapStoryView: View {
         case .summary: RecapSummaryPage(group: group, stats: stats, summary: summary, active: active)
         }
     }
+}
 
-    private func renderShareCard() {
+/// The share card as a picture, rendered when the share sheet asks for it rather than ahead of time.
+struct RecapShareImage: Transferable, Sendable {
+    let group: SplitGroup
+    let stats: RecapStats
+    let summary: String?
+    let hidesAmounts: Bool
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .png) { item in
+            try await item.pngData()
+        }
+    }
+
+    @MainActor
+    private func pngData() throws -> Data {
         let card = RecapShareCard(group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts)
             .environment(\.colorScheme, .light)
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3
-        if let image = renderer.uiImage { sharedImage = Image(uiImage: image) }
+        guard let data = renderer.uiImage?.pngData() else { throw CocoaError(.fileWriteUnknown) }
+        return data
     }
 }
 

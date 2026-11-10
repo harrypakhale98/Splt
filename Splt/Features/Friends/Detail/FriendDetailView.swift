@@ -12,12 +12,8 @@ struct FriendDetailView: View {
         if let services {
             FriendDetailContent(friendID: friendID, services: services)
         } else {
-            EmptyStateView(
-                title: "Friend Not Found",
-                systemImage: "person.2",
-                description: "Splt couldn't open its storage."
-            )
-            .navigationBarTitleDisplayMode(.inline)
+            EmptyStateView.dataUnavailable
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -39,6 +35,7 @@ private struct FriendDetailContent: View {
     @State private var showsRemind = false
     @State private var showsRename = false
     @State private var showsMerge = false
+    @State private var showsBlockConfirmation = false
     @State private var newName = ""
     private let visibility = FriendVisibilityStore()
 
@@ -63,7 +60,7 @@ private struct FriendDetailContent: View {
                 .toolbar { toolbar(friend) }
             } else if model.didLoad {
                 EmptyStateView(
-                    title: "Friend Not Found",
+                    title: "Friend not found",
                     systemImage: "person.2",
                     description: "This person may have been removed."
                 )
@@ -90,6 +87,15 @@ private struct FriendDetailContent: View {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }
             Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Block \(firstName)?",
+            isPresented: $showsBlockConfirmation, titleVisibility: .visible
+        ) {
+            Button("Block", role: .destructive) { setVisibility(.blocked) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("They stay out of your friends, search and reminders on this device.")
         }
         .alert("Couldn't Finish", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
@@ -208,16 +214,10 @@ private struct FriendDetailContent: View {
             }
         }
         ToolbarItem(placement: .secondaryAction) {
-            Button("Hide", systemImage: "eye.slash") {
-                visibility.set(.hidden, for: friend.id)
-                dismiss()
-            }
+            Button("Hide", systemImage: "eye.slash") { setVisibility(.hidden) }
         }
         ToolbarItem(placement: .secondaryAction) {
-            Button("Block", systemImage: "nosign", role: .destructive) {
-                visibility.set(.blocked, for: friend.id)
-                dismiss()
-            }
+            Button("Block\u{2026}", systemImage: "nosign", role: .destructive) { showsBlockConfirmation = true }
         }
     }
 
@@ -225,6 +225,16 @@ private struct FriendDetailContent: View {
 
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
+    }
+
+    private var firstName: String {
+        model.friend.map { ReminderMessage.firstName($0.name) } ?? ""
+    }
+
+    /// The store tells the Friends list, which refreshes before this screen finishes closing.
+    private func setVisibility(_ state: FriendVisibilityStore.State) {
+        visibility.set(state, for: model.friendID)
+        dismiss()
     }
 
     private func openPendingSettle() {
@@ -268,7 +278,7 @@ private struct PaymentRow: View {
         .swipeActions {
             if isUndone {
                 Button("Restore Payment", systemImage: "arrow.uturn.forward") { model.restore(payment) }
-                    .tint(Ink.owed)
+                    .tint(Ink.text)
             } else {
                 Button("Undo Payment", systemImage: "arrow.uturn.backward") { model.undo(payment) }
                     .tint(Ink.owe)

@@ -12,13 +12,9 @@ struct ExpenseDetailView: View {
         if let services {
             ExpenseDetailScreen(expenseID: expenseID, services: services)
         } else {
-            EmptyStateView(
-                title: "Expense Unavailable",
-                systemImage: "exclamationmark.triangle",
-                description: "Splt couldn't open its data. Restart the app and try again."
-            )
-            .navigationTitle("Expense")
-            .navigationBarTitleDisplayMode(.inline)
+            EmptyStateView.dataUnavailable
+                .navigationTitle("Expense")
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -62,7 +58,7 @@ private struct ExpenseDetailScreen: View {
         } message: {
             Text("It leaves everyone's balances. You can undo this right after.")
         }
-        .alert("Something Went Wrong", isPresented: Binding(
+        .alert("Couldn't Finish", isPresented: Binding(
             get: { model.actionError != nil }, set: { if !$0 { model.dismissError() } }
         )) {
             Button("OK", role: .cancel) {}
@@ -103,6 +99,8 @@ private struct ExpenseDetailScreen: View {
                             Label("Part of a recurring expense", systemImage: "arrow.triangle.2.circlepath")
                         }
                     }
+                } header: {
+                    SectionHeader("Repeats")
                 }
             }
             CommentsSection(model: model) { translating = $0 }
@@ -114,8 +112,10 @@ private struct ExpenseDetailScreen: View {
         .safeAreaBar(edge: .bottom) {
             if model.isDeleted {
                 DeletedBanner { model.undoDelete() }
+                    .motionTransition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .motion(Motion.settle, value: model.isDeleted)
     }
 
     @ToolbarContentBuilder
@@ -133,7 +133,7 @@ private struct ExpenseDetailScreen: View {
                     Divider()
                     Button("Delete", systemImage: "trash", role: .destructive) { confirmsDelete = true }
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("More", systemImage: "ellipsis")
                 }
             }
         }

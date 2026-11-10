@@ -1,8 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// The top of a friend's screen, on paper: who they are, the net balance in one big number with a
-/// word, and the one thing to do next. Settle up is left out when you are square.
+/// The top of a friend's screen, on paper: who they are, the net balance in one big ink number with
+/// a sentence that says which way it goes, and the one thing to do next. Settle up is left out when you are square.
 struct FriendHero: View {
     let friend: Person
     let balance: [Money]
@@ -46,18 +46,17 @@ struct FriendHero: View {
     private var figure: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let amount = position.primary {
-                HeroAmount(amount, showsSign: false, tint: Ink.direction(of: amount.minorUnits))
+                HeroAmount(amount, showsSign: false)
                 Text(sentence(for: amount))
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)
                 if !position.others.isEmpty {
                     Text("Also \(otherAmounts)")
-                        .font(.subheadline)
-                        .monospacedDigit()
+                        .font(Typeface.figure)
                         .foregroundStyle(Ink.secondary)
                 }
             } else {
-                Text("All settled up")
+                Text("Settled up")
                     .font(Typeface.hero(size: 44))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)

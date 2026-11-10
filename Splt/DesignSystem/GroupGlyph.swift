@@ -6,7 +6,7 @@ struct GroupGlyph: View {
     @ScaledMetric private var scaledSide: CGFloat
     private let baseSide: CGFloat
 
-    init(symbol: String, size: CGFloat = 44) {
+    init(symbol: String, size: CGFloat = 32) {
         self.symbol = symbol
         baseSide = size
         _scaledSide = ScaledMetric(wrappedValue: size, relativeTo: .body)

@@ -12,7 +12,7 @@ struct InviteGroupView: View {
 
     private enum LoadState {
         case loading
-        case ready(URL, UIImage?)
+        case ready(URL)
         case failed(String)
     }
 
@@ -20,26 +20,23 @@ struct InviteGroupView: View {
         List {
             switch state {
             case .loading:
-                HStack {
-                    ProgressView()
-                    Text("Preparing invite")
-                        .foregroundStyle(Ink.secondary)
-                }
-                .listRowBackground(Color.clear)
-            case .ready(let url, let image):
                 Section {
                     RaisedRows {
-                        if let image {
-                            Image(uiImage: image)
-                                .interpolation(.none)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxWidth: 240)
-                                .padding(12)
-                                .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                                .frame(maxWidth: .infinity)
-                                .accessibilityLabel("QR code to join \(groupName)")
+                        HStack {
+                            ProgressView()
+                            Text("Preparing invite")
+                                .foregroundStyle(Ink.secondary)
                         }
+                    }
+                }
+                .raisedSection()
+            case .ready(let url):
+                Section {
+                    RaisedRows {
+                        QRCard(text: url.absoluteString)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("QR code to join \(groupName)")
+                            .accessibilityAddTraits(.isImage)
                         Text(url.absoluteString)
                             .font(.footnote.monospaced())
                             .foregroundStyle(Ink.secondary)
@@ -83,7 +80,7 @@ struct InviteGroupView: View {
     private func load() async {
         do {
             let url = try await sharing.inviteURL(for: groupID, groupName: groupName)
-            state = .ready(url, QRCodeImage.make(from: url.absoluteString))
+            state = .ready(url)
         } catch {
             state = .failed(error.localizedDescription)
         }

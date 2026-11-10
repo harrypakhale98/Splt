@@ -10,20 +10,16 @@ struct SearchView: View {
             SearchContent(services: services)
         } else {
             NavigationStack {
-                EmptyStateView(
-                    title: "Search Splt",
-                    systemImage: "magnifyingglass",
-                    description: "Splt couldn't open its storage."
-                )
-                .navigationTitle("Search")
+                EmptyStateView.dataUnavailable
+                    .navigationTitle("Search")
             }
         }
     }
 }
 
 private struct SearchContent: View {
+    @Environment(Router.self) private var router
     @State private var model: SearchModel
-    @State private var path: [Route] = []
 
     init(services: DataServices) {
         _model = State(initialValue: SearchModel(services: services))
@@ -31,8 +27,9 @@ private struct SearchContent: View {
 
     var body: some View {
         @Bindable var model = model
+        @Bindable var router = router
 
-        NavigationStack(path: $path) {
+        NavigationStack(path: $router.searchPath) {
             List {
                 // the intro floats over an empty list: content in the list would hide the search field
                 if model.trimmedQuery.isEmpty {
@@ -49,6 +46,10 @@ private struct SearchContent: View {
             .toolbar { AccountToolbarItem() }
             .searchable(text: $model.query, prompt: "Friends, groups, expenses")
             .onSubmit(of: .search) { model.remember() }
+            .onChange(of: router.searchPath) { old, new in
+                // opening a result keeps the query as a recent search
+                if old.isEmpty, !new.isEmpty, !model.trimmedQuery.isEmpty { model.remember() }
+            }
             .task(id: model.query) {
                 try? await Task.sleep(for: .milliseconds(250))
                 guard !Task.isCancelled else { return }
@@ -80,7 +81,6 @@ private struct SearchContent: View {
                             }
                             .accessibilityElement(children: .combine)
                         }
-                        .simultaneousGesture(TapGesture().onEnded { model.remember() })
                     }
                 }
             } header: {
@@ -96,14 +96,13 @@ private struct SearchContent: View {
                                 GroupGlyph(symbol: group.symbol, size: 28)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(group.name)
-                                    Text("\(group.memberIDs.count) people")
+                                    Text("^[\(group.memberIDs.count) person](inflect: true)")
                                         .font(.footnote)
                                         .foregroundStyle(Ink.secondary)
                                 }
                             }
                             .accessibilityElement(children: .combine)
                         }
-                        .simultaneousGesture(TapGesture().onEnded { model.remember() })
                     }
                 }
             } header: {
@@ -115,9 +114,8 @@ private struct SearchContent: View {
                 RaisedRows {
                     ForEach(model.expenses) { expense in
                         NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                            ExpenseRowView(expense: expense, currentPerson: model.me?.id, people: Array(model.peopleByID.values))
+                            ExpenseRowView(expense: expense, currentPerson: model.me?.id, people: model.knownPeople)
                         }
-                        .simultaneousGesture(TapGesture().onEnded { model.remember() })
                     }
                 }
             } header: {
@@ -148,6 +146,8 @@ private struct SearchContent: View {
                         .font(.footnote)
                         .foregroundStyle(Ink.text)
                         .textCase(nil)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
             }
         }
@@ -158,27 +158,17 @@ private struct SearchContent: View {
         if model.trimmedQuery.isEmpty, model.recents.isEmpty {
             intro
         } else if !model.trimmedQuery.isEmpty, model.hasSearched, model.isEmpty {
-            EmptyStateView(
-                title: "No Results",
-                systemImage: "magnifyingglass",
-                description: "Nothing matches \u{201C}\(model.trimmedQuery)\u{201D}. Check the spelling, or ask a question such as \u{201C}\(SearchModel.examples[1])\u{201D}."
-            )
+            EmptyStateView.search(query: model.trimmedQuery)
         }
     }
 
-    /// The first thing you see: what search can do, and questions to try.
+    /// The first thing you see: questions to try.
     @ViewBuilder
     private var intro: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Search Splt")
-                        .font(Typeface.heading)
-                        .foregroundStyle(Ink.text)
-                    Text("Find friends, groups and expenses, or ask in your own words.")
-                        .font(.body)
-                        .foregroundStyle(Ink.secondary)
-                }
+            VStack(alignment: .leading, spacing: 8) {
+                SectionHeader("Try asking")
+                    .padding(.horizontal, Depth.rowPadding.leading)
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(SearchModel.examples.enumerated()), id: \.element) { index, example in
                         if index > 0 { Divider().overlay(Ink.hairline) }

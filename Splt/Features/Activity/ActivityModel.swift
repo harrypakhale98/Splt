@@ -18,8 +18,8 @@ final class ActivityModel {
         case restore
     }
 
-    var typeFilter: ActivityTypeFilter = .all
-    var groupFilter: GroupID?
+    var typeFilter: ActivityTypeFilter = .all { didSet { rebuildVisible() } }
+    var groupFilter: GroupID? { didSet { rebuildVisible() } }
     var errorMessage: String?
 
     private(set) var entries: [ActivityEntry] = []
@@ -29,10 +29,19 @@ final class ActivityModel {
     private(set) var paymentActions: [UUID: PaymentAction] = [:]
     private(set) var didLoad = false
 
+    // Worked out when the entries or the filters change, not on every redraw.
+    private(set) var visibleEntries: [ActivityEntry] = []
+    private(set) var sections: [DaySection] = []
+    /// Groups that have events, for the group filter. Hidden two person groups are left out.
+    private(set) var filterGroups: [SplitGroup] = []
+    private(set) var unreadCount = 0
+
     @ObservationIgnored private let services: DataServices
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
+    @ObservationIgnored private var sentences: [UUID: String] = [:]
+    @ObservationIgnored private var sentenceLocale: Locale?
 
     static let pageSize = 300
 
@@ -57,18 +66,22 @@ final class ActivityModel {
         } catch {
             errorMessage = String(localized: "Something went wrong. Please try again.")
         }
+        sentences = [:]
+        filterGroups = Set(entries.compactMap(\.groupID))
+            .compactMap { groups[$0] }
+            .filter { $0.kind != .friend }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        unreadCount = entries.filter { !$0.isRead }.count
+        rebuildVisible()
         didLoad = true
     }
 
     // MARK: Showing
 
-    var visibleEntries: [ActivityEntry] {
-        entries.filter { entry in
+    private func rebuildVisible() {
+        visibleEntries = entries.filter { entry in
             typeFilter.includes(entry.event.kind) && (groupFilter == nil || entry.groupID == groupFilter)
         }
-    }
-
-    var sections: [DaySection] {
         var result: [DaySection] = []
         for entry in visibleEntries {
             let day = calendar.startOfDay(for: entry.createdAt)
@@ -78,7 +91,7 @@ final class ActivityModel {
                 result.append(DaySection(day: day, entries: [entry]))
             }
         }
-        return result
+        sections = result
     }
 
     var isFiltering: Bool { typeFilter != .all || groupFilter != nil }
@@ -88,18 +101,16 @@ final class ActivityModel {
         groupFilter = nil
     }
 
-    /// Groups that have events, for the group filter. Hidden two person groups are left out.
-    var filterGroups: [SplitGroup] {
-        let used = Set(entries.compactMap(\.groupID))
-        return used.compactMap { groups[$0] }
-            .filter { $0.kind != .friend }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-    }
-
-    var unreadCount: Int { entries.filter { !$0.isRead }.count }
-
+    /// The row's sentence, kept until the next refresh so redraws don't rebuild it.
     func text(for entry: ActivityEntry, locale: Locale = .current) -> String {
-        GroupActivityText(currentPerson: me?.id, names: names, locale: locale).sentence(for: entry)
+        if sentenceLocale != locale {
+            sentences = [:]
+            sentenceLocale = locale
+        }
+        if let sentence = sentences[entry.id] { return sentence }
+        let sentence = GroupActivityText(currentPerson: me?.id, names: names, locale: locale).sentence(for: entry)
+        sentences[entry.id] = sentence
+        return sentence
     }
 
     /// The group name to show under a row. Nil for the hidden group behind a friend.

@@ -14,10 +14,14 @@ struct ReceiptActions: View {
                     showsScanner = true
                 } label: {
                     Label("Scan Receipt", systemImage: "doc.viewfinder")
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
             }
             PhotosPicker(selection: $pickedPhoto, matching: .images) {
                 Label("Choose Receipt Photo", systemImage: "photo.on.rectangle")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
         }
         .disabled(model.isScanning)

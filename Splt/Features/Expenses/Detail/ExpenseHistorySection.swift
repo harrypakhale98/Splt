@@ -15,7 +15,7 @@ struct ExpenseHistorySection: View {
                             if let detail = previousValues(of: entry) {
                                 Text(detail).font(.footnote).foregroundStyle(Ink.secondary)
                             }
-                            Text(entry.date, format: .dateTime.day().month().year().hour().minute())
+                            Text(entry.date.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption)
                                 .foregroundStyle(Ink.secondary)
                         }

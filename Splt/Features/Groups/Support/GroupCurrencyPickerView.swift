@@ -4,51 +4,8 @@ import SwiftUI
 struct GroupCurrencyPickerView: View {
     @Binding var selection: String
 
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.locale) private var locale
-    @State private var query = ""
-
     var body: some View {
-        let options = CurrencyCatalog.filter(CurrencyCatalog.options(locale: locale), query: query)
-
-        List {
-            RaisedRows {
-                ForEach(options) { option in
-                    Button {
-                        selection = option.code
-                        dismiss()
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(option.name)
-                                    .foregroundStyle(Ink.text)
-                                Text(option.code)
-                                    .font(.footnote)
-                                    .foregroundStyle(Ink.secondary)
-                            }
-                            Spacer()
-                            if option.code == selection {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(Ink.text)
-                                    .accessibilityHidden(true)
-                            }
-                        }
-                    }
-                    .accessibilityAddTraits(option.code == selection ? .isSelected : [])
-                }
-            }
-        }
-        .listStyle(.plain)
-        .listRowSeparatorTint(Ink.hairline)
-        .paperBackground()
-        .overlay {
-            if options.isEmpty {
-                ContentUnavailableView.search(text: query)
-            }
-        }
-        .navigationTitle("Currency")
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, prompt: "Currency or code")
+        CurrencyPicker(selection: $selection)
     }
 }
 

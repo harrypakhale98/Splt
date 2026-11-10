@@ -147,7 +147,7 @@ extension XCTestCase {
         let keyboardDone = app.keyboards.buttons["Done"]
         if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
 
-        let memberField = app.textFields["Add by name"]
+        let memberField = app.textFields["Add by Name"]
         for member in members {
             reveal(memberField, in: app)
             memberField.tap()

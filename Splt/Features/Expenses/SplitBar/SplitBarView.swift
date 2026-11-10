@@ -19,9 +19,11 @@ struct SplitBarView: View {
     @State private var draggingDivider: Int?
     @State private var detentCount = 0
     @State private var lastSnap: SplitBarDetent.Kind?
+    /// The callout's measured width, so it can be kept inside the bar at either end.
+    @State private var calloutWidth: CGFloat = 180
 
     private let barSpace = "splitBar"
-    private let corner: CGFloat = 8
+    private let corner = Depth.controlRadius
 
     var body: some View {
         GeometryReader { proxy in
@@ -99,7 +101,9 @@ struct SplitBarView: View {
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .named(barSpace))
                     .onChanged { value in
-                        draggingDivider = divider
+                        if draggingDivider != divider {
+                            Motion.perform(Motion.quick) { draggingDivider = divider }
+                        }
                         let fraction = layout.fraction(forX: value.location.x)
                         if let result = onDrag(divider, fraction) {
                             if let snap = result.snappedTo, lastSnap != snap { detentCount += 1 }
@@ -107,7 +111,7 @@ struct SplitBarView: View {
                         }
                     }
                     .onEnded { _ in
-                        draggingDivider = nil
+                        Motion.perform(Motion.quick) { draggingDivider = nil }
                         lastSnap = nil
                     }
             )
@@ -126,7 +130,7 @@ struct SplitBarView: View {
                             .fill(PersonPalette.color(for: segment.id, in: members))
                             .frame(width: 10, height: 10)
                         Text(firstName(of: segment.person))
-                            .font(.caption.weight(.medium))
+                            .font(.caption)
                         Text(label.primary)
                             .font(.footnote.weight(.semibold))
                             .monospacedDigit()
@@ -140,10 +144,18 @@ struct SplitBarView: View {
             .background(Ink.sheet, in: Capsule())
             .overlay { Capsule().strokeBorder(Ink.hairline) }
         }
-        .position(x: min(max(x, 90), max(width - 90, 90)), y: -22)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { calloutWidth = $0 }
+        .position(x: calloutX(x, barWidth: width), y: -22)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .transition(.opacity)
+        .motionTransition(.opacity)
+    }
+
+    /// Centers the callout on the divider, but never lets it hang past either end of the bar.
+    private func calloutX(_ x: CGFloat, barWidth: CGFloat) -> CGFloat {
+        let half = calloutWidth / 2
+        guard barWidth > calloutWidth else { return barWidth / 2 }
+        return min(max(x, half), barWidth - half)
     }
 
     private func firstName(of person: Person) -> String {

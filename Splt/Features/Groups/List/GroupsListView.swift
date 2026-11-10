@@ -15,14 +15,8 @@ struct GroupsListView: View {
                 if let services {
                     GroupsListContent(services: services)
                 } else {
-                    EmptyStateView(
-                        title: "No Groups Yet",
-                        systemImage: "person.3",
-                        description: "Create a group for a trip, a home or a night out.",
-                        actionTitle: "Create Group",
-                        action: { router.present(.newGroup) }
-                    )
-                    .navigationTitle("Groups")
+                    EmptyStateView.dataUnavailable
+                        .navigationTitle("Groups")
                 }
             }
             .environment(\.zoomNamespace, zoomNamespace)
@@ -36,6 +30,7 @@ private struct GroupsListContent: View {
     @State private var model: GroupsListViewModel
     @State private var pendingDelete: SplitGroup?
     @State private var showsImport = false
+    @State private var settingsGroup: SplitGroup?
 
     init(services: DataServices) {
         _model = State(initialValue: GroupsListViewModel(services: services))
@@ -97,6 +92,10 @@ private struct GroupsListContent: View {
         .sheet(isPresented: $showsImport) {
             SplitwiseImportSheet()
         }
+        // a sheet, as from the group screen, so Done is the one way out and nothing is dropped by Back
+        .sheet(item: $settingsGroup) { group in
+            GroupSettingsView(groupID: group.id, onGroupRemoved: { model.refresh() })
+        }
         .onAppear { model.refresh() }
         .confirmationDialog(
             "Delete Group?", isPresented: deleteBinding, titleVisibility: .visible, presenting: pendingDelete
@@ -125,7 +124,7 @@ private struct GroupsListContent: View {
                 action: { router.present(.newGroup) }
             )
         } else if model.isSearching && !model.hasResults {
-            ContentUnavailableView.search(text: model.query)
+            EmptyStateView.search(query: model.query)
         }
     }
 
@@ -160,7 +159,7 @@ private struct GroupsListContent: View {
                 }
             }
             Button("Group Settings", systemImage: "gearshape") {
-                router.push(.groupSettings(summary.group.id.rawValue), in: .groups)
+                settingsGroup = summary.group
             }
             Button("Delete", systemImage: "trash", role: .destructive) {
                 pendingDelete = summary.group

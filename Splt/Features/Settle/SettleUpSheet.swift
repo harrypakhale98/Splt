@@ -13,16 +13,12 @@ struct SettleUpSheet: View {
             SettleUpContent(route: route, services: services)
         } else {
             NavigationStack {
-                EmptyStateView(
-                    title: "Data Unavailable",
-                    systemImage: "exclamationmark.triangle",
-                    description: "Splt couldn't open its data. Restart the app and try again."
-                )
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close", role: .close) { dismiss() }
+                EmptyStateView.dataUnavailable
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close", role: .close) { dismiss() }
+                        }
                     }
-                }
             }
         }
     }
@@ -60,9 +56,11 @@ private struct SettleUpContent: View {
                 VStack(spacing: 8) {
                     SettleHeroCard(model: model, ceremony: ceremony)
                     if ceremony.finished {
-                        SettleDoneCard(model: model, finished: ceremony.finished)
+                        SettleDoneCard(model: model)
+                            .motionTransition(.opacity)
                     } else if !hasRecorded {
                         SettleControls(model: model, onPayWith: { url in Task { await payWith(url) } })
+                            .motionTransition(.opacity)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -74,7 +72,10 @@ private struct SettleUpContent: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !hasRecorded { recordBar }
+                if !hasRecorded {
+                    recordBar
+                        .motionTransition(.opacity)
+                }
             }
             .task(id: model.receipt?.id) { await runCeremony() }
             .alert("Couldn't Record Payment", isPresented: errorBinding) {
@@ -99,7 +100,8 @@ private struct SettleUpContent: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", role: .cancel) { dismiss() }
             }
-        } else if ceremony.finished {
+        } else if ceremony.finished, voiceOverOn {
+            // The sheet closes by itself, except under VoiceOver, which needs a way out.
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done", action: finish)
             }
@@ -108,9 +110,7 @@ private struct SettleUpContent: View {
 
     /// The button rides on paper, so the form scrolls underneath it instead of showing through.
     private var recordBar: some View {
-        Button {
-            model.record()
-        } label: {
+        Button(action: record) {
             Text("Record Payment")
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -130,13 +130,13 @@ private struct SettleUpContent: View {
     /// Plays the settle moment when a payment is recorded, then closes by itself. Undoing resets it.
     private func runCeremony() async {
         guard let receipt = model.receipt else {
-            withAnimation(Motion.animation(.smooth, reduceMotion: reduceMotion)) {
+            Motion.perform(Motion.smooth) {
                 ceremony = .idle
                 detent = .large
             }
             return
         }
-        withAnimation(Motion.animation(.smooth, reduceMotion: reduceMotion)) { detent = receiptDetent }
+        Motion.perform(Motion.smooth) { detent = receiptDetent }
         await SettleCeremony.play(on: $ceremony, reduceMotion: reduceMotion)
         AccessibilityNotification.Announcement(receipt.message).post()
         guard !voiceOverOn else { return }
@@ -155,7 +155,7 @@ private struct SettleUpContent: View {
                 Button("Open \(model.method.title) Website") { openURL(website) }
             }
             if model.canRecord {
-                Button("Record Payment") { model.record() }
+                Button("Record Payment", action: record)
             }
             Button("Cancel", role: .cancel) {}
         }
@@ -169,6 +169,11 @@ private struct SettleUpContent: View {
 
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
+    }
+
+    /// The controls and the record bar fade out together as the ceremony begins.
+    private func record() {
+        Motion.perform(Motion.smooth) { model.record() }
     }
 
     private func finish() {

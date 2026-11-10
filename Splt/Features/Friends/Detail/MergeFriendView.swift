@@ -44,7 +44,7 @@ struct MergeFriendView: View {
             .overlay {
                 if model.suggestions.isEmpty, model.others.isEmpty {
                     EmptyStateView(
-                        title: "Nobody to Merge With",
+                        title: "Nobody to merge with",
                         systemImage: "person.2",
                         description: "Add the person's real name as a friend first."
                     )

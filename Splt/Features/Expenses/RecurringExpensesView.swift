@@ -11,13 +11,9 @@ struct RecurringExpensesView: View {
         if let services {
             RecurringExpensesScreen(groupID: groupID, services: services)
         } else {
-            EmptyStateView(
-                title: "Recurring Unavailable",
-                systemImage: "exclamationmark.triangle",
-                description: "Splt couldn't open its data. Restart the app and try again."
-            )
-            .navigationTitle("Recurring")
-            .navigationBarTitleDisplayMode(.inline)
+            EmptyStateView.dataUnavailable
+                .navigationTitle("Recurring")
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -94,7 +90,7 @@ private struct RecurringExpensesScreen: View {
         } message: {
             Text("Expenses it already made stay in the group.")
         }
-        .alert("Something Went Wrong", isPresented: Binding(
+        .alert("Couldn't Finish", isPresented: Binding(
             get: { model.actionError != nil }, set: { if !$0 { model.dismissError() } }
         )) {
             Button("OK", role: .cancel) {}

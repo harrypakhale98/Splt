@@ -41,6 +41,8 @@ targets:
         CKSharingSupported: true
         UIBackgroundModes:
           - remote-notification
+        UILaunchScreen:
+          UIColorName: LaunchPaper
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.harrypakhale.splt

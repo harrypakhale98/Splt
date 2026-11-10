@@ -37,7 +37,6 @@ struct AccountView: View {
             .navigationDestination(isPresented: $showsEditor) {
                 ProfileEditorView(profile: profile)
             }
-            .task { summary = AccountSummary.load(from: services) }
             .onAppear { summary = AccountSummary.load(from: services) }
         }
         .presentationBackground(Ink.paper)

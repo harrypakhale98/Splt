@@ -69,7 +69,7 @@ struct BalanceOrbitView: View {
                 OrbitArcShape(from: geometry, to: geometry, progress: 1)
                     .fill(colors.ribbon(for: transfer))
                     .opacity(scene.emphasis(of: transfer, focus: focus).opacity)
-                    .transition(.opacity)
+                    .motionTransition(.opacity)
             }
         } else {
             let old = OrbitScene(size: scene.layout.size, people: board.people, transfers: previous)
@@ -110,7 +110,7 @@ struct BalanceOrbitView: View {
                         .background(Ink.paper, in: .capsule)
                         .overlay(Capsule().strokeBorder(Ink.hairline))
                         .position(placement.center)
-                        .transition(.opacity)
+                        .motionTransition(.opacity)
                         .allowsHitTesting(false)
                 }
             }
@@ -187,7 +187,8 @@ struct BalanceOrbitView: View {
         previous = old
         pairs = OrbitMorph.pairs(from: old, to: new)
         progress = 0
-        withAnimation(.smooth(duration: 0.8)) {
+        // the guard above already skips the morph when motion is reduced; the completion clears it
+        withAnimation(Motion.reveal) {
             progress = 1
         } completion: {
             pairs = []

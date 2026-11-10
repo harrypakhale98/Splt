@@ -18,7 +18,8 @@ struct ExpenseHeaderSection: View {
                     .multilineTextAlignment(.center)
                 ShareStrip(
                     colors: model.shareLines.map { PersonPalette.color(for: $0.person.id) },
-                    weights: model.shareLines.map { Double(max($0.share.minorUnits, 0)) }
+                    weights: model.shareLines.map { Double(max($0.share.minorUnits, 0)) },
+                    isGrooved: true
                 )
                 .padding(.top, 8)
             }

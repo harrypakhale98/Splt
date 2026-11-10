@@ -13,14 +13,14 @@ struct AvatarStack: View {
     let members: [PersonID]
     var limit = 4
     /// The color of the ring that separates neighbors. Match the surface the stack sits on.
-    var ring = Color(.systemBackground)
+    var ring = Ink.sheet
 
     @ScaledMetric private var scaledDiameter: CGFloat
     private let baseDiameter: CGFloat
 
     init(
         _ people: [Person], members: [PersonID]? = nil, size: CGFloat = 32, limit: Int = 4,
-        ring: Color = Color(.systemBackground)
+        ring: Color = Ink.sheet
     ) {
         items = people.map { Item(id: $0.id, name: $0.name) }
         self.members = members ?? people.map(\.id)
@@ -44,9 +44,9 @@ struct AvatarStack: View {
                 Text("+\(overflow)")
                     .font(.system(size: diameter * 0.36, weight: .medium))
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ink.secondary)
                     .frame(width: diameter, height: diameter)
-                    .background(Color(.tertiarySystemFill), in: .circle)
+                    .background(Ink.hairline, in: .circle)
                     .overlay { Circle().strokeBorder(ring, lineWidth: 2) }
             }
         }

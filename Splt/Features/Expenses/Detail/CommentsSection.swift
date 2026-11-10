@@ -34,7 +34,10 @@ struct CommentsSection: View {
                             .submitLabel(.send)
                             .onSubmit(send)
                         Button(action: send) {
-                            Image(systemName: "arrow.up.circle.fill").font(.title2)
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
                         .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -95,7 +98,9 @@ private struct CommentRow: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .overlay { Capsule().strokeBorder(group.mine ? Ink.text : Ink.hairline) }
-                        .contentShape(Capsule())
+                        // The capsule stays small; the tap area around it reaches 44 points.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(CommentReactions.name(for: group.emoji))
@@ -108,9 +113,8 @@ private struct CommentRow: View {
             } label: {
                 Image(systemName: "face.smiling")
                     .foregroundStyle(Ink.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .contentShape(Capsule())
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Add reaction")

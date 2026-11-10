@@ -26,7 +26,7 @@ struct FormSheetContent: View {
         case .category:
             CategorySheet(model: model, onDone: onDone).navigationTitle("Category")
         case .date:
-            DateSheet(model: model).navigationTitle("Date")
+            DateSheet(model: model, onDone: onDone).navigationTitle("Date")
         case .note:
             NoteSheet(model: model).navigationTitle("Note")
         case .receipt:
@@ -40,16 +40,18 @@ struct FormSheetContent: View {
             )
         case .more:
             MoreOptionsSheet(model: model).navigationTitle("More Options")
+        case .items:
+            Form { ItemizedSplitEditor(model: model) }.paperBackground().navigationTitle("Items")
         }
     }
 
     static func detents(for sheet: FormSheet) -> Set<PresentationDetent> {
         switch sheet {
         case .category: [.medium, .large]
-        case .date: [.medium]
+        case .date: [.medium, .large]
         case .note: [.medium]
         case .receipt: [.medium]
-        case .repeating: [.medium, .large]
+        case .repeating, .items: [.medium, .large]
         case .currency, .more: [.large]
         }
     }
@@ -84,7 +86,7 @@ private struct CategorySheet: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(selected ? Ink.text : Ink.secondary)
                     .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous)
                             .strokeBorder(selected ? Ink.text : Ink.hairline, lineWidth: selected ? 1.5 : 1)
                     }
                     .accessibilityAddTraits(selected ? .isSelected : [])
@@ -98,27 +100,35 @@ private struct CategorySheet: View {
 
 private struct DateSheet: View {
     @Bindable var model: ExpenseFormModel
+    var onDone: () -> Void
 
     var body: some View {
-        DatePicker("Date", selection: $model.date, displayedComponents: .date)
-            .datePickerStyle(.graphical)
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .paperBackground()
+        ScrollView {
+            DatePicker("Date", selection: $model.date, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding(.horizontal, 20)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .paperBackground()
+        // Picking a day is the whole job, as with a category. Paging months leaves the date alone.
+        .onChange(of: model.date) { onDone() }
     }
 }
 
 private struct NoteSheet: View {
     @Bindable var model: ExpenseFormModel
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         TextField("Add a note", text: $model.note, axis: .vertical)
             .lineLimit(3...10)
+            .focused($isFocused)
             .padding(16)
-            .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.hairline) }
+            .overlay { RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous).strokeBorder(Ink.hairline) }
             .padding(20)
             .frame(maxHeight: .infinity, alignment: .top)
             .paperBackground()
+            .onAppear { isFocused = true }
     }
 }
 
@@ -129,11 +139,10 @@ private struct ReceiptSheet: View {
     var body: some View {
         VStack(spacing: 20) {
             if model.receipt.isEmpty {
-                EmptyStateView(
-                    title: "No Receipt",
-                    systemImage: "doc.text.viewfinder",
-                    description: "Scan a receipt and the items fly onto the people who shared them."
-                )
+                Text("Scan a receipt to split it by item.")
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
+                    .multilineTextAlignment(.center)
             } else {
                 ReceiptThumbnail(
                     fileName: model.receipt.storedFileName, pendingImage: model.receipt.pendingImage,

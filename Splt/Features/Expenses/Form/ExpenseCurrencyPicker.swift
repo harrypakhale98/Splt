@@ -5,68 +5,7 @@ struct ExpenseCurrencyPicker: View {
     @Binding var selection: String
     let groupCurrencyCode: String
 
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.locale) private var locale
-    @State private var query = ""
-
     var body: some View {
-        let all = CurrencyCatalog.options(locale: locale)
-        let matches = CurrencyCatalog.filter(all, query: query)
-        let pinned = query.isEmpty ? matches.filter { $0.code == groupCurrencyCode } : []
-        let rest = matches.filter { !pinned.contains($0) }
-
-        List {
-            if pinned.isEmpty {
-                Section {
-                    RaisedRows { ForEach(rest) { row($0) } }
-                }
-            } else {
-                Section {
-                    RaisedRows { ForEach(pinned) { row($0) } }
-                } header: {
-                    SectionHeader("Group currency")
-                }
-                Section {
-                    RaisedRows { ForEach(rest) { row($0) } }
-                } header: {
-                    SectionHeader("All currencies")
-                }
-            }
-        }
-        .listStyle(.plain)
-        .listRowSeparatorTint(Ink.hairline)
-        .paperBackground()
-        .overlay {
-            if matches.isEmpty {
-                ContentUnavailableView.search(text: query)
-            }
-        }
-        .navigationTitle("Currency")
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, prompt: "Currency or code")
-    }
-
-    private func row(_ option: CurrencyOption) -> some View {
-        Button {
-            selection = option.code
-            dismiss()
-        } label: {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(option.name)
-                        .foregroundStyle(Ink.text)
-                    Text(option.code)
-                        .font(.footnote)
-                        .foregroundStyle(Ink.secondary)
-                }
-                Spacer()
-                if option.code == selection {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Ink.text)
-                        .accessibilityHidden(true)
-                }
-            }
-        }
-        .accessibilityAddTraits(option.code == selection ? .isSelected : [])
+        CurrencyPicker(selection: $selection, pinned: [groupCurrencyCode], pinnedHeader: "Group currency")
     }
 }

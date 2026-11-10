@@ -14,6 +14,8 @@ struct SplitBarSection: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var listOverride: Bool?
+    /// The drag hint shows until the first drag, then never again.
+    @AppStorage("expenses.splitBarDragged") private var hasDragged = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -21,17 +23,13 @@ struct SplitBarSection: View {
                 SectionHeader("Split")
                 Spacer()
                 if model.barData != nil {
-                    Button {
-                        listOverride = !showsList
-                    } label: {
-                        Label(showsList ? "Show Bar" : "Show List", systemImage: showsList ? "chart.bar" : "list.bullet")
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(Ink.secondary)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(.rect)
+                    Button(showsList ? "Bar" : "List") {
+                        Motion.perform(Motion.smooth) { listOverride = !showsList }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(showsList ? "Show bar" : "Show list")
+                    .font(.subheadline)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
+                    .accessibilityLabel(showsList ? "Show as Bar" : "Show as List")
                 }
             }
 
@@ -52,6 +50,7 @@ struct SplitBarSection: View {
                         data: data, members: members, currentPerson: model.me?.id, stepHint: model.barStepDescription,
                         onDrag: { divider, fraction in
                             onInteract()
+                            if !hasDragged { Motion.perform(Motion.smooth) { hasDragged = true } }
                             return model.dragDivider(divider, toFraction: fraction)
                         },
                         onStep: { person, increase in model.adjustShare(of: person, increase: increase) },
@@ -76,18 +75,18 @@ struct SplitBarSection: View {
 
     @ViewBuilder
     private func caption(_ data: SplitBarData) -> some View {
+        // Itemized needs no caption: the items tray above already says what to do.
         if data.method == .itemized {
-            Text("Assign each item to people and the bar fills in.")
-                .font(.footnote)
-                .foregroundStyle(Ink.secondary)
+            EmptyView()
         } else if data.total == nil {
             Text("Enter an amount to see what everyone pays.")
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)
-        } else {
+        } else if data.canDrag, !hasDragged {
             Text("Drag the dividers. Tap a person to fine tune.")
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)
+                .motionTransition(.opacity)
         }
     }
 }

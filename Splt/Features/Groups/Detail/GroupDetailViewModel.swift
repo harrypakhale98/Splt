@@ -64,6 +64,9 @@ final class GroupDetailViewModel {
         var recapStats: RecapStats?
         var sectionsKey: SectionsKey?
         var sections: [ExpenseSection] = []
+        var summariesRevision = -1
+        var summaries: [ExpenseID: ExpenseRowSummary] = [:]
+        var summaryNames: [PersonID: String] = [:]
     }
 
     init(
@@ -155,6 +158,20 @@ final class GroupDetailViewModel {
         let built = ExpenseSectioning.sections(visibleExpenses, grouping: grouping, calendar: calendar)
         memo.sectionsKey = key
         memo.sections = built
+        return built
+    }
+
+    /// What an expense row says, worked out once per load rather than every time the row redraws.
+    func rowSummary(for expense: Expense) -> ExpenseRowSummary {
+        _ = expenses
+        if memo.summariesRevision != revision {
+            memo.summaries = [:]
+            memo.summaryNames = names
+            memo.summariesRevision = revision
+        }
+        if let cached = memo.summaries[expense.id] { return cached }
+        let built = ExpenseRowSummary(expense: expense, currentPerson: me?.id, names: memo.summaryNames)
+        memo.summaries[expense.id] = built
         return built
     }
 

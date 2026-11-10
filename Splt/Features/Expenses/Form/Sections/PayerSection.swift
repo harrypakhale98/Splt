@@ -70,7 +70,7 @@ struct RemainingRow: View {
                 }
             } else {
                 Label {
-                    MoneyLabel(money: remaining)
+                    MoneyLabel(money: remaining).font(Typeface.figure)
                 } icon: {
                     Image(systemName: remaining.isNegative ? "minus.circle.fill" : "exclamationmark.circle.fill")
                 }

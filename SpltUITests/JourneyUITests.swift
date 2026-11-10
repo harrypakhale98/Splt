@@ -53,7 +53,7 @@ final class JourneyUITests: XCTestCase {
 
         // alex and sam each owe 10 + 20 + 30 + 40 + 10, so you are owed 110 by each of them
         selectSegment("Balances", in: app)
-        let listView = app.segmentedControls.buttons["List"]
+        let listView = app.buttons["Show List"]
         reveal(listView, in: app)
         listView.tap()
         let alex = element(labelContaining: "Alex owes", in: app)
@@ -85,8 +85,6 @@ final class JourneyUITests: XCTestCase {
         XCTAssertTrue(record.waitForExistence(timeout: 5))
         record.tap()
 
-        XCTAssertTrue(app.staticTexts["Payment Recorded"].waitForExistence(timeout: 10))
-        app.buttons["Done"].tap()
         XCTAssertTrue(app.staticTexts["All settled up"].waitForExistence(timeout: 10))
 
         let undo = app.buttons["Undo"].firstMatch

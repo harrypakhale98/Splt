@@ -19,6 +19,7 @@ final class Router {
     var friendsPath: [Route] = []
     var groupsPath: [Route] = []
     var activityPath: [Route] = []
+    var searchPath: [Route] = []
     var accountPath: [Route] = []
 
     init(selectedTab: AppTab = .groups) {
@@ -37,7 +38,7 @@ final class Router {
         case .friends: friendsPath.append(route)
         case .groups: groupsPath.append(route)
         case .activity: activityPath.append(route)
-        case .search: break
+        case .search: searchPath.append(route)
         }
     }
 

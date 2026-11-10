@@ -47,6 +47,11 @@ final class FriendsViewModel {
         visibilityRevision += 1
     }
 
+    /// Picks up a hide or block made elsewhere, such as on a friend's screen.
+    func visibilityDidChange() {
+        visibilityRevision += 1
+    }
+
     /// The payments that would square you with this friend, one per group and currency.
     func settleRequest(for summary: FriendSummary) -> SettleRequest? {
         guard let me = try? services.people.me() else { return nil }

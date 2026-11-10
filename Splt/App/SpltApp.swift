@@ -20,12 +20,12 @@ struct SpltApp: App {
                         .environment(router)
                         .environment(\.dataServices, services)
                         .personColors(services: services)
-                .syncLifecycle(services: services, router: router)
+                        .syncLifecycle(services: services, router: router)
                         .groupSpotlight(services: services, router: router)
                         .friendSpotlight(services: services, router: router)
                         .notificationRouting(router: router)
-                .onboardingTour(router: router)
-                .tint(Color("AccentColor"))
+                        .onboardingTour(router: router)
+                        .tint(Ink.text)
                 } else {
                     Ink.paper.ignoresSafeArea()
                 }

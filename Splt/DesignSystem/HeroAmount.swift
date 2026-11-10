@@ -8,7 +8,11 @@ struct HeroAmount: View {
     /// Defaults to the primary text color. Never use color as the only sign of direction.
     var tint: Color?
 
-    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = 52
+    /// The hero's size at the default text size, and the most it grows to with larger text.
+    static let baseSize: CGFloat = 52
+    static let maxSize: CGFloat = 80
+
+    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = HeroAmount.baseSize
     @Environment(\.locale) private var locale
 
     init(_ money: Money, showsSign: Bool = true, tint: Color? = nil) {
@@ -19,9 +23,9 @@ struct HeroAmount: View {
 
     var body: some View {
         Text(MoneyFormatting.string(money, locale: locale, showsSign: showsSign))
-            .font(Typeface.hero(size: min(size, 80)))
+            .font(Typeface.hero(size: min(size, Self.maxSize)))
             .monospacedDigit()
-            .foregroundStyle(tint ?? .primary)
+            .foregroundStyle(tint ?? Ink.text)
             .lineLimit(1)
             .minimumScaleFactor(0.4)
             .contentTransition(.numericText(value: Double(money.minorUnits)))
