@@ -55,7 +55,9 @@ struct OrbitSnapshotTests {
         try? renderer.uiImage?.pngData()?.write(to: url)
     }
 
-    @Test func drawsTheOrbitAtEverySize() {
+    /// Writes pictures to look at, so it only runs when a folder for them is given.
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["SPLT_SHOTS_DIR"] != nil))
+    func drawsTheOrbitAtEverySize() {
         for dark in [false, true] {
             for count in [2, 3, 6, 9, 12] {
                 let (board, ids) = board(count)
