@@ -27,6 +27,10 @@ final class SearchModel {
     @ObservationIgnored private let reader: any SearchIntentReader
     @ObservationIgnored private let now: @Sendable () -> Date
     @ObservationIgnored private let calendar: Calendar
+    @ObservationIgnored private var observer: ContainerChangeObserver?
+    @ObservationIgnored private var refreshScheduled = false
+    /// How the model read the current question, kept so a refresh does not have to ask it again.
+    @ObservationIgnored private var modelReading: (text: String, filter: SearchFilter)?
 
     static let resultLimit = 40
 
@@ -54,6 +58,7 @@ final class SearchModel {
         self.now = now
         self.calendar = calendar
         recents = recentStore.queries
+        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
     }
 
     var trimmedQuery: String { query.tidied }
@@ -63,9 +68,35 @@ final class SearchModel {
     /// could not read is offered to the on-device model afterwards, when it is available.
     func search() async {
         let text = trimmedQuery
+        modelReading = nil
+        guard let known = searchByRules(text) else { return }
+        await askModel(text, known: known)
+    }
+
+    /// Runs the current search again after the data changed, so a deleted expense or a renamed
+    /// person does not linger in the results. The model is not asked again.
+    func refresh() {
+        let text = trimmedQuery
+        guard hasSearched, !text.isEmpty else { return }
+        _ = searchByRules(text)
+        if let modelReading, modelReading.text == text { apply(modelReading.filter) }
+    }
+
+    private func scheduleRefresh() {
+        guard !refreshScheduled else { return }
+        refreshScheduled = true
+        Task { @MainActor [weak self] in
+            self?.refreshScheduled = false
+            self?.refresh()
+        }
+    }
+
+    /// The part of a search that needs no model. Returns everyone known when the rules could not
+    /// read the text as a question, which is when the model may be asked.
+    private func searchByRules(_ text: String) -> [Person]? {
         guard !text.isEmpty else {
             clearResults()
-            return
+            return nil
         }
         do {
             let known = try services.people.allPeople()
@@ -90,9 +121,10 @@ final class SearchModel {
                 understood = []
             }
             hasSearched = true
-            if !filter.isStructured { await askModel(text, known: known) }
+            return filter.isStructured ? nil : known
         } catch {
             clearResults()
+            return nil
         }
     }
 
@@ -113,7 +145,9 @@ final class SearchModel {
         let names = known.filter { !$0.isMe }.map(\.name)
         guard let reading = try? await reader.read(text, names: names), trimmedQuery == text else { return }
         let filter = SearchIntentValidator(people: known, now: now(), calendar: calendar).filter(from: reading, query: text)
-        if filter.isStructured { apply(filter) }
+        guard filter.isStructured else { return }
+        modelReading = (text, filter)
+        apply(filter)
     }
 
     private func apply(_ filter: SearchFilter) {

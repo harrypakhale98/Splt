@@ -74,6 +74,34 @@ struct SearchModelTests {
         #expect(model.expenses.isEmpty)
     }
 
+    @Test func resultsFollowTheDataWithoutTypingAgain() async throws {
+        let fixture = try Fixture()
+        let taxi = try fixture.addExpense("Taxi home", cents: 1500, paidBy: fixture.sam, date: date(3, 21))
+        let model = model(fixture)
+        model.query = "taxi"
+        await model.search()
+        #expect(model.expenses.map(\.title) == ["Taxi home"])
+        try fixture.services.expenses.delete(id: taxi.id)
+        #expect(await eventually { model.expenses.isEmpty })
+
+        model.query = "sam"
+        await model.search()
+        #expect(model.people.map(\.name) == ["Sam"])
+        var renamed = fixture.sam
+        renamed.name = "Samuel"
+        try fixture.services.people.update(renamed)
+        #expect(await eventually { model.people.map(\.name) == ["Samuel"] })
+    }
+
+    @Test func aChangeBeforeAnySearchShowsNothing() async throws {
+        let fixture = try Fixture()
+        let model = model(fixture)
+        try fixture.addExpense("Taxi home", cents: 1500)
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(!model.hasSearched)
+        #expect(model.isEmpty)
+    }
+
     @Test func plainWordsFindPeopleGroupsAndExpenses() async throws {
         let fixture = try scene()
         let model = model(fixture)
