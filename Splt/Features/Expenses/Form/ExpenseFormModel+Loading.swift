@@ -78,11 +78,16 @@ extension ExpenseFormModel {
         if let category = draft.category { self.category = category }
         if !draft.note.isEmpty { note = draft.note }
         if let repeats = draft.repeats { repeatChoice.frequency = repeats }
-        if !draft.payers.isEmpty { payer = PayerState(payers: draft.payers, locale: locale) }
+        // The draft can name people who have left the group since. The form cannot show them,
+        // so they must not stay in what it saves.
+        let present = Set(members.map(\.id))
+        let payers = draft.payers.filter { present.contains($0.key) }
+        if !payers.isEmpty { payer = PayerState(payers: payers, locale: locale) }
         if let definition = draft.split {
-            let inSplit = definition.participants
+            let inSplit = definition.participants.intersection(present)
             participants = inSplit.isEmpty ? participants : inSplit
             split = SplitEditorState(definition: definition, locale: locale)
+            split.keepPeople(present)
         }
     }
 }

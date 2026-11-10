@@ -137,6 +137,56 @@ struct ExpenseFormEdgeCaseTests {
         #expect(model.issue == nil)
     }
 
+    @Test func aDuplicateLeavesOutSomeoneWhoLeftTheGroup() throws {
+        let harness = try ExpenseFormHarness()
+        let gone = Person(name: "Maya", avatarSeed: 3)
+        try harness.fixture.services.people.add(gone)
+        let old = Expense(
+            groupID: harness.fixture.group.id, title: "Dinner", total: usd(9000), date: Date(), paidBy: harness.me,
+            split: .equal(participants: [harness.me, harness.sam, gone.id])
+        )
+        let model = harness.newExpense(prefill: ExpenseDraft(copying: old))
+        #expect(model.participants == [harness.me, harness.sam])
+        let saved = try model.save()
+        #expect(try saved.shares().shares == [harness.me: usd(4500), harness.sam: usd(4500)])
+    }
+
+    @Test func aDuplicateDropsThePaymentsAndItemsOfSomeoneWhoLeft() throws {
+        let harness = try ExpenseFormHarness()
+        let gone = Person(name: "Maya", avatarSeed: 3)
+        try harness.fixture.services.people.add(gone)
+        let items = ItemizedSplit(items: [
+            SplitItem(name: "Pasta", amount: usd(6000), assignees: [harness.me, gone.id]),
+            SplitItem(name: "Wine", amount: usd(3000), assignees: [harness.sam])
+        ])
+        let old = Expense(
+            groupID: harness.fixture.group.id, title: "Dinner", total: usd(9000), date: Date(),
+            payers: [harness.me: usd(4000), gone.id: usd(5000)], split: .itemized(items)
+        )
+        let model = harness.newExpense(prefill: ExpenseDraft(copying: old))
+        #expect(!model.payer.isMultiple)
+        #expect(model.payer.single == harness.me)
+        #expect(model.split.items.map(\.assignees) == [[harness.me], [harness.sam]])
+        let saved = try model.save()
+        #expect(saved.payers == [harness.me: usd(9000)])
+        #expect(try saved.shares().shares == [harness.me: usd(6000), harness.sam: usd(3000)])
+    }
+
+    @Test func aDuplicateForgetsWhatSomeoneWhoLeftOwedExactly() throws {
+        let harness = try ExpenseFormHarness()
+        let gone = Person(name: "Maya", avatarSeed: 3)
+        try harness.fixture.services.people.add(gone)
+        let old = Expense(
+            groupID: harness.fixture.group.id, title: "Dinner", total: usd(9000), date: Date(), paidBy: harness.me,
+            split: .exact(amounts: [harness.me: usd(4000), gone.id: usd(5000)])
+        )
+        let model = harness.newExpense(prefill: ExpenseDraft(copying: old))
+        #expect(model.participants == [harness.me])
+        #expect(model.split.exact == [harness.me: "40.00"])
+        // The rest is shown as still to assign, not kept for someone the form cannot show.
+        #expect(model.issue == .splitShort(usd(5000)))
+    }
+
     @Test func negativeAmountsDisplayWithoutAStrayGroupMark() {
         let english = Locale(identifier: "en_US")
         #expect(AmountKeypad.display("-123.00", locale: english) == "-123.00")

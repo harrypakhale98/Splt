@@ -119,6 +119,16 @@ struct SplitEditorState: Equatable, Sendable {
         return try? sum.subtracting(itemized.discount ?? zero)
     }
 
+    /// Forgets what was typed for anyone not in `people`, and takes them off every item.
+    /// The items, tax, tip and discount stay.
+    mutating func keepPeople(_ people: Set<PersonID>) {
+        exact = exact.filter { people.contains($0.key) }
+        percent = percent.filter { people.contains($0.key) }
+        weights = weights.filter { people.contains($0.key) }
+        adjustments = adjustments.filter { people.contains($0.key) }
+        for index in items.indices { items[index].assignees.formIntersection(people) }
+    }
+
     /// Fills the editors from an existing split, for editing.
     init(definition: SplitDefinition, locale: Locale = .current) {
         method = SplitMethod(definition)
