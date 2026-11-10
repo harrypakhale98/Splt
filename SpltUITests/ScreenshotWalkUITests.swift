@@ -62,6 +62,9 @@ final class ScreenshotWalkUITests: XCTestCase {
         if app.navigationBars["New Expense"].waitForExistence(timeout: 5) {
             shot("08-add-expense")
             for key in ["6", "0"] { app.buttons[key].firstMatch.tap() }
+            // without the pad, so the whole split bar and its amounts are in the picture
+            let hide = app.buttons["Hide number pad"].firstMatch
+            if hide.waitForExistence(timeout: 2) { hide.tap() }
             shot("09-add-expense-split")
             app.buttons["Cancel"].tap()
             let discard = app.buttons["Discard Changes"].firstMatch
