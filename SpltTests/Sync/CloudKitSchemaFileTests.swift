@@ -47,7 +47,7 @@ struct CloudKitSchemaFileTests {
     @Test("the share record type is in the file")
     func fileHasShareType() throws {
         let text = try String(contentsOf: Self.fileURL, encoding: .utf8)
-        #expect(text.contains("RECORD TYPE cloudkit.share ("))
+        #expect(text.contains(#"RECORD TYPE "cloudkit.share" ("#))
     }
 
     @Test("every synced record type and field is in the file with the right type")
