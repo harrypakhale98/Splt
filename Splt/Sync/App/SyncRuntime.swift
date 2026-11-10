@@ -25,8 +25,10 @@ final class SyncRuntime {
     @ObservationIgnored private var retry: Task<Void, Never>?
     @ObservationIgnored private let invitationRetryLimit: Int
     @ObservationIgnored private var retriesLeft = 0
-    /// Groups joined on this device that have not arrived yet. Each is opened when it does.
-    @ObservationIgnored private var awaitingArrival: Set<GroupID> = []
+    /// Groups joined on this device that have not arrived yet, and when each was joined. One that
+    /// arrives soon is opened. Later the person is doing something else and would be pulled out of it.
+    @ObservationIgnored private var awaitingArrival: [GroupID: ContinuousClock.Instant] = [:]
+    @ObservationIgnored private let arrivalWindow: Duration
     @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
 
     /// `makeEngine` replaces the engine that `start` builds, for tests.
@@ -35,12 +37,14 @@ final class SyncRuntime {
         leftGroups: LeftGroupsStore = LeftGroupsStore(),
         invitationRetry: Duration = .seconds(2),
         invitationRetryLimit: Int = 30,
+        arrivalWindow: Duration = .seconds(60),
         makeEngine: (@MainActor (DataServices) -> any SyncEngine)? = nil
     ) {
         self.liveServices = liveServices
         self.leftGroups = leftGroups
         self.invitationRetry = invitationRetry
         self.invitationRetryLimit = invitationRetryLimit
+        self.arrivalWindow = arrivalWindow
         self.makeEngine = makeEngine
     }
 
@@ -127,7 +131,7 @@ final class SyncRuntime {
     func groupJoined(_ group: GroupID) {
         leftGroups.remove(group)
         if let services = liveServices(), (try? services.groups.group(id: group)) == nil {
-            awaitingArrival.insert(group)
+            awaitingArrival[group] = .now
             return
         }
         onGroupJoined?(group)
@@ -137,7 +141,9 @@ final class SyncRuntime {
     /// joined it again on another device, or its first fetch failed after the invitation was accepted.
     func groupArrived(_ group: GroupID) {
         if leftGroups.contains(group) { leftGroups.remove(group) }
-        if awaitingArrival.remove(group) != nil { onGroupJoined?(group) }
+        if let joined = awaitingArrival.removeValue(forKey: group), .now - joined <= arrivalWindow {
+            onGroupJoined?(group)
+        }
     }
 
     // MARK: Push

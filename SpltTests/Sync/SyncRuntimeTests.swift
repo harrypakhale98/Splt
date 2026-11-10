@@ -154,6 +154,18 @@ struct SyncRuntimeTests {
         #expect(opened == [group])
     }
 
+    @Test func aGroupThatArrivesLongAfterItWasJoinedIsNotOpenedOverWhatThePersonIsDoing() async throws {
+        let services = try DataServices.inMemory()
+        let runtime = SyncRuntime(liveServices: { services }, leftGroups: isolatedLeftGroups(), arrivalWindow: .milliseconds(20))
+        var opened: [GroupID] = []
+        runtime.onGroupJoined = { opened.append($0) }
+        let group = GroupID()
+        runtime.groupJoined(group)
+        try await Task.sleep(for: .milliseconds(80))
+        runtime.groupArrived(group)
+        #expect(opened.isEmpty)
+    }
+
     @Test func aGroupJoinedThatIsAlreadyHereIsOpenedAtOnce() throws {
         let services = try DataServices.inMemory()
         let me = Person(name: "Me", kind: .me, avatarSeed: 1, createdAt: Date())
