@@ -83,6 +83,34 @@ struct SplitwiseCSVImporterTests {
         #expect(balances[result.members["Cy"]!] == usdAmount(-2000))
     }
 
+    @Test func severalPayersWithUnequalSharesKeepEveryBalance() throws {
+        let result = try parse([
+            "2025-03-14,Hotel,General,100.00,USD,50.00,30.00,-80.00",
+            "2025-03-15,Hotel refund,General,-100.00,USD,-50.00,-30.00,80.00"
+        ])
+        #expect(result.warnings.isEmpty)
+        #expect(result.expenses.count == 2)
+        let members = result.members
+        let cells: [String: Int64] = ["Ana": 5000, "Ben": 3000, "Cy": -8000]
+
+        let hotel = try #require(result.expenses.first)
+        try hotel.validate()
+        #expect(hotel.total == usdAmount(10000))
+        #expect(hotel.payers.values.map(\.minorUnits).reduce(0, +) == 10000)
+        let balances = try hotel.netBalances()
+        for (name, cents) in cells {
+            #expect(balances[members[name]!] == usdAmount(cents))
+        }
+
+        let refund = try #require(result.expenses.last)
+        try refund.validate()
+        #expect(refund.total == usdAmount(-10000))
+        let refunded = try refund.netBalances()
+        for (name, cents) in cells {
+            #expect(refunded[members[name]!] == usdAmount(-cents))
+        }
+    }
+
     @Test func settlementsBecomePayments() throws {
         let result = try parse(["2025-03-20,Ben paid Ana,Payment,15.00,USD,-15.00,15.00,"])
         let payment = try #require(result.payments.first)

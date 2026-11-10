@@ -6,7 +6,8 @@ import SpltCore
 /// Each row holds the cost and, per member, what that person paid minus what they owe. The
 /// importer works back from that. With one payer, shares are exact, or an equal split when
 /// they are equal. With several payers it assumes an equal split among everyone with a
-/// non zero balance. Rows it cannot rebuild are skipped and reported as warnings.
+/// non zero balance, and when that does not fit it keeps what each person paid or owes on
+/// balance. Rows it cannot rebuild are skipped and reported as warnings.
 enum SplitwiseCSVImporter {
     private static let fixedColumns = ["date", "description", "category", "cost", "currency"]
     /// More than any real expense, and small enough that sums of a file cannot overflow.
@@ -117,17 +118,10 @@ enum SplitwiseCSVImporter {
             if own > 0 { owed[payer.key] = own }
             shares = owed
         } else if payers.count > 1 {
-            let people = Array(signed.keys)
-            let equal = try? SplitCalculator.shares(for: .equal(participants: Set(people)), total: Money(minorUnits: total, currencyCode: currency))
-            guard let equal else { return nil }
-            var contributions: [PersonID: Int64] = [:]
-            for person in people {
-                let value = signed[person, default: 0] + (equal[person]?.minorUnits ?? 0)
-                guard value >= 0 else { return nil }
-                if value > 0 { contributions[person] = value }
-            }
-            paid = contributions
-            shares = equal.mapValues(\.minorUnits)
+            guard let rebuilt = equalSplit(signed: signed, total: total, currency: currency)
+                ?? keepingNets(signed: signed, total: total) else { return nil }
+            paid = rebuilt.paid
+            shares = rebuilt.shares
         } else {
             return nil
         }
@@ -141,6 +135,37 @@ enum SplitwiseCSVImporter {
             payers: paid.mapValues(money), split: split
         )
         return (try? expense.validate()) == nil ? nil : expense
+    }
+
+    private typealias Rebuilt = (paid: [PersonID: Int64], shares: [PersonID: Int64])
+
+    /// Several payers and an equal split among everyone in the row, when the amounts allow it.
+    private static func equalSplit(signed: [PersonID: Int64], total: Int64, currency: String) -> Rebuilt? {
+        let people = Array(signed.keys)
+        let equal = try? SplitCalculator.shares(for: .equal(participants: Set(people)), total: Money(minorUnits: total, currencyCode: currency))
+        guard let equal else { return nil }
+        var contributions: [PersonID: Int64] = [:]
+        for person in people {
+            let value = signed[person, default: 0] + (equal[person]?.minorUnits ?? 0)
+            guard value >= 0 else { return nil }
+            if value > 0 { contributions[person] = value }
+        }
+        return (contributions, equal.mapValues(\.minorUnits))
+    }
+
+    /// The file does not say who paid what, only each person's balance, so this keeps the balances:
+    /// people who are owed paid that much and people who owe have that share. What is left of the
+    /// cost was paid by one payer for themselves, which changes nobody's balance.
+    private static func keepingNets(signed: [PersonID: Int64], total: Int64) -> Rebuilt? {
+        var paid = signed.filter { $0.value > 0 }
+        var shares = signed.filter { $0.value < 0 }.mapValues { -$0 }
+        let rest = total - paid.values.reduce(0, +)
+        guard rest >= 0, let payer = paid.max(by: { ($0.value, $1.key) < ($1.value, $0.key) })?.key else { return nil }
+        if rest > 0 {
+            paid[payer, default: 0] += rest
+            shares[payer] = rest
+        }
+        return (paid, shares)
     }
 
     private struct Columns {
