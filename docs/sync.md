@@ -84,7 +84,6 @@ What one Mac cannot show is a change arriving from another device, and sharing b
 5. A invites B by name and then opens the link. B still has the group.
 6. A stops sharing: the group leaves B's phone and stays on A's. A shares again, then deletes the group: it leaves B's phone.
 7. On A, open Settings, iCloud, Manage Account Storage, Splt, and delete its data. A's groups stay on A's phone and are not uploaded again.
-8. Tap an invite link with the app closed and the phone in airplane mode, then go online within a minute. The group opens.
 
 ## Known limits
 
@@ -94,8 +93,8 @@ What one Mac cannot show is a change arriving from another device, and sharing b
 - Two people editing the same record before either has synced can lose a change, even in different fields: the later edit replaces the whole record. This also applies to a group's member list and a comment's reactions. Separate records, such as two new expenses, never conflict.
 - Receipt photos stay on the device that scanned them. Only the file name syncs.
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
-- After you delete Splt's data in the iCloud storage settings, your groups stay on each device as local copies and are not uploaded again. Groups you make afterwards sync as usual.
+- After you delete Splt's data in the iCloud storage settings, your groups stay on each device as local copies and are not uploaded again. Groups you make afterwards sync as usual. A device still on version 1.0.0 does upload them again.
 - Closing a link does not take the people it removed off the group's member list. Remove them in the group's settings, or invite them again by name.
-- A device that stays offline for a very long time may have to refetch everything. A group deleted elsewhere in the meantime is removed there too while iCloud still remembers the deletion. After that it stays on that device as a local copy and is not uploaded again. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
+- A device that stays offline for a very long time may have to refetch everything. A group deleted elsewhere in the meantime is removed there too while iCloud still remembers the deletion. After that a group of your own stays on that device as a local copy and is not uploaded again, and a group someone else shared is removed. A comment or person deleted elsewhere in the meantime can come back until it is deleted again.
 - Deleting a shared group as its owner removes it for everyone.
 - A group is stored in its owner's iCloud. When the owner's storage is full, nobody can upload changes to that group, and the app tells the others it is the owner's storage. Changes stay on each device and sync once space is available.

@@ -4,7 +4,7 @@ import SwiftUI
 /// Flat keys in ink on paper, with no fill.
 struct NumberPad: View {
     let exponent: Int
-    /// Tighter keys for short screens, so the title field above stays in view.
+    /// Lower keys for screens where the pad would otherwise cover the split bar or the title field.
     var compact = false
     var onKey: (AmountKey) -> Void
 

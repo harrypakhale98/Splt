@@ -16,7 +16,8 @@ struct ApplyReport {
 
 enum ZoneDeletionReason: Equatable, Sendable {
     case deleted
-    /// The user deleted the app's data in their iCloud storage settings. It must not be sent back.
+    /// The zone is gone from iCloud and must not be sent back: the user deleted the app's data in
+    /// their iCloud storage settings, or a fetch that listed every zone did not list this one.
     case purged
     case encryptedDataReset
     /// Saves say the zone is missing and a fetch does not say why, so the server lost it.

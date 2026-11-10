@@ -34,7 +34,8 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     var personCopies: [String: [String: PersonCopy]] = [:]
     /// Person copies that still have to be uploaded.
     var personQueue: Set<PersonCopyKey> = []
-    /// Groups left on the device by the previous iCloud account. They stay local and are not uploaded.
+    /// Groups that stay on the device as local copies and are not uploaded: left by the previous iCloud
+    /// account, or gone from iCloud without this device having deleted them.
     /// Optional so that metadata saved before this field existed still loads.
     var detachedZones: Set<String>?
     /// Shared groups this person left, waiting for their last changes to reach the others.

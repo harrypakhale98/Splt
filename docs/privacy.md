@@ -45,7 +45,7 @@ Exporting a group as CSV, PDF or JSON creates a file on your device. It goes whe
 
 ## Deleting your data
 
-Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Your groups then stay on your devices as local copies and are not uploaded again. Deleting the app removes what it stored on the device.
+Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Your groups then stay on your devices as local copies. Versions after 1.0.0 do not upload them again. Deleting the app removes what it stored on the device.
 
 ## Children
 
