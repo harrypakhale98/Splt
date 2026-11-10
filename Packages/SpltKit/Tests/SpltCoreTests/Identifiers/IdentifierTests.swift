@@ -52,6 +52,24 @@ struct IdentifierTests {
         #expect([high, low].sorted() == [low, high])
     }
 
+    /// Split rounding and settlement ties follow this order, so it must stay the order of the strings.
+    @Test func orderingMatchesTheUUIDStrings() {
+        var generator = SystemRandomNumberGenerator()
+        let ids = (0..<500).map { _ in
+            PersonID(rawValue: UUID(uuid: (
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator),
+                .random(in: 0...255, using: &generator), .random(in: 0...255, using: &generator)
+            )))
+        }
+        #expect(ids.sorted() == ids.sorted { $0.rawValue.uuidString < $1.rawValue.uuidString })
+    }
+
     @Test func differentKindsAreDifferentTypes() {
         let person = PersonID(rawValue: uuid)
         let group = GroupID(rawValue: uuid)

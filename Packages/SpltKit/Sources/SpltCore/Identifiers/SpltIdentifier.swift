@@ -3,7 +3,8 @@ import Foundation
 /// Shared behaviour of the UUID backed identifiers.
 ///
 /// Identifiers encode as a plain UUID string and, as dictionary keys, as JSON object keys.
-/// They order by UUID string so any code that must be deterministic can sort them.
+/// They order by UUID, which is also the order of the UUID strings, so any code that must be
+/// deterministic can sort them.
 public protocol SpltIdentifier: Hashable, Sendable, Codable, Comparable, CustomStringConvertible, CodingKeyRepresentable {
     var rawValue: UUID { get }
     init(rawValue: UUID)
@@ -24,7 +25,7 @@ extension SpltIdentifier {
     public var description: String { rawValue.uuidString }
 
     public static func < (lhs: Self, rhs: Self) -> Bool {
-        lhs.rawValue.uuidString < rhs.rawValue.uuidString
+        lhs.rawValue < rhs.rawValue
     }
 
     public var codingKey: any CodingKey {
