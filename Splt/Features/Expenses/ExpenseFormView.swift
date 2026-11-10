@@ -62,11 +62,11 @@ private struct ExpenseFormScreen: View {
         .interactiveDismissDisabled(model.isDirty)
         .onChange(of: model.isDirty, initial: true) { router?.hasUnsavedForm = model.isDirty }
         .onDisappear { router?.hasUnsavedForm = false }
-        .confirmationDialog("Discard this expense?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
+        .confirmationDialog("Discard Expense?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
             Button("Discard Changes", role: .destructive) { dismiss() }
             Button("Keep Editing", role: .cancel) {}
         }
-        .confirmationDialog("This looks like a duplicate", isPresented: $confirmsDuplicate, titleVisibility: .visible) {
+        .confirmationDialog("Possible Duplicate", isPresented: $confirmsDuplicate, titleVisibility: .visible) {
             Button("Save Anyway") { save() }
             Button("Cancel", role: .cancel) {}
         } message: {

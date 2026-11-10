@@ -49,7 +49,7 @@ private struct ExpenseDetailScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .tabBar)
         .toolbar { toolbar }
-        .confirmationDialog("Delete this expense?", isPresented: $confirmsDelete, titleVisibility: .visible) {
+        .confirmationDialog("Delete Expense?", isPresented: $confirmsDelete, titleVisibility: .visible) {
             Button("Delete Expense", role: .destructive) {
                 model.delete()
                 deleteCount += 1

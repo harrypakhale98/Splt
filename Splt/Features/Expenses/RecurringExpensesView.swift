@@ -82,7 +82,7 @@ private struct RecurringExpensesScreen: View {
             adding = false
         }
         .confirmationDialog(
-            "Delete this recurring expense?", isPresented: Binding(
+            "Delete Recurring Expense?", isPresented: Binding(
                 get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }
             ), titleVisibility: .visible
         ) {
