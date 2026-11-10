@@ -12,12 +12,6 @@ struct ParticipantSnapshot: Equatable, Sendable {
     var hasJoined: Bool
 }
 
-/// A guess that an existing placeholder is the same person as someone who joined.
-struct ClaimSuggestion: Equatable, Sendable {
-    var placeholder: PersonID
-    var participant: PersonID
-}
-
 enum ParticipantMapper {
     static func snapshots(from share: CKShare) -> [ParticipantSnapshot] {
         share.participants.map { participant in
@@ -41,16 +35,12 @@ enum ParticipantMapper {
 struct ParticipantImporter {
     let services: DataServices
 
-    /// Adds people for new participants and returns suggestions for placeholders that look like them.
-    @discardableResult
-    func importPeople(from snapshots: [ParticipantSnapshot], myUserRecordName: String?) throws -> [ClaimSuggestion] {
-        var suggestions: [ClaimSuggestion] = []
-        let existing = try services.people.allPeople()
+    /// Adds people for new participants.
+    func importPeople(from snapshots: [ParticipantSnapshot], myUserRecordName: String?) throws {
         for snapshot in snapshots where snapshot.hasJoined && !snapshot.isCurrentUser {
             guard let recordName = snapshot.userRecordName, recordName != myUserRecordName else { continue }
             let id = CloudIdentity.personID(forUserRecordName: recordName)
             guard try services.people.person(id: id) == nil else { continue }
-            let hints = Set(snapshot.contactHints.map { $0.lowercased() })
             try addStandIn(Person(
                 id: id,
                 name: snapshot.displayName ?? String(localized: "Friend"),
@@ -58,12 +48,7 @@ struct ParticipantImporter {
                 kind: .friend,
                 claimedByCloudUserID: recordName
             ))
-            for person in existing where person.kind != .me && person.id != id {
-                guard let hint = person.contactHint?.lowercased(), hints.contains(hint) else { continue }
-                suggestions.append(ClaimSuggestion(placeholder: person.id, participant: id))
-            }
         }
-        return suggestions
     }
 
     /// A person known only from the share until their own record arrives. The oldest possible date means

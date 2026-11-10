@@ -32,7 +32,6 @@ final class SyncCoordinator {
 
     /// Called with the report of every batch of remote changes, for notifications and similar.
     var onRemoteChanges: (@MainActor (ApplyReport) -> Void)?
-    var onSuggestions: (@MainActor ([ClaimSuggestion]) -> Void)?
     var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     /// Called when changes arrive for a group someone else shared and this person is a member of it.
     var onMembership: (@MainActor (GroupID) -> Void)?
@@ -176,16 +175,14 @@ final class SyncCoordinator {
     private func afterRemoteChanges(_ report: ApplyReport) throws {
         guard let user = userRecordName else { return }
         let importer = ParticipantImporter(services: services)
-        var suggestions: [ClaimSuggestion] = []
         for share in report.shares {
             let zone = share.recordID.zoneID
             if zone.scope == .privateDatabase { noteOwnShare(zoneName: zone.zoneName, exists: true) }
-            suggestions += try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
+            try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
         }
         for zone in report.touchedZones where adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
             try settleMembership(of: user, inZone: zone)
         }
-        if !suggestions.isEmpty { onSuggestions?(suggestions) }
         if !report.shares.isEmpty || !report.touchedZones.isEmpty { try reconcile() }
     }
 

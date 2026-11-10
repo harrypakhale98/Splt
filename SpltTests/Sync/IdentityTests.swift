@@ -254,18 +254,6 @@ struct ParticipantImporterTests {
         #expect(person?.name == "Friend")
     }
 
-    @Test func aPlaceholderWithTheSameEmailIsSuggestedForClaiming() throws {
-        let populated = try PopulatedDevice()
-        let hana = Person(name: "Hana", contactHint: "Hana@Example.com", kind: .placeholder, createdAt: populated.device.clock.start)
-        try populated.device.services.people.add(hana)
-        let suggestions = try ParticipantImporter(services: populated.device.services).importPeople(
-            from: [snapshot("_hana", display: "Hana Sato", hints: ["hana@example.com"])], myUserRecordName: "_me"
-        )
-        #expect(suggestions == [ClaimSuggestion(
-            placeholder: hana.id, participant: CloudIdentity.personID(forUserRecordName: "_hana")
-        )])
-    }
-
     @Test func youAreAddedToTheGroupOnlyOnce() throws {
         let populated = try PopulatedDevice()
         let importer = ParticipantImporter(services: populated.device.services)
