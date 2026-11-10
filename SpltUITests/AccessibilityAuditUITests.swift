@@ -151,11 +151,15 @@ final class AccessibilityAuditUITests: XCTestCase {
     @MainActor
     func testTabScreensAtLargestText() {
         let app = launchApp("-sampledata", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
-        for name in ["Friends", "Activity", "Account", "Groups"] {
+        for name in ["Friends", "Activity", "Groups"] {
             openTab(name, in: app)
             XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
             audit(app, "\(name) at the largest text size")
         }
+
+        // Account opens from the button in the top bar, not from a tab
+        openAccount(in: app)
+        audit(app, "Account at the largest text size")
     }
 
     @MainActor
