@@ -1,11 +1,11 @@
 import SpltCore
 
-/// The ways to divide an expense, in the order the picker lists them.
+/// The ways to divide an expense, in the one order every picker lists them.
 enum SplitMethod: String, CaseIterable, Identifiable, Hashable, Sendable {
     case equal
-    case exact
     case percentage
     case shares
+    case exact
     case adjustment
     case itemized
 

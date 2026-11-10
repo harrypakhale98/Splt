@@ -7,7 +7,8 @@ struct SplitSection: View {
     var body: some View {
         Section {
             RaisedRows {
-                Picker("Split", selection: $model.split.method) {
+                // Through the model, so the split is carried over as it is from the switcher.
+                Picker("Split", selection: Binding(get: { model.split.method }, set: { model.selectMethod($0) })) {
                     ForEach(SplitMethod.allCases) { method in
                         Label(method.title, systemImage: method.symbolName).tag(method)
                     }

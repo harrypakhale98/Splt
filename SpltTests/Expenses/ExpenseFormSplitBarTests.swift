@@ -133,6 +133,19 @@ struct ExpenseFormSplitBarTests {
         #expect(model.issue == nil)
     }
 
+    @Test func everyPickerListsTheMethodsInOneOrder() {
+        #expect(SplitMethod.allCases == [.equal, .percentage, .shares, .exact, .adjustment, .itemized])
+    }
+
+    @Test func switchingToPercentagesStartsFromTheEqualSplit() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.amountText = "90"
+        model.selectMethod(.percentage)
+        #expect(model.percentRemaining == 0)
+        #expect(model.issue == nil)
+    }
+
     @Test func switchingFromEqualToSharesStartsAtOneEach() throws {
         let harness = try ExpenseFormHarness()
         let model = harness.filledDinner()

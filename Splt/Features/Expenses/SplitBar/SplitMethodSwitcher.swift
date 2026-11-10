@@ -9,7 +9,7 @@ struct SplitMethodSwitcher: View {
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    private let order: [SplitMethod] = [.equal, .percentage, .shares, .exact, .adjustment, .itemized]
+    private let order = SplitMethod.allCases
 
     var body: some View {
         Group {
