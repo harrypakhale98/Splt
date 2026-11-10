@@ -35,6 +35,8 @@ final class SyncCoordinator {
     var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     /// Called when changes arrive for a group someone else shared and this person is a member of it.
     var onMembership: (@MainActor (GroupID) -> Void)?
+    /// Called when the server will not delete the zone of a group this person is leaving.
+    var onLeaveRefused: (@MainActor (CKRecordZone.ID) -> Void)?
 
     init(services: DataServices, adapter: SyncStoreAdapter, retry: RetryScheduler? = nil) {
         self.services = services
@@ -198,13 +200,27 @@ final class SyncCoordinator {
         }
         var failures: [SyncFailure] = failedSaves.map { SyncFailure($0.error) }
         for (id, error) in failedDeletes {
-            if SyncFailure(error) == .zoneMissing {
+            let failure = SyncFailure(error)
+            if failure == .zoneMissing {
                 try adapter.zoneDeleteConfirmed(id)
+            } else if scope == .sharedDatabase, failure.isRefusal, adapter.metadata.pendingLeaves?.contains(id.zoneName) == true,
+                      let onLeaveRefused {
+                // Deleting the zone is one way to leave. Deleting the share record is the documented one.
+                onLeaveRefused(id)
             } else {
-                failures.append(SyncFailure(error))
+                failures.append(failure)
             }
         }
         noteResult(failures: failures, scope: scope)
+    }
+
+    /// Leaving through the share record worked or did not.
+    func leftByShare(_ zone: CKRecordZone.ID, error: (any Error)?) throws {
+        if let error {
+            noteResult(failures: [SyncFailure(error)], scope: .sharedDatabase)
+        } else {
+            try adapter.zoneDeleteConfirmed(zone)
+        }
     }
 
     func sentRecords(

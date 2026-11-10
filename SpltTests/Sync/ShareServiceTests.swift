@@ -18,6 +18,17 @@ struct ShareServiceTests {
         CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zone)
     }
 
+    @Test func leavingDeletesTheShareRecordFromTheSharedDatabase() async throws {
+        let (service, privateDatabase, sharedDatabase) = make()
+        sharedDatabase.put(CKShare(recordZoneID: sharedZone))
+        privateDatabase.put(CKShare(recordZoneID: zone))
+        try await service.leave(zoneID: sharedZone)
+        #expect(!sharedDatabase.contains(shareID(sharedZone)))
+        #expect(privateDatabase.contains(shareID(zone)))
+        // a share that is already gone has been left
+        try await service.leave(zoneID: sharedZone)
+    }
+
     @Test func aFirstShareIsZoneWidePrivateAndTitled() async throws {
         let (service, privateDatabase, _) = make()
         let share = try await service.prepare(zoneID: zone, title: "Lisbon Trip")

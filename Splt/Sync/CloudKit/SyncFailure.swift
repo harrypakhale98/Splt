@@ -42,6 +42,14 @@ enum SyncFailure: Equatable, Sendable {
         }
     }
 
+    /// The server said no, as opposed to being out of reach or busy.
+    var isRefusal: Bool {
+        switch self {
+        case .noPermission, .other: true
+        default: false
+        }
+    }
+
     static let genericMessage = String(localized: "Sync ran into a problem. Your changes are safe on this device and will be sent later.")
 
     /// What Settings should show, or nil when the failure does not need to be surfaced.

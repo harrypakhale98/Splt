@@ -51,6 +51,17 @@ struct ShareService {
         return saved
     }
 
+    /// Leaves a group someone else shared by deleting its share record from the shared database,
+    /// which is how CloudKit says a participant leaves. A share that is already gone counts as left.
+    func leave(zoneID: CKRecordZone.ID) async throws {
+        let id = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
+        do {
+            try await sharedDatabase.deleteRecord(id)
+        } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
+            return
+        }
+    }
+
     /// The share of a zone in either database, or nil when the zone is not shared.
     func share(zoneID: CKRecordZone.ID) async throws -> CKShare? {
         try await existingShare(zoneID: zoneID, in: zoneID.scope == .privateDatabase ? privateDatabase : sharedDatabase)
