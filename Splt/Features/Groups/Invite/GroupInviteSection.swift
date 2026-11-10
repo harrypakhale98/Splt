@@ -2,10 +2,12 @@ import SpltCore
 import SwiftUI
 
 /// The Invite section of group settings. With iCloud sync available it opens the system invite
-/// sheet. Without it, only the plain link and QR code are offered.
+/// sheet. Without it, only the plain link and QR code are offered. The system sheet belongs to
+/// the person who shared the group, so someone who joined is only offered the link.
 struct GroupInviteSection: View {
     let groupID: GroupID
     let groupName: String
+    var isSharedWithMe = false
 
     private let runtime = SyncRuntime.shared
     @State private var sharing: GroupSharingModel?
@@ -13,7 +15,7 @@ struct GroupInviteSection: View {
     var body: some View {
         Section {
             RaisedRows {
-                if runtime.status.isConnected {
+                if runtime.status.isConnected, !isSharedWithMe {
                     Button(action: prepare) {
                         HStack {
                             Label("Invite with iCloud", systemImage: "person.badge.plus")
@@ -37,6 +39,9 @@ struct GroupInviteSection: View {
         } footer: {
             if !runtime.status.isConnected {
                 Text("Turn on iCloud to invite people; a link only opens the group on a device that already has it.")
+                    .padding(.horizontal, Depth.pageMargin + 4)
+            } else if isSharedWithMe {
+                Text("Only the person who shared this group can invite people with iCloud.")
                     .padding(.horizontal, Depth.pageMargin + 4)
             }
         }

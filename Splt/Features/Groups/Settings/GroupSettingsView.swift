@@ -159,7 +159,7 @@ private struct GroupSettingsForm: View {
             membersSection
 
             if let group = model.group {
-                GroupInviteSection(groupID: group.id, groupName: group.name)
+                GroupInviteSection(groupID: group.id, groupName: group.name, isSharedWithMe: model.isSharedWithMe == true)
             }
 
             exportSection
