@@ -100,7 +100,7 @@ struct InviteGroupView: View {
         } else if isSharedWithMe {
             "Anyone with this link can join and add expenses. Only the person who shared this group can stop that."
         } else {
-            "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join."
+            "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join. That also removes everyone who joined with the link."
         }
     }
 }
