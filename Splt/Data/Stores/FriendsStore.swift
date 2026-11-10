@@ -23,8 +23,6 @@ final class FriendsStore {
         refresh()
     }
 
-    /// Friends you are not square with.
-
     func refresh() {
         do {
             let balances = Dictionary(

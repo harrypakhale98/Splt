@@ -75,7 +75,7 @@ extension PersonRecord: SyncTracked {
 
     func applySyncFields(_ fields: SyncFields) {
         name = fields.string("name") ?? name
-        // not taken from a record: pay with buttons use this as the receiver
+        // contactHint is not taken from a record: the pay with buttons use it as the receiver
         // `me` is this device's own fact, so it never comes from a record and never goes away because of one
         if kind != .me, let remote = fields.string("kind"), remote != PersonKind.me.rawValue {
             kindRaw = remote
