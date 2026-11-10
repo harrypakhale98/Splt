@@ -74,12 +74,13 @@ enum QuickAddValidator {
     }
 
     /// Every number written in the note, in minor units of `currencyCode`.
-    /// Plain spaces never join digits, so "table 12 45" is two numbers, not 1245.
+    /// Plain spaces join digits only as thousands before written decimals: "1 234,50" is one number,
+    /// and "table 12 45" is two, not 1245.
     static func writtenAmounts(in text: String, currencyCode: String) -> Set<Int64> {
         var result = Set<Int64>()
-        let pattern = TextPattern(#"\d+(?:[.,'\x{00A0}\x{202F}]\d+)*(?<k>k)?"#)
+        let pattern = TextPattern(#"\d{1,3}(?: \d{3})+[.,]\d{1,2}(?!\d)|\d+(?:[.,'\x{00A0}\x{202F}]\d+)*(?<k>k)?"#)
         for match in pattern.matches(in: text) {
-            guard let token = match.group(0, in: text) else { continue }
+            guard let token = match.group(0, in: text)?.filter({ $0 != " " }) else { continue }
             let isThousands = match.group(named: "k", in: text) != nil
             let digits = isThousands ? String(token.dropLast()) : token
             guard let minor = MinorUnitParser.minorUnits(from: digits, currencyCode: currencyCode) else { continue }

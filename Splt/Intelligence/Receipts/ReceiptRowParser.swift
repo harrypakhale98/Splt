@@ -59,10 +59,29 @@ enum ReceiptPrice {
         while let trailing = tokens.last, tokens.count > 1, isSymbolOnly(trailing) || isCurrencyCode(trailing) {
             tokens.removeLast()
         }
+        tokens = joiningSpacedThousands(tokens, fractionDigits: fractionDigits)
         guard let last = tokens.last, let value = minorUnits(of: last, fractionDigits: fractionDigits) else { return nil }
         tokens.removeLast()
         while let trailing = tokens.last, isSymbolOnly(trailing) { tokens.removeLast() }
         return Split(name: tokens.joined(separator: " "), minorUnits: value)
+    }
+
+    /// Puts "1 250,00" back together where a space is printed between the thousands.
+    /// Only a run that ends in printed decimals is joined. "Ramen 1 250" keeps its digits apart,
+    /// because without decimals a small number before the price is more likely a count.
+    private static func joiningSpacedThousands(_ tokens: [String], fractionDigits: Int) -> [String] {
+        guard fractionDigits > 0, let last = tokens.last,
+              TextPattern(#"^\d{3}[.,]\d{\#(fractionDigits)}[$€£¥₹]?$"#).isMatch(in: last) else { return tokens }
+        var start = tokens.count - 1
+        while start > 0, TextPattern(#"^\d{3}$"#).isMatch(in: tokens[start - 1]) { start -= 1 }
+        if start > 0, TextPattern(#"^[$€£¥₹]?[1-9]\d{0,2}$"#).isMatch(in: tokens[start - 1]) {
+            start -= 1
+        } else {
+            // the run has to open with a group that can lead a number
+            while start < tokens.count - 1, tokens[start].hasPrefix("0") { start += 1 }
+        }
+        guard start < tokens.count - 1 else { return tokens }
+        return Array(tokens[..<start]) + [tokens[start...].joined()]
     }
 
     private static func isCurrencyCode(_ token: String) -> Bool {

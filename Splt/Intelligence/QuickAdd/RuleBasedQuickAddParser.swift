@@ -270,9 +270,13 @@ private struct Pass {
 
     private static let amountPattern: TextPattern = {
         let words = CurrencyDetector.wordAlternation
+        // "1 234,50" is one price with a space between the thousands. The run has to end in decimals:
+        // "2 500" is left as two numbers, because in a note that is more often a count and a price.
+        let spaced = #"(?<!\b(?:"# + notMoneyBefore.sorted().joined(separator: "|") + #") )\d{1,3}(?: \d{3})+[.,]\d{1,2}"#
         return TextPattern(
             #"(?<![\p{L}\d.,:/#])(?:(?<pre>"# + words + #")\.?\s?)?(?:(?<sym>[$€£¥₹])\s?)?"#
-                + #"(?<num>\d{1,3}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d{1,3}(?:[,'.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?<k>k(?![\p{L}]))?(?![\d:/%]|[.,]\d)"#
+                + "(?<num>" + spaced
+                + #"|\d{1,3}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d{1,3}(?:[,'.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?<k>k(?![\p{L}]))?(?![\d:/%]|[.,]\d)"#
                 + #"(?:\s?(?<word>"# + words + #")(?![\p{L}]))?"#
         )
     }()
@@ -313,7 +317,7 @@ private struct Pass {
                 ?? match.group(named: "word", in: text)
             let explicit = marker.flatMap { CurrencyDetector.code(forToken: $0, defaultCode: defaultCode) }
             let code = explicit ?? defaultCode
-            guard let numberText = match.group(named: "num", in: text),
+            guard let numberText = match.group(named: "num", in: text)?.filter({ $0 != " " }),
                   var minor = MinorUnitParser.minorUnits(from: numberText, currencyCode: code), minor > 0 else { continue }
             if match.group(named: "k", in: text) != nil {
                 let (scaled, overflow) = minor.multipliedReportingOverflow(by: 1000)

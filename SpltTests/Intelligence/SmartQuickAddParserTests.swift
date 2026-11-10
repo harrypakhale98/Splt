@@ -125,4 +125,10 @@ struct SmartQuickAddParserTests {
         reading.title = "dinner"
         #expect(QuickAddValidator.validate(reading, text: "dinner 60", context: context).title == "Dinner")
     }
+
+    @Test func aSpacedThousandIsOneWrittenAmount() {
+        #expect(QuickAddValidator.writtenAmounts(in: "dinner 1 234,50", currencyCode: "USD") == [123_450])
+        #expect(QuickAddValidator.writtenAmounts(in: "table 12 45", currencyCode: "USD") == [1200, 4500])
+        #expect(QuickAddValidator.writtenAmounts(in: "tickets 2 500", currencyCode: "USD") == [200, 50_000])
+    }
 }

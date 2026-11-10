@@ -107,4 +107,17 @@ struct QuickAddParserTests {
         let text = "Uber 18.50 with Alex"
         #expect(await parser.parse(text, context: context) == parse(text))
     }
+
+    @Test func aSpaceBetweenThousandsIsRead() {
+        let draft = parse("dinner 1 234,50 with Sam")
+        #expect(draft.amount?.minorUnits == 123_450)
+        #expect(draft.title == "Dinner")
+        #expect(parse("rent 12 500.00").amount?.minorUnits == 1_250_000)
+    }
+
+    @Test func separateNumbersAreNotJoined() {
+        #expect(parse("tickets 2 500 with Sam").amount?.minorUnits == 50_000)
+        #expect(parse("snacks 3 12.50").amount?.minorUnits == 1250)
+        #expect(parse("dinner at table 4 125.50").amount?.minorUnits == 12_550)
+    }
 }

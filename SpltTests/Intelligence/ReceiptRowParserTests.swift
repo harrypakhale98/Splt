@@ -336,4 +336,25 @@ struct ReceiptRowParserTests {
             #expect(parsed.total == usdMoney(4860), "\(label)")
         }
     }
+
+    @Test func aSpaceBetweenThousandsDoesNotCutThePrice() {
+        let plain = receipt(["Bistro", "Vin rouge 1 250,00", "TOTAL 1 250,00"])
+        #expect(plain.items.map(\.name) == ["Vin rouge"])
+        #expect(plain.items.map(\.total) == [usdMoney(125_000)])
+        #expect(plain.total == usdMoney(125_000))
+        #expect(plain.isConsistent)
+
+        let noBreak = receipt(["Bistro", "Vin rouge 1\u{00A0}250,00", "Menu 12\u{202F}500.00", "TOTAL 13 750,00"])
+        #expect(noBreak.items.map(\.total) == [usdMoney(125_000), usdMoney(1_250_000)])
+        #expect(noBreak.total == usdMoney(1_375_000))
+    }
+
+    @Test func digitsBesideAPriceAreJoinedOnlyAsThousands() {
+        #expect(ReceiptPrice.split("Bagel 2 4.50", fractionDigits: 2)?.minorUnits == 450)
+        #expect(ReceiptPrice.split("Table 12 85.00", fractionDigits: 2)?.minorUnits == 8500)
+        #expect(ReceiptPrice.split("Room 204 1250.00", fractionDigits: 2)?.minorUnits == 125_000)
+        #expect(ReceiptPrice.split("Cake 0 250,00", fractionDigits: 2)?.minorUnits == 25_000)
+        // without printed decimals a digit before the price is more likely a count
+        #expect(ReceiptPrice.split("Ramen 1 250", fractionDigits: 0)?.minorUnits == 250)
+    }
 }
