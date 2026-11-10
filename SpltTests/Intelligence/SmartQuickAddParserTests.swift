@@ -131,4 +131,55 @@ struct SmartQuickAddParserTests {
         #expect(QuickAddValidator.writtenAmounts(in: "table 12 45", currencyCode: "USD") == [1200, 4500])
         #expect(QuickAddValidator.writtenAmounts(in: "tickets 2 500", currencyCode: "USD") == [200, 50_000])
     }
+
+    @Test func aModelCannotOverrideThePayerTheRulesRead() async {
+        var reading = QuickAddReading()
+        reading.payer = "me"
+        let named = await parser(StubReader(reading: reading)).parse("Sam paid 60 for dinner with Priya", context: context)
+        #expect(named.payer == .person("Sam Carter"))
+        #expect(QuickAddValidator.validate(reading, text: "Sam paid 60 for dinner with Priya", context: context).payer == nil)
+
+        reading.payer = "Sam"
+        let mine = await parser(StubReader(reading: reading)).parse("dinner 60 with Sam, I paid", context: context)
+        #expect(mine.payer == .me)
+        #expect(QuickAddValidator.validate(reading, text: "dinner 60 with Sam, I paid", context: context).payer == nil)
+    }
+
+    @Test func aModelCannotFlipAnAdjustment() async {
+        var reading = QuickAddReading()
+        reading.split = .adjustments
+        reading.adjustments = [.init(name: "Priya", amount: "10", isLess: true)]
+        let more = QuickAddSplitHint.adjustments([
+            QuickAddShare(name: "Priya Shah", amount: Money(minorUnits: 1000, currencyCode: "USD"))
+        ])
+        let draft = await parser(StubReader(reading: reading)).parse("Priya owes 10 more", context: context)
+        #expect(draft.splitHint == more)
+        #expect(QuickAddValidator.validate(reading, text: "Priya owes 10 more", context: context).splitHint == nil)
+
+        // both words are written, so only the rules can tell whose is whose
+        let both = await parser(StubReader(reading: reading)).parse("dinner 60, Priya owes 10 more, Sam owes 5 less", context: context)
+        #expect(both.splitHint == .adjustments([
+            QuickAddShare(name: "Priya Shah", amount: Money(minorUnits: 1000, currencyCode: "USD")),
+            QuickAddShare(name: "Sam Carter", amount: Money(minorUnits: -500, currencyCode: "USD"))
+        ]))
+    }
+
+    @Test func aModelFillsInAPayerOrDirectionTheRulesMissed() async {
+        var reading = QuickAddReading()
+        reading.payer = "Sam"
+        let named = await parser(StubReader(reading: reading)).parse("Sam has paid 60 for dinner", context: context)
+        #expect(named.payer == .person("Sam Carter"))
+
+        reading.payer = "me"
+        let mine = await parser(StubReader(reading: reading)).parse("dinner 60 with Sam, I already paid", context: context)
+        #expect(mine.payer == .me)
+
+        reading = QuickAddReading()
+        reading.split = .adjustments
+        reading.adjustments = [.init(name: "Priya", amount: "10", isLess: true)]
+        let less = await parser(StubReader(reading: reading)).parse("dinner 60 with Priya who should get 10 less", context: context)
+        #expect(less.splitHint == .adjustments([
+            QuickAddShare(name: "Priya Shah", amount: Money(minorUnits: -1000, currencyCode: "USD"))
+        ]))
+    }
 }

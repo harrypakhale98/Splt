@@ -26,7 +26,8 @@ struct SmartQuickAddParser: QuickAddParsing {
         return draft
     }
 
-    /// Takes each field from the checked model reading when it has one, otherwise from the rules.
+    /// Takes the amount, title and people from the checked model reading when it has them, otherwise
+    /// from the rules. The payer and the direction of an adjustment stay as the rules read them.
     static func merge(rules: QuickAddDraft, model: QuickAddDraft) -> QuickAddDraft {
         var merged = rules
         var usedModel = false
@@ -44,11 +45,17 @@ struct SmartQuickAddParser: QuickAddParsing {
             merged.participantNames = model.participantNames
             usedModel = true
         }
-        if model.payer != nil {
+        // The rules read who paid and which way a share moves from fixed phrases, so the model may
+        // fill those in but never change them.
+        if model.payer != nil, rules.payer == nil || rules.payer == model.payer {
             merged.payer = model.payer
             usedModel = true
         }
-        if model.splitHint != nil {
+        if case .adjustments(let read) = rules.splitHint, case .adjustments(let added) = model.splitHint {
+            let known = Set(read.map(\.name.folded))
+            merged.splitHint = .adjustments(read + added.filter { !known.contains($0.name.folded) })
+            usedModel = true
+        } else if model.splitHint != nil {
             merged.splitHint = model.splitHint
             usedModel = true
         }

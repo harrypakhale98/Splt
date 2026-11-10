@@ -103,15 +103,33 @@ enum QuickAddValidator {
         return tidied.sentenceCased
     }
 
+    private static let payWords: Set<String> = [
+        "paid", "pay", "pays", "covered", "treat", "treated", "got", "fronted", "paying", "spent"
+    ]
+
+    /// The writer paid only when the note says I or my. A named payer has to sit beside the pay word,
+    /// so the other person in "dinner with Sam, I paid" is never taken for the payer.
     private static func payer(_ typed: String, resolver: NameResolver, text: String, words: Set<String>) -> QuickAddPayer? {
         let name = typed.tidied
-        guard !name.isEmpty else { return nil }
-        let payWords: Set<String> = ["paid", "pay", "pays", "covered", "treat", "treated", "got", "fronted", "paying", "spent"]
-        guard !words.isDisjoint(with: payWords) else { return nil }
+        guard !name.isEmpty, !words.isDisjoint(with: payWords) else { return nil }
         if NameResolver.refersToWriter(name) {
-            return words.isDisjoint(with: ["i", "me", "my", "paid", "spent"]) ? nil : .me
+            return words.isDisjoint(with: ["i", "my"]) ? nil : .me
         }
-        return resolver.validatedName(name, writtenIn: text).map(QuickAddPayer.person)
+        guard let person = resolver.validatedName(name, writtenIn: text),
+              isBesidePayWord(Set(name.foldedWords).union(person.foldedWords), in: text.foldedWords) else { return nil }
+        return .person(person)
+    }
+
+    /// True for "Sam paid", "Sam has paid", "Sam's treat" and "paid by Sam".
+    private static func isBesidePayWord(_ name: Set<String>, in words: [String]) -> Bool {
+        let between = name.union(["s", "is", "has", "will", "already", "just"])
+        for index in words.indices where name.contains(words[index]) {
+            if index >= 2, words[index - 1] == "by", payWords.contains(words[index - 2]) { return true }
+            var next = index + 1
+            while next < words.count, between.contains(words[next]) { next += 1 }
+            if next < words.count, payWords.contains(words[next]) { return true }
+        }
+        return false
     }
 
     private static func splitHint(
@@ -128,9 +146,12 @@ enum QuickAddValidator {
         case .equal:
             return words.isDisjoint(with: ["equal", "equally", "even", "evenly", "split", "50"]) ? nil : .equal
         case .adjustments:
-            guard !words.isDisjoint(with: ["less", "more", "extra", "fewer", "lower", "higher"]) else { return nil }
+            let lessWords: Set<String> = ["less", "fewer", "lower"]
+            let moreWords: Set<String> = ["more", "extra", "higher"]
             var seen = Set<String>()
             let shares: [QuickAddShare] = reading.adjustments.compactMap { adjustment in
+                // the direction has to be written, so "10 more" is never turned into 10 less
+                guard !words.isDisjoint(with: adjustment.isLess ? lessWords : moreWords) else { return nil }
                 guard let name = resolver.validatedName(adjustment.name, writtenIn: text),
                       seen.insert(name.folded).inserted,
                       let minor = Self.amount(adjustment.amount, currencyCode: code),
