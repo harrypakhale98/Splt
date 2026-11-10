@@ -112,6 +112,22 @@ struct GroupsListViewModelTests {
         #expect(fixture.services.friendsStore.totals == model.totals)
     }
 
+    @Test func aGroupYouJoinedIsNotDeletedFromTheList() async throws {
+        let fixture = try Fixture()
+        let model = GroupsListViewModel(services: fixture.services, leftGroups: isolatedLeftGroups())
+        #expect(model.listedIDs == [fixture.group.id])
+        #expect(model.canDelete(fixture.group.id))
+        await model.loadSharing(using: JoinedSharing(groups: [fixture.group.id]))
+        #expect(!model.canDelete(fixture.group.id))
+
+        model.delete(fixture.group.id)
+        #expect(try fixture.services.groups.group(id: fixture.group.id) != nil)
+        #expect(model.active.map(\.group.id) == [fixture.group.id])
+
+        await model.loadSharing(using: LocalGroupSharing())
+        #expect(model.canDelete(fixture.group.id))
+    }
+
     @Test func deleteRemovesTheGroup() throws {
         let fixture = try Fixture()
         let model = GroupsListViewModel(services: fixture.services, leftGroups: isolatedLeftGroups())

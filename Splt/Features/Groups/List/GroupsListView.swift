@@ -27,6 +27,7 @@ struct GroupsListView: View {
 
 private struct GroupsListContent: View {
     @Environment(Router.self) private var router
+    @Environment(\.groupSharing) private var sharing
     @State private var model: GroupsListViewModel
     @State private var pendingDelete: SplitGroup?
     @State private var showsImport = false
@@ -97,6 +98,7 @@ private struct GroupsListContent: View {
             GroupSettingsView(groupID: group.id, onGroupRemoved: { model.refresh() })
         }
         .onAppear { model.refresh() }
+        .task(id: model.listedIDs) { await model.loadSharing(using: sharing) }
         .confirmationDialog(
             "Delete Group?", isPresented: deleteBinding, titleVisibility: .visible, presenting: pendingDelete
         ) { group in
@@ -161,8 +163,11 @@ private struct GroupsListContent: View {
             Button("Group Settings", systemImage: "gearshape") {
                 settingsGroup = summary.group
             }
-            Button("Delete", systemImage: "trash", role: .destructive) {
-                pendingDelete = summary.group
+            // a group someone else shared is left from its settings, where balances are checked
+            if model.canDelete(summary.group.id) {
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    pendingDelete = summary.group
+                }
             }
         }
     }

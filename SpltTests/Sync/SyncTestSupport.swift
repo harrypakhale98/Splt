@@ -56,6 +56,8 @@ final class FakeSyncEngine: SyncEngine {
 
     var sharedByMe = false
     func isSharedByMe(group: GroupID) async -> Bool { sharedByMe }
+
+    var groupsSharedWithMe: Set<GroupID> = []
 }
 
 final class FakeAccountProbe: AccountProbe {

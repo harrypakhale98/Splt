@@ -122,6 +122,13 @@ final class AutomaticSyncEngine: SyncEngine {
         return await current.isSharedByMe(group: group)
     }
 
+    var groupsSharedWithMe: Set<GroupID> {
+        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+            return stateStore.loadMetadata().groupsSharedWithMe
+        }
+        return current.groupsSharedWithMe
+    }
+
     /// Looks at the environment and account again and swaps the engine if the answer changed.
     /// One look at a time: a change that arrives during a swap is looked at right after it.
     func reevaluate() async {

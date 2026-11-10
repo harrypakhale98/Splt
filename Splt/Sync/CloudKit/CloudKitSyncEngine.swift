@@ -223,6 +223,8 @@ final class CloudKitSyncEngine: SyncEngine {
         }
     }
 
+    var groupsSharedWithMe: Set<GroupID> { adapter.metadata.groupsSharedWithMe }
+
     func leave(group: GroupID) async throws {
         guard try services.groups.group(id: group) != nil else { throw SyncError.groupNotFound }
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)

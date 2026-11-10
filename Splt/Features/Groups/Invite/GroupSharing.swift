@@ -15,6 +15,8 @@ protocol GroupSharing: Sendable {
     /// True when this person shared the group with others. Leaving is not possible then, because
     /// the group lives in their iCloud and CloudKit cannot hand it to someone else.
     func isSharedByMe(groupID: GroupID) async -> Bool
+    /// The groups other people shared with you. You leave those; a group of your own you delete.
+    func groupsSharedWithMe() async -> Set<GroupID>
 }
 
 /// Used until sync provides sharing: the link is the app's own address for the group, which only
@@ -29,6 +31,8 @@ struct LocalGroupSharing: GroupSharing {
     func leave(groupID: GroupID) async throws {}
 
     func isSharedByMe(groupID: GroupID) async -> Bool { false }
+
+    func groupsSharedWithMe() async -> Set<GroupID> { [] }
 }
 
 extension EnvironmentValues {

@@ -148,6 +148,13 @@ struct CloudKitSyncEngineTests {
         await engine.stop()
     }
 
+    @Test func onlyGroupsOthersSharedAreSharedWithMe() throws {
+        let own = try Rig()
+        #expect(own.engine.groupsSharedWithMe.isEmpty)
+        let (rig, engine, _) = try sharedRig()
+        #expect(engine.groupsSharedWithMe == [rig.populated.group.id])
+    }
+
     @Test func leavingAnUnknownGroupFails() async throws {
         let rig = try Rig()
         await rig.engine.start()

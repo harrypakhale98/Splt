@@ -39,4 +39,6 @@ final class NoOpSyncEngine: SyncEngine {
     }
 
     func isSharedByMe(group: GroupID) async -> Bool { false }
+
+    var groupsSharedWithMe: Set<GroupID> { [] }
 }

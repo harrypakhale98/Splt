@@ -252,12 +252,24 @@ final class GroupSettingsViewModel {
 
     /// Set by `loadSharing`.
     private(set) var isSharedByMe = false
+    /// True when someone else shared the group with you. Nil until `loadSharing` has answered.
+    private(set) var isSharedWithMe: Bool?
 
-    /// Leaving needs you to be square and someone else to stay behind.
+    /// You leave a group you joined. One of your own stays in your iCloud, so leaving it would
+    /// only hide it on this device.
+    var canLeave: Bool { isSharedWithMe == true }
+    /// You delete a group of your own. Deleting one you joined would only leave it, without the
+    /// settle up check and with you still on the others' member list.
+    var canDelete: Bool { isSharedWithMe == false }
+
+    /// Leaving needs the group to be someone else's, you to be square and someone to stay behind.
     var leaveBlock: String? {
         guard let myRow else { return String(localized: "You are not a member of this group.") }
         if isSharedByMe {
             return String(localized: "You shared this group, so you can't leave it. Stop sharing in Invite with iCloud to keep it just for you, or delete it to remove it for everyone.")
+        }
+        if !canLeave {
+            return String(localized: "You can only leave a group someone else shared with you. Delete this group instead.")
         }
         if memberRows.count < 2 { return String(localized: "You are the only member. Delete the group instead.") }
         if !myRow.balance.isEmpty {
@@ -275,8 +287,9 @@ final class GroupSettingsViewModel {
         return nil
     }
 
-    /// Finds out whether this person shared the group, which rules out leaving it.
+    /// Finds out whose group this is, which decides between leaving and deleting.
     func loadSharing(using sharing: any GroupSharing) async {
+        isSharedWithMe = await sharing.groupsSharedWithMe().contains(groupID)
         isSharedByMe = await sharing.isSharedByMe(groupID: groupID)
     }
 
@@ -306,6 +319,10 @@ final class GroupSettingsViewModel {
 
     /// Returns true when the group was deleted.
     func delete() -> Bool {
+        if canLeave {
+            errorMessage = String(localized: "You joined this group, so you can't delete it. Leave it instead.")
+            return false
+        }
         do {
             try groups.delete(id: groupID)
             return true

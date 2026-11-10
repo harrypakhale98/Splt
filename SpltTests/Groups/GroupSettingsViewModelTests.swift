@@ -199,9 +199,11 @@ struct GroupSettingsViewModelTests {
         try addRent(fixture)
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
+        let joined = JoinedSharing(groups: [fixture.group.id])
+        await model.loadSharing(using: joined)
         let block = try #require(model.leaveBlock)
         #expect(block.contains("Rent"))
-        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(await model.leave(using: joined) == false)
         #expect(!leftGroups.contains(fixture.group.id))
     }
 
@@ -295,8 +297,10 @@ struct GroupSettingsViewModelTests {
         let fixture = try Fixture()
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
+        let joined = JoinedSharing(groups: [fixture.group.id])
+        await model.loadSharing(using: joined)
         #expect(model.leaveBlock == nil)
-        let left = await model.leave(using: LocalGroupSharing())
+        let left = await model.leave(using: joined)
         #expect(left)
         #expect(leftGroups.contains(fixture.group.id))
         let group = try #require(try fixture.services.groups.group(id: fixture.group.id))
@@ -308,13 +312,42 @@ struct GroupSettingsViewModelTests {
         func isInviteOnly(groupID: GroupID) async throws -> Bool { false }
         func leave(groupID: GroupID) async throws { Issue.record("An owner must not reach leave") }
         func isSharedByMe(groupID: GroupID) async -> Bool { true }
+        func groupsSharedWithMe() async -> Set<GroupID> { [] }
+    }
+
+    @Test func aGroupOfYourOwnIsDeletedNotLeft() async throws {
+        let fixture = try Fixture()
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        #expect(!model.canLeave)
+        #expect(!model.canDelete)
+        await model.loadSharing(using: LocalGroupSharing())
+        #expect(!model.canLeave)
+        #expect(model.canDelete)
+
+        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(model.blockedMessage?.contains("Delete this group instead") == true)
+        #expect(!leftGroups.contains(fixture.group.id))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
+        #expect(model.delete())
+    }
+
+    @Test func aGroupYouJoinedIsLeftNotDeleted() async throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        await model.loadSharing(using: JoinedSharing(groups: [fixture.group.id]))
+        #expect(model.canLeave)
+        #expect(!model.canDelete)
+
+        #expect(!model.delete())
+        #expect(model.errorMessage?.contains("Leave it instead") == true)
+        #expect(try fixture.services.groups.group(id: fixture.group.id) != nil)
     }
 
     @Test func theOwnerOfASharedGroupCannotLeaveAndIsToldWhatToDo() async throws {
         let fixture = try Fixture()
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
-        #expect(model.leaveBlock == nil)
         await model.loadSharing(using: OwnerSharing())
         let block = try #require(model.leaveBlock)
         #expect(block.contains("Stop sharing"))
@@ -336,9 +369,11 @@ struct GroupSettingsViewModelTests {
         try fixture.addExpense(cents: 3000)
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
+        let joined = JoinedSharing(groups: [fixture.group.id])
+        await model.loadSharing(using: joined)
         let block = try #require(model.leaveBlock)
         #expect(block.contains("You're owed $20.00"))
-        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(await model.leave(using: joined) == false)
         #expect(model.blockedMessage == block)
         #expect(!leftGroups.contains(fixture.group.id))
         #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
@@ -367,11 +402,12 @@ struct GroupSettingsViewModelTests {
         #expect(model.memberRows.count == 3)
     }
 
-    @Test func theOnlyMemberShouldDeleteInstead() throws {
+    @Test func theOnlyMemberShouldDeleteInstead() async throws {
         let fixture = try Fixture()
         let solo = SplitGroup(name: "Solo", currencyCode: "USD", memberIDs: [fixture.me.id])
         try fixture.services.groups.create(solo)
         let model = makeModel(fixture, groupID: solo.id)
+        await model.loadSharing(using: JoinedSharing(groups: [solo.id]))
         #expect(model.leaveBlock?.contains("only member") == true)
     }
 

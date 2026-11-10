@@ -58,4 +58,6 @@ protocol SyncEngine: AnyObject {
     /// True when the group is in your own iCloud and shared with others. Stopping is done in the invite
     /// sheet, or by deleting the group. With no network the last known answer is used.
     func isSharedByMe(group: GroupID) async -> Bool
+    /// The groups other people shared with you, as last known. You leave those; your own you delete.
+    var groupsSharedWithMe: Set<GroupID> { get }
 }

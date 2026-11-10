@@ -1,5 +1,6 @@
 import CloudKit
 import Foundation
+import SpltCore
 
 enum DatabaseScope: String, Codable, Hashable, Sendable, CaseIterable {
     /// Groups you created.
@@ -56,6 +57,13 @@ struct SyncMetadata: Codable, Equatable, Sendable {
 
     func scope(forZoneName name: String) -> DatabaseScope {
         zones[name]?.scope ?? .privateDatabase
+    }
+
+    /// The groups other people shared with you.
+    var groupsSharedWithMe: Set<GroupID> {
+        Set(zones.keys.filter { zoneID(forZoneName: $0).scope == .sharedDatabase }.compactMap {
+            UUID(uuidString: $0).map(GroupID.init(rawValue:))
+        })
     }
 
     func isKnown(zoneName: String) -> Bool {

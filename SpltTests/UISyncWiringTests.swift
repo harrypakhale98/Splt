@@ -96,6 +96,15 @@ struct UISyncGroupSharingTests {
         #expect(try await !SyncGroupSharing(runtime: runtime).isInviteOnly(groupID: group))
     }
 
+    @Test func groupsSharedWithYouComeFromTheEngineEvenOffline() async {
+        let engine = FakeSyncEngine()
+        engine.groupsSharedWithMe = [group]
+        engine.report(.offline)
+        let runtime = SyncRuntime()
+        runtime.use(engine)
+        #expect(await SyncGroupSharing(runtime: runtime).groupsSharedWithMe() == [group])
+    }
+
     @Test func aLinkToAGroupThisDeviceDoesNotHaveOpensNothingElse() {
         let router = Router()
         let id = UUID()

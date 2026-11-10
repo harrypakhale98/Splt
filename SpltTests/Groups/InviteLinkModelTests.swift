@@ -33,6 +33,7 @@ struct InviteLinkModelTests {
 
         func leave(groupID: GroupID) async throws {}
         func isSharedByMe(groupID: GroupID) async -> Bool { true }
+        func groupsSharedWithMe() async -> Set<GroupID> { [] }
     }
 
     private func makeModel() -> InviteLinkModel {

@@ -168,15 +168,20 @@ private struct GroupSettingsForm: View {
                             model.toggleArchived()
                         }
                     }
-                    Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                        if let reason = model.leaveBlock {
-                            model.blockedMessage = reason
-                        } else {
-                            showsLeaveConfirmation = true
+                    // you leave a group you joined and delete one of your own, never the other way round
+                    if model.canLeave {
+                        Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                            if let reason = model.leaveBlock {
+                                model.blockedMessage = reason
+                            } else {
+                                showsLeaveConfirmation = true
+                            }
                         }
                     }
-                    Button("Delete Group", systemImage: "trash", role: .destructive) {
-                        showsDeleteConfirmation = true
+                    if model.canDelete {
+                        Button("Delete Group", systemImage: "trash", role: .destructive) {
+                            showsDeleteConfirmation = true
+                        }
                     }
                 }
             }

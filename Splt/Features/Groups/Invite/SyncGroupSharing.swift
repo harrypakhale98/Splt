@@ -28,6 +28,10 @@ struct SyncGroupSharing: GroupSharing {
         await Self.isSharedByMe(groupID, runtime: runtime)
     }
 
+    func groupsSharedWithMe() async -> Set<GroupID> {
+        await Self.groupsSharedWithMe(runtime: runtime)
+    }
+
     @MainActor
     private static func shareURL(for groupID: GroupID, runtime: SyncRuntime) async throws -> URL? {
         guard runtime.status.isConnected else { return nil }
@@ -51,6 +55,11 @@ struct SyncGroupSharing: GroupSharing {
     @MainActor
     private static func isSharedByMe(_ groupID: GroupID, runtime: SyncRuntime) async -> Bool {
         await runtime.engine.isSharedByMe(group: groupID)
+    }
+
+    @MainActor
+    private static func groupsSharedWithMe(runtime: SyncRuntime) async -> Set<GroupID> {
+        runtime.engine.groupsSharedWithMe
     }
 
     @MainActor

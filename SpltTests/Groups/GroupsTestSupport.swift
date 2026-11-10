@@ -33,6 +33,17 @@ extension Fixture {
     }
 }
 
+/// Sharing as it is for groups someone else shared with you.
+struct JoinedSharing: GroupSharing {
+    var groups: Set<GroupID>
+
+    func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL { DeepLink.group(groupID.rawValue).url }
+    func isInviteOnly(groupID: GroupID) async throws -> Bool { false }
+    func leave(groupID: GroupID) async throws {}
+    func isSharedByMe(groupID: GroupID) async -> Bool { false }
+    func groupsSharedWithMe() async -> Set<GroupID> { groups }
+}
+
 /// A left-groups record that lives only for one test.
 func isolatedLeftGroups() -> LeftGroupsStore {
     LeftGroupsStore(defaults: UserDefaults(suiteName: "splt.tests.\(UUID().uuidString)")!)

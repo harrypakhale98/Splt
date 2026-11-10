@@ -9,6 +9,9 @@ final class GroupsListViewModel {
     var query = ""
     var errorMessage: String?
 
+    /// Groups other people shared with you. They are left from their settings, never deleted here.
+    private(set) var joined: Set<GroupID> = []
+
     /// Friends who owe you something, and friends you owe, for the hero at the top.
     private(set) var owedBy: [Person] = []
     private(set) var owedTo: [Person] = []
@@ -65,7 +68,20 @@ final class GroupsListViewModel {
         perform { try groups.setArchived(false, id: id) }
     }
 
+    /// Finds out which groups are someone else's. Call it again when the groups change.
+    func loadSharing(using sharing: any GroupSharing) async {
+        joined = await sharing.groupsSharedWithMe()
+    }
+
+    /// Every listed group, so the screen can ask about sharing again when one comes or goes.
+    var listedIDs: Set<GroupID> { Set(listed.map(\.group.id)) }
+
+    func canDelete(_ id: GroupID) -> Bool {
+        !joined.contains(id)
+    }
+
     func delete(_ id: GroupID) {
+        guard canDelete(id) else { return }
         perform { try groups.delete(id: id) }
     }
 

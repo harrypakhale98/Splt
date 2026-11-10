@@ -234,6 +234,21 @@ struct AutomaticSyncEngineTests {
         await #expect(throws: SyncError.unavailable) { try await unavailable.accept(invitation) }
         await unavailable.stop()
     }
+
+    @Test func aJoinedGroupIsRecognizedWhileTheAccountIsOutOfReach() async {
+        let store = InMemorySyncStateStore()
+        let group = GroupID()
+        var metadata = store.loadMetadata()
+        metadata.zones[group.description] = ZoneInfo(ownerName: "_owner", scope: .sharedDatabase)
+        store.saveMetadata(metadata)
+        let engine = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        #expect(engine.groupsSharedWithMe == [group])
+        await engine.stop()
+    }
 }
 
 @MainActor
