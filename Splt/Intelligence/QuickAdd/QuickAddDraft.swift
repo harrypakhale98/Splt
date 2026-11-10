@@ -58,10 +58,16 @@ struct QuickAddContext: Sendable {
     /// Members of the group other than the person typing.
     var candidateNames: [String]
     var defaultCurrencyCode: String
+    /// The year the note is written in. A number that could be this year is less likely to be the price.
+    var year: Int
 
-    init(candidateNames: [String] = [], defaultCurrencyCode: String = "USD") {
+    init(
+        candidateNames: [String] = [], defaultCurrencyCode: String = "USD",
+        year: Int = Calendar(identifier: .gregorian).component(.year, from: Date())
+    ) {
         self.candidateNames = candidateNames
         self.defaultCurrencyCode = defaultCurrencyCode
+        self.year = year
     }
 }
 

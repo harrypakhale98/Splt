@@ -4,7 +4,7 @@ import Testing
 
 @Suite("Quick add rules")
 struct QuickAddParserTests {
-    private let context = QuickAddContext(candidateNames: ["Sam Carter", "Priya Shah", "Alex"], defaultCurrencyCode: "USD")
+    private let context = QuickAddContext(candidateNames: ["Sam Carter", "Priya Shah", "Alex"], defaultCurrencyCode: "USD", year: 2026)
     private let parser = RuleBasedQuickAddParser()
 
     private func parse(_ text: String) -> QuickAddDraft {
@@ -127,6 +127,9 @@ struct QuickAddParserTests {
         #expect(lunch.title == "Lunch")
         #expect(parse("lunch 8 on 15 March with Sam").amount?.minorUnits == 800)
         #expect(parse("NYE 2026 dinner 120 with Sam").amount?.minorUnits == 12_000)
+        // a number is only a year when it is this year or next to it
+        #expect(parse("dinner 2000 drinks 450").amount?.minorUnits == 200_000)
+        #expect(parse("flights 1980 hotel 600").amount?.minorUnits == 198_000)
         #expect(parse("5k race entry 35 with Sam").amount?.minorUnits == 3500)
         #expect(parse("coffee 5 at 8 with Sam").amount?.minorUnits == 500)
     }
@@ -148,10 +151,10 @@ struct QuickAddParserTests {
         #expect(camping.title == "Camping")
         #expect(camping.amount?.minorUnits == 12_000)
 
-        let padel = parser.parseNow("Padel Sam paid 40", context: QuickAddContext())
-        #expect(padel.payer == .person("Sam"))
-        #expect(padel.participantNames == ["Sam"])
-        #expect(padel.title == "Padel")
+        // with nobody known by either word, two capitalised words stay one person's name
+        let unknown = parser.parseNow("Mary Jane paid 40", context: QuickAddContext())
+        #expect(unknown.payer == .person("Mary Jane"))
+        #expect(unknown.title.isEmpty)
     }
 
     @Test func twoWordNamesStillReadAsOnePerson() {

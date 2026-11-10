@@ -18,7 +18,9 @@ struct RuleBasedQuickAddParser: QuickAddParsing {
         let original = CentPhrases.normalized(NumberWords.replacingSpelledNumbers(in: rawText.tidied))
         guard !original.isEmpty else { return QuickAddDraft() }
 
-        var pass = Pass(text: original, resolver: NameResolver(candidates: context.candidateNames, text: original))
+        var pass = Pass(
+            text: original, resolver: NameResolver(candidates: context.candidateNames, text: original), year: context.year
+        )
         pass.takeAdjustments()
         pass.takeExactShares()
         pass.takePayer()
@@ -35,9 +37,6 @@ struct RuleBasedQuickAddParser: QuickAddParsing {
             draft.amount = Money(minorUnits: amount.minorUnits, currencyCode: amount.explicitCode ?? code)
         }
         draft.title = pass.title()
-        if draft.title.isEmpty, let word = pass.returnGuessedFirstName() {
-            draft.title = word
-        }
         draft.participantNames = pass.participants
         draft.payer = pass.payer
         draft.splitHint = splitHint(pass: pass, explicitEqual: explicitEqual, code: code)
@@ -83,12 +82,12 @@ private struct Pass {
     var payer: QuickAddPayer?
     var adjustments: [Entry] = []
     var exactShares: [Entry] = []
-    /// The payer's name when its first word was only guessed from a capital letter.
-    private var guessedPayer: (first: String, last: String, full: String)?
+    let year: Int
 
-    init(text: String, resolver: NameResolver) {
+    init(text: String, resolver: NameResolver, year: Int) {
         self.text = text
         self.resolver = resolver
+        self.year = year
     }
 
     private static let adjustmentPatterns: [TextPattern] = [
@@ -190,9 +189,6 @@ private struct Pass {
                 if let first = match.group(named: "first", in: text),
                    let full = resolver.fullName(first, typed),
                    let firstRange = Range(match.range(withName: "first"), in: text) {
-                    if resolver.matchingCandidate(for: full) == nil {
-                        guessedPayer = (first, last, full)
-                    }
                     name = full
                     start = firstRange.lowerBound
                 }
@@ -202,17 +198,6 @@ private struct Pass {
                 return
             }
         }
-    }
-
-    /// "Padel Sam paid 40" leaves no other word for a title, so Padel is what was paid for and Sam paid.
-    /// Returns the word that goes back to the title, or nil when the payer's name was not a guess.
-    mutating func returnGuessedFirstName() -> String? {
-        guard let guess = guessedPayer else { return nil }
-        guessedPayer = nil
-        payer = .person(guess.last)
-        participants.removeAll { $0.folded == guess.full.folded }
-        addParticipant(guess.last)
-        return guess.first.sentenceCased
     }
 
     // MARK: Who shared it
@@ -351,13 +336,14 @@ private struct Pass {
             // letters stuck to a number make it a measure or a code, unless they name a currency
             let isGlued = !hasMarker && text[whole.upperBound...].first?.isLetter == true
             let isThousands = match.group(named: "k", in: text) != nil
-            // a whole number with nothing attached, which is how a day, an hour or a year is written
+            // a whole number with nothing attached, which is how a day, an hour or a year is written.
+            // Only this year and the ones beside it count as a year: "rent 2000" is a price.
             let bare = hasMarker || isThousands ? nil : match.group(named: "num", in: text).flatMap { Int($0) }
             let isDay = bare != nil && dates.contains { NSIntersectionRange($0, match.range).length > 0 }
             let isClockOrDay = nextWord.isEmpty && bare.map { value in
                 (previousWord == "at" && (1...12).contains(value)) || (previousWord == "on" && (1...31).contains(value))
             } == true
-            let isYear = bare.map { (1900...2099).contains($0) } == true
+            let isYear = bare.map { ((year - 1)...(year + 1)).contains($0) } == true
             // "5k race" is a distance. An amount in thousands ends the phrase or meets a small word, as in "2k for rent".
             let isDistance = isThousands && !hasMarker && !nextWord.isEmpty && !Self.fillerWords.contains(nextWord)
             let isUnlikely = (Self.notMoneyBefore.contains(previousWord) && !hasMarker) || isGlued
