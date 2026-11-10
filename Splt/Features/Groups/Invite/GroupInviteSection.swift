@@ -28,7 +28,7 @@ struct GroupInviteSection: View {
                     .disabled(sharing?.phase == .preparing)
                 }
                 NavigationLink {
-                    InviteGroupView(groupID: groupID, groupName: groupName)
+                    InviteGroupView(groupID: groupID, groupName: groupName, isSharedWithMe: isSharedWithMe)
                 } label: {
                     Label("Link or QR Code", systemImage: "qrcode")
                 }

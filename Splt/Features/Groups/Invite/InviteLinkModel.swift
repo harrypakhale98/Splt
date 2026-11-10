@@ -32,7 +32,7 @@ final class InviteLinkModel {
                 state = .ready(try await sharing.inviteURL(for: groupID, groupName: groupName))
             }
         } catch {
-            state = .failed(error.localizedDescription)
+            state = .failed(SyncFailure.message(for: error))
         }
     }
 
@@ -42,7 +42,7 @@ final class InviteLinkModel {
         do {
             state = .ready(try await sharing.inviteURL(for: groupID, groupName: groupName))
         } catch {
-            state = .failed(error.localizedDescription)
+            state = .failed(SyncFailure.message(for: error))
         }
     }
 }

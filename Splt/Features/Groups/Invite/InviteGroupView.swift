@@ -7,8 +7,12 @@ struct InviteGroupView: View {
     @State private var model: InviteLinkModel
     @State private var copyCount = 0
 
-    init(groupID: GroupID, groupName: String) {
+    /// True in a group someone else shared, where only they can change who may join.
+    private let isSharedWithMe: Bool
+
+    init(groupID: GroupID, groupName: String, isSharedWithMe: Bool = false) {
         _model = State(initialValue: InviteLinkModel(groupID: groupID, groupName: groupName))
+        self.isSharedWithMe = isSharedWithMe
     }
 
     private var groupName: String { model.groupName }
@@ -93,6 +97,8 @@ struct InviteGroupView: View {
     private func footer(for url: URL) -> LocalizedStringKey {
         if url.scheme == DeepLink.scheme {
             "Turn on iCloud to invite people. This link only opens the group on a device that already has it."
+        } else if isSharedWithMe {
+            "Anyone with this link can join and add expenses. Only the person who shared this group can stop that."
         } else {
             "Anyone with this link can join and add expenses. To stop that, open Invite with iCloud and change who can join."
         }
