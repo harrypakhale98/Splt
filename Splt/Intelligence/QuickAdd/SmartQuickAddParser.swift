@@ -16,7 +16,13 @@ struct SmartQuickAddParser: QuickAddParsing {
 
         if let reader, reader.isAvailable, normalized.count <= FoundationModelsQuickAddReader.maximumCharacters,
            let reading = try? await reader.read(normalized, context: context) {
-            let checked = QuickAddValidator.validate(reading, text: normalized, context: context)
+            var checked = QuickAddValidator.validate(reading, text: normalized, context: context)
+            // The model can only pick a number that is written. An amount the rules worked out, such as
+            // a price per person times the people, is not written, so it stays.
+            if let amount = draft.amount,
+               !QuickAddValidator.writtenAmounts(in: normalized, currencyCode: amount.currencyCode).contains(amount.minorUnits) {
+                checked.amount = nil
+            }
             draft = Self.merge(rules: draft, model: checked)
         }
 

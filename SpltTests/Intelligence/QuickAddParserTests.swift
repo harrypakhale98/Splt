@@ -165,4 +165,23 @@ struct QuickAddParserTests {
         #expect(fresh.payer == .person("Jordan Lee"))
         #expect(fresh.title == "Dinner")
     }
+
+    @Test func aPricePerPersonIsMultipliedOut() {
+        let tickets = parse("tickets 12.50 each with Sam and Priya")
+        #expect(tickets.amount?.minorUnits == 3750)
+        #expect(tickets.title == "Tickets")
+        #expect(parse("brunch 20 per person with Alex").amount?.minorUnits == 4000)
+        let dinner = parse("dinner 30 a head with Sam, Priya and Alex")
+        #expect(dinner.amount?.minorUnits == 12_000)
+        #expect(dinner.title == "Dinner")
+        #expect(parse("tacos $9 apiece with Sam").amount?.minorUnits == 1800)
+    }
+
+    @Test func aPricePerPersonStaysAsWrittenWithoutAHeadCount() {
+        let alone = parse("tickets 12.50 each")
+        #expect(alone.amount?.minorUnits == 1250)
+        #expect(alone.title == "Tickets")
+        #expect(parse("tickets 25 with Sam and Priya").amount?.minorUnits == 2500)
+        #expect(parse("we each paid 20 for lunch with Sam").amount?.minorUnits == 2000)
+    }
 }

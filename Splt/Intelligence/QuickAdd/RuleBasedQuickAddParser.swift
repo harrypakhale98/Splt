@@ -310,6 +310,9 @@ private struct Pass {
         "table", "room", "seat", "no", "number", "order", "flight", "gate", "route", "bus"
     ]
 
+    /// Words right after a price that make it the price for one person.
+    private static let perPersonPattern = TextPattern(#"^\s*(?:each|apiece|per\s+(?:person|head)|a\s+head)(?![\p{L}])"#)
+
     private static let monthNames = "january|february|march|april|may|june|july|august|september|october|november|december"
         + "|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec"
     /// "on March 15", "March 15th" or "15 March".
@@ -385,10 +388,20 @@ private struct Pass {
         let marked = candidates.filter(\.hasCurrency)
         let pool = !marked.isEmpty ? marked : !candidates.isEmpty ? candidates : unlikely
         guard let chosen = pool.max(by: { $0.found.minorUnits < $1.found.minorUnits }) else { return nil }
+        var found = chosen.found
+        var priceRange = chosen.range
+        let rest = Range(chosen.range, in: text).map { String(text[$0.upperBound...]) } ?? ""
+        if let phrase = Self.perPersonPattern.firstMatch(in: rest) {
+            priceRange.length += phrase.range.length
+            // The writer and everyone named pay this much. With nobody named the head count is not
+            // known, so the price stays as written.
+            let (total, overflow) = found.minorUnits.multipliedReportingOverflow(by: Int64(participants.count + 1))
+            if !participants.isEmpty, !overflow, total <= MoneyParser.maximumMinorUnits { found.minorUnits = total }
+        }
         // a date that is not the price is not part of the title either
-        let spent = dates.filter { NSIntersectionRange($0, chosen.range).length == 0 } + [chosen.range]
+        let spent = dates.filter { NSIntersectionRange($0, chosen.range).length == 0 } + [priceRange]
         for range in spent.sorted(by: { $0.location > $1.location }) { blank(range) }
-        return chosen.found
+        return found
     }
 
     // MARK: Title

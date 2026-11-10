@@ -201,4 +201,11 @@ struct SmartQuickAddParserTests {
         let draft = QuickAddValidator.validate(reading, text: "Camping pizza dinner 60 with Sam and jordan", context: context)
         #expect(draft.participantNames == ["Sam Carter", "Jordan"])
     }
+
+    @Test func aModelCannotUndoAPerPersonTotal() async {
+        var reading = QuickAddReading()
+        reading.amount = "12.50"
+        let draft = await parser(StubReader(reading: reading)).parse("tickets 12.50 each with Sam and Priya", context: context)
+        #expect(draft.amount?.minorUnits == 3750)
+    }
 }
