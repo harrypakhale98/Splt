@@ -163,6 +163,20 @@ struct DatabaseSyncerTests {
         #expect(rig.coordinator.status == .idle)
     }
 
+    @Test func aZoneThatCouldNotBeFetchedDoesNotReadAsUpToDate() throws {
+        let rig = try Rig()
+        rig.syncer.handle(.zoneFetchFailed(CKError(.quotaExceeded)))
+        guard case .error = rig.coordinator.status else {
+            Issue.record("expected an error status, got \(rig.coordinator.status)")
+            return
+        }
+    }
+
+    @Test func anAccountThatIsNotReadyYetIsAWaitAndNotAMissingAccount() {
+        #expect(SyncFailure(CKError(.accountTemporarilyUnavailable)) == .transient(retryAfter: nil))
+        #expect(SyncFailure(CKError(.notAuthenticated)) == .noAccount)
+    }
+
     @Test func aSignOutShowsNoAccount() throws {
         let rig = try Rig()
         rig.syncer.handle(.account(.signedOut))

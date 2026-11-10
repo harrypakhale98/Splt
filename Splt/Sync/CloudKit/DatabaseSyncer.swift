@@ -65,6 +65,8 @@ enum SyncEngineInput {
     )
     case operationStarted
     case operationEnded
+    /// One zone could not be fetched, although the fetch as a whole went on.
+    case zoneFetchFailed(CKError)
 
     init?(_ event: CKSyncEngine.Event) {
         switch event {
@@ -101,7 +103,10 @@ enum SyncEngineInput {
             self = .operationStarted
         case .didFetchChanges, .didSendChanges:
             self = .operationEnded
-        case .willFetchRecordZoneChanges, .didFetchRecordZoneChanges:
+        case .didFetchRecordZoneChanges(let fetched):
+            guard let error = fetched.error else { return nil }
+            self = .zoneFetchFailed(error)
+        case .willFetchRecordZoneChanges:
             return nil
         @unknown default:
             return nil
@@ -275,6 +280,9 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
             coordinator.updateStatus { $0.began() }
         case .operationEnded:
             coordinator.updateStatus { $0.ended() }
+        case .zoneFetchFailed(let error):
+            // a group that did not arrive must not read as up to date
+            coordinator.fetchFailed(error, scope: scope)
         }
     }
 }

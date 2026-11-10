@@ -30,10 +30,12 @@ enum SyncFailure: Equatable, Sendable {
         case .zoneNotFound, .userDeletedZone: self = .zoneMissing
         case .unknownItem: self = .itemMissing
         case .networkUnavailable, .networkFailure: self = .offline
-        case .serviceUnavailable, .zoneBusy, .requestRateLimited, .limitExceeded, .serverResponseLost, .batchRequestFailed:
+        // an account that is signed in but not ready yet is a wait, not a missing account
+        case .serviceUnavailable, .zoneBusy, .requestRateLimited, .limitExceeded, .serverResponseLost, .batchRequestFailed,
+             .accountTemporarilyUnavailable:
             self = .transient(retryAfter: cloudError.retryAfterSeconds)
         case .quotaExceeded: self = .quotaExceeded
-        case .notAuthenticated, .accountTemporarilyUnavailable: self = .noAccount
+        case .notAuthenticated: self = .noAccount
         case .managedAccountRestricted: self = .restricted
         case .permissionFailure: self = .noPermission
         default: self = .other(Self.genericMessage)
