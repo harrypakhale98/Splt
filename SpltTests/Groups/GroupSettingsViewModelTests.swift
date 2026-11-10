@@ -305,6 +305,7 @@ struct GroupSettingsViewModelTests {
 
     private struct OwnerSharing: GroupSharing {
         func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL { URL(string: "splt://group")! }
+        func isInviteOnly(groupID: GroupID) async throws -> Bool { false }
         func leave(groupID: GroupID) async throws { Issue.record("An owner must not reach leave") }
         func isSharedByMe(groupID: GroupID) async -> Bool { true }
     }

@@ -42,6 +42,9 @@ final class FakeSyncEngine: SyncEngine {
     }
 
     var acceptError: (any Error)?
+    var sharedInviteOnly = false
+    func isSharedInviteOnly(group: GroupID) async throws -> Bool { sharedInviteOnly }
+
     func accept(_ invitation: ShareInvitation) async throws {
         if let acceptError { throw acceptError }
         accepted.append(invitation)

@@ -86,6 +86,10 @@ final class AutomaticSyncEngine: SyncEngine {
         try await current.share(group: group, anyoneWithLink: anyoneWithLink)
     }
 
+    func isSharedInviteOnly(group: GroupID) async throws -> Bool {
+        try await current.isSharedInviteOnly(group: group)
+    }
+
     func accept(_ invitation: ShareInvitation) async throws {
         switch choice {
         case nil, .noOp(.accountUnavailable)?:

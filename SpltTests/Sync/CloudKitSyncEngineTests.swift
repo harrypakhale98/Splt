@@ -211,6 +211,26 @@ struct CloudKitSyncEngineTests {
         await rig.engine.stop()
     }
 
+    @Test func onlyAShareLimitedToInvitedPeopleIsInviteOnly() async throws {
+        let rig = try Rig()
+        let group = rig.populated.group.id
+        await rig.engine.start()
+        #expect(await eventually { rig.backend.privateHandle.fetchCount == 1 })
+        #expect(try await !rig.engine.isSharedInviteOnly(group: group))
+        await #expect(throws: FakeBackendError.noContainer) { _ = try await rig.engine.share(group: group, anyoneWithLink: false) }
+        #expect(try await rig.engine.isSharedInviteOnly(group: group))
+        await #expect(throws: FakeBackendError.noContainer) { _ = try await rig.engine.share(group: group, anyoneWithLink: true) }
+        #expect(try await !rig.engine.isSharedInviteOnly(group: group))
+        await rig.engine.stop()
+    }
+
+    @Test func aGroupSomeoneElseSharedIsNeverInviteOnlyForYou() async throws {
+        let (rig, engine, _) = try sharedRig()
+        await engine.start()
+        #expect(try await !engine.isSharedInviteOnly(group: rig.populated.group.id))
+        await engine.stop()
+    }
+
     @Test func invitationsWithoutMetadataAreRejected() async throws {
         let rig = try Rig()
         await rig.engine.start()

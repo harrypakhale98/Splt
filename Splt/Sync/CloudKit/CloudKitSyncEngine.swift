@@ -193,6 +193,13 @@ final class CloudKitSyncEngine: SyncEngine {
         return try backend.groupShare(share, groupName: value.name)
     }
 
+    func isSharedInviteOnly(group: GroupID) async throws -> Bool {
+        let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
+        guard zoneID.scope == .privateDatabase else { return false }
+        guard let existing = try await backend.shareService.share(zoneID: zoneID) else { return false }
+        return existing.publicPermission == .none
+    }
+
     func accept(_ invitation: ShareInvitation) async throws {
         // until the engines exist nothing can fetch the group, so the invitation has to wait
         guard !syncers.isEmpty else { throw SyncError.notReady }

@@ -49,6 +49,9 @@ protocol SyncEngine: AnyObject {
     /// `anyoneWithLink` the owner's share is opened so its link works for anyone who has it.
     /// Someone who joined the group only gets its share with `anyoneWithLink`, for the link.
     func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare
+    /// True when the group is in your own iCloud, already shared, and only invited people can join.
+    /// Sharing it with `anyoneWithLink` would open it, so the link screen asks before it does.
+    func isSharedInviteOnly(group: GroupID) async throws -> Bool
     func accept(_ invitation: ShareInvitation) async throws
     /// Leaves a group someone else shared. A group in your own iCloud is not affected.
     func leave(group: GroupID) async throws

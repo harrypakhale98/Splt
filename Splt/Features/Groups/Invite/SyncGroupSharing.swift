@@ -16,6 +16,10 @@ struct SyncGroupSharing: GroupSharing {
         return try await Self.shareURL(for: groupID, runtime: runtime) ?? local
     }
 
+    func isInviteOnly(groupID: GroupID) async throws -> Bool {
+        try await Self.isInviteOnly(groupID, runtime: runtime)
+    }
+
     func leave(groupID: GroupID) async throws {
         try await Self.leave(groupID, runtime: runtime)
     }
@@ -31,6 +35,16 @@ struct SyncGroupSharing: GroupSharing {
             return try await runtime.engine.share(group: groupID, anyoneWithLink: true).url
         } catch SyncError.unavailable {
             return nil
+        }
+    }
+
+    @MainActor
+    private static func isInviteOnly(_ groupID: GroupID, runtime: SyncRuntime) async throws -> Bool {
+        guard runtime.status.isConnected else { return false }
+        do {
+            return try await runtime.engine.isSharedInviteOnly(group: groupID)
+        } catch SyncError.unavailable {
+            return false
         }
     }
 

@@ -75,6 +75,27 @@ struct UISyncGroupSharingTests {
         #expect(url == DeepLink.group(group.rawValue).url)
     }
 
+    @Test func anInviteOnlyShareIsReportedWhenConnected() async throws {
+        let engine = FakeSyncEngine()
+        let runtime = SyncRuntime()
+        runtime.use(engine)
+        #expect(try await !SyncGroupSharing(runtime: runtime).isInviteOnly(groupID: group))
+        engine.sharedInviteOnly = true
+        #expect(try await SyncGroupSharing(runtime: runtime).isInviteOnly(groupID: group))
+    }
+
+    @Test func nothingIsInviteOnlyWithoutSync() async throws {
+        let engine = FakeSyncEngine()
+        engine.sharedInviteOnly = true
+        engine.report(.noAccount)
+        let runtime = SyncRuntime()
+        runtime.use(engine)
+        #expect(try await !SyncGroupSharing(runtime: runtime).isInviteOnly(groupID: group))
+
+        runtime.use(NoOpSyncEngine(reason: .simulator))
+        #expect(try await !SyncGroupSharing(runtime: runtime).isInviteOnly(groupID: group))
+    }
+
     @Test func aLinkToAGroupThisDeviceDoesNotHaveOpensNothingElse() {
         let router = Router()
         let id = UUID()

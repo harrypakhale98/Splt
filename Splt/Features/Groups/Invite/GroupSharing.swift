@@ -7,6 +7,9 @@ import SwiftUI
 protocol GroupSharing: Sendable {
     /// A link that opens the group for whoever receives it.
     func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL
+    /// True when you already shared the group and only the people you invited can join. Asking for
+    /// the link would open it to anyone who has it, so the screen asks before doing that.
+    func isInviteOnly(groupID: GroupID) async throws -> Bool
     /// Tells sync this device is leaving the group. Local membership is changed by the caller.
     func leave(groupID: GroupID) async throws
     /// True when this person shared the group with others. Leaving is not possible then, because
@@ -20,6 +23,8 @@ struct LocalGroupSharing: GroupSharing {
     func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL {
         DeepLink.group(groupID.rawValue).url
     }
+
+    func isInviteOnly(groupID: GroupID) async throws -> Bool { false }
 
     func leave(groupID: GroupID) async throws {}
 

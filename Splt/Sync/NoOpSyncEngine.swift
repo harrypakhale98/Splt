@@ -26,6 +26,10 @@ final class NoOpSyncEngine: SyncEngine {
         throw SyncError.unavailable
     }
 
+    func isSharedInviteOnly(group: GroupID) async throws -> Bool {
+        throw SyncError.unavailable
+    }
+
     func accept(_ invitation: ShareInvitation) async throws {
         throw SyncError.unavailable
     }
