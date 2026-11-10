@@ -34,7 +34,13 @@ public enum MoneyParser {
             end += 1
         }
 
-        let negative = try readSign(prefix: chars[..<start], suffix: chars[(end + 1)...])
+        var suffixStart = end + 1
+        // Swiss prices write whole francs as "12.-". That dash stands for no cents, not for a minus.
+        if end > lastDigit, suffixStart < chars.count, chars[suffixStart] == "-" {
+            suffixStart += 1
+        }
+
+        let negative = try readSign(prefix: chars[..<start], suffix: chars[suffixStart...])
         if negative && !allowNegative { throw MoneyParseError.negativeNotAllowed }
 
         let exponent = Currency.minorUnitExponent(for: currencyCode)

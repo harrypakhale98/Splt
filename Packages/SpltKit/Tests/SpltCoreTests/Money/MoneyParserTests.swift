@@ -85,6 +85,15 @@ struct MoneyParserTests {
         #expect(try parse("12.5000000") == 1250)
     }
 
+    @Test func aDashForNoCentsIsNotAMinus() throws {
+        #expect(try parse("12.-", "CHF", swiss) == 1200)
+        #expect(try parse("Fr. 12.\u{2013}", "CHF", swiss) == 1200)
+        #expect(try parse("12,-", "EUR", germany) == 1200)
+        #expect(try parse("-12.-", "CHF", swiss) == -1200)
+        #expect(try parse("12.50-", "CHF", swiss) == -1250)
+        #expect(try parse("12-", "CHF", swiss) == -1200)
+    }
+
     @Test func ignoresSymbolsAndCodes() throws {
         #expect(try parse("$12.50") == 1250)
         #expect(try parse("$ 12.50") == 1250)
