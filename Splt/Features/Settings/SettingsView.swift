@@ -1,8 +1,7 @@
 import SwiftUI
 import UserNotifications
 
-/// The preference, sync, import and about sections. They sit on the Account screen, and
-/// `SettingsView` shows the same sections on their own when a route asks for settings.
+/// The preference, sync, import and about sections of the Account screen.
 struct SettingsSections: View {
     @Environment(Router.self) private var router
     @Environment(\.scenePhase) private var scenePhase
@@ -121,27 +120,3 @@ private struct SettingsBehavior: ViewModifier {
     }
 }
 
-struct SettingsView: View {
-    var body: some View {
-        List {
-            SettingsSections()
-        }
-        .listStyle(.plain)
-        .listRowSeparatorTint(Ink.hairline)
-        .paperBackground()
-        .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsBehavior()
-    }
-}
-
-#Preview {
-    NavigationStack { SettingsView() }
-        .environment(Router())
-}
-
-#Preview("Large text") {
-    NavigationStack { SettingsView() }
-        .environment(Router())
-        .dynamicTypeSize(.accessibility2)
-}

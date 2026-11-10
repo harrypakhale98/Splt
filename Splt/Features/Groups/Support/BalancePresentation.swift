@@ -16,14 +16,6 @@ enum BalanceDirection: Equatable, Sendable {
             self = .settled
         }
     }
-
-    var caption: String {
-        switch self {
-        case .owed: String(localized: "you're owed")
-        case .owes: String(localized: "you owe")
-        case .settled: String(localized: "settled up")
-        }
-    }
 }
 
 /// One currency of a signed balance, ready to show.

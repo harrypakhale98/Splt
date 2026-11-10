@@ -45,11 +45,6 @@ final class Router {
     }
 
     func push(_ route: Route, in tab: AppTab? = nil) {
-        if route == .settings {
-            // the settings sections are the Account screen itself
-            openAccount()
-            return
-        }
         let target = tab ?? selectedTab
         selectedTab = target
         switch target {

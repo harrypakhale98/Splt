@@ -41,10 +41,6 @@ struct ExpenseFilter: Equatable, Sendable {
         isFiltering || !trimmedQuery.isEmpty
     }
 
-    mutating func clear() {
-        self = ExpenseFilter()
-    }
-
     mutating func clearFilters() {
         payer = nil
         category = nil

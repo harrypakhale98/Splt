@@ -6,20 +6,14 @@ struct GroupSettingsView: View {
     let groupID: GroupID
     /// Called after the group is deleted or you leave it, so the screen behind can step back.
     var onGroupRemoved: () -> Void = {}
-    /// True when shown inside a navigation stack as a pushed screen, which has its own back button.
-    var isPushed = false
 
     @Environment(\.dataServices) private var services
     @Environment(Router.self) private var router: Router?
 
     var body: some View {
-        if isPushed {
-            content
-        } else {
-            NavigationStack { content }
-                // set by the form below; cleared here because the form also disappears under a pushed picker
-                .onDisappear { router?.hasUnsavedForm = false }
-        }
+        NavigationStack { content }
+            // set by the form below; cleared here because the form also disappears under a pushed picker
+            .onDisappear { router?.hasUnsavedForm = false }
     }
 
     @ViewBuilder

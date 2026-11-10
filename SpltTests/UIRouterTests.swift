@@ -22,15 +22,6 @@ struct UIRouterTests {
         #expect(router.groupsPath.isEmpty)
     }
 
-    @Test func settingsRouteShowsTheAccountScreen() {
-        let router = Router()
-        router.accountPath = [.expense(id)]
-        router.push(.settings, in: .groups)
-        #expect(router.selectedTab == .groups)
-        #expect(router.sheet == .account)
-        #expect(router.accountPath.isEmpty)
-    }
-
     @Test func welcomeTourWaitsForAnOpenSheetToClose() {
         let router = Router()
         router.openAccount()
@@ -59,13 +50,6 @@ struct UIRouterTests {
         let router = Router(selectedTab: .friends)
         router.push(.friend(id))
         #expect(router.friendsPath == [.friend(id)])
-    }
-
-    @Test func groupSettingsRouteIsPushedOnTheGroupsTab() {
-        let router = Router(selectedTab: .friends)
-        router.push(.groupSettings(id), in: .groups)
-        #expect(router.selectedTab == .groups)
-        #expect(router.groupsPath == [.groupSettings(id)])
     }
 
     @Test func replacingTheTopStaysOnTheTabTheScreenIsIn() {

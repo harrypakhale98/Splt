@@ -66,7 +66,7 @@ struct UIShellDesignTests {
         #expect(Route.group(id).zoomSourceID == .group(id))
         #expect(Route.friend(id).zoomSourceID == .friend(id))
         #expect(Route.expense(id).zoomSourceID == nil)
-        #expect(Route.settings.zoomSourceID == nil)
+        #expect(Route.recurringExpenses(id).zoomSourceID == nil)
     }
 
     @Test func onboardingCompletionIsStored() {

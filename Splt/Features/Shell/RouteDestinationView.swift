@@ -20,14 +20,10 @@ struct RouteDestinationView: View {
             GroupDetailView(groupID: GroupID(rawValue: id))
         case .friend(let id):
             FriendDetailView(friendID: PersonID(rawValue: id))
-        case .settings:
-            SettingsView()
         case .expense(let id):
             ExpenseDetailView(expenseID: ExpenseID(rawValue: id))
         case .recurringExpenses(let id):
             RecurringExpensesView(groupID: GroupID(rawValue: id))
-        case .groupSettings(let id):
-            GroupSettingsView(groupID: GroupID(rawValue: id), isPushed: true)
         }
     }
 }
