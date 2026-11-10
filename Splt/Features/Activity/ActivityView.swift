@@ -61,6 +61,12 @@ private struct ActivityContent: View {
                 } header: {
                     Text(model.title(for: section, locale: locale))
                         .sectionHeaderStyle()
+                        // a pinned plain header has no backing of its own, so rows would draw through the date
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Depth.pageMargin + 4)
+                        .padding(.vertical, 6)
+                        .background(Ink.paper)
+                        .listRowInsets(EdgeInsets())
                 }
             }
         }

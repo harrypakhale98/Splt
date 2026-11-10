@@ -59,6 +59,8 @@ struct SettleControls: View {
                         .accessibilityLabel("Amount to pay in \(model.fullAmount?.currencyCode ?? "")")
                     stepButton("plus", label: "More", steps: 1)
                 }
+                // the amount must stay readable beside the steppers
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 .motionTransition(.opacity)
             }
             if let footer = amountMessage {

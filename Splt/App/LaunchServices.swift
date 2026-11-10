@@ -2,19 +2,31 @@ import Foundation
 import SwiftUI
 
 enum LaunchServices {
-    /// The data the app runs on. UI tests pass `-uitesting` to start on an empty in-memory store.
-    /// Debug builds also accept `-sampledata` to start on the sample trip.
+    /// The data the app runs on. Debug builds accept `-uitesting` to start on an empty in-memory store for
+    /// UI tests, `-sampledata` to start on the sample trip, and `-nostore` to act as if the store failed to open.
     @MainActor
     static func make(arguments: [String] = ProcessInfo.processInfo.arguments) -> DataServices? {
         #if DEBUG
         if arguments.contains("-sampledata") {
             return SampleData.previewServices()
         }
-        #endif
+        if arguments.contains("-nostore") {
+            return nil
+        }
         if arguments.contains("-uitesting") {
             return try? DataServices.inMemory()
         }
-        return IntentServices.shared.live()
+        #endif
+        let services = IntentServices.shared.live()
+        if let services { removeLeftovers(services) }
+        return services
+    }
+
+    /// Files that outlived what they belong to: photos of deleted groups, and exports already sent.
+    @MainActor
+    private static func removeLeftovers(_ services: DataServices) {
+        try? ReceiptStore.standard.removeUnreferenced(in: services.environment.context)
+        try? FileManager.default.removeItem(at: GroupExportFile.defaultDirectory)
     }
 }
 

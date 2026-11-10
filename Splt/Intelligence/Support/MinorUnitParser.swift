@@ -1,4 +1,5 @@
 import Foundation
+import SpltCore
 
 /// Turns typed or recognised amounts such as "1,234.50" or "12,5" into integer minor units.
 ///
@@ -7,11 +8,7 @@ import Foundation
 enum MinorUnitParser {
     /// Number of digits after the decimal point for an ISO 4217 code (2 for USD, 0 for JPY).
     static func fractionDigits(for currencyCode: String) -> Int {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyCode.uppercased()
-        return formatter.maximumFractionDigits
+        Currency.minorUnitExponent(for: currencyCode)
     }
 
     static func minorUnits(from text: String, currencyCode: String) -> Int64? {
@@ -53,8 +50,9 @@ enum MinorUnitParser {
             if digitsAfter == 0 {
                 decimalIndex = last.offset
             } else if fractionDigits == 0 {
-                guard digitsAfter == 3 else { return nil }
+                guard digitsAfter == 3, text.first != "0" else { return nil }
             } else if digitsAfter == 3 && !(fractionDigits == 3 && isDot) {
+                guard text.first != "0" else { return nil }
                 decimalIndex = nil
             } else if digitsAfter <= fractionDigits {
                 decimalIndex = last.offset
@@ -63,7 +61,8 @@ enum MinorUnitParser {
             }
         } else {
             let groups = text.split(separator: last.element, omittingEmptySubsequences: false).dropFirst()
-            guard groups.allSatisfy({ $0.count == 3 }) else { return nil }
+            // the last group has three digits, the ones before two or three: 1,234,567 or 1,23,456
+            guard groups.last?.count == 3, groups.dropLast().allSatisfy({ (2...3).contains($0.count) }) else { return nil }
         }
 
         if let decimalIndex {
@@ -80,6 +79,7 @@ enum MinorUnitParser {
         let paddedFraction = fractionPart.padding(toLength: fractionDigits, withPad: "0", startingAt: 0)
         let digits = integerDigits + paddedFraction
         guard !digits.isEmpty, digits.count <= 17 else { return nil }
-        return Int64(digits)
+        guard let value = Int64(digits), value <= MoneyParser.maximumMinorUnits else { return nil }
+        return value
     }
 }

@@ -21,6 +21,7 @@ struct IntentActions {
 
     let services: DataServices
     var now: @Sendable () -> Date = { Date() }
+    var leftGroups = LeftGroupsStore()
 
     // MARK: Add expense
 
@@ -62,7 +63,7 @@ struct IntentActions {
             guard let found = try services.groups.group(id: groupID) else { throw Failure.noGroup }
             return found
         }
-        let groups = try services.groups.groups(includeArchived: false).filter { $0.kind != .friend }
+        let groups = try services.groups.groups(includeArchived: false).filter { $0.kind != .friend && !leftGroups.contains($0.id) }
         guard let first = groups.first else { throw Failure.noGroup }
         return first
     }

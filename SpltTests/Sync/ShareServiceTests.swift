@@ -80,12 +80,4 @@ struct ShareServiceTests {
         privateDatabase.put(CKShare(recordZoneID: zone))
         #expect(try await service.share(zoneID: zone) != nil)
     }
-
-    @Test func stoppingRemovesTheShareOnce() async throws {
-        let (service, privateDatabase, _) = make()
-        _ = try await service.prepare(zoneID: zone, title: "Trip")
-        try await service.stopSharing(zoneID: zone)
-        #expect(!privateDatabase.contains(shareID(zone)))
-        await #expect(throws: SyncError.notShared) { try await service.stopSharing(zoneID: zone) }
-    }
 }

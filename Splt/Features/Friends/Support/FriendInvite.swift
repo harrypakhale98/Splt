@@ -3,6 +3,8 @@ import Foundation
 /// An invitation to become friends: who is asking, and the id that person has on their device.
 /// It travels as a `splt://invite` link, which is also what the QR code holds.
 struct FriendInvite: Hashable, Sendable {
+    static let maximumNameLength = 100
+
     var name: String
     /// The sender's id, so their name lines up with the same person once shared groups sync.
     var personID: UUID?
@@ -18,7 +20,7 @@ struct FriendInvite: Hashable, Sendable {
               let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems else { return nil }
         let name = (items.first { $0.name == "name" }?.value ?? "").tidied
         guard !name.isEmpty else { return nil }
-        self.name = name
+        self.name = String(name.prefix(Self.maximumNameLength))
         self.personID = items.first { $0.name == "id" }?.value.flatMap(UUID.init(uuidString:))
     }
 

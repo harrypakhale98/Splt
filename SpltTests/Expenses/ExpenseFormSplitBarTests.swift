@@ -237,4 +237,18 @@ struct ExpenseFormSplitBarTests {
         model.apply(receipt: receipt)
         #expect(model.selectedItemID == model.split.items.first?.id)
     }
+
+    @Test func aRefundSplitByExactAmountsDrawsItsRealProportions() throws {
+        let harness = try ExpenseFormHarness()
+        let fixture = harness.fixture
+        let refund = Expense(
+            groupID: fixture.group.id, title: "Refund", total: usd(-3000), date: fixture.clock.start,
+            paidBy: fixture.me.id, split: .exact(amounts: [fixture.me.id: usd(-1000), fixture.sam.id: usd(-2000)])
+        )
+        try fixture.services.expenses.add(refund, extras: ExpenseExtras())
+        let model = harness.editor(for: refund.id)
+        let data = try #require(model.barData)
+        let amounts = data.segments.filter { [fixture.me.id, fixture.sam.id].contains($0.person.id) }.compactMap(\.amount)
+        #expect(Set(amounts) == [usd(-1000), usd(-2000)])
+    }
 }

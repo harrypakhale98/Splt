@@ -8,6 +8,8 @@ enum GroupErrorMessage {
         switch error {
         case .memberStillHasBalance:
             return String(localized: "Settle up first. This person still owes or is owed money in the group.")
+        case .memberOnRecurringExpense(let title):
+            return String(localized: "This person is part of the recurring expense “\(title)”. Change or delete it first.")
         case .unreadableCSV(let detail):
             return String(localized: "This doesn't look like a Splitwise CSV export. \(detail)")
         case .notFound:

@@ -222,4 +222,37 @@ struct ExpenseRepositoryTests {
         try fixture.addExpense("Sam and Priya only", paidBy: fixture.sam, splitBetween: [fixture.sam.id, fixture.priya.id])
         #expect(try fixture.services.expenses.sharedExpenses(with: fixture.sam.id).map(\.id) == [both.id])
     }
+
+    @Test func aPastedMegabyteIsCutToFitACloudKitRecord() throws {
+        let fixture = try Fixture()
+        var expense = fixture.expense("Pizza")
+        expense.title = String(repeating: "é", count: 1_000_000)
+        expense.note = String(repeating: "é", count: 1_000_000)
+        try fixture.services.expenses.add(expense)
+        var edited = try #require(try fixture.services.expenses.expense(id: expense.id))
+        #expect(edited.title.count < 1_000)
+        edited.note = String(repeating: "é", count: 1_000_000)
+        try fixture.services.expenses.update(edited, extras: nil)
+        let saved = try #require(try fixture.services.expenses.expense(id: expense.id))
+        #expect(saved.note.count < 20_000)
+
+        let comment = ExpenseComment(
+            groupID: fixture.group.id, expenseID: expense.id, authorID: fixture.me.id,
+            text: String(repeating: "é", count: 1_000_000), createdAt: fixture.clock.start
+        )
+        try fixture.services.comments.add(comment)
+        #expect(try fixture.services.comments.comments(on: expense.id).first?.text.count ?? .max < 20_000)
+        let tracker = fixture.services.makeChangeTracker()
+        for change in try tracker.pendingChanges() {
+            let payload = try #require(try tracker.payload(recordType: change.recordType, recordName: change.recordName))
+            let bytes = payload.fields.values.values.reduce(0) { total, value in
+                switch value {
+                case .string(let text): total + text.utf8.count
+                case .data(let data): total + data.count
+                default: total + 8
+                }
+            }
+            #expect(bytes < 500_000)
+        }
+    }
 }

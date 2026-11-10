@@ -15,7 +15,7 @@ struct RuleBasedQuickAddParser: QuickAddParsing {
     }
 
     func parseNow(_ rawText: String, context: QuickAddContext) -> QuickAddDraft {
-        let original = NumberWords.replacingSpelledNumbers(in: rawText.tidied)
+        let original = CentPhrases.normalized(NumberWords.replacingSpelledNumbers(in: rawText.tidied))
         guard !original.isEmpty else { return QuickAddDraft() }
 
         var pass = Pass(text: original, resolver: NameResolver(candidates: context.candidateNames, text: original))
@@ -104,7 +104,7 @@ private struct Pass {
     private static let mePatterns: [TextPattern] = [
         TextPattern(#"\b(?:i|i'll|i’ll)\s+(?:both\s+)?"#.appending(meVerbs).appending(#"\b"#)),
         TextPattern(#"\bpaid\s+by\s+me\b|\bmy\s+treat\b|\bon\s+me\b"#),
-        TextPattern(#"^\s*(?:i\s+)?(?:paid|spent)\b"#)
+        TextPattern(#"^\s*(?:i\s+)?(?:paid|spent)\b(?!\s+by\b)"#)
     ]
     private static let paidByPattern = TextPattern(#"\bpaid\s+by\s+(?<name>NAME)"#.replacingPlaceholders())
     private static let namedPayerPattern = TextPattern(
@@ -272,7 +272,7 @@ private struct Pass {
         let words = CurrencyDetector.wordAlternation
         return TextPattern(
             #"(?<![\p{L}\d.,:/#])(?:(?<pre>"# + words + #")\.?\s?)?(?:(?<sym>[$€£¥₹])\s?)?"#
-                + #"(?<num>\d{1,3}(?:[,'.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?<k>k)?(?![\d:/%]|[.,]\d)"#
+                + #"(?<num>\d{1,3}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d{1,3}(?:[,'.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?<k>k(?![\p{L}]))?(?![\d:/%]|[.,]\d)"#
                 + #"(?:\s?(?<word>"# + words + #")(?![\p{L}]))?"#
         )
     }()
@@ -280,7 +280,8 @@ private struct Pass {
     private static let notMoneyAfter: Set<String> = [
         "people", "person", "persons", "ppl", "friends", "guests", "pax", "items", "item", "days", "day",
         "nights", "night", "hours", "hrs", "hr", "mins", "min", "minutes", "kids", "adults", "x", "am",
-        "pm", "st", "nd", "rd", "th", "km", "kg", "miles", "percent", "of"
+        "pm", "st", "nd", "rd", "th", "km", "kg", "kgs", "g", "gm", "gms", "gram", "grams", "mg", "ml", "l", "litre",
+        "litres", "liter", "liters", "cm", "mm", "m", "lb", "lbs", "oz", "gb", "mb", "tb", "pcs", "miles", "percent", "of"
     ]
     private static let notMoneyBefore: Set<String> = [
         "table", "room", "seat", "no", "number", "order", "flight", "gate", "route", "bus"
@@ -293,6 +294,7 @@ private struct Pass {
             var hasCurrency: Bool
         }
         var candidates: [Candidate] = []
+        var unlikely: [Candidate] = []
         for match in Self.amountPattern.matches(in: text) {
             guard let whole = Range(match.range, in: text) else { continue }
             let following = text[whole.upperBound...].drop { $0 == " " }
@@ -302,7 +304,9 @@ private struct Pass {
             let previousWord = String(preceding.prefix { $0.isLetter }.reversed()).lowercased()
             let hasMarker = match.group(named: "sym", in: text) != nil || match.group(named: "pre", in: text) != nil
                 || match.group(named: "word", in: text) != nil
-            if Self.notMoneyBefore.contains(previousWord), !hasMarker { continue }
+            // letters stuck to a number make it a measure or a code, unless they name a currency
+            let isGlued = !hasMarker && text[whole.upperBound...].first?.isLetter == true
+            let isUnlikely = (Self.notMoneyBefore.contains(previousWord) && !hasMarker) || isGlued
 
             let marker = match.group(named: "sym", in: text)
                 ?? match.group(named: "pre", in: text)
@@ -316,14 +320,15 @@ private struct Pass {
                 guard !overflow else { continue }
                 minor = scaled
             }
-            candidates.append(Candidate(
+            let candidate = Candidate(
                 range: match.range,
                 found: FoundAmount(minorUnits: minor, explicitCode: explicit),
                 hasCurrency: explicit != nil
-            ))
+            )
+            if isUnlikely { unlikely.append(candidate) } else { candidates.append(candidate) }
         }
         let marked = candidates.filter(\.hasCurrency)
-        let pool = marked.isEmpty ? candidates : marked
+        let pool = !marked.isEmpty ? marked : !candidates.isEmpty ? candidates : unlikely
         guard let chosen = pool.max(by: { $0.found.minorUnits < $1.found.minorUnits }) else { return nil }
         blank(chosen.range)
         return chosen.found
@@ -339,7 +344,7 @@ private struct Pass {
 
     func title() -> String {
         let pieces = text.components(separatedBy: "\u{00A6}")
-            .map { $0.trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.whitespaces).union(.symbols)) }
+            .map(Self.trimmedEdges)
             .filter { !$0.isEmpty }
         var words = pieces.joined(separator: " ").split(separator: " ").map(String.init)
         func isFiller(_ word: String) -> Bool {
@@ -350,11 +355,61 @@ private struct Pass {
         return words.joined(separator: " ").trimmingCharacters(in: .punctuationCharacters.union(.whitespaces)).sentenceCased
     }
 
+    /// Drops spaces, punctuation and symbols from both ends, keeping whole emoji.
+    private static func trimmedEdges(_ piece: String) -> String {
+        func isEdge(_ character: Character) -> Bool {
+            let isEmoji = !character.isASCII && character.unicodeScalars.first?.properties.isEmoji == true
+            return character.isWhitespace || character.isPunctuation || (character.isSymbol && !isEmoji)
+        }
+        var trimmed = Substring(piece)
+        while let first = trimmed.first, isEdge(first) { trimmed.removeFirst() }
+        while let last = trimmed.last, isEdge(last) { trimmed.removeLast() }
+        return String(trimmed)
+    }
+
     // MARK: Helpers
 
     private mutating func blank(_ range: NSRange) {
         guard let swiftRange = Range(range, in: text) else { return }
         text.replaceSubrange(swiftRange, with: Self.gap)
+    }
+}
+
+/// Rewrites "12 dollars and 50 cents" to "12.50 dollars" and "50 cents" to "0.50", so the amount pass reads one price.
+private enum CentPhrases {
+    private static let withWhole = TextPattern(
+        #"(?<![\p{L}\d.,])(\d+)\s*(dollars?|bucks?|euros?|pounds?|quid|rupees?)\s+(?:and\s+)?(\d{1,2})\s*(?:cents?|pence|paise)(?![\p{L}])"#
+    )
+    private static let alone = TextPattern(#"(?<![\p{L}\d.,$€£¥₹])(\d+)\s*(cents?|pence|paise)(?![\p{L}])"#)
+
+    static func normalized(_ text: String) -> String {
+        var result = text
+        replace(withWhole, in: &result) { match, text in
+            guard let whole = match.group(1, in: text), let unit = match.group(2, in: text),
+                  let cents = match.group(3, in: text).flatMap({ Int($0) }) else { return nil }
+            return "\(whole).\(twoDigits(cents)) \(unit)"
+        }
+        replace(alone, in: &result) { match, text in
+            guard let count = match.group(1, in: text).flatMap({ Int($0) }), let unit = match.group(2, in: text)?.lowercased() else {
+                return nil
+            }
+            let word = unit == "pence" ? " pounds" : unit == "paise" ? " rupees" : ""
+            return "\(count / 100).\(twoDigits(count % 100))\(word)"
+        }
+        return result
+    }
+
+    private static func twoDigits(_ value: Int) -> String {
+        value < 10 ? "0\(value)" : String(value)
+    }
+
+    private static func replace(
+        _ pattern: TextPattern, in text: inout String, with make: (NSTextCheckingResult, String) -> String?
+    ) {
+        for match in pattern.matches(in: text).reversed() {
+            guard let range = Range(match.range, in: text), let replacement = make(match, text) else { continue }
+            text.replaceSubrange(range, with: replacement)
+        }
     }
 }
 

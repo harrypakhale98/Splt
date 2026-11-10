@@ -106,7 +106,8 @@ struct RecapStats: Equatable, Sendable {
         let limit = calendar.dateInterval(of: component, for: end)?.start ?? end
         while cursor <= limit, built.count < 400 {
             built.append(Slice(start: cursor, total: Money(minorUnits: totals[cursor] ?? 0, currencyCode: code)))
-            guard let next = calendar.date(byAdding: component, value: 1, to: cursor) else { break }
+            // Not by adding a day: after a clock change at midnight that lands an hour off the next day's start.
+            guard let next = calendar.dateInterval(of: component, for: cursor)?.end else { break }
             cursor = next
         }
         slices = built
@@ -125,7 +126,7 @@ struct RecapStats: Equatable, Sendable {
             )
         }
 
-        let paidTotal = summary.byPerson.reduce(Int64(0)) { $0 + max($1.paid.minorUnits, 0) }
+        let paidTotal = summary.byPerson.reduce(Int64(0)) { $0 &+ max($1.paid.minorUnits, 0) }
         topPayer = summary.byPerson.first.flatMap { person in
             guard person.paid.minorUnits > 0, paidTotal > 0 else { return nil }
             let tied = summary.byPerson.dropFirst()
@@ -144,9 +145,10 @@ struct RecapStats: Equatable, Sendable {
         if !rest.isEmpty {
             // everything past the top four joins one "other" entry at the end, taking in the
             // category's own "other" when that made the top four, so no category shows twice
-            var units = rest.reduce(Int64(0)) { $0 + $1.amount.minorUnits }
+            // The sums wrap rather than trap on amounts nobody could have entered.
+            var units = rest.reduce(Int64(0)) { $0 &+ $1.amount.minorUnits }
             if let index = kept.firstIndex(where: { $0.category == .other }) {
-                units += kept.remove(at: index).units
+                units &+= kept.remove(at: index).units
             }
             kept.append((category: .other, units: units))
         }

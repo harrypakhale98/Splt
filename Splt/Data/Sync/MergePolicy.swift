@@ -50,3 +50,12 @@ enum MergePolicy {
         return local.tieBreaker >= remote.tieBreaker ? .local : .remote
     }
 }
+
+extension Date {
+    /// True when this modified date comes from an edit after `sent`, the date a server handed back.
+    /// CloudKit keeps whole milliseconds and may cut a date down to the one before, so anything closer
+    /// than the two millisecond step between local edits is the same edit.
+    func isLaterEdit(than sent: Date) -> Bool {
+        timeIntervalSince(sent) > 0.0015
+    }
+}

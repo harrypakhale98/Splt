@@ -6,7 +6,8 @@ enum MoneyTotals {
         var units: [String: Int64] = [:]
         for amount in amounts {
             let (value, overflow) = units[amount.currencyCode, default: 0].addingReportingOverflow(amount.minorUnits)
-            units[amount.currencyCode] = overflow ? (amount.minorUnits < 0 ? Int64.min : Int64.max) : value
+            // Never Int64.min: callers show and settle totals by their size, and that one cannot be negated.
+            units[amount.currencyCode] = overflow ? (amount.minorUnits < 0 ? -Int64.max : Int64.max) : max(value, -Int64.max)
         }
         return units.keys.sorted().compactMap { code in
             guard let value = units[code], value != 0 else { return nil }

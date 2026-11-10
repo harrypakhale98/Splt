@@ -138,7 +138,56 @@ struct MoneyParserTests {
     @Test func rejectsHugeAmounts() {
         #expect(throws: MoneyParseError.outOfRange) { try parse("99999999999999999999") }
         #expect(throws: MoneyParseError.outOfRange) { try parse("92233720368547758.08") }
-        #expect(throws: Never.self) { try parse("92233720368547758.07") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("92233720368547758.07") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("10000000000000.01") }
+        #expect(throws: Never.self) { try parse("10000000000000") }
+        #expect(throws: MoneyParseError.outOfRange) { try parse("1000000000000001", "JPY") }
+        #expect(throws: Never.self) { try parse("1000000000000000", "JPY") }
+    }
+
+    @Test func directionMarksAreIgnored() throws {
+        #expect(try parse("\u{200F}-12.50", "USD", Locale(identifier: "he_IL")) == -1250)
+        #expect(try parse("\u{061C}-12.50", "USD", Locale(identifier: "ar_SA")) == -1250)
+        #expect(try parse("12.50\u{200E}") == 1250)
+    }
+
+    @Test func plainStringRoundTripsInEveryLocale() throws {
+        for identifier in Locale.availableIdentifiers {
+            let locale = Locale(identifier: identifier)
+            for code in ["USD", "JPY", "KWD"] {
+                for units: Int64 in [-123_456, -1, 1_500, 123_456] {
+                    let money = Money(minorUnits: units, currencyCode: code)
+                    let parsed = try? MoneyParser.parse(money.plainString(locale: locale), currencyCode: code, locale: locale)
+                    #expect(parsed == money, "\(identifier) \(code) \(units)")
+                }
+            }
+        }
+    }
+
+    @Test func groupedAmountsParseInEveryLocale() throws {
+        // Toki Pona groups digits in twos with spaces. It is refused rather than misread, and iOS does not offer it.
+        for identifier in Locale.availableIdentifiers where !identifier.hasPrefix("tok") {
+            let locale = Locale(identifier: identifier)
+            for code in ["USD", "JPY", "KWD"] {
+                let money = Money(minorUnits: 123_456_789, currencyCode: code)
+                let text = money.decimalValue.formatted(.number.locale(locale).grouping(.automatic).precision(.fractionLength(money.exponent)))
+                let parsed = try? MoneyParser.parse(text, currencyCode: code, locale: locale)
+                #expect(parsed == money, "\(identifier) \(code) \(text)")
+            }
+        }
+    }
+
+    @Test func arabicGroupingIsNotReadAsADecimal() throws {
+        let arabic = Locale(identifier: "ar_SA")
+        #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234_000)
+        #expect(try parse("\u{0661}\u{066C}\u{0662}\u{0663}\u{0664}", "USD", arabic) == 123_400)
+        #expect(try parse("\u{0661}\u{066B}\u{0662}\u{0663}\u{0664}", "KWD", arabic) == 1_234)
+    }
+
+    @Test func theLastThousandsGroupHasThreeDigits() {
+        #expect(throws: MoneyParseError.self) { try parse("1,234,56") }
+        #expect(throws: MoneyParseError.self) { try parse("12,34,56") }
+        #expect(throws: MoneyParseError.self) { try parse("1.234.56", "EUR", germany) }
     }
 
     @Test func moneyInitialiserParses() throws {

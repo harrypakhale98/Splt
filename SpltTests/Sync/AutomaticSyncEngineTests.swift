@@ -129,6 +129,79 @@ struct AutomaticSyncEngineTests {
         #expect(fake.left == [group])
         await engine.stop()
     }
+
+    @Test func leavingWhileTheAccountIsOutOfReachIsRememberedForTheEngine() async {
+        let store = InMemorySyncStateStore()
+        let engine = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        #expect(engine.choice == .noOp(.accountUnavailable))
+        let group = GroupID()
+        try? await engine.leave(group: group)
+        #expect(store.loadMetadata().pendingLeaves == [group.description])
+        await engine.stop()
+    }
+
+    @Test func aBuildThatCannotSyncRemembersNoLeave() async {
+        let store = InMemorySyncStateStore()
+        let simulator = {
+            var environment = SyncEnvironment.signedDevice()
+            environment.isSimulator = true
+            return environment
+        }()
+        let engine = AutomaticSyncEngine(
+            environment: { simulator }, probe: FakeAccountProbe(.available), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        await #expect(throws: SyncError.unavailable) { try await engine.leave(group: GroupID()) }
+        #expect(store.loadMetadata().pendingLeaves == nil)
+        await engine.stop()
+    }
+
+    @Test func startingAgainAfterStoppingRestartsTheEngine() async {
+        let (engine, _, made) = make(environment: .signedDevice())
+        await engine.start()
+        await engine.stop()
+        await engine.start()
+        #expect(made.engines.reduce(0) { $0 + $1.startCount } == 2)
+        await engine.stop()
+    }
+
+    @Test func anAccountChangeDuringASwitchIsNotMissed() async throws {
+        let (engine, probe, made) = make(environment: .signedDevice())
+        await engine.start()
+        let first = try #require(made.engines.first)
+        let (gate, open) = AsyncStream<Void>.makeStream()
+        first.beforeStop = { for await _ in gate { break } }
+        probe.set(.unknown)
+        let switching = Task { await engine.reevaluate() }
+        #expect(await eventually { first.stopCount == 1 })
+        probe.set(.available)
+        await engine.reevaluate()
+        open.yield()
+        await switching.value
+        #expect(await eventually { engine.choice == .cloudKit(containerIdentifier: "iCloud.com.example.app") })
+        await engine.stop()
+    }
+
+    @Test func anOwnerIsRecognizedWhileTheAccountIsOutOfReach() async {
+        let store = InMemorySyncStateStore()
+        let group = GroupID()
+        var metadata = store.loadMetadata()
+        metadata.ownedShares = [group.description]
+        store.saveMetadata(metadata)
+        let engine = AutomaticSyncEngine(
+            environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
+            stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
+        )
+        await engine.start()
+        #expect(await engine.isSharedByMe(group: group))
+        #expect(await !engine.isSharedByMe(group: GroupID()))
+        await engine.stop()
+    }
 }
 
 @MainActor

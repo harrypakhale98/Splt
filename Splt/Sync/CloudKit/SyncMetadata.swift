@@ -33,6 +33,18 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     var personCopies: [String: [String: PersonCopy]] = [:]
     /// Person copies that still have to be uploaded.
     var personQueue: Set<PersonCopyKey> = []
+    /// Groups left on the device by the previous iCloud account. They stay local and are not uploaded.
+    /// Optional so that metadata saved before this field existed still loads.
+    var detachedZones: Set<String>?
+    /// Shared groups this person left, waiting for their last changes to reach the others.
+    /// Optional for the same reason.
+    var pendingLeaves: Set<String>?
+    /// Groups in your own iCloud last known to be shared with others. Optional for the same reason.
+    var ownedShares: Set<String>?
+
+    func isDetached(zoneName: String) -> Bool {
+        detachedZones?.contains(zoneName) == true
+    }
 
     func zoneID(forZoneName name: String) -> CKRecordZone.ID {
         let owner = zones[name]?.ownerName ?? CKCurrentUserDefaultName
@@ -54,7 +66,7 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     /// True when the zone has no copy of the person yet, or the copy is older than `modifiedAt`.
     func copyNeedsUpload(zoneName: String, recordName: String, modifiedAt: Date) -> Bool {
         guard let copy = copy(zoneName: zoneName, recordName: recordName) else { return true }
-        return copy.sentModifiedAt < modifiedAt
+        return modifiedAt.isLaterEdit(than: copy.sentModifiedAt)
     }
 
     mutating func setCopy(_ copy: PersonCopy?, zoneName: String, recordName: String) {
@@ -78,5 +90,7 @@ struct SyncMetadata: Codable, Equatable, Sendable {
         zones[zoneName] = nil
         personCopies[zoneName] = nil
         personQueue = personQueue.filter { $0.zoneName != zoneName }
+        pendingLeaves?.remove(zoneName)
+        ownedShares?.remove(zoneName)
     }
 }

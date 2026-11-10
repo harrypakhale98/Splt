@@ -38,6 +38,32 @@ struct SplitEditorStateTests {
         #expect(definition(state) == .issue(.invalidNumber))
     }
 
+    @Test func exactAmountsOfARefundKeepTheirSign() throws {
+        let refund = Money(minorUnits: -1000, currencyCode: "USD")
+        let shares: [PersonID: Money] = [a: Money(minorUnits: -700, currencyCode: "USD"), b: Money(minorUnits: -300, currencyCode: "USD")]
+        let state = SplitEditorState(definition: .exact(amounts: shares), locale: Locale(identifier: "en_US"))
+        let outcome = state.definition(participants: [a, b], currencyCode: "USD", locale: Locale(identifier: "en_US"))
+        guard case .definition(let definition) = outcome else {
+            Issue.record("Not read back: \(outcome)")
+            return
+        }
+        #expect(try SplitCalculator.shares(for: definition, total: refund) == shares)
+    }
+
+    @Test func aNegativeExactAmountOnAPurchaseIsStillRefused() throws {
+        var state = SplitEditorState()
+        state.method = .exact
+        state.exact = [a: "-5", b: "15"]
+        let outcome = state.definition(participants: [a, b], currencyCode: "USD", locale: Locale(identifier: "en_US"))
+        guard case .definition(let definition) = outcome else {
+            Issue.record("Not read back: \(outcome)")
+            return
+        }
+        #expect(throws: SplitError.negativeShare(a)) {
+            try SplitCalculator.shares(for: definition, total: Money(minorUnits: 1000, currencyCode: "USD"))
+        }
+    }
+
     @Test func percentagesBecomeBasisPoints() {
         var state = SplitEditorState()
         state.method = .percentage

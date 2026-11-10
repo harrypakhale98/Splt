@@ -16,7 +16,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 - A balance orbit that shows who owes whom, and a settle up that closes the ring
 - Any currency, with reference rates or a rate you set for the trip
 - Quick add from a sentence or your voice, and receipt scanning
-- Invites by link or QR code, synced through iCloud
+- Group invites through iCloud
 - Export to a spreadsheet or PDF
 - A trip recap for each group
 - Dark mode, large text, VoiceOver and Reduce Motion

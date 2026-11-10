@@ -115,13 +115,22 @@ final class SettleModel {
         return Money(minorUnits: full.minorUnits - amount.minorUnits, currencyCode: full.currencyCode)
     }
 
+    /// The line under the amount once it is recorded. A payment the other way adds to the debt, so it has none.
+    var outcomeNote: String? {
+        guard !isReversed else { return nil }
+        return remaining == nil ? String(localized: "Settled up") : String(localized: "still owed")
+    }
+
     // MARK: Share of the debt
 
-    /// The step of the stepper and the drag: a whole unit of the currency, or a tenth of one for small debts.
+    /// The step of the stepper and the drag: a whole unit of the currency, a tenth of one for small
+    /// debts, or the smallest unit when the debt is no bigger than that tenth.
     var step: Int64 {
         guard let full = fullAmount else { return 1 }
         let one = Int64(pow(10, Double(full.exponent)))
-        return full.minorUnits >= 10 * one ? one : max(one / 10, 1)
+        if full.minorUnits >= 10 * one { return one }
+        let tenth = max(one / 10, 1)
+        return full.minorUnits > tenth ? tenth : 1
     }
 
     /// How much of the debt is being paid, from 0 to 1. A payment above the debt counts as all of it.
@@ -132,7 +141,12 @@ final class SettleModel {
 
     /// Pays this share of the debt, rounded to the step. Everything above 98 percent means all of it.
     func setFraction(_ value: Double) {
-        guard let full = fullAmount, !isReversed else { return }
+        guard let full = fullAmount else { return }
+        // The other way there is no share of the debt to pick, only an amount to type.
+        guard !isReversed else {
+            amountMode = .partial
+            return
+        }
         let clamped = min(max(value, 0), 1)
         if clamped >= 0.98 {
             amountMode = .full
@@ -146,8 +160,8 @@ final class SettleModel {
     /// Moves the amount by whole steps, for the stepper and for VoiceOver. Never below one step.
     func nudge(by steps: Int) {
         guard let full = fullAmount, let current = amount else { return }
-        var units = current.minorUnits + Int64(steps) * step
-        units = max(units, step)
+        let (moved, overflow) = current.minorUnits.addingReportingOverflow(Int64(steps) * step)
+        let units = max(overflow ? Int64.max : moved, step)
         if !isReversed, units >= full.minorUnits {
             amountMode = .full
             return

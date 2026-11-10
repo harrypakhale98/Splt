@@ -52,7 +52,8 @@ struct AddExpenseLauncher: View {
     }
 
     private func resolve() -> Resolution {
-        let groups = (try? services?.groups.groups(includeArchived: false)) ?? []
+        let left = LeftGroupsStore()
+        let groups = ((try? services?.groups.groups(includeArchived: false)) ?? []).filter { !left.contains($0.id) }
         if let remembered = UUID(uuidString: lastGroupID), groups.contains(where: { $0.id.rawValue == remembered }) {
             return .group(GroupID(rawValue: remembered))
         }

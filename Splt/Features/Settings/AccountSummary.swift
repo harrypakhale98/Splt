@@ -6,10 +6,12 @@ struct AccountSummary: Equatable {
     /// The name your person is stored under. Initials come from this, so you read the same everywhere.
     var meName: String?
 
-    /// Reads the store. Anything that fails leaves that part empty.
+    /// Reads the store. Anything that fails leaves that part empty. A name given to your person on
+    /// another device moves into `profile` here, which runs before the header or the editor shows it.
     @MainActor
-    static func load(from services: DataServices?) -> AccountSummary {
+    static func load(from services: DataServices?, profile: AccountProfile = .shared) -> AccountSummary {
         guard let services else { return AccountSummary() }
+        profile.adoptName(from: services.people)
         var summary = AccountSummary()
         let me = try? services.people.me()
         summary.meID = me?.id

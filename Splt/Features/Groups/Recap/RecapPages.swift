@@ -255,6 +255,8 @@ struct RecapPayerPage: View {
             let tied = everyone.count > 1
             // each person's share of the bar, so a tie shows as two equal parts in their own colours
             let share = min(CGFloat(payer.percent) / 100, 1 / CGFloat(everyone.count))
+            // the percent sign goes through the locale, "50 %" in some regions
+            let percent = payer.percent.formatted(.percent.locale(locale))
             VStack(alignment: .leading, spacing: 14) {
                 RecapTitle(text: "Who paid the most")
                 HStack(spacing: 8) {
@@ -268,9 +270,9 @@ struct RecapPayerPage: View {
                     .minimumScaleFactor(0.6)
                 Group {
                     if tied {
-                        Text("split it, covering \(payer.percent)% of the bills each")
+                        Text("split it, covering \(percent) of the bills each")
                     } else {
-                        Text("covered \(payer.percent)% of the bills")
+                        Text("covered \(percent) of the bills")
                     }
                 }
                 .font(.title3)
@@ -324,7 +326,7 @@ struct RecapCategoriesPage: View {
                 .cornerRadius(0)
                 .foregroundStyle(color(at: index))
                 .accessibilityLabel(share.category.title)
-                .accessibilityValue("\(share.percent)%")
+                .accessibilityValue(share.percent.formatted(.percent.locale(locale)))
             }
             .frame(height: 210)
             .motion(Motion.reveal, value: active)
@@ -335,7 +337,7 @@ struct RecapCategoriesPage: View {
                         Label(share.category.title, systemImage: share.category.symbolName)
                             .font(.body)
                         Spacer(minLength: 4)
-                        Text("\(share.percent)%")
+                        Text(share.percent.formatted(.percent.locale(locale)))
                             .font(.body)
                             .monospacedDigit()
                         if !hidesAmounts {
@@ -433,13 +435,14 @@ struct RecapShareCard: View {
             // plain ledger rows: what on the left, the figure on the right
             VStack(alignment: .leading, spacing: 6) {
                 if let top = stats.categories.first {
-                    ledgerRow(Text(top.category.title), figure: "\(top.percent)%")
+                    ledgerRow(Text(top.category.title), figure: top.percent.formatted(.percent))
                 }
                 if let payer = stats.topPayer {
                     let names = recapPayerNames(payer, locale: .current)
+                    let percent = payer.percent.formatted(.percent)
                     ledgerRow(
                         Text("Paid by \(names)"),
-                        figure: payer.tiedWith.isEmpty ? "\(payer.percent)%" : String(localized: "\(payer.percent)% each")
+                        figure: payer.tiedWith.isEmpty ? percent : String(localized: "\(percent) each")
                     )
                 }
                 if let biggest = stats.biggest {

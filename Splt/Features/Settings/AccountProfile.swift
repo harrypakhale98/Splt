@@ -10,6 +10,9 @@ final class AccountProfile {
     static let shared = AccountProfile()
 
     static let nameKey = "profile.displayName"
+    /// Your person's name as this device last knew it. A difference from it tells a rename made here
+    /// from a rename made on another device.
+    private static let appliedNameKey = "profile.appliedName"
     private static let handlePrefix = "profile.handle."
 
     /// What people can use to pay you. Only these methods have a handle worth sharing.
@@ -85,10 +88,32 @@ final class AccountProfile {
     /// Does nothing until a name is set.
     func applyName(to people: any PersonRepository) throws {
         guard hasName else { return }
-        var me = try people.ensureMe(name: effectiveName)
-        guard me.name != effectiveName else { return }
-        me.name = effectiveName
-        try people.update(me)
+        let name = effectiveName
+        var me = try people.ensureMe(name: name)
+        let applied = defaults.string(forKey: Self.appliedNameKey)
+        if me.name != name, name != applied {
+            me.name = name
+            try people.update(me)
+        }
+        // the same name as last time, on a person with another name: that rename came from another device
+        if me.name == name { defaults.set(name, forKey: Self.appliedNameKey) }
+    }
+
+    /// Takes over a name that another device gave your person, so it is what this device shows and edits.
+    func adoptName(from people: any PersonRepository) {
+        guard let me = try? people.me(), me.name != String(localized: "You"),
+              me.name != defaults.string(forKey: Self.appliedNameKey) else { return }
+        defaults.set(me.name, forKey: Self.appliedNameKey)
+        displayName = me.name
+        defaults.set(me.name, forKey: Self.nameKey)
+        defaults.set(me.name, forKey: AddFriendModel.inviteNameKey)
+    }
+
+    /// For launch. The name is stored per device, so applying it every launch would undo a rename made on
+    /// another device. Once a profile exists, only saving in the editor changes its name.
+    func applyNameIfNoProfile(to people: any PersonRepository) throws {
+        guard try people.me() == nil else { return }
+        try applyName(to: people)
     }
 
     // MARK: Messages

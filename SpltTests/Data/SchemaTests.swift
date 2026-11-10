@@ -82,4 +82,15 @@ struct SchemaTests {
         try context.save()
         #expect(try context.fetchCount(FetchDescriptor<PersonRecord>()) == 1)
     }
+
+    @Test func aDamagedStoreFileFailsToOpenAndIsLeftAlone() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appending(path: "damaged.store")
+        let junk = Data(repeating: 0x5A, count: 8_192)
+        try junk.write(to: url)
+        #expect(throws: (any Error).self) { _ = try ModelContainerFactory.make(url: url) }
+        #expect(try Data(contentsOf: url) == junk)
+    }
 }

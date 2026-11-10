@@ -57,6 +57,7 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
 
     /// Stores an expense without saving. Importers pass `logsActivity: false` and write one summary entry instead.
     func insert(_ expense: Expense, extras: ExpenseExtras, logsActivity: Bool) throws {
+        let expense = Self.fitted(expense)
         guard let groupID = expense.groupID else { throw DataError.missingGroup }
         guard try env.groupRecord(groupID) != nil else { throw DataError.notFound("group \(groupID)") }
         try Self.validate(expense)
@@ -73,6 +74,7 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
     /// Stores many expenses without saving or logging. Everything is checked first, with a handful
     /// of queries instead of one per expense, so a bad row leaves the store untouched.
     func insertBatch(_ expenses: [Expense], extras: ExpenseExtras = ExpenseExtras(), createdBy: PersonID?) throws {
+        let expenses = expenses.map(Self.fitted)
         var knownGroups = Set<GroupID>()
         var seen = Set<ExpenseID>()
         for expense in expenses {
@@ -96,6 +98,7 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
     }
 
     func update(_ expense: Expense, extras: ExpenseExtras?) throws {
+        let expense = Self.fitted(expense)
         guard let record = try env.expenseRecord(expense.id), record.deletedAt == nil else {
             throw DataError.notFound("expense \(expense.id)")
         }
@@ -159,6 +162,13 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
             .filter { abs($0.date.timeIntervalSince(expense.date)) <= window }
             .filter { TitleSimilarity.areSimilar($0.title, expense.title) }
             .compactMap { try? Expense($0) }
+    }
+
+    private static func fitted(_ expense: Expense) -> Expense {
+        var expense = expense
+        expense.title = expense.title.limited(to: RecordLimits.name)
+        expense.note = expense.note.limited(to: RecordLimits.text)
+        return expense
     }
 
     private static func validate(_ expense: Expense) throws {

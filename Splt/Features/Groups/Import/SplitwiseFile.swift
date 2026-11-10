@@ -13,12 +13,18 @@ enum SplitwiseFile {
     static func read(_ url: URL) throws -> String {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        // a file in the cloud is read whole into memory, so look at its size first
+        if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > maximumBytes { throw Unreadable() }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
         return try text(from: data)
     }
 
     static func text(from data: Data) throws -> String {
         guard data.count <= maximumBytes else { throw Unreadable() }
+        if data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF]) {
+            guard let decoded = String(data: data, encoding: .utf16) else { throw Unreadable() }
+            return decoded
+        }
         let decoded = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1)
         guard let decoded, !decoded.contains("\u{0}") else { throw Unreadable() }
         return decoded

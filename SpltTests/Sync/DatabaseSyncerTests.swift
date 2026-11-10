@@ -294,4 +294,16 @@ struct DatabaseSyncerTests {
         rig.syncer.handle(.sentRecords(saved: [], failedSaves: [], deleted: [], failedDeletes: [id: CKError(.networkFailure)]))
         #expect(rig.coordinator.status == .offline)
     }
+
+    @Test func aFetchedBatchThatCouldNotBeAppliedIsFetchedAgainNextLaunch() throws {
+        let rig = try Rig()
+        rig.device.store.saveEngineState(Data([1]), scope: .privateDatabase)
+        rig.syncer.applyFault = { input in
+            if case .fetchedRecords = input { throw CKError(.internalError) }
+        }
+        rig.syncer.handle(.fetchedRecords(modifications: [], deletions: []))
+        rig.syncer.applyFault = nil
+        rig.syncer.handle(.stateUpdate(Data([2])))
+        #expect(rig.device.store.loadEngineState(.privateDatabase) == nil)
+    }
 }

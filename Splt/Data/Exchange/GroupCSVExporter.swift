@@ -25,10 +25,11 @@ enum GroupCSVExporter {
             let cells = people.map { amountText(net[$0.id]) }
             entries.append((expense.date, CSVText.line([
                 dateText.string(from: expense.date), CSVText.neutralized(expense.title),
-                expense.category.rawValue, amountText(expense.total), expense.total.currencyCode
+                expense.category.rawValue, amountText(expense.total), CSVText.neutralized(expense.total.currencyCode)
             ] + cells)))
         }
-        for payment in snapshot.payments {
+        // Skipped like the ledger skips them, so the rows still add up to the total balance.
+        for payment in snapshot.payments where (try? payment.validate()) != nil {
             let payer = people.first { $0.id == payment.payer }?.name ?? "?"
             let receiver = people.first { $0.id == payment.receiver }?.name ?? "?"
             let cells = people.map { person -> String in
@@ -38,7 +39,7 @@ enum GroupCSVExporter {
             }
             entries.append((payment.date, CSVText.line([
                 dateText.string(from: payment.date), CSVText.neutralized("\(payer) paid \(receiver)"),
-                paymentCategory, amountText(payment.amount), payment.amount.currencyCode
+                paymentCategory, amountText(payment.amount), CSVText.neutralized(payment.amount.currencyCode)
             ] + cells)))
         }
         lines += entries.sorted { $0.date < $1.date }.map(\.line)
@@ -47,7 +48,7 @@ enum GroupCSVExporter {
         for currency in ledger.currencies {
             let table = ledger.netBalances[currency] ?? [:]
             let cells = people.map { amountText(table[$0.id]) }
-            lines.append(CSVText.line(["", totalBalanceLabel, "", "", currency] + cells))
+            lines.append(CSVText.line(["", totalBalanceLabel, "", "", CSVText.neutralized(currency)] + cells))
         }
         return lines.joined(separator: "\n") + "\n"
     }

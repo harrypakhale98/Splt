@@ -30,6 +30,12 @@ struct FriendInviteTests {
         #expect(FriendInvite(url: URL(string: "splt://group?name=Sam")!) == nil)
     }
 
+    @Test func aHugeNameInALinkIsCut() throws {
+        let long = String(repeating: "a", count: 5_000)
+        let invite = try #require(FriendInvite(url: URL(string: "splt://invite?name=\(long)")!))
+        #expect(invite.name.count == FriendInvite.maximumNameLength)
+    }
+
     @Test func ignoresAnIdThatIsNotAUUID() throws {
         let invite = try #require(FriendInvite(url: URL(string: "splt://invite?name=Sam&id=nope")!))
         #expect(invite.personID == nil)

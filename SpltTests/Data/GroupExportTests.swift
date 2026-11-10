@@ -17,6 +17,15 @@ struct GroupExportTests {
         return fixture
     }
 
+    @Test func csvSkipsAPaymentTheLedgerWouldSkip() throws {
+        let fixture = try populated()
+        let bad = Payment(payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(.min), date: fixture.clock.start)
+        let snapshot = GroupExportSnapshot(
+            group: fixture.group, people: [], expenses: [], payments: [bad], exportedAt: fixture.clock.start
+        )
+        #expect(!GroupCSVExporter.text(for: snapshot, timeZone: utc).contains(GroupCSVExporter.paymentCategory + ","))
+    }
+
     @Test func csvStartsWithTheSplitwiseHeader() throws {
         let fixture = try populated()
         let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)
@@ -60,6 +69,17 @@ struct GroupExportTests {
         try fixture.addExpense("=HYPERLINK(\"http://example.com\")", cents: 100)
         let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)
         #expect(CSVText.rows(text)[1][1].hasPrefix("'="))
+    }
+
+    @Test func csvNeutralizesACurrencyFromAnotherDevice() throws {
+        let fixture = try Fixture()
+        let expense = try fixture.addExpense("Dinner")
+        let context = fixture.services.environment.context
+        try #require(try ExpenseRecord.find(recordName: expense.id.description, in: context)).currencyCode = "=1+"
+        try context.save()
+        let text = String(decoding: try fixture.services.groups.export(group: fixture.group.id, format: .csv), as: UTF8.self)
+        let rows = CSVText.rows(text)
+        #expect(!rows.contains { row in row.contains { $0.hasPrefix("=") } })
     }
 
     @Test func exportedCSVImportsBackToTheSameBalances() throws {

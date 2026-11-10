@@ -65,6 +65,13 @@ struct ExchangeRatesTests {
         #expect(broken.rate(from: "USD", to: "EUR") == nil)
     }
 
+    @Test func aRateTooLargeForDecimalThrowsInsteadOfGivingAnAmount() {
+        let rates = ExchangeRates(baseCurrency: "EUR", rates: ["USD": Decimal(string: "1e120")!, "JPY": Decimal(string: "1e-120")!])
+        let amount = money(9_000_000_000_000_000_000, "JPY")
+        #expect(throws: ExchangeRatesError.overflow) { try rates.convert(amount, to: "USD") }
+        #expect(throws: ExchangeRatesError.overflow) { try rates.convert([person(1): [amount]], to: "USD") }
+    }
+
     @Test func codableRoundTrip() throws {
         let value = ExchangeRates(
             baseCurrency: "eur",

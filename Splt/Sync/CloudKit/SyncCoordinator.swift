@@ -44,6 +44,22 @@ final class SyncCoordinator {
         retry = scheduler
     }
 
+    /// Plans another attempt to start after `begin` failed.
+    func startFailed(_ error: any Error) {
+        retry?.failed(SyncFailure(error))
+    }
+
+    func cancelRetry() {
+        retry?.cancel()
+    }
+
+    /// Accepting an invitation makes this person a member, even if they were removed or left before.
+    func joined(zoneName: String) throws {
+        adapter.updateMetadata { $0.pendingLeaves?.remove(zoneName) }
+        guard let user = userRecordName else { return }
+        try ParticipantImporter(services: services).ensureMembership(ofMe: user, inZone: zoneName, afterInvitation: true)
+    }
+
     func attach(_ queue: any EngineQueue, for scope: DatabaseScope) {
         queues[scope] = queue
     }
@@ -75,14 +91,40 @@ final class SyncCoordinator {
     // MARK: Queueing
 
     /// Queues everything the data store has waiting.
-    func reconcile() throws {
+    func reconcile(givingUpOn refused: Set<String> = []) throws {
         guard isReady else { return }
         try adoptIdentity()
+        try finishLeaves(givingUpOn: refused)
         let plan = try adapter.collectOutgoing()
         guard !plan.isEmpty else { return }
         for scope in DatabaseScope.allCases {
             let part = plan.part(for: scope)
             if !part.isEmpty { queues[scope]?.queue(part) }
+        }
+    }
+
+    /// Remembers that this person is leaving a shared group. The zone is given up once what they
+    /// still have to send, such as leaving the member list, has gone out: after that they cannot write to it.
+    func requestLeave(zoneName: String) {
+        adapter.updateMetadata { $0.pendingLeaves = ($0.pendingLeaves ?? []).union([zoneName]) }
+    }
+
+    private func finishLeaves(givingUpOn refused: Set<String>) throws {
+        for zone in (adapter.metadata.pendingLeaves ?? []).sorted() {
+            if adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
+                if !refused.contains(zone), try adapter.tracker.hasUnsentChanges(inZone: zone) { continue }
+                try adapter.tracker.retireForLeaving(zone: zone)
+            }
+            adapter.updateMetadata { $0.pendingLeaves?.remove(zone) }
+        }
+    }
+
+    /// Remembers whether a group in your own iCloud is shared, for when the server cannot be asked.
+    func noteOwnShare(zoneName: String, exists: Bool) {
+        adapter.updateMetadata { metadata in
+            var owned = metadata.ownedShares ?? []
+            if exists { owned.insert(zoneName) } else { owned.remove(zoneName) }
+            metadata.ownedShares = owned
         }
     }
 
@@ -119,6 +161,8 @@ final class SyncCoordinator {
         let importer = ParticipantImporter(services: services)
         var suggestions: [ClaimSuggestion] = []
         for share in report.shares {
+            let zone = share.recordID.zoneID
+            if zone.scope == .privateDatabase { noteOwnShare(zoneName: zone.zoneName, exists: true) }
             suggestions += try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
         }
         for zone in report.touchedZones where adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
@@ -153,10 +197,13 @@ final class SyncCoordinator {
         saved: [CKRecord], failedSaves: [(record: CKRecord, error: CKError)],
         deleted: [CKRecord.ID], failedDeletes: [CKRecord.ID: CKError], scope: DatabaseScope
     ) throws {
-        try adapter.didSend(saved: saved, deleted: deleted)
+        let orphans = try adapter.didSend(saved: saved, deleted: deleted)
+        if !orphans.isEmpty { queues[scope]?.queue(OutgoingPlan(deletes: orphans)) }
         var failures: [SyncFailure] = []
+        var missingZones: [CKRecordZone.ID: [CKRecord.ID]] = [:]
         for failed in failedSaves {
             let outcome = try adapter.saveFailed(record: failed.record, error: failed.error)
+            if let zone = outcome.askServerAbout { missingZones[zone, default: []].append(failed.record.recordID) }
             if outcome.requeue { queues[scope]?.queue(saves: [failed.record.recordID]) }
             if let zone = outcome.recreateZone { queues[scope]?.queue(zonesToSave: [zone]) }
             if let zone = outcome.goneZone { try fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
@@ -165,8 +212,25 @@ final class SyncCoordinator {
         for (id, error) in failedDeletes {
             failures.append(try adapter.deleteFailed(id: id, error: error))
         }
+        if !missingZones.isEmpty {
+            Task { [weak self] in await self?.settleMissingZones(missingZones, scope: scope) }
+        }
         noteResult(failures: failures, scope: scope)
-        if failures.isEmpty { try reconcile() }
+        // no permission means the zone is no longer ours, so a leave has nothing more to wait for
+        let refused = failedSaves.filter { SyncFailure($0.error) == .noPermission }.map(\.record.recordID.zoneID.zoneName)
+        if failures.isEmpty || !refused.isEmpty { try reconcile(givingUpOn: Set(refused)) }
+    }
+
+    /// A fetch reports a zone deleted elsewhere or lost by the server, and both are handled there. If the zone
+    /// is still known afterwards nothing explains it, so it is made again. If the fetch fails, the changes stay
+    /// dirty and the next attempt asks again.
+    private func settleMissingZones(_ zones: [CKRecordZone.ID: [CKRecord.ID]], scope: DatabaseScope) async {
+        guard let queue = queues[scope], (try? await queue.fetchChanges()) != nil else { return }
+        for (zone, records) in zones where adapter.metadata.isKnown(zoneName: zone.zoneName) {
+            adapter.updateMetadata { $0.zones[zone.zoneName] = nil }
+            queue.queue(zonesToSave: [zone])
+            queue.queue(saves: records)
+        }
     }
 
     private func noteResult(failures: [SyncFailure], scope: DatabaseScope) {

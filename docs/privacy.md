@@ -6,14 +6,16 @@ Splt does not collect your data. There is no Splt server, no account and no anal
 
 ## Where your data lives
 
-- On your iPhone, in the app's own storage.
+- On your iPhone, in the app's own storage, and in that iPhone's backup if you back it up.
 - In your own iCloud, if you are signed in to iCloud. Splt uses Apple's CloudKit to keep your devices in step and to share a group with the people you invite. This data belongs to your Apple Account and counts against your iCloud storage. We cannot see it.
 
 If you turn iCloud off, Splt keeps working and keeps everything on the device.
 
 ## Who can see a group
 
-You and the people you invite to that group. An invite is a link that you send yourself, through Messages or any other way you choose. Only people who accept it can see the group's members, expenses, payments and comments.
+You and the people you invite to that group. An invite is a link that you send yourself, through Messages or any other way you choose. Only people who accept it can see the group's members, expenses, payments and comments. Everyone in a group can add, change and remove what is in it, so invite people you trust.
+
+An email address or phone number that you pick from Contacts stays on your device. It is not shared with the group.
 
 ## What Splt does not do
 
@@ -28,11 +30,12 @@ When an expense is in another currency than its group, Splt can look up a rate f
 
 ## Features that use the device
 
-- **Camera.** Receipts are scanned on the device with Apple's frameworks. A receipt photo you keep stays on the device that scanned it. Only its file name syncs.
+- **Camera.** Receipts are scanned on the device with Apple's frameworks. A receipt photo you keep stays on the device that scanned it and that device's backup. Only its file name syncs.
 - **Microphone and speech.** Voice entry is turned into text on the device.
 - **Smart entry and suggestions.** These use Apple's on-device language model when it is available.
 - **Translation.** Comments are translated with Apple's system translation.
 - **Notifications.** Reminders are local notifications that Splt schedules on your device. A notice about a friend's change is built on your device after iCloud wakes the app. Splt has no push server.
+- **Spotlight and Siri.** Group and friend names, and who is in each group, go into the search index on your device so Spotlight and Siri can find them. Adding an expense or hearing a balance through Siri needs an unlocked iPhone.
 - **Pay with.** When you tap a payment app in Settle Up, Splt opens that app or its website with the amount and a short note. Splt never handles the payment, and what the other app does with it is up to that app.
 
 ## Exports
@@ -41,7 +44,7 @@ Exporting a group as CSV, PDF or JSON creates a file on your device. It goes whe
 
 ## Deleting your data
 
-Deleting a group in the app removes it from your devices and your iCloud. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Deleting the app removes what it stored on the device.
+Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Deleting the app removes what it stored on the device.
 
 ## Children
 

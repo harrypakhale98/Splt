@@ -233,6 +233,21 @@ struct SyncStoreAdapterTests {
         ])
     }
 
+    @Test func uploadsThatComeBackCutToMillisecondsAreNotSentAgain() throws {
+        let device = try SyncDevice(start: 1_750_000_000.123_456_7)
+        let me = try device.services.people.ensureMe(name: "Me")
+        try device.services.groups.create(SplitGroup(name: "Flat", currencyCode: "USD", memberIDs: [me.id]))
+        let (_, records) = try device.outgoing()
+        for record in records {
+            let sent = try #require(record[RecordSchema.modifiedAtKey] as? Date)
+            let cut = (sent.timeIntervalSince1970 * 1000).rounded(.down) / 1000
+            record[RecordSchema.modifiedAtKey] = Date(timeIntervalSince1970: cut) as NSDate
+        }
+        try device.adapter.didSend(saved: records, deleted: [])
+        #expect(try device.adapter.collectOutgoing().isEmpty)
+        #expect(try device.tracker.pendingChanges().isEmpty)
+    }
+
     @Test func aNewerServerVersionWinsTheConflictAndIsNotSentAgain() throws {
         let populated = try PopulatedDevice()
         let expense = try populated.addExpense()
@@ -310,7 +325,7 @@ struct SyncStoreAdapterTests {
         #expect(record.isDirty)
     }
 
-    @Test func aMissingZoneIsRecreatedForPrivateGroups() throws {
+    @Test func aKnownPrivateZoneThatIsMissingWaitsForTheServerToExplain() throws {
         let populated = try PopulatedDevice()
         try populated.addExpense()
         let cloud = FakeCloud()
@@ -318,9 +333,10 @@ struct SyncStoreAdapterTests {
         try populated.addExpense("Another")
         let sent = try #require(try populated.device.outgoing().records.first { $0.recordType == "Expense" })
         let outcome = try populated.device.adapter.saveFailed(record: sent, error: CKError(.zoneNotFound))
-        #expect(outcome.recreateZone?.zoneName == populated.zone)
-        #expect(outcome.requeue)
-        #expect(populated.device.adapter.metadata.zones[populated.zone] == nil)
+        #expect(outcome.askServerAbout?.zoneName == populated.zone)
+        #expect(outcome.recreateZone == nil)
+        #expect(!outcome.requeue)
+        #expect(populated.device.adapter.metadata.zones[populated.zone] != nil)
     }
 
     @Test func otherFailuresKeepTheChangesAndReportWhy() throws {
@@ -417,6 +433,8 @@ struct SyncStoreAdapterTests {
         let cloud = FakeCloud()
         try cloud.upload(from: populated.device)
         let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: "_owner")
+        // the upload above made it a private zone; here it is one the device knows as someone else's
+        populated.device.adapter.updateMetadata { $0.zones[populated.zone] = ZoneInfo(ownerName: "_owner", scope: .sharedDatabase) }
         let needsSend = try populated.device.adapter.zoneDeleted(zone, reason: .deleted)
         #expect(!needsSend)
         #expect(try populated.device.services.groups.group(id: populated.group.id) == nil)
@@ -465,5 +483,120 @@ struct SyncStoreAdapterTests {
         let reloaded = SyncStoreAdapter(tracker: populated.device.tracker, store: populated.device.store)
         #expect(reloaded.metadata == populated.device.adapter.metadata)
         #expect(reloaded.metadata.zones[populated.zone] != nil)
+    }
+
+    @Test func theNameOfSomeoneWhoJoinedIsNotReplacedByTheOneFromTheShare() throws {
+        let owner = try PopulatedDevice()
+        let joined = CloudIdentity.personID(forUserRecordName: "_jane")
+        try ParticipantImporter(services: owner.device.services).importPeople(from: [ParticipantSnapshot(
+            userRecordName: "_jane", displayName: nil, contactHints: [], isCurrentUser: false, hasJoined: true
+        )], myUserRecordName: "_owner")
+        #expect(try owner.device.services.people.person(id: joined)?.name == "Friend")
+        #expect(try owner.device.tracker.pendingChanges().allSatisfy { $0.recordName != joined.description })
+
+        var fields = SyncFields()
+        fields.set("name", "Jane")
+        fields.set("kind", PersonKind.friend.rawValue)
+        let chosenLongAgo = owner.device.clock.start.addingTimeInterval(-10_000_000)
+        let record = RecordMapper.record(
+            for: SyncPayload(recordType: .person, recordName: joined.description, modifiedAt: chosenLongAgo, fields: fields),
+            in: CKRecordZone.ID(zoneName: owner.zone, ownerName: CKCurrentUserDefaultName)
+        )
+        let report = try owner.device.adapter.applyFetched(modifications: [record], deletions: [])
+        #expect(report.requeue.isEmpty)
+        #expect(try owner.device.services.people.person(id: joined)?.name == "Jane")
+    }
+
+    @Test func mergingAPlaceholderDoesNotBringBackADeletedZone() throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        try populated.device.adapter.zoneDeleted(zone, reason: .deleted)
+        try ReferenceRewriter(tracker: populated.device.tracker).rewrite(from: populated.sam.id.rawValue, to: UUID())
+        #expect(try populated.device.adapter.collectOutgoing().isEmpty)
+        #expect(try populated.device.tracker.pendingChanges().isEmpty)
+    }
+
+    @Test func aGroupFromThePreviousAccountIsNotUploadedAfterAnEdit() throws {
+        let populated = try PopulatedDevice()
+        let expense = try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        var edited = expense
+        edited.title = "After the switch"
+        try populated.device.services.expenses.update(edited, extras: nil)
+        let plan = try populated.device.adapter.collectOutgoing()
+        #expect(plan.isEmpty)
+    }
+
+    @Test func aNewGroupAfterAnAccountSwitchStillUploads() throws {
+        let populated = try PopulatedDevice()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        let fresh = SplitGroup(name: "New", currencyCode: "USD", memberIDs: [populated.me.id])
+        try populated.device.services.groups.create(fresh)
+        let plan = try populated.device.adapter.collectOutgoing()
+        #expect(plan.zonesToSave.map(\.zoneName) == [fresh.id.description])
+        #expect(plan.saves.allSatisfy { $0.zoneID.zoneName == fresh.id.description })
+    }
+
+    @Test func aGroupFromThePreviousAccountReconnectsWhenItsZoneComesBack() throws {
+        let populated = try PopulatedDevice()
+        let expense = try populated.addExpense()
+        try FakeCloud().upload(from: populated.device)
+        try populated.device.adapter.resetForNewAccount(userRecordName: "_other")
+        var edited = expense
+        edited.title = "After the switch"
+        try populated.device.services.expenses.update(edited, extras: nil)
+        populated.device.adapter.registerZone(CKRecordZone.ID(zoneName: populated.zone, ownerName: "_owner"))
+        #expect(try populated.device.adapter.collectOutgoing().saves.contains { $0.recordName == expense.id.description })
+    }
+
+    @Test func metadataSavedBeforeDetachedZonesStillLoads() throws {
+        let old = #"{"zones":{},"personCopies":{},"personQueue":[]}"#
+        let metadata = try JSONDecoder().decode(SyncMetadata.self, from: Data(old.utf8))
+        #expect(!metadata.isDetached(zoneName: "zone"))
+    }
+
+    @Test func deletingAZoneLeavesTheTombstonesOfOtherZones() throws {
+        let populated = try PopulatedDevice()
+        let device = populated.device
+        let expense = try populated.addExpense()
+        let comment = ExpenseComment(
+            groupID: populated.group.id, expenseID: expense.id, authorID: populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        let other = SplitGroup(name: "Other", currencyCode: "USD", memberIDs: [populated.me.id])
+        try device.services.groups.create(other)
+        let otherExpense = Expense(
+            groupID: other.id, title: "Lunch", total: usdAmount(100), date: device.clock.start,
+            paidBy: populated.me.id, split: .equal(participants: [populated.me.id])
+        )
+        try device.services.expenses.add(otherExpense)
+        let cloud = FakeCloud()
+        try cloud.upload(from: device)
+        try device.services.comments.delete(id: comment.id)
+        try cloud.upload(from: device)
+        try device.services.groups.delete(id: other.id)
+        try cloud.upload(from: device)
+        let context = device.tracker.context
+        #expect(try CommentRecord.find(recordName: comment.id.uuidString, in: context)?.deletedAt != nil)
+        #expect(try GroupRecord.find(recordName: other.id.description, in: context) == nil)
+        #expect(try ExpenseRecord.find(recordName: otherExpense.id.description, in: context) == nil)
+    }
+
+    @Test func aProfileWithoutAChosenNameIsNotUploadedUntilItHasOne() throws {
+        let device = try SyncDevice()
+        var me = try device.services.people.ensureMe(name: String(localized: "You"))
+        try device.services.groups.create(SplitGroup(name: "Flat", currencyCode: "USD", memberIDs: [me.id]))
+        let first = try device.adapter.collectOutgoing()
+        #expect(!first.saves.contains { $0.recordName == me.id.description })
+
+        me.name = "Sam"
+        try device.services.people.update(me)
+        let named = try device.adapter.collectOutgoing()
+        #expect(named.saves.contains { $0.recordName == me.id.description })
     }
 }

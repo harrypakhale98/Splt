@@ -27,11 +27,15 @@ extension ExpenseFormModel {
         case .percentage:
             raw = people.map { AmountInput.basisPoints(split.percent[$0.id, default: ""], locale: locale) ?? 0 }
         case .exact:
-            raw = people.map { AmountInput.money(split.exact[$0.id, default: ""], currencyCode: currencyCode, locale: locale)?.minorUnits ?? 0 }
+            // A refund has negative shares. The bar shows proportions, so it uses their size.
+            let allowNegative = total?.isNegative == true
+            raw = people.map {
+                abs(AmountInput.money(split.exact[$0.id, default: ""], currencyCode: currencyCode, locale: locale, allowNegative: allowNegative)?.minorUnits ?? 0)
+            }
         case .shares:
             raw = people.map { AmountInput.hundredths(split.weights[$0.id, default: "1"], locale: locale) ?? 0 }
         case .adjustment, .itemized:
-            let byPerson = Dictionary(uniqueKeysWithValues: sharePreview.map { ($0.person.id, max($0.amount.minorUnits, 0)) })
+            let byPerson = Dictionary(uniqueKeysWithValues: sharePreview.map { ($0.person.id, abs($0.amount.minorUnits)) })
             raw = people.map { byPerson[$0.id] ?? 0 }
         }
         return SplitBarMath.scaled(raw, to: SplitBarMath.basisPoints)

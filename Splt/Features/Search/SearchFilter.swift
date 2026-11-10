@@ -39,7 +39,8 @@ struct SearchFilter: Equatable, Sendable {
 
     private static func haystack(_ expense: Expense, groupName: String?, names: [PersonID: String]) -> String {
         let people = expense.participants.compactMap { names[$0] }.joined(separator: " ")
-        return [expense.title, expense.note, expense.category.rawValue, groupName ?? "", people].joined(separator: " ")
+        let amount = expense.total.plainString(locale: Locale(identifier: "en_US_POSIX"))
+        return [expense.title, expense.note, expense.category.rawValue, groupName ?? "", people, amount].joined(separator: " ")
     }
 
     private static func contains(_ text: String, _ word: String) -> Bool {

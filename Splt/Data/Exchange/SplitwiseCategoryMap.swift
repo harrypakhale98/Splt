@@ -25,7 +25,8 @@ enum SplitwiseCategoryMap {
     static func category(for name: String) -> ExpenseCategory {
         let lowered = name.lowercased()
         if let exact = ExpenseCategory(rawValue: lowered) { return exact }
-        for rule in rules where rule.keywords.contains(where: lowered.contains) {
+        let words = lowered.split { !$0.isLetter }
+        for rule in rules where rule.keywords.contains(where: { keyword in words.contains { $0.hasPrefix(keyword) } }) {
             return rule.category
         }
         return .general

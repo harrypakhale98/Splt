@@ -54,6 +54,7 @@ struct FriendHero: View {
                     Text("Also \(otherAmounts)")
                         .font(Typeface.figure)
                         .foregroundStyle(Ink.secondary)
+                        .accessibilityLabel(Text("Also \(spokenOthers)"))
                 }
             } else {
                 Text("Settled up")
@@ -80,5 +81,9 @@ struct FriendHero: View {
         ListFormatter.localizedString(
             byJoining: position.others.map { MoneyFormatting.string($0, locale: locale, showsSign: true) }
         )
+    }
+
+    private var spokenOthers: String {
+        ListFormatter.localizedString(byJoining: position.others.map { MoneyLabel.spokenBalance($0, locale: locale) })
     }
 }

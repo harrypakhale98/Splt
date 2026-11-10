@@ -49,6 +49,8 @@ final class ExpenseFormModel {
     @ObservationIgnored var original: Expense?
     @ObservationIgnored var originalExtras = ExpenseExtras()
     @ObservationIgnored var template: RecurringExpense?
+    /// True when the form was filled from a refund, whose negative total must stay readable.
+    @ObservationIgnored var startedAsRefund = false
 
     var amountText = ""
     var currencyCode = "USD"
@@ -72,12 +74,16 @@ final class ExpenseFormModel {
     var isReading = false
     var filledNotice: String?
     var unmatchedNames: [String] = []
+    /// Names in a note that fit more than one person in the group.
+    var ambiguousNames: [String] = []
     var suggestedCategory: ExpenseCategory?
     var possibleDuplicates: [Expense] = []
     var isScanning = false
     var scanNotice: String?
     var saveCount = 0
     var saveError: String?
+    /// What this form stored. A second tap on Save hands this back and stores nothing.
+    @ObservationIgnored var savedExpense: Expense?
     @ObservationIgnored private var snapshot: Snapshot?
     @ObservationIgnored var categoryTask: Task<Void, Never>?
 
@@ -108,7 +114,7 @@ final class ExpenseFormModel {
     var groupCurrencyCode: String { group?.currencyCode ?? currencyCode }
 
     var total: Money? {
-        AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: original?.isRefund == true)
+        AmountInput.money(amountText, currencyCode: currencyCode, locale: locale, allowNegative: original?.isRefund == true || startedAsRefund)
     }
 
     var isDirty: Bool { snapshot.map { $0 != Snapshot(self) } ?? false }
@@ -204,6 +210,8 @@ final class ExpenseFormModel {
         var title: String
         var category: ExpenseCategory
         var note: String
+        var date: Date
+        var groupID: GroupID?
         var payer: PayerState
         var participants: Set<PersonID>
         var split: SplitEditorState
@@ -216,6 +224,8 @@ final class ExpenseFormModel {
             title = model.title
             category = model.category
             note = model.note
+            date = model.date
+            groupID = model.group?.id
             payer = model.payer
             participants = model.participants
             split = model.split

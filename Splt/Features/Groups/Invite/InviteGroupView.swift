@@ -56,6 +56,7 @@ struct InviteGroupView: View {
                         Button("Copy Link", systemImage: "doc.on.doc") {
                             UIPasteboard.general.string = url.absoluteString
                             copyCount += 1
+                            AccessibilityNotification.Announcement(String(localized: "Link copied")).post()
                         }
                     }
                 } footer: {

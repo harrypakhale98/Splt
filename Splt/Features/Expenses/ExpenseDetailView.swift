@@ -53,6 +53,7 @@ private struct ExpenseDetailScreen: View {
             Button("Delete Expense", role: .destructive) {
                 model.delete()
                 deleteCount += 1
+                AccessibilityNotification.Announcement(String(localized: "Expense deleted")).post()
             }
             Button("Cancel", role: .cancel) {}
         } message: {

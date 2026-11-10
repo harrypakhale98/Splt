@@ -16,7 +16,7 @@ extension ExpenseFormModel {
         return Expense(
             id: original?.id ?? ExpenseID(),
             groupID: group.id,
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            title: title.split(whereSeparator: \.isNewline).joined(separator: " ").trimmingCharacters(in: .whitespaces),
             total: total,
             date: date,
             category: category,
@@ -30,6 +30,7 @@ extension ExpenseFormModel {
     /// when `canSave` is false, or the repository's error.
     @discardableResult
     func save() throws -> Expense {
+        if let savedExpense { return savedExpense }
         guard canSave, var expense = makeExpense() else { throw SaveFailure.notReady }
         switch mode {
         case .add:
@@ -41,6 +42,7 @@ extension ExpenseFormModel {
             try saveTemplate(expense)
         }
         saveCount += 1
+        savedExpense = expense
         return expense
     }
 

@@ -95,4 +95,13 @@ struct AddFriendModelTests {
         AddFriendModel(services: services, defaults: defaults).inviteName = "Jamie"
         #expect(AddFriendModel(services: services, defaults: defaults).inviteName == "Jamie")
     }
+
+    @Test func anInviteWithNoIdAddsThePersonOnce() throws {
+        let services = try DataServices.inMemory()
+        let model = model(services)
+        let invite = FriendInvite(name: "Sam", personID: nil)
+        guard case .created = try #require(model.accept(invite)) else { Issue.record("expected a new person"); return }
+        guard case .existing = try #require(model.accept(invite)) else { Issue.record("expected the same person"); return }
+        #expect(try services.people.friends().count == 1)
+    }
 }

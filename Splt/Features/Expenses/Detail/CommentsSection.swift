@@ -4,11 +4,11 @@ import SwiftUI
 /// Reaction emoji offered on every comment, with the name VoiceOver speaks for each.
 enum CommentReactions {
     static let choices: [(emoji: String, name: String)] = [
-        ("\u{1F44D}", "Thumbs up"),
-        ("\u{2764}\u{FE0F}", "Heart"),
-        ("\u{1F602}", "Laughing"),
-        ("\u{1F62E}", "Surprised"),
-        ("\u{1F389}", "Celebration")
+        ("\u{1F44D}", String(localized: "Thumbs up")),
+        ("\u{2764}\u{FE0F}", String(localized: "Heart")),
+        ("\u{1F602}", String(localized: "Laughing")),
+        ("\u{1F62E}", String(localized: "Surprised")),
+        ("\u{1F389}", String(localized: "Celebration"))
     ]
 
     static func name(for emoji: String) -> String {

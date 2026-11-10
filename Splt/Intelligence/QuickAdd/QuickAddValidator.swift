@@ -83,7 +83,8 @@ enum QuickAddValidator {
             let isThousands = match.group(named: "k", in: text) != nil
             let digits = isThousands ? String(token.dropLast()) : token
             guard let minor = MinorUnitParser.minorUnits(from: digits, currencyCode: currencyCode) else { continue }
-            result.insert(isThousands ? minor * 1000 : minor)
+            let (value, overflow) = minor.multipliedReportingOverflow(by: isThousands ? 1000 : 1)
+            if !overflow { result.insert(value) }
         }
         return result
     }

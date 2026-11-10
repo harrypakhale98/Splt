@@ -35,11 +35,7 @@ struct HeroAmount: View {
     }
 
     private var spokenText: String {
-        let amount = MoneyFormatting.magnitudeString(money, locale: locale)
-        guard showsSign else { return amount }
-        if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
-        if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
-        return String(localized: "Settled up")
+        showsSign ? MoneyLabel.spokenBalance(money, locale: locale) : MoneyFormatting.magnitudeString(money, locale: locale)
     }
 }
 

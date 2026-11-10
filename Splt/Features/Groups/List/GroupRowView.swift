@@ -34,7 +34,7 @@ struct GroupRowView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(summary.group.name)
                 .font(.headline)
-                .lineLimit(2)
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
             Text("^[\(summary.memberCount) member](inflect: true)")
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)

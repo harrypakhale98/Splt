@@ -125,7 +125,23 @@ struct GroupSettingsViewModelTests {
         #expect(RateInput.parse(" 2 ", locale: GroupsTestCalendar.english) == 2)
         #expect(RateInput.parse("-1", locale: GroupsTestCalendar.english) == nil)
         #expect(RateInput.parse("x", locale: GroupsTestCalendar.english) == nil)
+        #expect(RateInput.parse("1.08", locale: german) == Decimal(string: "1.08"))
+        #expect(RateInput.parse("1,5", locale: GroupsTestCalendar.english) == Decimal(string: "1.5"))
+        #expect(RateInput.parse("0.9", locale: Locale(identifier: "ar_SA")) == Decimal(string: "0.9"))
+        #expect(RateInput.parse("\u{0660}\u{066B}\u{0669}", locale: Locale(identifier: "ar_SA")) == Decimal(string: "0.9"))
+        #expect(RateInput.parse("25,000", locale: GroupsTestCalendar.english) == 25_000)
+        #expect(RateInput.parse("1.085", locale: german) == 1_085)
+        #expect(RateInput.parse("0.125", locale: german) == Decimal(string: "0.125"))
+        #expect(RateInput.parse("0,125", locale: GroupsTestCalendar.english) == Decimal(string: "0.125"))
+        #expect(RateInput.parse(".125", locale: german) == Decimal(string: "0.125"))
+        #expect(RateInput.parse("1234,567", locale: GroupsTestCalendar.english) == Decimal(string: "1234.567"))
+        #expect(RateInput.parse("1.08abc", locale: GroupsTestCalendar.english) == nil)
+        #expect(RateInput.parse("1.2.3", locale: GroupsTestCalendar.english) == nil)
+        #expect(RateInput.parse("1e3", locale: GroupsTestCalendar.english) == nil)
+        #expect(RateInput.parse("0", locale: GroupsTestCalendar.english) == nil)
+        #expect(RateInput.parse(".", locale: GroupsTestCalendar.english) == nil)
         #expect(RateInput.string(Decimal(string: "0.0065")!, locale: GroupsTestCalendar.english) == "0.0065")
+        #expect(RateInput.string(Decimal(string: "0.00671234")!, locale: GroupsTestCalendar.english) == "0.00671234")
     }
 
     // MARK: Members
@@ -151,6 +167,46 @@ struct GroupSettingsViewModelTests {
         let row = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
         model.remove(row)
         #expect(try #require(model.blockedMessage).contains("owes $10.00"))
+    }
+
+    private func addRent(_ fixture: Fixture) throws {
+        try fixture.services.recurring.add(RecurringExpense(
+            groupID: fixture.group.id, title: "Rent", total: usdAmount(900), payers: [fixture.me.id: usdAmount(900)],
+            split: .equal(participants: [fixture.me.id, fixture.sam.id]),
+            rule: RecurrenceRule(frequency: .monthly, startDate: fixture.clock.start)
+        ))
+    }
+
+    @Test func aMemberOnARecurringExpenseIsToldWhichOne() throws {
+        let fixture = try Fixture()
+        try addRent(fixture)
+        let model = makeModel(fixture)
+        let sam = try #require(model.memberRows.first { $0.person.id == fixture.sam.id })
+        #expect(!sam.canRemove)
+        model.remove(sam)
+        let message = try #require(model.blockedMessage)
+        #expect(message.contains("Sam"))
+        #expect(message.contains("Rent"))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.sam.id) == true)
+
+        model.blockedMessage = nil
+        let priya = try #require(model.memberRows.first { $0.person.id == fixture.priya.id })
+        #expect(priya.canRemove)
+    }
+
+    @Test func youCannotLeaveWhileOnARecurringExpense() async throws {
+        let fixture = try Fixture()
+        try addRent(fixture)
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        let block = try #require(model.leaveBlock)
+        #expect(block.contains("Rent"))
+        #expect(await model.leave(using: LocalGroupSharing()) == false)
+        #expect(!leftGroups.contains(fixture.group.id))
+    }
+
+    @Test func theRepositoryErrorNamesTheRecurringExpense() {
+        #expect(GroupErrorMessage.text(for: DataError.memberOnRecurringExpense("Rent")).contains("Rent"))
     }
 
     @Test func aSettledMemberCanBeRemoved() throws {
@@ -200,6 +256,28 @@ struct GroupSettingsViewModelTests {
         #expect(model.memberRows.count == 4)
     }
 
+    @Test func typingANameAlreadyInTheGroupAddsNobody() throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        let everyone = try fixture.services.people.allPeople().count
+        model.addMember(named: " SAM ")
+        #expect(model.memberRows.count == 3)
+        #expect(try fixture.services.people.allPeople().count == everyone)
+        #expect(model.errorMessage == "Sam is already in this group.")
+    }
+
+    @Test func typingTheNameOfAFriendAddsThatFriend() throws {
+        let fixture = try Fixture()
+        let outsider = Person(name: "Dee")
+        try fixture.services.people.add(outsider)
+        let model = makeModel(fixture)
+        let everyone = try fixture.services.people.allPeople().count
+        model.addMember(named: "dee")
+        #expect(model.memberRows.map(\.person.id).contains(outsider.id))
+        #expect(try fixture.services.people.allPeople().count == everyone)
+        #expect(model.errorMessage == nil)
+    }
+
     @Test func addingAFriendReusesThePerson() throws {
         let fixture = try Fixture()
         let outsider = Person(name: "Dee")
@@ -223,6 +301,33 @@ struct GroupSettingsViewModelTests {
         #expect(leftGroups.contains(fixture.group.id))
         let group = try #require(try fixture.services.groups.group(id: fixture.group.id))
         #expect(!group.memberIDs.contains(fixture.me.id))
+    }
+
+    private struct OwnerSharing: GroupSharing {
+        func inviteURL(for groupID: GroupID, groupName: String) async throws -> URL { URL(string: "splt://group")! }
+        func leave(groupID: GroupID) async throws { Issue.record("An owner must not reach leave") }
+        func isSharedByMe(groupID: GroupID) async -> Bool { true }
+    }
+
+    @Test func theOwnerOfASharedGroupCannotLeaveAndIsToldWhatToDo() async throws {
+        let fixture = try Fixture()
+        let leftGroups = isolatedLeftGroups()
+        let model = makeModel(fixture, leftGroups: leftGroups)
+        #expect(model.leaveBlock == nil)
+        await model.loadSharing(using: OwnerSharing())
+        let block = try #require(model.leaveBlock)
+        #expect(block.contains("Stop sharing"))
+        #expect(block.contains("delete"))
+        #expect(await model.leave(using: OwnerSharing()) == false)
+        #expect(model.blockedMessage == block)
+        #expect(!leftGroups.contains(fixture.group.id))
+        #expect(try fixture.services.groups.group(id: fixture.group.id)?.memberIDs.contains(fixture.me.id) == true)
+    }
+
+    @Test func aShareMadeSinceTheScreenOpenedStillBlocksLeaving() async throws {
+        let fixture = try Fixture()
+        let model = makeModel(fixture)
+        #expect(await model.leave(using: OwnerSharing()) == false)
     }
 
     @Test func youCannotLeaveWithABalance() async throws {

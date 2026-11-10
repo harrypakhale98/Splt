@@ -20,7 +20,9 @@ extension SplitCalculator {
                 tieBreakOffset: index
             )
             for (person, units) in parts {
-                itemTotals[person, default: 0] += units
+                let (sum, overflow) = itemTotals[person, default: 0].addingReportingOverflow(units)
+                guard !overflow else { throw SplitError.overflow }
+                itemTotals[person] = sum
             }
         }
 

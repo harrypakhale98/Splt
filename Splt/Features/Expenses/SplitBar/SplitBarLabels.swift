@@ -34,7 +34,7 @@ enum SplitBarLabels {
     static func percent(_ segment: SplitBarSegment, scale: Int64, locale: Locale) -> String {
         guard scale > 0 else { return "" }
         let value = Double(segment.weight) / Double(scale) * 100
-        return value.formatted(.number.locale(locale).precision(.fractionLength(0...1))) + "%"
+        return (value / 100).formatted(.percent.locale(locale).precision(.fractionLength(0...1)))
     }
 
     private static func adjustment(_ segment: SplitBarSegment, locale: Locale) -> String? {

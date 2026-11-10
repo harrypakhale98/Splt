@@ -7,11 +7,14 @@ import Speech
 @Observable
 final class DictationController {
     private(set) var isListening = false
+    /// Why dictation ended without hearing anything, when the person did not stop it themselves.
+    private(set) var notice: String?
 
     @ObservationIgnored private let service: any Dictating
     @ObservationIgnored private var task: Task<Void, Never>?
     /// Set by `cancel()`, so the words heard so far stay but the form is not filled in.
     @ObservationIgnored private var skipsFinish = false
+    @ObservationIgnored private var stopRequested = false
 
     init(service: any Dictating = SpeechDictationService()) {
         self.service = service
@@ -27,18 +30,28 @@ final class DictationController {
         }
         isListening = true
         skipsFinish = false
+        notice = nil
+        stopRequested = false
         task = Task { [service] in
             let stream = await service.start(locale: locale)
+            var heardSomething = false
             for await text in stream {
+                heardSomething = true
                 update(text)
             }
             isListening = false
+            if !heardSomething, !stopRequested {
+                notice = await service.requestPermission() == .denied
+                    ? String(localized: "Microphone access is off for Splt. Turn it on in Settings, or type instead.")
+                    : String(localized: "Dictation could not start. You can type instead.")
+            }
             if !skipsFinish { finished() }
             skipsFinish = false
         }
     }
 
     func stop() {
+        stopRequested = true
         Task { [service] in await service.stop() }
     }
 

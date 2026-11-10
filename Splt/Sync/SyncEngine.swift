@@ -49,6 +49,9 @@ protocol SyncEngine: AnyObject {
     /// `anyoneWithLink` the owner's share is opened so its link works for anyone who has it.
     func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare
     func accept(_ invitation: ShareInvitation) async throws
-    /// Leaves a group someone else shared. For the owner this stops sharing and keeps the group.
+    /// Leaves a group someone else shared. A group in your own iCloud is not affected.
     func leave(group: GroupID) async throws
+    /// True when the group is in your own iCloud and shared with others. Stopping is done in the invite
+    /// sheet, or by deleting the group. With no network the last known answer is used.
+    func isSharedByMe(group: GroupID) async -> Bool
 }

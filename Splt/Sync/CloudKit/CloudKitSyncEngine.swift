@@ -41,7 +41,8 @@ final class CloudKitSyncEngine: SyncEngine {
         backend: any CloudKitBackend, services: DataServices, store: any SyncStateStore,
         notifier: RemoteChangeNotifier? = nil,
         connectivity: @escaping @Sendable () -> AsyncStream<Bool> = { ConnectivityMonitor().updates() },
-        reconcileDelay: Duration = .milliseconds(400)
+        reconcileDelay: Duration = .milliseconds(400),
+        retryPolicy: BackoffPolicy = BackoffPolicy()
     ) {
         self.backend = backend
         self.services = services
@@ -51,7 +52,7 @@ final class CloudKitSyncEngine: SyncEngine {
         self.reconcileDelay = reconcileDelay
         self.adapter = SyncStoreAdapter(tracker: services.makeChangeTracker(), store: store)
         self.coordinator = SyncCoordinator(services: services, adapter: adapter)
-        coordinator.setRetry(RetryScheduler { [weak self] in await self?.retryNow() })
+        coordinator.setRetry(RetryScheduler(policy: retryPolicy) { [weak self] in await self?.retryNow() })
         coordinator.onStatusChange = { [weak self] in self?.publish($0) }
         coordinator.onRemoteChanges = { [weak self] report in self?.notifier?.notify(for: report, services: self?.services) }
     }
@@ -68,8 +69,10 @@ final class CloudKitSyncEngine: SyncEngine {
         } catch {
             isStarted = false
             publish(SyncFailure(error).status ?? .error(SyncFailure.genericMessage))
+            coordinator.startFailed(error)
             return
         }
+        publish(coordinator.status)
 
         let privateSyncer = DatabaseSyncer(scope: .privateDatabase, coordinator: coordinator, store: store)
         let sharedSyncer = DatabaseSyncer(scope: .sharedDatabase, coordinator: coordinator, store: store)
@@ -91,6 +94,7 @@ final class CloudKitSyncEngine: SyncEngine {
 
     func stop() async {
         isStarted = false
+        coordinator.cancelRetry()
         tasks.forEach { $0.cancel() }
         tasks = []
         reconcileTask?.cancel()
@@ -140,6 +144,10 @@ final class CloudKitSyncEngine: SyncEngine {
     }
 
     private func retryNow() async {
+        guard isStarted else {
+            await start()
+            return
+        }
         try? coordinator.reconcile()
         try? await sendChanges()
         try? await fetchChanges()
@@ -173,6 +181,7 @@ final class CloudKitSyncEngine: SyncEngine {
         try coordinator.reconcile()
         try await privateSyncer.sendChanges()
         let share = try await service.prepare(zoneID: zoneID, title: value.name, anyoneWithLink: anyoneWithLink)
+        coordinator.noteOwnShare(zoneName: zoneID.zoneName, exists: true)
         return try backend.groupShare(share, groupName: value.name)
     }
 
@@ -182,18 +191,31 @@ final class CloudKitSyncEngine: SyncEngine {
         guard isStarted else { throw SyncError.notReady }
         try await backend.accept(metadata)
         try await fetchChanges()
+        try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)
+    }
+
+    func isSharedByMe(group: GroupID) async -> Bool {
+        let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
+        guard zoneID.scope == .privateDatabase else { return false }
+        do {
+            let shared = try await backend.shareService.share(zoneID: zoneID) != nil
+            coordinator.noteOwnShare(zoneName: zoneID.zoneName, exists: shared)
+            return shared
+        } catch {
+            return adapter.metadata.ownedShares?.contains(zoneID.zoneName) == true
+        }
     }
 
     func leave(group: GroupID) async throws {
         guard try services.groups.group(id: group) != nil else { throw SyncError.groupNotFound }
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
-        if zoneID.scope == .privateDatabase {
-            try await backend.shareService.stopSharing(zoneID: zoneID)
-            return
-        }
-        guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { throw SyncError.notReady }
-        try adapter.tracker.retireLocally(zone: zoneID.zoneName)
-        sharedSyncer.queue(zonesToDelete: [zoneID])
+        guard zoneID.scope == .sharedDatabase else { return }
+        coordinator.requestLeave(zoneName: zoneID.zoneName)
+        // before sync has started the request just waits: it is stored, and the first reconcile picks it up
+        guard let sharedSyncer = syncers.first(where: { $0.scope == .sharedDatabase }) else { return }
+        try coordinator.reconcile()
+        try? await sharedSyncer.sendChanges()
+        try coordinator.reconcile()
         try await sharedSyncer.sendChanges()
     }
 }

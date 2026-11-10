@@ -13,6 +13,7 @@ struct FriendRow: View {
         let lines = BalanceLine.lines(for: summary.balance)
         HStack(spacing: 12) {
             AvatarView(person: summary.person, size: 28)
+                .accessibilityHidden(true)
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 4) {
                     nameText
@@ -20,6 +21,8 @@ struct FriendRow: View {
                 }
             } else {
                 nameText
+                    // keeps a word readable: past this the amount scales down instead of taking more width
+                    .frame(minWidth: 110, alignment: .leading)
                 Spacer(minLength: 8)
                 balanceBlock(lines)
             }
@@ -50,10 +53,14 @@ struct FriendRow: View {
                         Text(MoneyFormatting.string(line.money, locale: locale, showsSign: false))
                             .font(Typeface.figure)
                             .foregroundStyle(Ink.direction(of: line.money.minorUnits))
+                            // an amount never breaks across lines, as in MoneyLabel: the name wraps first
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                             .accessibilityLabel(spoken(line))
                     }
                 }
             }
+            .layoutPriority(1)
         }
     }
 

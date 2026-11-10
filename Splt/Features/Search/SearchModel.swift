@@ -76,6 +76,10 @@ final class SearchModel {
             let filter = NaturalSearchParser(people: known, now: now(), calendar: calendar).parse(text)
             if filter.isStructured {
                 apply(filter)
+                if expenses.isEmpty, !base.expenses.isEmpty {
+                    expenses = base.expenses
+                    understood = []
+                }
             } else {
                 expenses = base.expenses
                 understood = []

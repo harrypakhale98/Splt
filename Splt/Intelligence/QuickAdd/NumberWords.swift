@@ -15,11 +15,17 @@ enum NumberWords {
         "eighty": 80, "ninety": 90
     ]
     private static let currencyWords: Set<String> = [
-        "dollar", "dollars", "buck", "bucks", "euro", "euros", "pound", "pounds", "quid", "rupee", "rupees"
+        "dollar", "dollars", "buck", "bucks", "euro", "euros", "pound", "pounds", "quid", "rupee", "rupees",
+        "cent", "cents", "pence", "paise"
     ]
 
     static func replacingSpelledNumbers(in text: String) -> String {
-        let pieces = text.components(separatedBy: " ")
+        let spaced = text.replacingOccurrences(
+            of: #"(?i)\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b"#,
+            with: "$1 $2",
+            options: .regularExpression
+        )
+        let pieces = spaced.components(separatedBy: " ")
         var output: [String] = []
         var index = 0
         while index < pieces.count {
@@ -72,10 +78,11 @@ enum NumberWords {
                 current += value
                 sawLarge = true
             } else if word == "hundred" {
-                if current == 0 && index == start { break }
+                if (current == 0 && index == start) || current >= 100 { break }
                 current = max(current, 1) * 100
                 sawLarge = true
             } else if word == "thousand" {
+                if total > 0 { break }
                 total += max(current, 1) * 1000
                 current = 0
                 sawLarge = true

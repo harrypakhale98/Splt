@@ -1,6 +1,5 @@
 import SpltCore
 import SwiftUI
-import Synchronization
 import UIKit
 
 /// Shows an amount with tabular digits.
@@ -22,6 +21,10 @@ struct MoneyLabel: View {
         Text(MoneyFormatting.string(money, locale: locale, showsSign: style == .balance))
             .monospacedDigit()
             .foregroundStyle(color)
+            // an amount never breaks across lines: neighbors wrap first, then it shrinks a little
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .layoutPriority(1)
             .accessibilityLabel(accessibilityText)
     }
 
@@ -39,8 +42,12 @@ struct MoneyLabel: View {
     }
 
     private var accessibilityText: String {
+        style == .balance ? Self.spokenBalance(money, locale: locale) : MoneyFormatting.magnitudeString(money, locale: locale)
+    }
+
+    /// A signed balance in words, so VoiceOver says who owes whom instead of "plus" or "minus".
+    static func spokenBalance(_ money: Money, locale: Locale) -> String {
         let amount = MoneyFormatting.magnitudeString(money, locale: locale)
-        guard style == .balance else { return amount }
         if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
         if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
         return String(localized: "Settled up")
@@ -57,26 +64,8 @@ enum MoneyFormatting {
 
     /// The amount without any sign.
     static func magnitudeString(_ money: Money, locale: Locale = .current) -> String {
-        let digits = fractionDigits(for: money.currencyCode, locale: locale)
-        let value = Decimal(sign: .plus, exponent: -digits, significand: Decimal(money.minorUnits.magnitude))
-        return value.formatted(Decimal.FormatStyle.Currency(code: money.currencyCode, locale: locale))
+        money.formattedMagnitude(locale: locale)
     }
-
-    static func fractionDigits(for currencyCode: String, locale: Locale = .current) -> Int {
-        let key = "\(currencyCode)|\(locale.identifier)"
-        if let cached = fractionDigitsCache.withLock({ $0[key] }) { return cached }
-        let formatter = NumberFormatter()
-        formatter.locale = locale
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyCode
-        let digits = formatter.maximumFractionDigits
-        fractionDigitsCache.withLock { $0[key] = digits }
-        return digits
-    }
-
-    /// Building a NumberFormatter is slow, and every amount on screen asks, so remember the answer
-    /// per currency and locale.
-    private static let fractionDigitsCache = Mutex<[String: Int]>([:])
 }
 
 #Preview {

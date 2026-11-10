@@ -33,7 +33,8 @@ struct SplitEditorState: Equatable, Sendable {
         case .equal:
             return participants.isEmpty ? .issue(.noParticipants) : .definition(.equal(participants: participants))
         case .exact:
-            return amounts(exact, for: participants, currencyCode: currencyCode, locale: locale, allowNegative: false)
+            // A refund has negative shares. A negative share on a purchase is caught by the calculator.
+            return amounts(exact, for: participants, currencyCode: currencyCode, locale: locale, allowNegative: true)
                 .map { .definition(.exact(amounts: $0)) } ?? .issue(participants.isEmpty ? .noParticipants : .invalidNumber)
         case .percentage:
             guard !participants.isEmpty else { return .issue(.noParticipants) }

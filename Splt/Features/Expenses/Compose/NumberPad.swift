@@ -4,16 +4,20 @@ import SwiftUI
 /// Flat keys in ink on paper, with no fill.
 struct NumberPad: View {
     let exponent: Int
+    /// Tighter keys for short screens, so the title field above stays in view.
+    var compact = false
     var onKey: (AmountKey) -> Void
 
     @Environment(\.locale) private var locale
-    @ScaledMetric(relativeTo: .title) private var keyHeight: CGFloat = 48
+    @ScaledMetric(relativeTo: .title) private var scaledKeyHeight: CGFloat = 48
+
+    private var keyHeight: CGFloat { compact ? min(scaledKeyHeight, 44) : scaledKeyHeight }
 
     var body: some View {
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             ForEach([[1, 2, 3], [4, 5, 6], [7, 8, 9]], id: \.self) { row in
                 GridRow {
-                    ForEach(row, id: \.self) { digit in key(.digit(digit), title: "\(digit)") }
+                    ForEach(row, id: \.self) { digit in key(.digit(digit), title: AmountKeypad.digit(digit, locale: locale)) }
                 }
             }
             GridRow {
@@ -22,10 +26,12 @@ struct NumberPad: View {
                 } else {
                     Color.clear.frame(height: keyHeight)
                 }
-                key(.digit(0), title: "0")
+                key(.digit(0), title: AmountKeypad.digit(0, locale: locale))
                 key(.delete, systemImage: "delete.backward", label: String(localized: "Delete"))
             }
         }
+        // keypads keep 1 on the left in right-to-left languages too, like the system's
+        .environment(\.layoutDirection, .leftToRight)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Number pad")
     }

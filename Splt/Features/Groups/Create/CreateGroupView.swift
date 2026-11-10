@@ -68,6 +68,8 @@ private struct CreateGroupForm: View {
                                 .accessibilityHidden(true)
                         }
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityValue(GroupSymbols.spokenName(for: model.symbol))
                 }
             }
             .raisedSection()
@@ -231,6 +233,7 @@ private struct CreateGroupForm: View {
     }
 
     private func create() {
+        guard !model.hasCreated else { return }
         do {
             onCreated(try model.create())
         } catch {

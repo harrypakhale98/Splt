@@ -5,10 +5,12 @@ import SpltCore
 extension ExpenseFormModel {
     // MARK: Describe it
 
+    private static let longestNote = 1_000
+
     /// Reads the "Describe it" note and fills the form. The model is optional: the rules parser
     /// always answers, so this works without the on-device language model.
     func fillFromNote() async {
-        let text = describeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = String(describeText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.longestNote))
         guard !text.isEmpty else { return }
         isReading = true
         defer { isReading = false }
@@ -23,6 +25,7 @@ extension ExpenseFormModel {
         guard !draft.isEmpty else {
             filledNotice = String(localized: "Nothing to fill in. Try adding an amount and what it was for.")
             unmatchedNames = []
+            ambiguousNames = []
             return
         }
         var filled: [String] = []
@@ -30,6 +33,8 @@ extension ExpenseFormModel {
             currencyCode = amount.currencyCode
             amountText = AmountInput.text(for: amount, locale: locale)
             filled.append(String(localized: "amount"))
+        } else if let hint = draft.currencyHint {
+            currencyCode = hint
         }
         if !draft.title.isEmpty {
             title = draft.title
@@ -57,8 +62,12 @@ extension ExpenseFormModel {
         applyPayer(draft.payer, member: member, unmatched: &unmatched, filled: &filled)
         applySplitHint(draft.splitHint, member: member, unmatched: &unmatched, filled: &filled)
 
-        unmatchedNames = unmatched
-        filledNotice = String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it above.")
+        func fitsSeveral(_ name: String) -> Bool {
+            members.filter { $0.name.foldedWords.first == name.foldedWords.first }.count > 1
+        }
+        unmatchedNames = unmatched.filter { !fitsSeveral($0) }
+        ambiguousNames = unmatched.filter(fitsSeveral)
+        filledNotice = filled.isEmpty ? nil : String(localized: "Filled in \(filled.formatted(.list(type: .and))). Check it above.")
     }
 
     private func applyPayer(
@@ -201,29 +210,32 @@ extension ExpenseFormModel {
     }
 
     func apply(receipt parsed: ParsedReceipt) {
-        guard !parsed.items.isEmpty else {
+        let charged = parsed.items.filter { !$0.total.isNegative }
+        let lineDiscounts = parsed.items.reduce(Int64(0)) { $0 + max(-$1.total.minorUnits, 0) }
+        guard !charged.isEmpty else {
             scanNotice = String(localized: "The receipt is attached, but no items could be read. Add them by hand.")
             return
         }
         if let merchant = parsed.merchant, title.trimmingCharacters(in: .whitespaces).isEmpty { title = merchant }
         if let receiptDate = parsed.date { date = receiptDate }
         currencyCode = parsed.currencyCode
-        split.items = parsed.items.map {
+        split.items = charged.map {
             ItemDraft(name: $0.name, amountText: AmountInput.text(for: $0.total, locale: locale), assignees: [])
         }
         let other = parsed.otherCharges?.minorUnits ?? 0
         let tax = (parsed.tax?.minorUnits ?? 0) + max(other, 0)
         split.taxText = tax == 0 ? "" : AmountInput.text(for: Money(minorUnits: tax, currencyCode: parsed.currencyCode), locale: locale)
         split.tipText = parsed.tip.map { AmountInput.text(for: $0, locale: locale) } ?? ""
-        split.discountText = other < 0
-            ? AmountInput.text(for: Money(minorUnits: -other, currencyCode: parsed.currencyCode), locale: locale) : ""
+        let discount = lineDiscounts + max(-other, 0)
+        split.discountText = discount > 0
+            ? AmountInput.text(for: Money(minorUnits: discount, currencyCode: parsed.currencyCode), locale: locale) : ""
         split.method = .itemized
         selectedItemID = split.items.first?.id
         let computed = split.itemizedTotal(currencyCode: parsed.currencyCode, locale: locale)
         if let amount = parsed.total ?? computed { amountText = AmountInput.text(for: amount, locale: locale) }
         scanNotice = parsed.isConsistent
-            ? String(localized: "Scanned \(parsed.items.count) items. Tap people under each item to assign it.")
-            : String(localized: "Scanned \(parsed.items.count) items. The numbers do not fully add up, so check them against the receipt.")
+            ? String(localized: "Scanned \(charged.count) items. Tap people under each item to assign it.")
+            : String(localized: "Scanned \(charged.count) items. The numbers do not fully add up, so check them against the receipt.")
     }
 
     private static func cgImage(from data: Data) -> CGImage? {

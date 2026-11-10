@@ -35,7 +35,7 @@ struct FriendTimelineRow: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(expense.title)
                 .font(.body)
-                .lineLimit(2)
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
             Text("Paid by \(payerName) \u{00B7} \(expense.date.formatted(.dateTime.day().month(.abbreviated)))")
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)

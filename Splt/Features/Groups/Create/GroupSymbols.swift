@@ -13,8 +13,8 @@ enum GroupSymbols {
         "bag.fill", "creditcard.fill", "party.popper.fill", "balloon.fill"
     ]
 
-    /// A written name for a symbol, rather than one pieced together from its file name.
-    static func label(for symbol: String) -> String {
+    /// The name VoiceOver reads for a symbol, rather than one pieced together from its file name.
+    static func spokenName(for symbol: String) -> String {
         switch symbol {
         case "person.3.fill": String(localized: "People")
         case "house.fill": String(localized: "Home")

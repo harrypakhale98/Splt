@@ -7,6 +7,10 @@ import Foundation
 /// grouping. Currency symbols, currency codes and spaces around the number are ignored.
 /// A minus sign, a trailing minus or parentheses make the amount negative.
 public enum MoneyParser {
+    /// The largest amount that can be typed, in minor units: ten trillion dollars. Far below what
+    /// fits in 64 bits, so adding up thousands of typed amounts can never overflow.
+    public static let maximumMinorUnits: Int64 = 1_000_000_000_000_000
+
     public static func parse(
         _ text: String,
         currencyCode: String,
@@ -47,11 +51,12 @@ public enum MoneyParser {
     }
 
     private static func normalize(_ text: String) -> [Character] {
-        text.map { ch -> Character in
+        // Bidi marks are invisible, and locales such as Arabic and Hebrew put them around a minus sign.
+        String(String.UnicodeScalarView(text.unicodeScalars.filter { !$0.properties.isBidiControl })).map { ch -> Character in
             switch ch {
             case "\u{2212}", "\u{2013}", "\u{2014}": return "-"
             case "\u{066B}": return "."
-            case "\u{066C}": return ","
+            case "\u{066C}", "\u{060C}", "\u{2E41}", "\u{07F8}": return ","
             case "\u{00A0}", "\u{202F}", "\u{2009}", "\u{3000}": return " "
             case "\u{2018}", "\u{2019}": return "'"
             default:
@@ -136,7 +141,9 @@ public enum MoneyParser {
         }
         fraction += Array(repeating: "0", count: exponent - fraction.count)
 
-        guard let value = Int64(String(integerDigits + fraction)) else { throw MoneyParseError.outOfRange }
+        guard let value = Int64(String(integerDigits + fraction)), value <= maximumMinorUnits else {
+            throw MoneyParseError.outOfRange
+        }
         return value
     }
 
@@ -146,9 +153,9 @@ public enum MoneyParser {
         let after = body.count - index - 1
         guard (1...3).contains(index), body[0] != "0", after == 3 else { return false }
         if exponent == 0 { return true }
-        let character = String(body[index])
-        if character == locale.decimalSeparator { return false }
-        return character == locale.groupingSeparator
+        // The body is already normalized, so the locale's separators have to be as well.
+        if normalize(locale.decimalSeparator ?? "").first == body[index] { return false }
+        return normalize(locale.groupingSeparator ?? "").first == body[index]
     }
 
     /// Joins chunks split by spaces or apostrophes, as in "1 234,56" or "1'234.50".
@@ -170,7 +177,7 @@ public enum MoneyParser {
         return joined
     }
 
-    /// Checks thousands groups (one to three digits, then groups of two or three) and drops the separators.
+    /// Checks thousands groups (one to three digits, then groups of two or three, ending in three) and drops the separators.
     private static func joinGroups(_ region: [Character], separator: Character) throws -> [Character] {
         let groups = region.split(separator: separator, omittingEmptySubsequences: false)
         guard groups.count >= 2, groups.allSatisfy({ !$0.isEmpty && $0.allSatisfy(isDigit) }) else {
@@ -179,7 +186,9 @@ public enum MoneyParser {
         guard (1...3).contains(groups[0].count), groups[0][groups[0].startIndex] != "0" else {
             throw MoneyParseError.invalidFormat
         }
-        guard groups.dropFirst().allSatisfy({ (2...3).contains($0.count) }) else { throw MoneyParseError.invalidFormat }
+        guard groups.dropFirst().allSatisfy({ (2...3).contains($0.count) }), groups.last?.count == 3 else {
+            throw MoneyParseError.invalidFormat
+        }
         return groups.flatMap { $0 }
     }
 }

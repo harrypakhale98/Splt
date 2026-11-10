@@ -22,6 +22,8 @@ final class AccessibilityAuditUITests: XCTestCase {
             try app.performAccessibilityAudit(for: Self.audited) { issue in
                 // an element drawn outside the screen is a scroll container's cell, not something to read
                 if let frame = issue.element?.frame, !app.frame.contains(frame) { return true }
+                // a label such as the recap's page count is read, never tapped, so it has no target to size
+                if issue.auditType == .hitRegion, let type = issue.element?.elementType, [.other, .staticText].contains(type) { return true }
                 let element = issue.element.map { "\($0.elementType.rawValue) '\($0.label)' id '\($0.identifier)' \($0.frame) in \(app.frame)" } ?? "no element"
                 let nearby = issue.element?.label.isEmpty == true
                     ? " controls: " + app.buttons.allElementsBoundByIndex.map { "\($0.label)@\(Int($0.frame.minY))" }.joined(separator: ", ")
@@ -85,7 +87,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         let app = launchApp("-sampledata")
 
         openTab("Friends", in: app)
-        let friend = element(labelStartingWith: "Jonas Weber", in: app)
+        // the row, not the avatar of the same name in the hero above it
+        let friend = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maya Chen'")).firstMatch
         reveal(friend, in: app)
         friend.tap()
         XCTAssertTrue(app.buttons["Settle Up"].firstMatch.waitForExistence(timeout: 5))
@@ -114,15 +117,50 @@ final class AccessibilityAuditUITests: XCTestCase {
         audit(app, "Add expense")
     }
 
+    /// Sheets and screens the tabs do not reach, at the default size.
+    @MainActor
+    func testSheetsAndSettings() {
+        let app = launchApp("-sampledata")
+        openGroup("Lisbon Trip", in: app)
+
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Group Settings"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Group Settings"].waitForExistence(timeout: 5))
+        audit(app, "Group settings")
+        app.buttons["Cancel"].firstMatch.tap()
+
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Recap"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Close"].firstMatch.waitForExistence(timeout: 5))
+        audit(app, "Recap")
+        app.buttons["Close"].firstMatch.tap()
+
+        app.buttons["Add Expense"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
+        app.buttons["expense-amount"].firstMatch.tap()
+        for chip in ["chip-category", "chip-date"] {
+            let button = element(chip, in: app)
+            reveal(button, in: app)
+            button.tap()
+            audit(app, chip)
+            app.buttons["Done"].firstMatch.tap()
+        }
+    }
+
+    /// The tabs at the largest text size. Clipped text is still reviewed on screenshots.
+    @MainActor
+    func testTabScreensAtLargestText() {
+        let app = launchApp("-sampledata", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
+        for name in ["Friends", "Activity", "Account", "Groups"] {
+            openTab(name, in: app)
+            XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+            audit(app, "\(name) at the largest text size")
+        }
+    }
+
     @MainActor
     func testEmptyTabs() {
         let app = launchApp()
-
-        for name in ["Groups", "Friends", "Activity", "Search"] {
-            openTab(name, in: app)
-            XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
-            audit(app, "Empty \(name)")
-        }
 
         openTab("Groups", in: app)
         app.buttons["Create Group"].firstMatch.tap()
@@ -130,5 +168,13 @@ final class AccessibilityAuditUITests: XCTestCase {
         let keyboardDone = app.keyboards.buttons["Done"]
         if keyboardDone.waitForExistence(timeout: 3) { keyboardDone.tap() }
         audit(app, "New group")
+        app.buttons["Cancel"].firstMatch.tap()
+
+        // Search goes last: the tab bar collapses behind its search field
+        for name in ["Groups", "Friends", "Activity", "Search"] {
+            openTab(name, in: app)
+            XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10))
+            audit(app, "Empty \(name)")
+        }
     }
 }

@@ -51,7 +51,7 @@ struct ParticipantImporter {
             let id = CloudIdentity.personID(forUserRecordName: recordName)
             guard try services.people.person(id: id) == nil else { continue }
             let hints = Set(snapshot.contactHints.map { $0.lowercased() })
-            try services.people.add(Person(
+            try addStandIn(Person(
                 id: id,
                 name: snapshot.displayName ?? String(localized: "Friend"),
                 contactHint: snapshot.contactHints.first,
@@ -66,12 +66,46 @@ struct ParticipantImporter {
         return suggestions
     }
 
-    /// Adds this person to a group they joined through a share, once, so everyone sees them as a member.
-    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String) throws {
+    /// A person known only from the share until their own record arrives. The oldest possible date means
+    /// that record wins whenever it comes, so the name they chose is never replaced by this one.
+    private func addStandIn(_ person: Person) throws {
+        let record = PersonRecord(person)
+        record.modifiedAt = .distantStandIn
+        services.environment.context.insert(record)
+        try services.environment.save()
+    }
+
+    /// Adds this person to a group they joined through a share, so everyone sees them as a member.
+    /// It also repairs a join lost to a conflict, but it respects being removed: only a new invitation
+    /// (`afterInvitation`) brings back someone whose latest word in the group's activity is a removal.
+    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String, afterInvitation: Bool = false) throws {
         guard let groupID = UUID(uuidString: zoneName).map(GroupID.init(rawValue:)),
               let group = try services.groups.group(id: groupID) else { return }
         let me = CloudIdentity.personID(forUserRecordName: userRecordName)
-        guard try services.people.person(id: me) != nil, !group.memberIDs.contains(me) else { return }
+        guard !group.memberIDs.contains(me) else { return }
+        if !afterInvitation, try wasRemoved(me, from: groupID) { return }
+        if try services.people.me() == nil {
+            // joined before choosing a name: the others know them from the share until they pick one
+            try services.people.ensureMe(name: String(localized: "You"))
+            try IdentityAdopter(tracker: services.makeChangeTracker()).adopt(userRecordName: userRecordName)
+        }
+        guard try services.people.person(id: me) != nil else { return }
         try services.groups.addMember(me, to: groupID)
     }
+
+    private func wasRemoved(_ person: PersonID, from group: GroupID) throws -> Bool {
+        for entry in try services.activity.entries(in: group, limit: 1_000) {
+            switch entry.event {
+            case .memberRemoved(person): return true
+            case .memberAdded(person): return false
+            default: continue
+            }
+        }
+        return false
+    }
+}
+
+extension Date {
+    /// The modified date of a stand in. Any real edit is later, and CloudKit can store it.
+    fileprivate static let distantStandIn = Date(timeIntervalSince1970: 0)
 }

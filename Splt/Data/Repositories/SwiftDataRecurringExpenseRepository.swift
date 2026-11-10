@@ -20,6 +20,7 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
     }
 
     func add(_ template: RecurringExpense) throws {
+        let template = Self.fitted(template)
         guard let groupID = template.groupID else { throw DataError.missingGroup }
         guard try env.groupRecord(groupID) != nil else { throw DataError.notFound("group \(groupID)") }
         let record = RecurringExpenseRecord(template)
@@ -29,9 +30,13 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
     }
 
     func update(_ template: RecurringExpense) throws {
+        let template = Self.fitted(template)
         guard let record = try RecurringExpenseRecord.find(recordName: template.id.uuidString, in: env.context),
               record.deletedAt == nil else { throw DataError.notFound("recurring expense \(template.id)") }
+        let resumed = !record.isActive && template.isActive
         record.update(from: template)
+        // Occurrences missed while paused are not billed: the schedule picks up after this moment.
+        if resumed { record.lastCreatedOccurrence = max(record.lastCreatedOccurrence ?? .distantPast, env.now()) }
         env.tracker.recordEdit(record)
         try env.save()
     }
@@ -41,6 +46,13 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
               record.deletedAt == nil else { return }
         env.tracker.tombstone(record)
         try env.save()
+    }
+
+    private static func fitted(_ template: RecurringExpense) -> RecurringExpense {
+        var template = template
+        template.title = template.title.limited(to: RecordLimits.name)
+        template.note = template.note.limited(to: RecordLimits.text)
+        return template
     }
 
     @discardableResult
@@ -55,18 +67,35 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
             guard let template = try? RecurringExpense(record),
                   let groupID = template.groupID,
                   try env.groupRecord(groupID) != nil else { continue }
-            let due = template.rule.dueOccurrences(after: template.lastCreatedOccurrence, through: now)
+            // Anyone in a group can sync a template that started decades ago, and every member's device makes
+            // its expenses. Older occurrences are not billed, and a backlog goes a little on each run.
+            let oldest = now.addingTimeInterval(-366 * 86_400)
+            let due = template.rule.dueOccurrences(
+                after: max(template.lastCreatedOccurrence ?? .distantPast, oldest), through: now, limit: 100
+            )
             guard let latest = due.last else { continue }
+            // a template that cannot make a valid expense must not stop the others
+            guard (try? template.expense(on: latest).validate()) != nil else { continue }
             for occurrence in due {
                 var expense = template.expense(on: occurrence)
                 expense.id = OccurrenceID.expenseID(template: template.id, occurrence: occurrence)
                 if try env.expenseRecord(expense.id) == nil {
-                    try expenses.add(expense, extras: ExpenseExtras(recurringExpenseID: template.id))
+                    try expenses.insert(expense, extras: ExpenseExtras(recurringExpenseID: template.id), logsActivity: false)
+                    try env.log(
+                        .expenseAdded(SwiftDataExpenseRepository.reference(expense)), groupID: groupID,
+                        actor: try env.currentUser()?.personID, id: OccurrenceID.addedEntryID(expense: expense.id)
+                    )
+                    // This can run before the first fetch, so another device may have made this occurrence
+                    // and since edited or deleted it. Dated by its occurrence, this copy loses to any such change.
+                    try env.expenseRecord(expense.id)?.modifiedAt = occurrence
                     created.append(expense)
                 }
             }
-            record.lastCreatedOccurrence = latest
-            env.tracker.recordEdit(record)
+            // the date comes back from CloudKit cut to milliseconds, which is not a new occurrence
+            if record.lastCreatedOccurrence.map({ latest.isLaterEdit(than: $0) }) ?? true {
+                record.lastCreatedOccurrence = latest
+                env.tracker.recordBookkeeping(record)
+            }
             try env.save()
         }
         return created

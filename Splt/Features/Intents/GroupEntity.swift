@@ -49,10 +49,10 @@ struct GroupEntityQuery: EntityStringQuery {
 /// Active groups that people made, without the hidden two person groups behind friends.
 @MainActor
 enum IntentGroups {
-    static func all(services: DataServices? = IntentServices.shared.live()) -> [GroupEntity] {
+    static func all(services: DataServices? = IntentServices.shared.live(), left: LeftGroupsStore = LeftGroupsStore()) -> [GroupEntity] {
         guard let services else { return [] }
         return ((try? services.groups.groups(includeArchived: false)) ?? [])
-            .filter { $0.kind != .friend }
+            .filter { $0.kind != .friend && !left.contains($0.id) }
             .map(GroupEntity.init)
     }
 }

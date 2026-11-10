@@ -43,6 +43,36 @@ struct SyncRuntimeTests {
         #expect(runtime.status == .syncing)
     }
 
+    @Test func joiningAGroupYouLeftBringsItBackToYourList() {
+        let left = isolatedLeftGroups()
+        let group = GroupID()
+        left.insert(group)
+        let runtime = SyncRuntime(leftGroups: left)
+        var opened: [GroupID] = []
+        runtime.onGroupJoined = { opened.append($0) }
+        runtime.groupJoined(group)
+        #expect(!left.contains(group))
+        #expect(opened == [group])
+    }
+
+    @Test func aPushThatLaunchedTheAppStartsSync() async throws {
+        let services = try DataServices.inMemory()
+        var asked = 0
+        let runtime = SyncRuntime(liveServices: {
+            asked += 1
+            return services
+        })
+        let push: [AnyHashable: Any] = [
+            "aps": ["content-available": 1],
+            "ck": ["ce": 2, "cid": "iCloud.com.example.app", "nid": UUID().uuidString, "fet": ["zid": "zone", "dbs": 1, "zoid": "_owner", "sid": "sub"]],
+        ]
+        #expect(await runtime.handleRemoteNotification(push))
+        #expect(asked == 1)
+        #expect(runtime.engine is AutomaticSyncEngine)
+        #expect(await runtime.handleRemoteNotification(push))
+        #expect(asked == 1)
+    }
+
     @Test func pushesThatAreNotFromCloudKitAreIgnored() async {
         let runtime = SyncRuntime()
         #expect(await runtime.handleRemoteNotification(["aps": ["alert": "hello"]]) == false)
@@ -59,15 +89,6 @@ struct GroupSharingModelTests {
         #expect(model.phase == .failed("iCloud sync is not available in this build."))
         #expect(model.prepared == nil)
         model.dismissError()
-        #expect(model.phase == .idle)
-    }
-
-    @Test func leavingForwardsToTheEngine() async {
-        let engine = FakeSyncEngine()
-        let model = GroupSharingModel(engine: engine)
-        let group = GroupID()
-        await model.leave(group: group)
-        #expect(engine.left == [group])
         #expect(model.phase == .idle)
     }
 }

@@ -1,3 +1,4 @@
+import SpltCore
 import Testing
 @testable import Splt
 
@@ -26,6 +27,12 @@ struct MinorUnitParserTests {
     @Test(arguments: ["", "abc", "12.345.6", "1.2.3", "12x", "--"])
     func rejectsNonsense(text: String) {
         #expect(MinorUnitParser.minorUnits(from: text, fractionDigits: 2) == nil)
+    }
+
+    @Test func amountsAboveWhatCanBeTypedAreRefused() {
+        #expect(MinorUnitParser.minorUnits(from: "10000000000000", currencyCode: "USD") == MoneyParser.maximumMinorUnits)
+        #expect(MinorUnitParser.minorUnits(from: "10000000000000.01", currencyCode: "USD") == nil)
+        #expect(MinorUnitParser.minorUnits(from: "90000000000000", currencyCode: "USD") == nil)
     }
 
     @Test func rejectsTooManyDecimals() {

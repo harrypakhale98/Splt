@@ -29,6 +29,8 @@ struct SaveBar: View {
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 4)
+        // it stays on screen, so at the largest sizes it must leave room for the form above it
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .background(Ink.paper)
     }
 }

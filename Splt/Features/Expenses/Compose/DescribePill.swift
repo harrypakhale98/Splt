@@ -6,12 +6,17 @@ struct DescribePill: View {
     var focus: FocusState<ExpenseFormField?>.Binding
 
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var dictation = DictationController()
 
     var body: some View {
         VStack(spacing: 8) {
             VStack(spacing: 0) {
-                HStack(spacing: 10) {
+                // at the largest sizes the buttons sit under the field, so the text keeps the full width
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                    : AnyLayout(HStackLayout(spacing: 10))
+                layout {
                     TextField("Describe it", text: $model.describeText, prompt: example, axis: .vertical)
                     .lineLimit(1...3)
                     .submitLabel(.go)
@@ -26,6 +31,13 @@ struct DescribePill: View {
                 Rectangle().fill(Ink.hairline).frame(height: 1)
             }
 
+            if let notice = dictation.notice {
+                Label(notice, systemImage: "mic.slash")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 6)
+            }
             if let notice = model.filledNotice {
                 Label(notice, systemImage: "checkmark.circle")
                     .font(.footnote)
@@ -40,11 +52,22 @@ struct DescribePill: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 6)
             }
+            if !model.ambiguousNames.isEmpty {
+                let names = model.ambiguousNames.formatted(.list(type: .and))
+                Label("More than one person here is called \(names). Choose who you mean below.", systemImage: "person.2.fill")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 6)
+            }
         }
         .onChange(of: focus.wrappedValue) { _, new in
             if new != nil, new != .describe { dictation.cancel() }
         }
         .onDisappear { dictation.cancel() }
+        .onChange(of: model.filledNotice) { _, notice in
+            if let notice { AccessibilityNotification.Announcement(notice).post() }
+        }
     }
 
     /// An example built from the group's own people, so it shows how to name them.
@@ -70,6 +93,16 @@ struct DescribePill: View {
     private var trailing: some View {
         if model.isReading {
             ProgressView()
+        } else if dictation.isListening {
+            // the words heard so far fill the field, so this stays ahead of Fill In
+            Button(action: toggleDictation) {
+                Image(systemName: "stop.circle.fill")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(Ink.secondary)
+            .accessibilityLabel("Stop dictating")
         } else if !model.describeText.trimmingCharacters(in: .whitespaces).isEmpty {
             Button("Fill In", action: fill)
                 .font(.body.weight(.medium))
@@ -78,11 +111,11 @@ struct DescribePill: View {
             HStack(spacing: 0) {
                 if DictationController.isSupported {
                     Button(action: toggleDictation) {
-                        Image(systemName: dictation.isListening ? "stop.circle.fill" : "mic")
+                        Image(systemName: "mic")
                             .frame(minWidth: 44, minHeight: 44)
                             .contentShape(Rectangle())
                     }
-                    .accessibilityLabel(dictation.isListening ? "Stop dictating" : "Dictate")
+                    .accessibilityLabel("Dictate")
                 }
                 ReceiptActions(model: model)
                     .labelStyle(.iconOnly)

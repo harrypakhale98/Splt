@@ -75,6 +75,15 @@ struct UISyncGroupSharingTests {
         #expect(url == DeepLink.group(group.rawValue).url)
     }
 
+    @Test func aLinkToAGroupThisDeviceDoesNotHaveOpensNothingElse() {
+        let router = Router()
+        let id = UUID()
+        #expect(router.open(URL(string: "splt://group/\(id.uuidString)")!))
+        #expect(router.groupsPath == [.group(id)])
+        #expect(router.sheet == nil)
+        #expect(router.pendingInvite == nil)
+    }
+
     @Test func leavingIsForwardedWhenConnected() async throws {
         let engine = FakeSyncEngine()
         let runtime = SyncRuntime()
@@ -84,13 +93,19 @@ struct UISyncGroupSharingTests {
         #expect(engine.left == [group])
     }
 
-    @Test func leavingDoesNothingWhenNotConnected() async throws {
+    @Test func leavingWhileOfflineStillReachesTheEngine() async throws {
         let engine = FakeSyncEngine()
-        engine.report(.unavailable(.simulator))
+        engine.report(.offline)
         let runtime = SyncRuntime()
         runtime.use(engine)
 
         try await SyncGroupSharing(runtime: runtime).leave(groupID: group)
-        #expect(engine.left.isEmpty)
+        #expect(engine.left == [group])
+    }
+
+    @Test func leavingWithoutSyncIsFine() async throws {
+        let runtime = SyncRuntime()
+        runtime.use(NoOpSyncEngine(reason: .simulator))
+        try await SyncGroupSharing(runtime: runtime).leave(groupID: group)
     }
 }

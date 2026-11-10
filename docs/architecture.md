@@ -37,7 +37,7 @@ Sync is built on `CKSyncEngine`.
 - Each group is a record zone. Groups you create live in your private database.
 - Inviting a friend shares the zone with `CKShare`. Accepted groups appear in the shared database.
 - People without the app are placeholders inside a group. They can be claimed later when they join.
-- Conflicts resolve per field, last writer wins, and expenses are soft deleted so history is kept.
+- Conflicts resolve per record, last writer wins, so concurrent edits to one record can lose a change. Expenses are soft deleted so history is kept.
 - Change notifications use CloudKit subscriptions, which cost nothing.
 
 Sync sits behind a protocol. Builds without the iCloud entitlement use a no-op engine, so the app runs fully offline in the simulator and in CI.

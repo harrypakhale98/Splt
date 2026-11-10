@@ -12,8 +12,11 @@ final class GroupSettingsViewModel {
         var isMe: Bool
         /// Positive means the person is owed. Empty when square.
         var balance: [Money]
+        /// A recurring expense that would keep charging the person, which has to change first.
+        var recurringExpense: String?
 
         var id: PersonID { person.id }
+        var canRemove: Bool { !isMe && balance.isEmpty && recurringExpense == nil }
     }
 
     let groupID: GroupID
@@ -94,7 +97,10 @@ final class GroupSettingsViewModel {
         let me = try people.me()?.id
         let balances = try groups.balances(for: groupID)
         memberRows = try people.people(ids: current.memberIDs).map { person in
-            MemberRow(person: person, isMe: person.id == me, balance: balances.net(for: person.id))
+            MemberRow(
+                person: person, isMe: person.id == me, balance: balances.net(for: person.id),
+                recurringExpense: try groups.recurringExpenseTitle(involving: person.id, in: groupID)
+            )
         }
         let members = Set(current.memberIDs)
         friends = try people.friends()
@@ -173,7 +179,12 @@ final class GroupSettingsViewModel {
     // MARK: Members
 
     func removalBlock(for row: MemberRow) -> String? {
-        guard !row.balance.isEmpty else { return nil }
+        guard !row.balance.isEmpty else {
+            let name = row.person.name
+            return row.recurringExpense.map {
+                String(localized: "\(name) is part of the recurring expense “\($0)”. Change or delete it before removing them.")
+            }
+        }
         let amounts = row.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
         let name = row.person.name
         return row.balance.contains { $0.minorUnits > 0 }
@@ -194,6 +205,18 @@ final class GroupSettingsViewModel {
     func addMember(named rawName: String, contactHint: String? = nil) {
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        let same = { (person: Person) in
+            person.name.compare(trimmed, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }
+        if let member = memberRows.first(where: { same($0.person) }) {
+            errorMessage = String(localized: "\(member.person.name) is already in this group.")
+            return
+        }
+        // the same name as a friend is that friend, as everywhere else people are added
+        if let friend = friendsToAdd.first(where: same) {
+            addMember(friend)
+            return
+        }
         perform {
             let person = Person(name: trimmed, contactHint: contactHint, kind: .placeholder)
             try people.add(person)
@@ -220,9 +243,15 @@ final class GroupSettingsViewModel {
 
     var myRow: MemberRow? { memberRows.first(where: \.isMe) }
 
+    /// Set by `loadSharing`.
+    private(set) var isSharedByMe = false
+
     /// Leaving needs you to be square and someone else to stay behind.
     var leaveBlock: String? {
         guard let myRow else { return String(localized: "You are not a member of this group.") }
+        if isSharedByMe {
+            return String(localized: "You shared this group, so you can't leave it. Stop sharing in Invite with iCloud to keep it just for you, or delete it to remove it for everyone.")
+        }
         if memberRows.count < 2 { return String(localized: "You are the only member. Delete the group instead.") }
         if !myRow.balance.isEmpty {
             let amounts = myRow.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
@@ -230,24 +259,34 @@ final class GroupSettingsViewModel {
                 ? String(localized: "You're owed \(amounts). Settle up before leaving.")
                 : String(localized: "You owe \(amounts). Settle up before leaving.")
         }
+        if let title = myRow.recurringExpense {
+            return String(localized: "You are part of the recurring expense “\(title)”. Change or delete it before leaving.")
+        }
         return nil
+    }
+
+    /// Finds out whether this person shared the group, which rules out leaving it.
+    func loadSharing(using sharing: any GroupSharing) async {
+        isSharedByMe = await sharing.isSharedByMe(groupID: groupID)
     }
 
     /// Returns true when you left.
     func leave(using sharing: any GroupSharing) async -> Bool {
+        await loadSharing(using: sharing)
         guard leaveBlock == nil, let myRow else {
             blockedMessage = leaveBlock
             return false
         }
-        try? await sharing.leave(groupID: groupID)
         do {
+            // first, because sync hides the group once it has left, and the others need to see this
             try groups.removeMember(myRow.person.id, from: groupID)
-            leftGroups.insert(groupID)
-            return true
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)
             return false
         }
+        leftGroups.insert(groupID)
+        try? await sharing.leave(groupID: groupID)
+        return true
     }
 
     func toggleArchived() {

@@ -67,4 +67,11 @@ struct SettleMethodTests {
         #expect(SettleNote.compose(method: .other, text: "Handed over") == "Handed over")
         #expect(SettleNote.compose(method: .other, text: "") == "")
     }
+
+    @Test func dollarOnlyAppsAreNotHandedOtherCurrencies() throws {
+        let euros = Money(minorUnits: 1250, currencyCode: "EUR")
+        let venmo = try #require(SettleMethod.venmo.paymentURL(amount: euros, note: "", recipient: "@sam-r"))
+        #expect(!venmo.absoluteString.contains("amount"))
+        #expect(SettleMethod.cashApp.paymentURL(amount: euros, note: "", recipient: "$samr")?.absoluteString == "https://cash.app/$samr")
+    }
 }

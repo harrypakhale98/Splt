@@ -15,6 +15,7 @@ struct SplitBarView: View {
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 56
     @Environment(\.locale) private var locale
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.layoutDirection) private var layoutDirection
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draggingDivider: Int?
     @State private var detentCount = 0
@@ -37,7 +38,7 @@ struct SplitBarView: View {
                     ForEach(0..<max(data.segments.count - 1, 0), id: \.self) { divider in
                         handle(divider: divider, layout: layout)
                     }
-                    handleGrip(layout: layout)
+                    handleGrip(layout: layout, width: width)
                 }
                 if let divider = draggingDivider, divider + 1 < layout.visual.count {
                     callout(divider: divider, x: layout.visual[divider + 1], width: width, palette: palette)
@@ -72,13 +73,7 @@ struct SplitBarView: View {
                 .accessibilityLabel(segment.id == currentPerson ? String(localized: "You") : segment.person.name)
                 .accessibilityValue(spokenValue(for: segment))
                 .accessibilityHint(data.canDrag ? String(localized: "Swipe up or down to change. \(stepHint) at a time.") : "")
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: onStep(segment.id, true)
-                    case .decrement: onStep(segment.id, false)
-                    @unknown default: break
-                    }
-                }
+                .adjustable(when: data.canDrag) { increase in onStep(segment.id, increase) }
                 .accessibilityAction(named: Text("Fine tune")) { onTap(segment.id) }
             }
         }
@@ -111,8 +106,10 @@ struct SplitBarView: View {
     /// One touch area for every divider: 44pt around each, and a touch moves the divider nearest to
     /// where it landed. Separate areas per divider overlap where a segment is narrow, and then the
     /// later divider would always win.
-    private func handleGrip(layout: SplitBarLayout) -> some View {
-        let positions = Array(layout.visual.dropFirst().dropLast())
+    private func handleGrip(layout: SplitBarLayout, width: CGFloat) -> some View {
+        // a touch's x and a shape's path run from the left even where the bar is mirrored
+        let mirrored = layoutDirection == .rightToLeft
+        let positions = layout.visual.dropFirst().dropLast().map { mirrored ? width - $0 : $0 }
         return Color.clear
             .contentShape(DividerZones(positions: positions, reach: 22))
             .gesture(
@@ -123,7 +120,7 @@ struct SplitBarView: View {
                         if draggingDivider != divider {
                             Motion.perform(Motion.quick) { draggingDivider = divider }
                         }
-                        let fraction = layout.fraction(forX: value.location.x)
+                        let fraction = layout.fraction(forX: mirrored ? width - value.location.x : value.location.x)
                         if let result = onDrag(divider, fraction) {
                             if let snap = result.snappedTo, lastSnap != snap { detentCount += 1 }
                             lastSnap = result.snappedTo
@@ -193,6 +190,24 @@ private struct DividerZones: Shape {
             path.addRect(CGRect(x: x - reach, y: rect.minY, width: reach * 2, height: rect.height))
         }
         return path
+    }
+}
+
+extension View {
+    /// VoiceOver announces any element with an adjustable action as adjustable, so only add it when swiping changes something.
+    @ViewBuilder
+    func adjustable(when isAdjustable: Bool, _ step: @escaping (_ increase: Bool) -> Void) -> some View {
+        if isAdjustable {
+            accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: step(true)
+                case .decrement: step(false)
+                @unknown default: break
+                }
+            }
+        } else {
+            self
+        }
     }
 }
 

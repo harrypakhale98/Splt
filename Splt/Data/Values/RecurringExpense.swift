@@ -12,7 +12,8 @@ struct RecurringExpense: Hashable, Sendable, Identifiable {
     var split: SplitDefinition
     var note: String
     var rule: RecurrenceRule
-    /// The date of the latest occurrence that already became an expense.
+    /// The date of the latest occurrence that already became an expense, or the moment the template
+    /// was resumed: later occurrences are the only ones it still makes.
     var lastCreatedOccurrence: Date?
     var isActive: Bool
     var createdBy: PersonID?
@@ -46,6 +47,13 @@ struct RecurringExpense: Hashable, Sendable, Identifiable {
         self.isActive = isActive
         self.createdBy = createdBy
         self.createdAt = createdAt
+    }
+
+    /// Whether a future occurrence would charge or credit this person. A paused template counts,
+    /// because it can be resumed. One whose schedule has ended does not.
+    func willInvolve(_ person: PersonID) -> Bool {
+        guard payers.keys.contains(person) || split.participants.contains(person) else { return false }
+        return rule.nextOccurrence(after: lastCreatedOccurrence ?? .distantPast) != nil
     }
 
     /// The expense this template makes for one occurrence.

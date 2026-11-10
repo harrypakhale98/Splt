@@ -29,7 +29,8 @@ struct ExpenseRowSummary: Equatable {
     func detail(locale: Locale) -> String? {
         guard let yourNet, let caption else { return nil }
         if yourNet.isZero { return caption }
-        return "\(caption) \(MoneyFormatting.magnitudeString(yourNet, locale: locale))"
+        let amount = MoneyFormatting.magnitudeString(yourNet, locale: locale)
+        return yourNet.minorUnits > 0 ? String(localized: "you lent \(amount)") : String(localized: "you owe \(amount)")
     }
 }
 
@@ -57,7 +58,7 @@ struct GroupExpenseRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(expense.title)
                     .font(.body)
-                    .lineLimit(2)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
                 HStack(spacing: 6) {
                     payerMarkers(summary.payers)
                     Text(summary.payerText)

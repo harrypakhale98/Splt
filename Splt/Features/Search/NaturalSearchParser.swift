@@ -119,6 +119,8 @@ struct NaturalSearchParser {
             // "may" is also a verb, so it needs the word "in" before it or a year after it
             let nextYear = index + 1 < all.count ? Self.year(all[index + 1]) : nil
             if word == "may" && !hasIn && nextYear == nil { continue }
+            let isFriend = people.contains { !$0.isMe && Self.foldedWords($0.name).first == word }
+            if isFriend && !hasIn && nextYear == nil { continue }
             var range = index..<index + 1
             if hasIn { range = index - 1..<range.upperBound }
             var year = nextYear
@@ -182,6 +184,13 @@ struct NaturalSearchParser {
                 use(&tokens, index..<index + 2)
                 continue
             }
+            if word == "me", index > 0, tokens[index - 1].folded == "by", !tokens[index - 1].used,
+               let me = people.first(where: \.isMe) {
+                filter.payer = me.id
+                let paid = index > 1 && tokens[index - 2].folded == "paid" && !tokens[index - 2].used
+                use(&tokens, (paid ? index - 2 : index - 1)..<index + 1)
+                continue
+            }
             guard let (person, length) = match(at: index, in: tokens) else { continue }
             let range = index..<index + length
             let before = index > 0 && !tokens[index - 1].used ? tokens[index - 1].folded : nil
@@ -212,7 +221,7 @@ struct NaturalSearchParser {
         }
         let word = tokens[index].folded
         guard word.count >= 2, !SearchVocabulary.stopWords.contains(word),
-              SearchVocabulary.categoryWords[word] == nil, SearchVocabulary.months[word] == nil else { return nil }
+              SearchVocabulary.categoryWords[word] == nil else { return nil }
         let matches = people.filter { person in
             guard !person.isMe else { return false }
             let parts = Self.foldedWords(person.name)

@@ -19,6 +19,16 @@ final class SyncRuntime {
     @ObservationIgnored private let notifier = RemoteChangeNotifier()
     @ObservationIgnored private var waiting: [ShareInvitation] = []
     @ObservationIgnored private var isRunning = false
+    @ObservationIgnored private let liveServices: @MainActor () -> DataServices?
+    @ObservationIgnored private let leftGroups: LeftGroupsStore
+
+    init(
+        liveServices: @escaping @MainActor () -> DataServices? = { IntentServices.shared.live() },
+        leftGroups: LeftGroupsStore = LeftGroupsStore()
+    ) {
+        self.liveServices = liveServices
+        self.leftGroups = leftGroups
+    }
 
     var status: SyncStatus { engine.status }
 
@@ -63,11 +73,17 @@ final class SyncRuntime {
         do {
             try await engine.accept(invitation)
             if let zone = invitation.metadata?.share.recordID.zoneID.zoneName, let id = UUID(uuidString: zone) {
-                onGroupJoined?(GroupID(rawValue: id))
+                groupJoined(GroupID(rawValue: id))
             }
         } catch {
             onInvitationFailed?(error.localizedDescription)
         }
+    }
+
+    /// A group you left and were invited back to belongs in your list again.
+    func groupJoined(_ group: GroupID) {
+        leftGroups.remove(group)
+        onGroupJoined?(group)
     }
 
     // MARK: Push
@@ -75,6 +91,8 @@ final class SyncRuntime {
     /// Called when a silent push arrives. Returns true if it was a CloudKit change notification.
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> Bool {
         guard CKNotification(fromRemoteNotificationDictionary: userInfo) != nil else { return false }
+        // a push can launch the app in the background, where no screen ever starts sync
+        if !isRunning, let services = liveServices() { await start(services: services) }
         try? await engine.fetchChanges()
         return true
     }

@@ -233,6 +233,66 @@ struct SettleModelTests {
         #expect(model.amount == usdAmount(1100))
     }
 
+    @Test func partialWorksAfterSwappingWhoPays() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        model.isReversed = true
+        model.setFraction(0.5)
+        #expect(model.amountMode == .partial)
+        #expect(model.amount == debt.amount)
+        model.amountText = "2"
+        #expect(model.amount == usdAmount(200))
+        #expect(model.canRecord)
+    }
+
+    @Test func onlyAPaymentThatPaysTheDebtDownSaysWhatIsLeft() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        #expect(model.outcomeNote == "Settled up")
+        model.setFraction(0.5)
+        #expect(model.outcomeNote == "still owed")
+        model.isReversed = true
+        #expect(model.outcomeNote == nil)
+        model.amountMode = .full
+        #expect(model.outcomeNote == nil)
+    }
+
+    @Test func aSecondUndoChangesNothing() throws {
+        let (fixture, debts) = try scene()
+        let model = model(fixture, debts: debts)
+        let receipt = try #require(model.record())
+        let center = SettleUndoCenter(visibleFor: .seconds(60))
+        center.show(receipt)
+        #expect(center.undo(using: fixture.services.payments))
+        let logged = try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count
+        #expect(!center.undo(using: fixture.services.payments))
+        model.undo()
+        model.undo()
+        #expect(try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count == logged)
+        #expect(try fixture.services.payments.payments(in: fixture.group.id).isEmpty)
+    }
+
+    @Test func steppingUpFromTheLargestDebtDoesNotCrash() throws {
+        let fixture = try Fixture()
+        let debt = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(.max))
+        let model = model(fixture, debts: [debt])
+        model.nudge(by: 1)
+        #expect(model.amount == debt.amount)
+        #expect(model.amountMode == .full)
+    }
+
+    @Test func aDebtSmallerThanTheStepCanStillBePaidInPart() throws {
+        let fixture = try Fixture()
+        let debt = Debt(debtor: fixture.sam.id, creditor: fixture.me.id, amount: usdAmount(5))
+        let model = model(fixture, debts: [debt])
+        #expect(model.step == 1)
+        model.setFraction(0.5)
+        #expect(model.amountIssue == nil)
+        #expect(model.amount == usdAmount(3))
+    }
+
     @Test func participantsCarryDistinctColorsInPayerFirstOrder() throws {
         let (fixture, debts) = try scene()
         let debt = try #require(debts.first { $0.debtor == fixture.sam.id })

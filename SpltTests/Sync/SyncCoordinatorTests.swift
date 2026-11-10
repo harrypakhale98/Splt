@@ -15,8 +15,13 @@ final class FakeQueue: EngineQueue {
     func queue(_ plan: OutgoingPlan) { plans.append(plan) }
     func queue(saves: [CKRecord.ID]) { savedAgain += saves }
     func queue(zonesToSave: [CKRecordZone.ID]) { zonesRequested += zonesToSave }
+    private(set) var fetchCount = 0
+    var onFetch: (() throws -> Void)?
     func sendChanges() async throws {}
-    func fetchChanges() async throws {}
+    func fetchChanges() async throws {
+        fetchCount += 1
+        try onFetch?()
+    }
 }
 
 /// A thread safe list that closures can append to.
@@ -163,7 +168,7 @@ struct SyncCoordinatorTests {
         #expect(rig.delays.values == [15, 30, 60])
     }
 
-    @Test func aMissingZoneIsRequestedAgain() throws {
+    @Test func aMissingZoneIsRequestedAgain() async throws {
         let rig = try rig()
         rig.coordinator.markReady()
         let cloud = FakeCloud()
@@ -173,8 +178,55 @@ struct SyncCoordinatorTests {
         try rig.coordinator.sentRecords(
             saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
         )
+        #expect(await eventually { rig.privateQueue.zonesRequested.map(\.zoneName) == [rig.populated.zone] })
+        #expect(rig.privateQueue.savedAgain == [sent.recordID])
+    }
+
+    /// An edit that the server refuses because the zone it belongs to is gone.
+    private func failWithMissingZone(_ rig: Rig) throws -> CKRecordZone.ID {
+        rig.coordinator.markReady()
+        try FakeCloud().upload(from: rig.device)
+        try rig.populated.addExpense("Edited offline")
+        let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
+        return sent.recordID.zoneID
+    }
+
+    @Test func aGroupDeletedOnAnotherDeviceIsNotBroughtBackByAnOfflineEdit() async throws {
+        let rig = try rig()
+        let zone = CKRecordZone.ID(zoneName: rig.populated.zone, ownerName: CKCurrentUserDefaultName)
+        rig.privateQueue.onFetch = { try rig.coordinator.fetchedZones(modified: [], deleted: [(zone, .deleted)]) }
+        _ = try failWithMissingZone(rig)
+        #expect(await eventually { rig.privateQueue.fetchCount == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(rig.privateQueue.zonesRequested.isEmpty)
+        #expect(rig.privateQueue.savedAgain.isEmpty)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) == nil)
+        #expect(try rig.device.tracker.pendingChanges().allSatisfy { $0.recordType == .person })
+    }
+
+    @Test func aMissingZoneWaitsWhenTheFetchFails() async throws {
+        let rig = try rig()
+        rig.privateQueue.onFetch = { throw CKError(.networkUnavailable) }
+        _ = try failWithMissingZone(rig)
+        #expect(await eventually { rig.privateQueue.fetchCount == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(rig.privateQueue.zonesRequested.isEmpty)
+        #expect(try rig.device.services.groups.group(id: rig.populated.group.id) != nil)
+    }
+
+    @Test func aZoneTheServerNeverConfirmedIsRequestedWithoutAFetch() throws {
+        let rig = try rig()
+        rig.coordinator.markReady()
+        let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, CKError(.zoneNotFound))], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
         #expect(rig.privateQueue.zonesRequested.map(\.zoneName) == [rig.populated.zone])
         #expect(rig.privateQueue.savedAgain == [sent.recordID])
+        #expect(rig.privateQueue.fetchCount == 0)
     }
 
     @Test func remoteChangesAreReportedToTheNotifier() throws {
@@ -243,6 +295,134 @@ struct SyncCoordinatorTests {
         try rig.coordinator.accountChanged(.switched(to: "_bob"))
         #expect(try rig.device.services.people.me()?.id == CloudIdentity.personID(forUserRecordName: "_bob"))
         #expect(rig.device.adapter.metadata.userRecordName == "_bob")
+    }
+
+    @Test func aRecordDeletedDuringItsFirstUploadIsDeletedOnTheServer() throws {
+        let rig = try rig()
+        let device = rig.device
+        let cloud = FakeCloud()
+        try cloud.upload(from: device)
+        let expense = try #require(try device.services.expenses.expenses(in: rig.populated.group.id).first)
+        let comment = ExpenseComment(
+            groupID: rig.populated.group.id, expenseID: expense.id, authorID: rig.populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        let (_, sending) = try device.outgoing()
+        let inFlight = try #require(sending.first { $0.recordID.recordName == comment.id.uuidString })
+
+        try device.services.comments.delete(id: comment.id)
+        try rig.coordinator.sentRecords(saved: sending, failedSaves: [], deleted: [], failedDeletes: [:], scope: .privateDatabase)
+        #expect(rig.privateQueue.plans.flatMap(\.deletes) == [inFlight.recordID])
+    }
+
+    @Test func aDeleteInAZoneThatIsGoneIsDone() throws {
+        let rig = try rig()
+        let device = rig.device
+        let expense = try #require(try device.services.expenses.expenses(in: rig.populated.group.id).first)
+        let comment = ExpenseComment(
+            groupID: rig.populated.group.id, expenseID: expense.id, authorID: rig.populated.me.id, text: "Soon gone",
+            createdAt: device.clock.start
+        )
+        try device.services.comments.add(comment)
+        try FakeCloud().upload(from: device)
+        try device.services.comments.delete(id: comment.id)
+        let id = try #require(try device.adapter.collectOutgoing().deletes.first)
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [], deleted: [], failedDeletes: [id: CKError(.zoneNotFound)], scope: .privateDatabase
+        )
+        #expect(try device.tracker.pendingChanges().isEmpty)
+    }
+
+    /// A device that has joined the owner's group through a share, and the records as its zone holds them.
+    @MainActor
+    private struct Joiner {
+        let owner: PopulatedDevice
+        let cloud = FakeCloud()
+        let device: SyncDevice
+        let coordinator: SyncCoordinator
+        let me = CloudIdentity.personID(forUserRecordName: "_casey")
+
+        init() throws {
+            owner = try PopulatedDevice()
+            try cloud.upload(from: owner.device)
+            device = try SyncDevice()
+            try device.services.people.ensureMe(name: "Casey")
+            coordinator = SyncCoordinator(services: device.services, adapter: device.adapter)
+            try coordinator.begin(user: "_casey")
+            try coordinator.fetchedZones(modified: [sharedZone], deleted: [])
+            try fetch()
+        }
+
+        var sharedZone: CKRecordZone.ID { CKRecordZone.ID(zoneName: owner.zone, ownerName: "_owner") }
+
+        func fetch() throws {
+            let records = try cloud.records.values.map { record -> CKRecord in
+                var payload = try RecordMapper.payload(from: record)
+                payload.systemFields = nil
+                return RecordMapper.record(for: payload, in: sharedZone)
+            }
+            try coordinator.fetchedRecords(modifications: records, deletions: [])
+        }
+
+        var isMember: Bool {
+            get throws { try device.services.groups.group(id: owner.group.id)?.memberIDs.contains(me) == true }
+        }
+
+        func ownerRemovesMe() throws {
+            let services = owner.device.services
+            try services.people.add(Person(id: me, name: "Casey", kind: .friend))
+            try services.groups.addMember(me, to: owner.group.id)
+            owner.device.clock.advance(by: 1_000)
+            try services.groups.removeMember(me, from: owner.group.id)
+            try cloud.upload(from: owner.device)
+        }
+    }
+
+    @Test func someoneTheOwnerRemovedDoesNotAddThemselvesBack() throws {
+        let joiner = try Joiner()
+        #expect(try joiner.isMember)
+        try joiner.ownerRemovesMe()
+        try joiner.fetch()
+        #expect(try !joiner.isMember)
+    }
+
+    @Test func aJoinLostToAConflictIsRepaired() throws {
+        let joiner = try Joiner()
+        // another member's older copy of the group replaced this device's join, with no removal anywhere
+        try joiner.device.tracker.markSynced(
+            recordType: .group, recordName: joiner.owner.zone, sentModifiedAt: .distantFuture, systemFields: nil
+        )
+        try joiner.fetch()
+        #expect(try joiner.isMember)
+    }
+
+    @Test func aNewInvitationBringsBackSomeoneWhoWasRemoved() throws {
+        let joiner = try Joiner()
+        try joiner.ownerRemovesMe()
+        try joiner.fetch()
+        try joiner.coordinator.joined(zoneName: joiner.owner.zone)
+        #expect(try joiner.isMember)
+    }
+
+    @Test func someoneWithNoProfileYetStillBecomesAMemberWhenTheyJoin() throws {
+        let owner = try PopulatedDevice()
+        let cloud = FakeCloud()
+        try cloud.upload(from: owner.device)
+        let device = try SyncDevice()
+        let coordinator = SyncCoordinator(services: device.services, adapter: device.adapter)
+        try coordinator.begin(user: "_casey")
+        let zone = CKRecordZone.ID(zoneName: owner.zone, ownerName: "_owner")
+        try coordinator.fetchedZones(modified: [zone], deleted: [])
+        let records = try cloud.records.values.map { record -> CKRecord in
+            var payload = try RecordMapper.payload(from: record)
+            payload.systemFields = nil
+            return RecordMapper.record(for: payload, in: zone)
+        }
+        try coordinator.fetchedRecords(modifications: records, deletions: [])
+        let casey = CloudIdentity.personID(forUserRecordName: "_casey")
+        #expect(try device.services.groups.group(id: owner.group.id)?.memberIDs.contains(casey) == true)
+        #expect(try device.services.people.me()?.id == casey)
     }
 }
 

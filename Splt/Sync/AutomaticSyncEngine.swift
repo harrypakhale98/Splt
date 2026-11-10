@@ -27,18 +27,23 @@ final class AutomaticSyncEngine: SyncEngine {
     @ObservationIgnored private var rechecking: Task<Void, Never>?
     @ObservationIgnored private let recheckInterval: Duration
     @ObservationIgnored private var isRunning = false
+    @ObservationIgnored private let stateStore: any SyncStateStore
+    @ObservationIgnored private var isEvaluating = false
+    @ObservationIgnored private var evaluateAgain = false
 
     init(
         environment: @escaping @Sendable () -> SyncEnvironment = { .current },
         probe: any AccountProbe,
         accountChanges: @escaping @Sendable () -> AsyncStream<Void> = { AutomaticSyncEngine.systemAccountChanges() },
         recheckInterval: Duration = .seconds(30),
+        stateStore: any SyncStateStore = FileSyncStateStore(),
         makeCloudKitEngine: @escaping @MainActor (String) -> any SyncEngine
     ) {
         self.environment = environment
         self.probe = probe
         self.accountChanges = accountChanges
         self.recheckInterval = recheckInterval
+        self.stateStore = stateStore
         self.makeCloudKitEngine = makeCloudKitEngine
         self.status = .unavailable(.starting)
         self.broadcaster = StatusBroadcaster(initial: .unavailable(.starting))
@@ -66,6 +71,7 @@ final class AutomaticSyncEngine: SyncEngine {
         forwarding?.cancel()
         forwarding = nil
         await current.stop()
+        choice = nil
     }
 
     func sendChanges() async throws {
@@ -85,11 +91,39 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     func leave(group: GroupID) async throws {
+        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+            // iCloud is only out of reach for now: the CloudKit engine finishes this when it starts
+            var metadata = stateStore.loadMetadata()
+            metadata.pendingLeaves = (metadata.pendingLeaves ?? []).union([group.description])
+            stateStore.saveMetadata(metadata)
+            return
+        }
         try await current.leave(group: group)
     }
 
+    func isSharedByMe(group: GroupID) async -> Bool {
+        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+            return stateStore.loadMetadata().ownedShares?.contains(group.description) == true
+        }
+        return await current.isSharedByMe(group: group)
+    }
+
     /// Looks at the environment and account again and swaps the engine if the answer changed.
+    /// One look at a time: a change that arrives during a swap is looked at right after it.
     func reevaluate() async {
+        guard !isEvaluating else {
+            evaluateAgain = true
+            return
+        }
+        isEvaluating = true
+        defer { isEvaluating = false }
+        repeat {
+            evaluateAgain = false
+            await evaluate()
+        } while evaluateAgain && isRunning
+    }
+
+    private func evaluate() async {
         let snapshot = environment()
         let account: AccountAvailability
         if let container = snapshot.entitlements.cloudKitContainers.first, SyncEngineSelector.preflight(snapshot) == nil {

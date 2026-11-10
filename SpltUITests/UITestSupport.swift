@@ -52,7 +52,8 @@ extension XCTestCase {
 
     @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
-        let button = app.tabBars.firstMatch.buttons[name]
+        // iPhone Duo shows the tabs in a side rail, outside any tab bar
+        let button = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.buttons[name] : app.buttons[name].firstMatch
         // On iOS 26 the Search tab shrinks the bar to a single button for the last tab, and tapping it
         // brings the full bar back.
         let collapsed = app.tabBars.firstMatch.buttons.matching(NSPredicate(format: "value == 'Collapsed'")).firstMatch

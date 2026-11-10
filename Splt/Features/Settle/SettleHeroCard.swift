@@ -11,7 +11,7 @@ struct SettleHeroCard: View {
     /// While the amount rolls it moves toward what is still owed, which is zero for a full payment.
     private var shownAmount: Money? {
         guard let amount = model.amount ?? model.totals.first else { return nil }
-        guard ceremony.rolled else { return amount }
+        guard ceremony.rolled, !model.isReversed else { return amount }
         return model.remaining ?? Money.zero(currencyCode: amount.currencyCode)
     }
 
@@ -35,10 +35,12 @@ struct SettleHeroCard: View {
                     .multilineTextAlignment(.center)
             }
             if ceremony.finished {
-                Text(model.remaining == nil ? String(localized: "Settled up") : String(localized: "still owed"))
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.secondary)
-                    .motionTransition(.opacity)
+                if let note = model.outcomeNote {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                        .motionTransition(.opacity)
+                }
             } else if !ceremony.rolled, let remaining = model.remaining {
                 Text("\(MoneyFormatting.magnitudeString(remaining, locale: locale)) will still be owed")
                     .font(.footnote)

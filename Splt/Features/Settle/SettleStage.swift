@@ -42,6 +42,7 @@ struct SettleStage: View {
     /// Set by the first few points of a drag. Only a sideways drag moves the knob, so scrolling the sheet doesn't.
     /// Resets by itself when the drag ends or the scroll view takes it over.
     @GestureState private var track = DragTrack()
+    @Environment(\.layoutDirection) private var layoutDirection
 
     private let baseDiameter: CGFloat = 40
     private let inset: CGFloat = 14
@@ -100,18 +101,11 @@ struct SettleStage: View {
         }
         .contentShape(Rectangle())
         // Simultaneous, so a vertical drag that starts here still scrolls the sheet.
-        .simultaneousGesture(isAdjustable && contraction == 0 ? drag(geometry) : nil)
+        .simultaneousGesture(isAdjustable && contraction == 0 ? drag(geometry, width: width) : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Self.spokenPayment(payer: payer, receiver: receiver))
         .accessibilityValue(isAdjustable ? Text("\(Int((fraction * 100).rounded())) percent of what is owed") : Text(""))
-        .accessibilityAdjustableAction { direction in
-            guard isAdjustable else { return }
-            switch direction {
-            case .increment: onStep(1)
-            case .decrement: onStep(-1)
-            @unknown default: break
-            }
-        }
+        .adjustable(when: isAdjustable) { increase in onStep(increase ? 1 : -1) }
     }
 
     private func knob(at point: CGPoint) -> some View {
@@ -124,7 +118,7 @@ struct SettleStage: View {
             .position(point)
     }
 
-    private func drag(_ geometry: SettleArcGeometry) -> some Gesture {
+    private func drag(_ geometry: SettleArcGeometry, width: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .updating($track) { value, track, _ in
                 let moved = hypot(value.translation.width, value.translation.height)
@@ -134,7 +128,7 @@ struct SettleStage: View {
                     track.isSideways = abs(value.translation.width) > abs(value.translation.height)
                 }
                 guard track.isSideways == true else { return }
-                let detent = apply(value.location, geometry)
+                let detent = apply(value.location, geometry, width: width)
                 if detent != track.detent {
                     track.detent = detent
                     Haptics.play(.detent)
@@ -143,15 +137,17 @@ struct SettleStage: View {
             .onEnded { value in
                 // a tap jumps the knob to where the finger landed
                 if hypot(value.translation.width, value.translation.height) < 6 {
-                    _ = apply(value.location, geometry)
+                    _ = apply(value.location, geometry, width: width)
                     Haptics.play(.detent)
                 }
             }
     }
 
     /// Sets the amount from a point on the stage and returns the nearest quarter, for the detent haptic.
-    private func apply(_ location: CGPoint, _ geometry: SettleArcGeometry) -> Int {
-        let share = geometry.fraction(atX: location.x)
+    private func apply(_ location: CGPoint, _ geometry: SettleArcGeometry, width: CGFloat) -> Int {
+        // a gesture's x runs from the left even where the layout is mirrored
+        let x = layoutDirection == .rightToLeft ? width - location.x : location.x
+        let share = geometry.fraction(atX: x)
         onFraction(share)
         return Int((share * 4).rounded())
     }

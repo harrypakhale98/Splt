@@ -22,7 +22,7 @@ enum ReceiptRowParser {
     static func parse(pages: [[ReceiptTextLine]], options: ReceiptParsingOptions = ReceiptParsingOptions()) -> ParsedReceipt {
         let rows = pages.flatMap { ReceiptRowBuilder.rows(from: $0) }
         let allText = rows.map(\.text).joined(separator: "\n")
-        let currency = CurrencyDetector.codes(in: allText, defaultCode: options.defaultCurrencyCode).first
+        let currency = CurrencyDetector.printedCodes(in: allText, defaultCode: options.defaultCurrencyCode).first
             ?? options.defaultCurrencyCode.uppercased()
         let digits = MinorUnitParser.fractionDigits(for: currency)
 
@@ -45,6 +45,8 @@ enum ReceiptPrice {
     }
 
     private static let currencySymbols = CharacterSet(charactersIn: "$€£¥₹")
+    /// Longer digit runs are misreads, and refusing them keeps the receipt's sums far from overflow.
+    static let largestPrice: Int64 = 999_999_999_999
 
     /// Splits "Burger  12.99 T" into the name and a signed price. Nil when the row ends in no price.
     static func split(_ text: String, fractionDigits: Int) -> Split? {
@@ -102,7 +104,8 @@ enum ReceiptPrice {
             ? #"^\d{1,3}(?:[,.']\d{3})*[.,]\d{\#(fractionDigits)}$|^\d+[.,]\d{\#(fractionDigits)}$"#
             : #"^\d{1,3}(?:[,.']\d{3})+$|^\d{3,}$"#
         guard TextPattern(shape).isMatch(in: body),
-              let magnitude = MinorUnitParser.minorUnits(from: body, fractionDigits: fractionDigits) else { return nil }
+              let magnitude = MinorUnitParser.minorUnits(from: body, fractionDigits: fractionDigits),
+              magnitude <= largestPrice else { return nil }
         return negative ? -magnitude : magnitude
     }
 }
@@ -348,7 +351,8 @@ private struct QuantityDetail {
         guard let match = pattern.firstMatch(in: text),
               let count = match.group(1, in: text).flatMap(Int.init),
               let unitText = match.group(2, in: text),
-              let unit = MinorUnitParser.minorUnits(from: unitText, fractionDigits: fractionDigits) else { return nil }
+              let unit = MinorUnitParser.minorUnits(from: unitText, fractionDigits: fractionDigits),
+              unit <= ReceiptPrice.largestPrice else { return nil }
         quantity = max(count, 1)
         self.unit = unit
         total = match.group(3, in: text).flatMap { MinorUnitParser.minorUnits(from: $0, fractionDigits: fractionDigits) }

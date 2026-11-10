@@ -26,7 +26,15 @@ struct IdentityAdopter {
             predicate: #Predicate { $0.kindRaw == me && $0.deletedAt == nil }, sortBy: [SortDescriptor(\.createdAt)]
         )
         descriptor.fetchLimit = 1
-        guard let current = try context.fetch(descriptor).first else { return .noProfile }
+        guard let current = try context.fetch(descriptor).first else {
+            // your own person, synced from another device, arrives as a friend
+            guard let mine = try PersonRecord.find(recordName: target.description, in: context), mine.deletedAt == nil else {
+                return .noProfile
+            }
+            mine.kind = .me
+            try tracker.save()
+            return .adopted(target)
+        }
         if current.id == target.rawValue { return .alreadyUsing(target) }
 
         switch try ReferenceRewriter(tracker: tracker).rewrite(from: current.id, to: target.rawValue) {

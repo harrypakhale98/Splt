@@ -14,10 +14,8 @@ struct AmountHero: View {
         VStack(spacing: 6) {
             Button(action: onTap) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(symbol)
-                        .font(Typeface.hero(size: size * 0.45))
-                        .foregroundStyle(Ink.secondary)
-                    Text(shown.isEmpty ? "0" : shown)
+                    if symbolLeads { symbolText }
+                    Text(shown.isEmpty ? AmountKeypad.digit(0, locale: locale) : shown)
                         .font(Typeface.hero(size: min(size, 80)))
                         .monospacedDigit()
                         .foregroundStyle(shown.isEmpty ? Ink.secondary : Ink.text)
@@ -26,6 +24,7 @@ struct AmountHero: View {
                         .contentTransition(.numericText())
                         .motion(Motion.quick, value: model.amountText)
                         .letterpress()
+                    if !symbolLeads { symbolText }
                     if keypadOpen {
                         Rectangle()
                             .fill(Ink.text)
@@ -33,10 +32,18 @@ struct AmountHero: View {
                             .accessibilityHidden(true)
                     }
                 }
+                // long amounts shrink rather than run under the hide button
+                .padding(.horizontal, keypadOpen ? 56 : 0)
                 .frame(maxWidth: .infinity)
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Amount in \(model.currencyCode)")
+            .accessibilityValue(spokenAmount)
+            .accessibilityHint(keypadOpen ? String(localized: "Use the number pad to change it") : String(localized: "Opens the number pad"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityIdentifier("expense-amount")
             .overlay(alignment: .trailing) {
                 if keypadOpen {
                     Button(action: onTap) {
@@ -50,17 +57,26 @@ struct AmountHero: View {
                     .accessibilityLabel("Hide number pad")
                 }
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Amount in \(model.currencyCode)")
-            .accessibilityValue(model.amountText.isEmpty ? String(localized: "Empty") : model.amountText)
-            .accessibilityHint(keypadOpen ? String(localized: "Use the number pad to change it") : String(localized: "Opens the number pad"))
-            .accessibilityIdentifier("expense-amount")
 
             conversion
         }
     }
 
     private var shown: String { AmountKeypad.display(model.amountText, locale: locale) }
+
+    private var symbolLeads: Bool { AmountKeypad.symbolLeads(currencyCode: model.currencyCode, locale: locale) }
+
+    private var symbolText: some View {
+        Text(symbol)
+            .font(Typeface.hero(size: size * 0.45))
+            .foregroundStyle(Ink.secondary)
+    }
+
+    /// The amount as money, which VoiceOver reads as dollars and cents, or what is typed so far.
+    private var spokenAmount: String {
+        if model.amountText.isEmpty { return String(localized: "Empty") }
+        return model.total.map { MoneyFormatting.magnitudeString($0, locale: locale) } ?? shown
+    }
 
     /// Currency symbols already looked up, by locale and currency, so a keypress never builds a formatter.
     @MainActor private static var symbols: [String: String] = [:]

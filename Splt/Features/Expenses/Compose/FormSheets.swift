@@ -50,7 +50,7 @@ struct FormSheetContent: View {
         case .category: [.medium, .large]
         case .date: [.medium, .large]
         case .note: [.medium]
-        case .receipt: [.medium]
+        case .receipt: [.medium, .large]
         case .repeating, .items: [.medium, .large]
         case .currency, .more: [.large]
         }
@@ -61,7 +61,12 @@ private struct CategorySheet: View {
     let model: ExpenseFormModel
     var onDone: () -> Void
 
-    private let columns = [GridItem(.adaptive(minimum: 96), spacing: 10)]
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// At accessibility sizes each category gets the full width, so its name does not break mid word.
+    private var columns: [GridItem] {
+        [typeSize.isAccessibilitySize ? GridItem(.flexible()) : GridItem(.adaptive(minimum: 96), spacing: 10)]
+    }
 
     var body: some View {
         ScrollView {
@@ -74,8 +79,8 @@ private struct CategorySheet: View {
                         onDone()
                     } label: {
                         VStack(spacing: 6) {
-                            Image(systemName: category.symbolName).font(.title2)
-                            Text(category.title).font(.caption.weight(.medium)).lineLimit(2).multilineTextAlignment(.center)
+                            Image(systemName: selected ? "checkmark.circle.fill" : category.symbolName).font(.title2)
+                            Text(category.title).font(.caption.weight(.medium)).lineLimit(typeSize.isAccessibilitySize ? nil : 2).multilineTextAlignment(.center)
                             if category == model.suggestedCategory, !selected {
                                 Text("Suggested").font(.caption2)
                             }
@@ -103,6 +108,7 @@ private struct DateSheet: View {
     var onDone: () -> Void
 
     var body: some View {
+        // the calendar is taller than the medium height on small phones
         ScrollView {
             DatePicker("Date", selection: $model.date, displayedComponents: .date)
                 .datePickerStyle(.graphical)
@@ -136,31 +142,38 @@ private struct ReceiptSheet: View {
     let model: ExpenseFormModel
     var onDone: () -> Void
 
+    @State private var sheetHeight: CGFloat = 0
+
     var body: some View {
-        VStack(spacing: 20) {
-            if model.receipt.isEmpty {
-                Text("Scan a receipt to split it by item.")
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.secondary)
-                    .multilineTextAlignment(.center)
-            } else {
-                ReceiptThumbnail(
-                    fileName: model.receipt.storedFileName, pendingImage: model.receipt.pendingImage,
-                    store: model.dependencies.receipts, side: 160
-                )
-                Button("Remove Receipt", role: .destructive) { model.clearReceipt() }
+        // centered when it fits; with a receipt on a small phone it is taller than the medium height, so it scrolls
+        ScrollView {
+            VStack(spacing: 20) {
+                if model.receipt.isEmpty {
+                    Text("Scan a receipt to split it by item.")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                        .multilineTextAlignment(.center)
+                } else {
+                    ReceiptThumbnail(
+                        fileName: model.receipt.storedFileName, pendingImage: model.receipt.pendingImage,
+                        store: model.dependencies.receipts, side: 160
+                    )
+                    Button("Remove Receipt", role: .destructive) { model.clearReceipt() }
+                }
+                HStack(spacing: 12) {
+                    ReceiptActions(model: model)
+                        .labelStyle(.titleAndIcon)
+                        .buttonStyle(.borderless)
+                }
+                if model.isScanning {
+                    HStack { ProgressView(); Text("Reading the receipt") }
+                }
             }
-            HStack(spacing: 12) {
-                ReceiptActions(model: model)
-                    .labelStyle(.titleAndIcon)
-                    .buttonStyle(.borderless)
-            }
-            if model.isScanning {
-                HStack { ProgressView(); Text("Reading the receipt") }
-            }
+            .padding(20)
+            .frame(maxWidth: .infinity, minHeight: sheetHeight)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self, of: \.size.height) { sheetHeight = $0 }
         .paperBackground()
         .onChange(of: model.isScanning) { was, now in
             if was, !now { onDone() }

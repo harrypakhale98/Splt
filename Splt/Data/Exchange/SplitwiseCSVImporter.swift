@@ -9,6 +9,8 @@ import SpltCore
 /// non zero balance. Rows it cannot rebuild are skipped and reported as warnings.
 enum SplitwiseCSVImporter {
     private static let fixedColumns = ["date", "description", "category", "cost", "currency"]
+    /// More than any real expense, and small enough that sums of a file cannot overflow.
+    private static let largestAmount: Int64 = 1_000_000_000_000_000
 
     static func parse(
         _ text: String,
@@ -43,16 +45,17 @@ enum SplitwiseCSVImporter {
             }
             let description = CSVText.restored(cell(columns.description))
             if description.isEmpty && cell(columns.cost).isEmpty { continue }
-            if description.caseInsensitiveCompare(GroupCSVExporter.totalBalanceLabel) == .orderedSame { continue }
+            if cell(columns.cost).isEmpty,
+               description.caseInsensitiveCompare(GroupCSVExporter.totalBalanceLabel) == .orderedSame { continue }
 
             func skip(_ message: String) {
                 result.warnings.append(ImportWarning(line: line, message: message))
             }
             guard let date = date(cell(columns.date), calendar: calendar) else { skip("Unreadable date."); continue }
             let currency = cell(columns.currency).uppercased()
-            guard currency.count == 3 else { skip("Missing currency."); continue }
+            guard currency.count == 3, currency.allSatisfy({ $0.isASCII && $0.isLetter }) else { skip("Missing currency."); continue }
             guard let cost = try? MoneyParser.parse(cell(columns.cost), currencyCode: currency, locale: GroupCSVExporter.posix),
-                  !cost.isZero else { skip("Unreadable or zero cost."); continue }
+                  !cost.isZero, abs(cost.minorUnits) <= largestAmount else { skip("Unreadable or zero cost."); continue }
 
             var nets: [PersonID: Int64] = [:]
             var readable = true
@@ -60,11 +63,12 @@ enum SplitwiseCSVImporter {
                 let text = cell(member.column)
                 if text.isEmpty { continue }
                 guard let amount = try? MoneyParser.parse(text, currencyCode: currency, locale: GroupCSVExporter.posix),
+                      abs(amount.minorUnits) <= largestAmount,
                       let id = members[member.name] else { readable = false; break }
                 if !amount.isZero { nets[id] = amount.minorUnits }
             }
             guard readable else { skip("Unreadable member amount."); continue }
-            guard nets.values.reduce(0, +) == 0 else { skip("Member amounts do not add up to zero."); continue }
+            guard nets.values.reduce(Int128(0), { $0 + Int128($1) }) == 0 else { skip("Member amounts do not add up to zero."); continue }
 
             let category = cell(columns.category)
             if category.caseInsensitiveCompare(GroupCSVExporter.paymentCategory) == .orderedSame {
@@ -86,10 +90,11 @@ enum SplitwiseCSVImporter {
 
     private static func payment(nets: [PersonID: Int64], cost: Money, date: Date, groupID: GroupID) -> Payment? {
         guard nets.count == 2,
-              let payer = nets.first(where: { $0.value > 0 })?.key,
-              let receiver = nets.first(where: { $0.value < 0 })?.key else { return nil }
+              let payer = nets.first(where: { $0.value > 0 }),
+              let receiver = nets.first(where: { $0.value < 0 })?.key,
+              payer.value == abs(cost.minorUnits) else { return nil }
         let amount = Money(minorUnits: abs(cost.minorUnits), currencyCode: cost.currencyCode)
-        return Payment(groupID: groupID, payer: payer, receiver: receiver, amount: amount, date: date)
+        return Payment(groupID: groupID, payer: payer.key, receiver: receiver, amount: amount, date: date)
     }
 
     private static func expense(
@@ -174,7 +179,8 @@ enum SplitwiseCSVImporter {
     /// A date such as 2025-03-14, placed at noon so a shifted time zone does not change the day.
     private static func date(_ text: String, calendar: Calendar) -> Date? {
         let parts = text.split(separator: "-").map { Int($0) }
-        guard parts.count == 3, let year = parts[0], let month = parts[1], let day = parts[2] else { return nil }
+        guard parts.count == 3, let year = parts[0], let month = parts[1], let day = parts[2],
+              (1900...2200).contains(year) else { return nil }
         let components = DateComponents(year: year, month: month, day: day, hour: 12)
         guard let date = calendar.date(from: components),
               calendar.dateComponents([.year, .month, .day], from: date) == DateComponents(year: year, month: month, day: day)

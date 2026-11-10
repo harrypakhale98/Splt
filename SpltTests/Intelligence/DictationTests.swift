@@ -49,4 +49,53 @@ struct DictationTests {
         guard !hasDescription else { return }
         #expect(await SpeechDictationService().requestPermission() == .unavailable)
     }
+
+    private actor FakeDictation: Dictating {
+        let permission: DictationPermission
+        let heard: [String]
+        init(permission: DictationPermission, heard: [String] = []) {
+            self.permission = permission
+            self.heard = heard
+        }
+        func requestPermission() async -> DictationPermission { permission }
+        func start(locale: Locale) async -> AsyncStream<String> {
+            let words = heard
+            return AsyncStream { continuation in
+                words.forEach { continuation.yield($0) }
+                continuation.finish()
+            }
+        }
+        func stop() async {}
+    }
+
+    @MainActor
+    private func run(_ controller: DictationController) async -> [String] {
+        var updates: [String] = []
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            controller.toggle(locale: Locale(identifier: "en_US"), update: { updates.append($0) }, finished: { done.resume() })
+        }
+        return updates
+    }
+
+    @MainActor
+    @Test func aDeniedMicrophoneIsExplained() async {
+        let controller = DictationController(service: FakeDictation(permission: .denied))
+        #expect(await run(controller).isEmpty)
+        #expect(controller.notice?.contains("Settings") == true)
+        #expect(!controller.isListening)
+    }
+
+    @MainActor
+    @Test func dictationThatCannotStartIsExplained() async {
+        let controller = DictationController(service: FakeDictation(permission: .granted))
+        _ = await run(controller)
+        #expect(controller.notice?.contains("could not start") == true)
+    }
+
+    @MainActor
+    @Test func dictationThatHeardWordsSaysNothing() async {
+        let controller = DictationController(service: FakeDictation(permission: .granted, heard: ["dinner"]))
+        #expect(await run(controller) == ["dinner"])
+        #expect(controller.notice == nil)
+    }
 }

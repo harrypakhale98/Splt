@@ -64,7 +64,8 @@ extension PersonRecord: SyncTracked {
     var syncFields: SyncFields {
         var fields = SyncFields()
         fields.set("name", name)
-        fields.set("contactHint", contactHint)
+        // an email or phone number from your contacts, or one the share showed you, is not for the rest of the group.
+        // Left out, an upload also clears what an older copy holds.
         fields.set("kind", kind == .me ? PersonKind.friend.rawValue : kindRaw)
         fields.set("claimedByCloudUserID", claimedByCloudUserID)
         fields.set("avatarSeed", Int64(avatarSeed))
@@ -74,9 +75,10 @@ extension PersonRecord: SyncTracked {
 
     func applySyncFields(_ fields: SyncFields) {
         name = fields.string("name") ?? name
-        contactHint = fields.string("contactHint")
-        if kind != .me {
-            kindRaw = fields.string("kind") ?? kindRaw
+        // not taken from a record: pay with buttons use this as the receiver
+        // `me` is this device's own fact, so it never comes from a record and never goes away because of one
+        if kind != .me, let remote = fields.string("kind"), remote != PersonKind.me.rawValue {
+            kindRaw = remote
         }
         claimedByCloudUserID = fields.string("claimedByCloudUserID")
         avatarSeed = Int(fields.int("avatarSeed") ?? Int64(avatarSeed))

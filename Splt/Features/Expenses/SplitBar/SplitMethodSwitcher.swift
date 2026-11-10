@@ -18,7 +18,9 @@ struct SplitMethodSwitcher: View {
             } else {
                 Picker("Split method", selection: Binding(get: { selection }, set: { select($0) })) {
                     ForEach(order) { method in
-                        Text(method.shortTitle).tag(method)
+                        Text(method.shortTitle)
+                            .accessibilityLabel(method.spokenShortTitle)
+                            .tag(method)
                     }
                 }
                 .pickerStyle(.segmented)

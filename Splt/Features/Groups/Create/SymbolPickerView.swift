@@ -29,7 +29,7 @@ struct SymbolPickerView: View {
                             .contentShape(RoundedRectangle(cornerRadius: Depth.controlRadius, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(GroupSymbols.label(for: symbol))
+                    .accessibilityLabel(GroupSymbols.spokenName(for: symbol))
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }

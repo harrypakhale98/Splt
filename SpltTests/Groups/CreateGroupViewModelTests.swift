@@ -96,6 +96,21 @@ struct CreateGroupViewModelTests {
         #expect(model.members.map(\.name) == ["Jo"])
     }
 
+    @Test func aSecondCreateStoresNothing() throws {
+        let services = try DataServices.inMemory()
+        let model = makeModel(services)
+        model.name = "Trip"
+        model.addMember(named: "Alex")
+        let first = try model.create()
+        let peopleAfterFirst = try services.people.allPeople().count
+        let second = try model.create()
+        let groups = try services.groups.groups(includeArchived: true)
+        let people = try services.people.allPeople()
+        #expect(second == first)
+        #expect(groups.count == 1)
+        #expect(people.count == peopleAfterFirst)
+    }
+
     @Test func templatesPickKindAndSymbol() throws {
         let services = try DataServices.inMemory()
         let model = makeModel(services)

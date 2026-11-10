@@ -7,16 +7,26 @@ struct SaveFailureOutcome: Equatable {
     /// The change should be queued again, for example after a conflict the local version won.
     var requeue = false
     var recreateZone: CKRecordZone.ID?
+    /// A zone the server once confirmed is now missing. A fetch has to tell why before it may come back:
+    /// another device may have deleted the group.
+    var askServerAbout: CKRecordZone.ID?
     /// A shared zone that is gone, treated like a zone the owner deleted.
     var goneZone: CKRecordZone.ID?
 }
 
 extension SyncStoreAdapter {
-    /// Records the server accepted and records it deleted.
-    func didSend(saved: [CKRecord], deleted: [CKRecord.ID]) throws {
+    /// Records the server accepted and records it deleted. Returns the accepted records that no longer
+    /// exist here: they were deleted during their first upload, so the server must delete them too.
+    @discardableResult
+    func didSend(saved: [CKRecord], deleted: [CKRecord.ID]) throws -> [CKRecord.ID] {
         var copies: [(PersonCopyKey, PersonCopy)] = []
+        var orphans: [CKRecord.ID] = []
         for record in saved {
             guard let type = SyncRecordType(rawValue: record.recordType) else { continue }
+            guard try type.modelType.find(recordName: record.recordID.recordName, in: tracker.context) != nil else {
+                orphans.append(record.recordID)
+                continue
+            }
             let sentAt = (record[RecordSchema.modifiedAtKey] as? Date) ?? .distantPast
             let systemFields = RecordMapper.encodeSystemFields(record)
             if type == .person {
@@ -47,6 +57,7 @@ extension SyncStoreAdapter {
         for id in deleted {
             try didDelete(id)
         }
+        return orphans
     }
 
     private func didDelete(_ id: CKRecord.ID) throws {
@@ -86,8 +97,9 @@ extension SyncStoreAdapter {
             outcome.requeue = true
         case .zoneMissing:
             let zone = record.recordID.zoneID
-            if zone.scope == .privateDatabase {
-                updateMetadata { $0.zones[zone.zoneName] = nil }
+            if zone.scope == .privateDatabase, metadata.isKnown(zoneName: zone.zoneName) {
+                outcome.askServerAbout = zone
+            } else if zone.scope == .privateDatabase {
                 outcome.recreateZone = zone
                 outcome.requeue = true
             } else {
@@ -99,10 +111,10 @@ extension SyncStoreAdapter {
         return outcome
     }
 
-    /// A delete that finds nothing to delete has done its job.
+    /// A delete that finds nothing to delete, or no zone to delete it from, has done its job.
     func deleteFailed(id: CKRecord.ID, error: CKError) throws -> SyncFailure {
         let failure = SyncFailure(error)
-        if failure == .itemMissing {
+        if failure == .itemMissing || failure == .zoneMissing {
             try didSend(saved: [], deleted: [id])
         }
         return failure

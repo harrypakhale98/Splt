@@ -18,24 +18,30 @@ struct RepeatSection: View {
                 if model.repeatChoice.frequency != nil {
                     Toggle("End Date", isOn: Binding(
                         get: { model.repeatChoice.endDate != nil },
-                        set: { model.repeatChoice.endDate = $0 ? Calendar.current.date(byAdding: .year, value: 1, to: model.date) : nil }
+                        set: { model.repeatChoice.endDate = $0 ? Calendar.current.date(byAdding: .year, value: 1, to: model.date).map { RepeatChoice.lastMoment(of: $0) } : nil }
                     ))
                     if let end = model.repeatChoice.endDate {
                         DatePicker(
-                            "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = $0 }),
+                            "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = RepeatChoice.lastMoment(of: $0) }),
                             in: model.date..., displayedComponents: .date
                         )
                     }
                 }
             }
-        } header: {
-            SectionHeader("Repeat")
         } footer: {
             if let frequency = model.repeatChoice.frequency, !model.isEditingRecurring {
                 Text("A new expense is added automatically \(frequency.footerPhrase), starting after this one.")
             }
         }
         .raisedSection()
+    }
+}
+
+extension RepeatChoice {
+    /// The end date is picked as a day and that day counts, so an occurrence at any time on it is included.
+    static func lastMoment(of day: Date, calendar: Calendar = .current) -> Date {
+        let next = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: day))
+        return next?.addingTimeInterval(-1) ?? day
     }
 }
 

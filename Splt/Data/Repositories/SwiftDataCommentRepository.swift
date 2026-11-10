@@ -16,7 +16,9 @@ final class SwiftDataCommentRepository: CommentRepository {
             predicate: #Predicate { $0.expenseID == eid && $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        return try env.context.fetch(descriptor).map(ExpenseComment.init)
+        // a comment from another group's zone can name this expense, but it does not belong on it
+        let group = try env.expenseRecord(expense)?.groupID
+        return try env.context.fetch(descriptor).filter { $0.groupID == group }.map(ExpenseComment.init)
     }
 
     func comments(in group: GroupID) throws -> [ExpenseComment] {
@@ -29,6 +31,8 @@ final class SwiftDataCommentRepository: CommentRepository {
     }
 
     func add(_ comment: ExpenseComment) throws {
+        var comment = comment
+        comment.text = comment.text.limited(to: RecordLimits.text)
         guard try CommentRecord.find(recordName: comment.id.uuidString, in: env.context) == nil else {
             throw DataError.alreadyExists("comment \(comment.id)")
         }
@@ -44,6 +48,7 @@ final class SwiftDataCommentRepository: CommentRepository {
     }
 
     func edit(id: UUID, text: String) throws {
+        let text = text.limited(to: RecordLimits.text)
         let record = try find(id)
         guard record.text != text else { return }
         record.text = text

@@ -42,9 +42,16 @@ struct RecurringExpensesModelTests {
         let whilePaused = RecurringExpenseGenerator.run(services: fixture.services, now: fixture.clock.start.addingTimeInterval(86_400 * 90))
         #expect(whilePaused.isEmpty)
 
+        // Resuming does not bill what was missed, it picks up at the next future date.
+        fixture.clock.advance(by: 86_400 * 90)
+        let resumedAt = fixture.clock.start.addingTimeInterval(86_400 * 90)
         model.setActive(true, for: model.templates[0])
-        let afterResume = RecurringExpenseGenerator.run(services: fixture.services, now: fixture.clock.start.addingTimeInterval(86_400 * 90))
-        #expect(afterResume.count >= 3)
+        #expect(RecurringExpenseGenerator.run(services: fixture.services, now: resumedAt.addingTimeInterval(60)).isEmpty)
+        let next = try #require(model.nextDate(for: model.templates[0]))
+        #expect(next > resumedAt)
+        #expect(next < resumedAt.addingTimeInterval(86_400 * 32))
+        #expect(RecurringExpenseGenerator.run(services: fixture.services, now: next).count == 1)
+        #expect(try fixture.services.expenses.expenses(in: fixture.group.id).count == 1)
     }
 
     @Test func deletingLeavesPastExpenses() throws {

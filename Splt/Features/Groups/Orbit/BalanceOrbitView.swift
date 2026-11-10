@@ -17,6 +17,7 @@ struct BalanceOrbitView: View {
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
+    @Environment(\.layoutDirection) private var layoutDirection
 
     init(board: OrbitBoard, members: [PersonID], initialFocus: OrbitFocus = .none, onSettle: @escaping (Debt) -> Void) {
         self.board = board
@@ -44,7 +45,9 @@ struct BalanceOrbitView: View {
             }
             .contentShape(Rectangle())
             .gesture(SpatialTapGesture().onEnded { value in
-                handle(scene.hit(at: value.location))
+                // a gesture's x runs from the left even where the ring is mirrored
+                let x = layoutDirection == .rightToLeft ? proxy.size.width - value.location.x : value.location.x
+                handle(scene.hit(at: CGPoint(x: x, y: value.location.y)))
             })
         }
         .dynamicTypeSize(...DynamicTypeSize.xLarge)
