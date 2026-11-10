@@ -82,6 +82,10 @@ struct NameResolver: Sendable {
         }
         let written = Set(text.foldedWords)
         guard name.foldedWords.allSatisfy(written.contains) else { return nil }
+        // "pizza" is what was bought, and "Dinner Sam" is the member Sam with a stray word
+        let words = name.split(separator: " ").map(String.init)
+        guard !words.contains(where: { Self.isStopWord($0) || KeywordCategoryTable.standard.recognises(word: $0) }),
+              words.count == 1 || !words.contains(where: { matchingCandidate(for: $0) != nil }) else { return nil }
         guard name.allSatisfy({ $0.isLetter || $0 == " " || $0 == "'" || $0 == "\u{2019}" || $0 == "-" }) else { return nil }
         return name.split(separator: " ").map { String($0).sentenceCased }.joined(separator: " ")
     }

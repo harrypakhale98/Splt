@@ -182,4 +182,23 @@ struct SmartQuickAddParserTests {
             QuickAddShare(name: "Priya Shah", amount: Money(minorUnits: -1000, currencyCode: "USD"))
         ]))
     }
+
+    @Test func modelNamesAddToTheNamesTheRulesRead() async {
+        var reading = QuickAddReading()
+        reading.participants = ["pizza", "Dinner Sam"]
+        let draft = await parser(StubReader(reading: reading)).parse("pizza dinner 60 with Sam", context: context)
+        #expect(draft.participantNames == ["Sam Carter"])
+
+        reading.participants = ["Sam"]
+        let three = QuickAddContext(candidateNames: ["Sam Carter", "Priya Shah", "Alex"], defaultCurrencyCode: "USD")
+        let partial = await parser(StubReader(reading: reading)).parse("dinner 90 with Sam, Priya and Alex", context: three)
+        #expect(partial.participantNames == ["Sam Carter", "Priya Shah", "Alex"])
+    }
+
+    @Test func modelNamesThatAreExpenseWordsAreRefused() {
+        var reading = QuickAddReading()
+        reading.participants = ["pizza", "Dinner Sam", "Camping Sam", "Sam", "jordan"]
+        let draft = QuickAddValidator.validate(reading, text: "Camping pizza dinner 60 with Sam and jordan", context: context)
+        #expect(draft.participantNames == ["Sam Carter", "Jordan"])
+    }
 }
