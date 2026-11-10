@@ -1,5 +1,6 @@
 import CloudKit
 import Foundation
+import SpltCore
 
 /// What the coordinator needs from one CKSyncEngine, so the logic can be tested with a fake.
 @MainActor
@@ -33,6 +34,8 @@ final class SyncCoordinator {
     var onRemoteChanges: (@MainActor (ApplyReport) -> Void)?
     var onSuggestions: (@MainActor ([ClaimSuggestion]) -> Void)?
     var onStatusChange: (@MainActor (SyncStatus) -> Void)?
+    /// Called when changes arrive for a group someone else shared and this person is a member of it.
+    var onMembership: (@MainActor (GroupID) -> Void)?
 
     init(services: DataServices, adapter: SyncStoreAdapter, retry: RetryScheduler? = nil) {
         self.services = services
@@ -54,10 +57,24 @@ final class SyncCoordinator {
     }
 
     /// Accepting an invitation makes this person a member, even if they were removed or left before.
+    /// The group may not be on this device yet, so the invitation is remembered until it is.
     func joined(zoneName: String) throws {
-        adapter.updateMetadata { $0.pendingLeaves?.remove(zoneName) }
+        adapter.updateMetadata {
+            $0.pendingLeaves?.remove(zoneName)
+            $0.pendingJoins = ($0.pendingJoins ?? []).union([zoneName])
+        }
         guard let user = userRecordName else { return }
-        try ParticipantImporter(services: services).ensureMembership(ofMe: user, inZone: zoneName, afterInvitation: true)
+        try settleMembership(of: user, inZone: zoneName)
+    }
+
+    private func settleMembership(of user: String, inZone zone: String) throws {
+        let invited = adapter.metadata.pendingJoins?.contains(zone) == true
+        let importer = ParticipantImporter(services: services)
+        guard try importer.ensureMembership(ofMe: user, inZone: zone, afterInvitation: invited) else { return }
+        adapter.updateMetadata { $0.pendingJoins?.remove(zone) }
+        // a group that is being left stays hidden while its last changes go out
+        guard adapter.metadata.pendingLeaves?.contains(zone) != true, let id = UUID(uuidString: zone) else { return }
+        onMembership?(GroupID(rawValue: id))
     }
 
     func attach(_ queue: any EngineQueue, for scope: DatabaseScope) {
@@ -166,7 +183,7 @@ final class SyncCoordinator {
             suggestions += try importer.importPeople(from: ParticipantMapper.snapshots(from: share), myUserRecordName: user)
         }
         for zone in report.touchedZones where adapter.metadata.scope(forZoneName: zone) == .sharedDatabase {
-            try importer.ensureMembership(ofMe: user, inZone: zone)
+            try settleMembership(of: user, inZone: zone)
         }
         if !suggestions.isEmpty { onSuggestions?(suggestions) }
         if !report.shares.isEmpty || !report.touchedZones.isEmpty { try reconcile() }

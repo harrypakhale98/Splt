@@ -52,8 +52,10 @@ final class SyncRuntime {
 
     private func automaticEngine(services: DataServices) -> any SyncEngine {
         let notifier = notifier
-        return AutomaticSyncEngine(probe: CloudKitAccountProbe()) { identifier in
-            CloudKitSyncEngine(containerIdentifier: identifier, services: services, notifier: notifier)
+        return AutomaticSyncEngine(probe: CloudKitAccountProbe()) { [weak self] identifier in
+            let engine = CloudKitSyncEngine(containerIdentifier: identifier, services: services, notifier: notifier)
+            engine.onMembership = { self?.groupArrived($0) }
+            return engine
         }
     }
 
@@ -108,6 +110,13 @@ final class SyncRuntime {
     func groupJoined(_ group: GroupID) {
         leftGroups.remove(group)
         onGroupJoined?(group)
+    }
+
+    /// Changes arrived for a shared group you are a member of, so it is not one you left. You may have
+    /// joined it again on another device, or its first fetch failed after the invitation was accepted.
+    func groupArrived(_ group: GroupID) {
+        guard leftGroups.contains(group) else { return }
+        leftGroups.remove(group)
     }
 
     // MARK: Push

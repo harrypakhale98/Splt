@@ -78,19 +78,22 @@ struct ParticipantImporter {
     /// Adds this person to a group they joined through a share, so everyone sees them as a member.
     /// It also repairs a join lost to a conflict, but it respects being removed: only a new invitation
     /// (`afterInvitation`) brings back someone whose latest word in the group's activity is a removal.
-    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String, afterInvitation: Bool = false) throws {
+    /// Returns true when this person is a member of the group afterwards.
+    @discardableResult
+    func ensureMembership(ofMe userRecordName: String, inZone zoneName: String, afterInvitation: Bool = false) throws -> Bool {
         guard let groupID = UUID(uuidString: zoneName).map(GroupID.init(rawValue:)),
-              let group = try services.groups.group(id: groupID) else { return }
+              let group = try services.groups.group(id: groupID) else { return false }
         let me = CloudIdentity.personID(forUserRecordName: userRecordName)
-        guard !group.memberIDs.contains(me) else { return }
-        if !afterInvitation, try wasRemoved(me, from: groupID) { return }
+        guard !group.memberIDs.contains(me) else { return true }
+        if !afterInvitation, try wasRemoved(me, from: groupID) { return false }
         if try services.people.me() == nil {
             // joined before choosing a name: the others know them from the share until they pick one
             try services.people.ensureMe(name: String(localized: "You"))
             try IdentityAdopter(tracker: services.makeChangeTracker()).adopt(userRecordName: userRecordName)
         }
-        guard try services.people.person(id: me) != nil else { return }
+        guard try services.people.person(id: me) != nil else { return false }
         try services.groups.addMember(me, to: groupID)
+        return true
     }
 
     private func wasRemoved(_ person: PersonID, from group: GroupID) throws -> Bool {

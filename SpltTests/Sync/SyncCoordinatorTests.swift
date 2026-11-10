@@ -408,13 +408,14 @@ struct SyncCoordinatorTests {
         let coordinator: SyncCoordinator
         let me = CloudIdentity.personID(forUserRecordName: "_casey")
 
-        init() throws {
+        init(fetching: Bool = true) throws {
             owner = try PopulatedDevice()
             try cloud.upload(from: owner.device)
             device = try SyncDevice()
             try device.services.people.ensureMe(name: "Casey")
             coordinator = SyncCoordinator(services: device.services, adapter: device.adapter)
             try coordinator.begin(user: "_casey")
+            guard fetching else { return }
             try coordinator.fetchedZones(modified: [sharedZone], deleted: [])
             try fetch()
         }
@@ -468,6 +469,42 @@ struct SyncCoordinatorTests {
         try joiner.fetch()
         try joiner.coordinator.joined(zoneName: joiner.owner.zone)
         #expect(try joiner.isMember)
+    }
+
+    @Test func anInvitationAcceptedBeforeTheGroupArrivesStillBringsBackSomeoneWhoWasRemoved() throws {
+        let joiner = try Joiner(fetching: false)
+        try joiner.ownerRemovesMe()
+        try joiner.coordinator.joined(zoneName: joiner.owner.zone)
+        #expect(try !joiner.isMember)
+        #expect(joiner.device.adapter.metadata.pendingJoins == [joiner.owner.zone])
+
+        try joiner.coordinator.fetchedZones(modified: [joiner.sharedZone], deleted: [])
+        try joiner.fetch()
+        #expect(try joiner.isMember)
+        #expect(joiner.device.adapter.metadata.pendingJoins?.isEmpty == true)
+    }
+
+    @Test func changesInASharedGroupYouAreInSayThatYouAreAMember() throws {
+        let joiner = try Joiner()
+        var groups: [GroupID] = []
+        joiner.coordinator.onMembership = { groups.append($0) }
+        try joiner.fetch()
+        #expect(groups == [joiner.owner.group.id])
+
+        // while leaving, the group stays hidden
+        groups = []
+        joiner.coordinator.requestLeave(zoneName: joiner.owner.zone)
+        try joiner.fetch()
+        #expect(groups.isEmpty)
+    }
+
+    @Test func changesInAGroupYouWereRemovedFromDoNotSayThatYouAreAMember() throws {
+        let joiner = try Joiner()
+        var groups: [GroupID] = []
+        joiner.coordinator.onMembership = { groups.append($0) }
+        try joiner.ownerRemovesMe()
+        try joiner.fetch()
+        #expect(groups.isEmpty)
     }
 
     @Test func someoneWithNoProfileYetStillBecomesAMemberWhenTheyJoin() throws {

@@ -26,6 +26,8 @@ final class CloudKitSyncEngine: SyncEngine {
     @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     @ObservationIgnored private var reconcileTask: Task<Void, Never>?
     @ObservationIgnored private var isStarted = false
+    /// Called when changes arrive for a group someone else shared and this person is a member of it.
+    @ObservationIgnored var onMembership: (@MainActor (GroupID) -> Void)?
 
     convenience init(
         containerIdentifier: String, services: DataServices,
@@ -55,6 +57,7 @@ final class CloudKitSyncEngine: SyncEngine {
         coordinator.setRetry(RetryScheduler(policy: retryPolicy) { [weak self] in await self?.retryNow() })
         coordinator.onStatusChange = { [weak self] in self?.publish($0) }
         coordinator.onRemoteChanges = { [weak self] report in self?.notifier?.notify(for: report, services: self?.services) }
+        coordinator.onMembership = { [weak self] in self?.onMembership?($0) }
     }
 
     var statusUpdates: AsyncStream<SyncStatus> { broadcaster.updates() }
@@ -194,8 +197,9 @@ final class CloudKitSyncEngine: SyncEngine {
         guard let metadata = invitation.metadata else { throw SyncError.invalidInvitation }
         guard metadata.containerIdentifier == backend.containerIdentifier else { throw SyncError.invalidInvitation }
         try await backend.accept(metadata)
-        try await fetchChanges()
+        // the server has accepted, so the join stands even if the group cannot be fetched right now
         try coordinator.joined(zoneName: metadata.share.recordID.zoneID.zoneName)
+        try await fetchChanges()
     }
 
     func isSharedByMe(group: GroupID) async -> Bool {

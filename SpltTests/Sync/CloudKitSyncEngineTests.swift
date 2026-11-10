@@ -272,6 +272,18 @@ struct CloudKitSyncEngineTests {
         try rig.device.tracker.context.fetch(FetchDescriptor<ActivityRecord>()).first { $0.kindRaw == "memberRemoved" }
     }
 
+    @Test func changesInASharedGroupYouAreInAreReportedAsMembership() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        var groups: [GroupID] = []
+        engine.onMembership = { groups.append($0) }
+        await engine.start()
+        let payload = try #require(try rig.device.tracker.payload(recordType: .group, recordName: zone.zoneName))
+        let syncer = try #require(engine.syncers.first { $0.scope == .sharedDatabase })
+        syncer.handle(.fetchedRecords(modifications: [RecordMapper.record(for: payload, in: zone)], deletions: []))
+        #expect(groups == [rig.populated.group.id])
+        await engine.stop()
+    }
+
     @Test func leavingGivesUpTheZoneOnlyAfterTheRemovalWasSent() async throws {
         let (rig, engine, zone) = try sharedRig()
         await engine.start()
