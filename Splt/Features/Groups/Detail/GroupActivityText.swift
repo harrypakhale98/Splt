@@ -34,11 +34,11 @@ struct GroupActivityText {
         case .expenseRestored(let expense):
             return String(localized: "\(actor) restored \(expense.title)")
         case .paymentRecorded(let payment):
-            let payer = name(payment.payer), receiver = name(payment.receiver)
+            let payer = name(payment.payer), receiver = member(payment.receiver)
             let amount = MoneyFormatting.magnitudeString(payment.amount, locale: locale)
             return String(localized: "\(payer) paid \(receiver) \(amount)")
         case .paymentUndone(let payment):
-            let payer = name(payment.payer), receiver = name(payment.receiver)
+            let payer = member(payment.payer), receiver = member(payment.receiver)
             let amount = MoneyFormatting.magnitudeString(payment.amount, locale: locale)
             return String(localized: "\(actor) undid \(payer) paying \(receiver) \(amount)")
         case .commentAdded(let expense, let text):

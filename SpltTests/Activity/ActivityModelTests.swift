@@ -27,7 +27,7 @@ struct ActivityModelTests {
         #expect(kinds.first == .paymentRecorded)
         #expect(kinds.contains(.expenseAdded))
         let payment = try #require(model.visibleEntries.first)
-        #expect(model.text(for: payment, locale: Locale(identifier: "en_US")) == "Sam paid You $10.00")
+        #expect(model.text(for: payment, locale: Locale(identifier: "en_US")) == "Sam paid you $10.00")
     }
 
     @Test func groupsEntriesByDay() throws {
