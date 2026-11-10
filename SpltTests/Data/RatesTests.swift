@@ -293,6 +293,38 @@ struct RatesServiceTests {
         #expect(provider.historicalCalls == 1)
     }
 
+    @Test func anEarlierTableForARecentDayIsUsedButNotKept() async {
+        let service = service()
+        let yesterday = clock.start.addingTimeInterval(-86_400)
+        let day = RatesService.dayString(yesterday, timeZone: .current)
+        let dayBefore = RatesService.dayString(yesterday.addingTimeInterval(-86_400), timeZone: .current)
+        // yesterday's rates are not out yet, so the provider answers with the day before
+        provider.setHistorical(table("USD", day: dayBefore, fetchedAt: clock.start, rates: ["EUR": 0.80]), base: "USD", day: day)
+        #expect(await service.historicalTable(base: "USD", on: yesterday)?.rates["EUR"] == 0.80)
+
+        provider.setHistorical(table("USD", day: day, fetchedAt: clock.start, rates: ["EUR": 0.82]), base: "USD", day: day)
+        #expect(await service.historicalTable(base: "USD", on: yesterday)?.rates["EUR"] == 0.82)
+        #expect(provider.historicalCalls == 2)
+
+        // now the table is for the day asked, so it is final
+        provider.setHistorical(nil, base: "USD", day: day)
+        #expect(await service.historicalTable(base: "USD", on: yesterday)?.rates["EUR"] == 0.82)
+        #expect(provider.historicalCalls == 2)
+    }
+
+    @Test func anEarlierTableForAnOlderDayIsFinal() async {
+        let service = service()
+        let past = clock.start.addingTimeInterval(-4 * 86_400)
+        let day = RatesService.dayString(past, timeZone: .current)
+        let dayBefore = RatesService.dayString(past.addingTimeInterval(-86_400), timeZone: .current)
+        // a weekend or holiday: the table of the last business day stands
+        provider.setHistorical(table("USD", day: dayBefore, fetchedAt: clock.start, rates: ["EUR": 0.80]), base: "USD", day: day)
+        #expect(await service.historicalTable(base: "USD", on: past)?.rates["EUR"] == 0.80)
+        provider.setHistorical(nil, base: "USD", day: day)
+        #expect(await service.historicalTable(base: "USD", on: past)?.rates["EUR"] == 0.80)
+        #expect(provider.historicalCalls == 1)
+    }
+
     // Precedence: pinned, then the expense day, then latest, then nothing.
 
     @Test func aPinnedRateForTheExpensePairWinsWithoutAnyLookup() async throws {

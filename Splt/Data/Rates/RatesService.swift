@@ -59,6 +59,10 @@ final class RatesService: Sendable {
     }
 
     /// The table published for the calendar day of `date`. Past days never change, so a cached one is final.
+    ///
+    /// The provider answers with the last day it has. For a recent day that can mean its rates are
+    /// not out yet, so an earlier table is used but not kept. For a weekend or holiday the earlier
+    /// table is the right one for good, which is taken as settled once the day is more than two days back.
     func historicalTable(base: String, on date: Date, timeZone: TimeZone = .current) async -> RateTable? {
         let base = base.uppercased()
         let day = Self.dayString(date, timeZone: timeZone)
@@ -69,8 +73,17 @@ final class RatesService: Sendable {
             markFailed(key)
             return nil
         }
-        await cache.storeHistorical(fetched, day: day)
+        if fetched.day == day || isMoreThanTwoDaysAgo(day, timeZone: timeZone) {
+            await cache.storeHistorical(fetched, day: day)
+        }
         return fetched
+    }
+
+    private func isMoreThanTwoDaysAgo(_ day: String, timeZone: TimeZone) -> Bool {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        guard let cutoff = calendar.date(byAdding: .day, value: -2, to: now()) else { return false }
+        return day < Self.dayString(cutoff, timeZone: timeZone)
     }
 
     /// Rates for converting into the group's currency.
