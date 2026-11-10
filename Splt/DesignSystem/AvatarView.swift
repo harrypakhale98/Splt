@@ -3,11 +3,12 @@ import SwiftUI
 
 /// A circle with a person's initials on their person color.
 ///
-/// A person has the same color on every screen. `members` is kept for older callers and does not
-/// change the color. Without an id the color comes from the name.
+/// A person has the same color on every screen. Pass the group as `members` so no two members share
+/// a color (`PersonPalette.indices(for:)`). Without an id the color comes from the name.
 struct AvatarView: View {
     let name: String
     private let personID: PersonID?
+    private let members: [PersonID]
     private let fixedHue: Int?
     private let showsInitials: Bool
     @ScaledMetric private var scaledDiameter: CGFloat
@@ -17,6 +18,7 @@ struct AvatarView: View {
         self.name = name
         self.showsInitials = showsInitials
         personID = nil
+        members = []
         fixedHue = nil
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
@@ -26,6 +28,7 @@ struct AvatarView: View {
         self.name = name
         self.showsInitials = showsInitials
         personID = id
+        self.members = members
         fixedHue = nil
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
@@ -36,6 +39,7 @@ struct AvatarView: View {
         self.name = name
         self.showsInitials = showsInitials
         personID = nil
+        members = []
         fixedHue = hue
         baseDiameter = size
         _scaledDiameter = ScaledMetric(wrappedValue: size, relativeTo: .body)
@@ -53,7 +57,7 @@ struct AvatarView: View {
     private var hue: Int {
         _ = PersonColorRevision.shared.value
         if let fixedHue { return fixedHue }
-        if let personID { return PersonPalette.index(for: personID) }
+        if let personID { return PersonPalette.index(for: personID, in: members) }
         return PersonPalette.preferredIndex(forName: name)
     }
 

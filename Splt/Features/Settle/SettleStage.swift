@@ -8,6 +8,9 @@ struct SettleParticipant: Identifiable, Equatable {
     var color: Color
     /// The name the person is stored under, for their initials. `name` may read "You".
     var avatarName: String?
+
+    /// Whether this is you: then `name` reads "You" while `avatarName` keeps your stored name.
+    var isYou: Bool { avatarName.map { $0 != name } ?? false }
 }
 
 /// The two people of a payment facing each other, with an arc between them in their blended colors.
@@ -21,6 +24,9 @@ struct SettleStage: View {
     }
 
     let layout: Layout
+    /// The group the people belong to, so no two of them share a color. Without it the people on the
+    /// stage are kept apart from each other.
+    var members: [PersonID] = []
     /// The share of the debt being paid, 0 to 1.
     var fraction: Double
     /// Whether the knob can be dragged.
@@ -96,7 +102,7 @@ struct SettleStage: View {
         // Simultaneous, so a vertical drag that starts here still scrolls the sheet.
         .simultaneousGesture(isAdjustable && contraction == 0 ? drag(geometry) : nil)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("\(payer.name) pays \(receiver.name)"))
+        .accessibilityLabel(Self.spokenPayment(payer: payer, receiver: receiver))
         .accessibilityValue(isAdjustable ? Text("\(Int((fraction * 100).rounded())) percent of what is owed") : Text(""))
         .accessibilityAdjustableAction { direction in
             guard isAdjustable else { return }
@@ -152,8 +158,25 @@ struct SettleStage: View {
 
     // MARK: Group
 
+    /// "You pay Sam", "Sam pays you" or "Sam pays Priya": the names may read "You", which does not
+    /// fit in "pays".
+    static func spokenPayment(payer: SettleParticipant, receiver: SettleParticipant) -> String {
+        if payer.isYou { return String(localized: "You pay \(receiver.name)") }
+        if receiver.isYou { return String(localized: "\(payer.name) pays you") }
+        return String(localized: "\(payer.name) pays \(receiver.name)")
+    }
+
+    /// Who the colors are kept apart within: the group when known, otherwise everyone on the stage.
+    private var colorScope: [PersonID] {
+        if !members.isEmpty { return members }
+        switch layout {
+        case .pair(let payer, let receiver): return [payer.id, receiver.id]
+        case .group(let people): return people.map(\.id)
+        }
+    }
+
     private func group(_ people: [SettleParticipant]) -> some View {
-        ShareStrip(colors: people.map(\.color))
+        ShareStrip(people: people.map(\.id), members: colorScope)
             .padding(.vertical, 12)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(ListFormatter.localizedString(byJoining: people.map(\.name))))
@@ -170,7 +193,7 @@ struct SettleStage: View {
     }
 
     private func avatar(_ person: SettleParticipant, at point: CGPoint) -> some View {
-        AvatarView(name: person.avatarName ?? person.name, id: person.id, size: baseDiameter)
+        AvatarView(name: person.avatarName ?? person.name, id: person.id, members: colorScope, size: baseDiameter)
             .position(point)
             .motion(.smooth, value: point)
     }

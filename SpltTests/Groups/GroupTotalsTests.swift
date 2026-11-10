@@ -62,13 +62,13 @@ struct GroupTotalsTests {
         #expect(usd.byPerson.map(\.paid) == [usdAmount(5000), usdAmount(-1200)])
     }
 
-    @Test func eachCurrencyGetsItsOwnTotalsBiggestFirst() {
+    @Test func eachCurrencyGetsItsOwnTotalsMostUsedFirst() {
         let totals = GroupTotals.make(expenses: [
             expense("Lunch", 3000), expense("Ramen", 5000, currency: "JPY"), expense("Coffee", 400)
         ], names: names)
-        #expect(totals.map(\.currencyCode) == ["JPY", "USD"])
-        #expect(totals[0].total == Money(minorUnits: 5000, currencyCode: "JPY"))
-        #expect(totals[1].total == usdAmount(3400))
+        #expect(totals.map(\.currencyCode) == ["USD", "JPY"])
+        #expect(totals[0].total == usdAmount(3400))
+        #expect(totals[1].total == Money(minorUnits: 5000, currencyCode: "JPY"))
     }
 
     @Test func peopleWithoutANameAreSomeone() {

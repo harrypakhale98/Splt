@@ -29,9 +29,11 @@ struct GroupTotals: Equatable, Sendable, Identifiable {
 
     var id: String { currencyCode }
 
-    /// One entry per currency, the one with the most spending first. Deleted expenses are ignored and
-    /// refunds reduce what they refund.
-    static func make(expenses: [Expense], names: [PersonID: String]) -> [GroupTotals] {
+    /// One entry per currency. Deleted expenses are ignored and refunds reduce what they refund.
+    /// Amounts in different currencies can't be compared without rates, so the order is the lead
+    /// currency (usually the group's own) first, then the currency used by the most expenses, then
+    /// by code.
+    static func make(expenses: [Expense], names: [PersonID: String], leadCurrency: String? = nil) -> [GroupTotals] {
         struct Accumulator {
             var total: Int64 = 0
             var count = 0
@@ -69,8 +71,16 @@ struct GroupTotals: Equatable, Sendable, Identifiable {
                     }
             )
         }
-        return totals.sorted {
-            $0.total.minorUnits != $1.total.minorUnits ? $0.total.minorUnits > $1.total.minorUnits : $0.currencyCode < $1.currencyCode
+        return ordered(totals, lead: leadCurrency)
+    }
+
+    /// The lead currency first, then by number of expenses, then by code.
+    static func ordered(_ totals: [GroupTotals], lead: String?) -> [GroupTotals] {
+        totals.sorted { lhs, rhs in
+            let leftLeads = lhs.currencyCode == lead, rightLeads = rhs.currencyCode == lead
+            if leftLeads != rightLeads { return leftLeads }
+            if lhs.expenseCount != rhs.expenseCount { return lhs.expenseCount > rhs.expenseCount }
+            return lhs.currencyCode < rhs.currencyCode
         }
     }
 
@@ -89,6 +99,84 @@ struct GroupTotals: Equatable, Sendable, Identifiable {
             categories: byCategory.map { InsightInput.CategoryAmount(name: $0.category.title, minorUnits: $0.amount.minorUnits) },
             members: byPerson.map { InsightInput.MemberAmount(name: $0.name, paidMinorUnits: $0.paid.minorUnits) }
         )
+    }
+}
+
+/// One row of a spending chart: a person or a category and what it adds to the total.
+struct SpendingRow: Equatable, Sendable, Identifiable {
+    /// The person or category the row stands for. Two people can share a name, so the name is only the label.
+    var id: String
+    var label: String
+    /// Signed: a refund is negative and pulls the total down.
+    var money: Money
+    var personID: PersonID?
+
+    /// The amount as printed beside the bar, with a minus sign for a refund so it never reads as spending.
+    func amountText(locale: Locale) -> String {
+        MoneyFormatting.string(money, locale: locale, showsSign: money.minorUnits < 0)
+    }
+
+    /// One sentence for VoiceOver covering every row, with refunds named as such.
+    static func spokenSummary(_ rows: [SpendingRow], locale: Locale) -> String {
+        rows.map { row in
+            let amount = MoneyFormatting.magnitudeString(row.money, locale: locale)
+            return row.money.minorUnits < 0
+                ? String(localized: "\(row.label), refund \(amount)")
+                : String(localized: "\(row.label), \(amount)")
+        }
+        .joined(separator: "; ")
+    }
+
+    /// Labels that are never repeated, since a chart's categories must be distinct.
+    static func distinctLabels(_ rows: [SpendingRow]) -> [String] {
+        var seen: [String: Int] = [:]
+        return rows.map { row in
+            let count = seen[row.label, default: 0] + 1
+            seen[row.label] = count
+            return count == 1 ? row.label : "\(row.label) (\(count))"
+        }
+    }
+}
+
+extension GroupTotals {
+    /// Everyone whose payments did not cancel out, refunds included, so the rows add up to `total`.
+    var personRows: [SpendingRow] {
+        byPerson.filter { $0.paid.minorUnits != 0 }.map {
+            SpendingRow(id: "person-\($0.personID.rawValue.uuidString)", label: $0.name, money: $0.paid, personID: $0.personID)
+        }
+    }
+
+    /// Every category that did not cancel out, refunds included, so the rows add up to `total`.
+    var categoryRows: [SpendingRow] {
+        byCategory.filter { $0.amount.minorUnits != 0 }.map {
+            SpendingRow(id: "category-\($0.category.rawValue)", label: $0.category.title, money: $0.amount, personID: nil)
+        }
+    }
+}
+
+/// Where each bar of a spending chart starts and how long it is, as fractions of the chart's width.
+/// Refunds run left from a zero line, so every bar is to scale and together they add up to the total.
+struct SpendingScale: Equatable, Sendable {
+    /// Where zero sits, from 0 (the left edge) to 1.
+    let zero: Double
+    let lowest: Int64
+    let highest: Int64
+
+    init(values: [Int64]) {
+        lowest = min(0, values.min() ?? 0)
+        highest = max(0, values.max() ?? 0)
+        let span = Double(highest) - Double(lowest)
+        zero = span > 0 ? -Double(lowest) / span : 0
+    }
+
+    /// Whether any bar runs left of zero, which is when the zero line is drawn.
+    var hasNegatives: Bool { lowest < 0 }
+
+    func bar(for value: Int64) -> (start: Double, length: Double) {
+        let span = Double(highest) - Double(lowest)
+        guard span > 0 else { return (zero, 0) }
+        let length = Double(value.magnitude) / span
+        return (value < 0 ? zero - length : zero, length)
     }
 }
 

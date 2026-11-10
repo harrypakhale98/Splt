@@ -152,6 +152,28 @@ struct InsightSummarizer: InsightSummarizing {
 
     // MARK: Fallback sentences
 
+    /// How a group's money is named in "Most of … went on …".
+    private static func spendingPhrase(for kind: InsightInput.Kind) -> String {
+        switch kind {
+        case .trip: "the money on this trip"
+        case .household: "your shared spending"
+        case .other: "this group's spending"
+        }
+    }
+
+    /// What money "went on" for a category's display name, in plain English: "places to stay", not "stay".
+    static func spentOn(_ categoryName: String) -> String {
+        switch categoryName.lowercased() {
+        case "stay": "places to stay"
+        case "dining", "food": "food"
+        case "transport": "getting around"
+        case "entertainment": "things to do"
+        case "utilities", "bills": "bills"
+        case "home": "the home"
+        default: categoryName.lowercased()
+        }
+    }
+
     static func template(for input: InsightInput) -> String {
         let noun: String
         switch input.kind {
@@ -167,7 +189,7 @@ struct InsightSummarizer: InsightSummarizing {
             let share = percent(top.minorUnits, of: total)
             let name = top.name.lowercased()
             if share >= 50 {
-                sentences.append("Most of \(noun) went to \(name).")
+                sentences.append("Most of \(spendingPhrase(for: input.kind)) went on \(spentOn(top.name)).")
             } else if share >= 30 {
                 sentences.append("\(top.name.sentenceCased) was the biggest part of \(noun).")
             } else if ranked.count >= 2 {

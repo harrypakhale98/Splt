@@ -38,6 +38,8 @@ struct GroupExpenseRow: View {
     let expense: Expense
     /// Worked out once by the screen's model, not on every redraw.
     let summary: ExpenseRowSummary
+    /// The group's members, so payers get their color within this group.
+    var memberIDs: [PersonID] = []
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
@@ -78,7 +80,8 @@ struct GroupExpenseRow: View {
     private func trailing(_ summary: ExpenseRowSummary) -> some View {
         Group {
             VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 3) {
-                Text(MoneyFormatting.string(expense.total, locale: locale))
+                // a refund keeps its minus sign, so the rows add up to the day's total
+                Text(MoneyFormatting.string(expense.total, locale: locale, showsSign: expense.isRefund))
                     .font(Typeface.figure)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -100,10 +103,11 @@ struct GroupExpenseRow: View {
     }
 
     private func payerMarkers(_ ids: [PersonID]) -> some View {
-        HStack(spacing: -3) {
+        let _ = PersonColorRevision.shared.value
+        return HStack(spacing: -3) {
             ForEach(ids.prefix(3), id: \.self) { id in
                 Circle()
-                    .fill(PersonPalette.color(for: id))
+                    .fill(PersonPalette.color(for: id, in: memberIDs))
                     .frame(width: 10, height: 10)
                     .overlay { Circle().strokeBorder(Ink.paper, lineWidth: 1.5) }
             }
@@ -112,7 +116,8 @@ struct GroupExpenseRow: View {
     }
 
     private func accessibilityText(_ summary: ExpenseRowSummary) -> String {
-        let total = MoneyFormatting.magnitudeString(expense.total, locale: locale)
+        let amount = MoneyFormatting.magnitudeString(expense.total, locale: locale)
+        let total = expense.isRefund ? String(localized: "refund \(amount)") : amount
         var parts = [expense.title, "\(summary.payerText) \(total)"]
         if let detail = summary.detail(locale: locale) {
             parts.append(detail)

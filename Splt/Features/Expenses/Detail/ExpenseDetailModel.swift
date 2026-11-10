@@ -14,9 +14,16 @@ struct ShareLine: Identifiable, Equatable {
 
     func spokenText(locale: Locale) -> String {
         func amount(_ money: Money) -> String { MoneyFormatting.magnitudeString(money, locale: locale) }
-        var text = isYou
-            ? String(localized: "You owe \(amount(share))")
-            : String(localized: "\(name) owes \(amount(share))")
+        var text: String
+        if share.isNegative {
+            text = isYou
+                ? String(localized: "You get back \(amount(share))")
+                : String(localized: "\(name) gets back \(amount(share))")
+        } else {
+            text = isYou
+                ? String(localized: "You owe \(amount(share))")
+                : String(localized: "\(name) owes \(amount(share))")
+        }
         if let breakdown {
             var parts = [String(localized: "items \(amount(breakdown.items))")]
             if !breakdown.tax.isZero { parts.append(String(localized: "tax \(amount(breakdown.tax))")) }

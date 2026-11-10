@@ -29,7 +29,13 @@ private let trip = InsightInput(
 @Suite("Insights")
 struct InsightSummarizerTests {
     @Test func templateNamesTheBiggestCategoryAndPayer() {
-        #expect(InsightSummarizer.template(for: trip) == "Most of this trip went to food. Sam covered most of it.")
+        #expect(InsightSummarizer.template(for: trip) == "Most of the money on this trip went on food. Sam covered most of it.")
+    }
+
+    @Test func categoriesReadAsWhatTheMoneyWentOn() {
+        #expect(InsightSummarizer.spentOn("Stay") == "places to stay")
+        #expect(InsightSummarizer.spentOn("Transport") == "getting around")
+        #expect(InsightSummarizer.spentOn("Groceries") == "groceries")
     }
 
     @Test func templateHandlesSpreadSpendingAndEvenPayers() {

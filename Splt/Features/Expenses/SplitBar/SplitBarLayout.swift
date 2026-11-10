@@ -1,7 +1,8 @@
 import CoreGraphics
 
 /// How the bar is drawn: the same weights as the data, but no segment is narrower than `minimum`
-/// points, so a person who owes almost nothing can still be seen and touched. Dividers sit at the
+/// points, so a person who owes almost nothing can still be seen and touched. On a crowded bar the
+/// minimum shrinks so the floors never take more than half the width, and the weights still show. Dividers sit at the
 /// drawn boundaries, and `fraction(forX:)` turns a touch position back into the real position.
 struct SplitBarLayout: Equatable {
     let widths: [CGFloat]
@@ -18,19 +19,20 @@ struct SplitBarLayout: Equatable {
         let total = Double(max(scale, 1))
         let natural = weights.map { usable * CGFloat(max(Double($0), 0) / total) }
         var widths = natural
-        if CGFloat(count) * minimum >= usable {
+        let floorWidth = min(minimum, usable / CGFloat(count) / 2)
+        if CGFloat(count) * floorWidth >= usable {
             widths = Array(repeating: usable / CGFloat(count), count: count)
         } else {
             var pinned = Set<Int>()
             while true {
                 let free = widths.indices.filter { !pinned.contains($0) }
-                let remaining = usable - CGFloat(pinned.count) * minimum
+                let remaining = usable - CGFloat(pinned.count) * floorWidth
                 let freeNatural = free.reduce(CGFloat(0)) { $0 + natural[$1] }
                 guard freeNatural > 0 else { break }
                 var changed = false
                 for index in free {
                     let proposed = natural[index] / freeNatural * remaining
-                    if proposed < minimum {
+                    if proposed < floorWidth {
                         pinned.insert(index)
                         changed = true
                     }
@@ -40,7 +42,7 @@ struct SplitBarLayout: Equatable {
                     break
                 }
             }
-            for index in pinned { widths[index] = minimum }
+            for index in pinned { widths[index] = floorWidth }
         }
 
         var visual: [CGFloat] = [0]
@@ -52,6 +54,11 @@ struct SplitBarLayout: Equatable {
             truth.append(min(Double(runningWeight) / total, 1))
         }
         return SplitBarLayout(widths: widths, visual: visual, truth: truth)
+    }
+
+    /// The index of the position closest to `x`, the earlier one on a tie. Nil when there is none.
+    static func nearest(to x: CGFloat, in positions: [CGFloat]) -> Int? {
+        positions.indices.min { abs(positions[$0] - x) < abs(positions[$1] - x) }
     }
 
     /// The real position, from 0 to 1, that a touch at drawn position `x` stands for.

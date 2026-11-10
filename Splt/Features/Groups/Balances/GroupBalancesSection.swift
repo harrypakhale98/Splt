@@ -143,19 +143,28 @@ private struct TransferRow: View {
     let onTap: () -> Void
 
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
+            HStack(alignment: typeSize.isAccessibilitySize ? .top : .center, spacing: 12) {
                 AvatarView(name: avatarName, id: debt.debtor, members: members, size: 28)
-                Text(sentence)
-                    .foregroundStyle(Ink.text)
-                Spacer(minLength: 8)
-                Text(MoneyFormatting.string(displayAmount, locale: locale, showsSign: involvesMe))
-                    .font(Typeface.figure)
-                    .foregroundStyle(involvesMe ? Ink.direction(of: displayAmount.minorUnits) : Ink.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                if typeSize.isAccessibilitySize {
+                    // the sentence and the amount each get the full width rather than squeezing side by side
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(sentence)
+                            .foregroundStyle(Ink.text)
+                        amount
+                            .minimumScaleFactor(0.5)
+                    }
+                    Spacer(minLength: 0)
+                } else {
+                    Text(sentence)
+                        .foregroundStyle(Ink.text)
+                    Spacer(minLength: 8)
+                    amount
+                        .minimumScaleFactor(0.7)
+                }
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Ink.tertiary)
@@ -165,6 +174,14 @@ private struct TransferRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens settle up")
+    }
+
+    /// Signed and colored when it involves you; otherwise the sentence says who pays whom.
+    private var amount: some View {
+        Text(MoneyFormatting.string(displayAmount, locale: locale, showsSign: involvesMe))
+            .font(Typeface.figure)
+            .foregroundStyle(involvesMe ? Ink.direction(of: displayAmount.minorUnits) : Ink.text)
+            .lineLimit(1)
     }
 
     private var sentence: String {
@@ -189,31 +206,55 @@ private struct NetBalanceRowView: View {
     let isMe: Bool
     let members: [PersonID]
 
+    @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: typeSize.isAccessibilitySize ? .top : .center, spacing: 12) {
             AvatarView(name: row.person.name, id: row.person.id, members: members, size: 28)
-            Text(isMe ? String(localized: "You") : row.person.name)
-            Spacer(minLength: 8)
-            if row.isSettled {
-                Text("Settled up")
-                    .foregroundStyle(Ink.secondary)
-            } else {
-                VStack(alignment: .trailing, spacing: 2) {
-                    ForEach(row.amounts, id: \.currencyCode) { amount in
-                        caption(for: amount)
-                    }
+            if typeSize.isAccessibilitySize {
+                // name above, balance below, so neither is squeezed off the card
+                VStack(alignment: .leading, spacing: 4) {
+                    name
+                    status(alignment: .leading)
                 }
-                .monospacedDigit()
-                .foregroundStyle(Ink.secondary)
-                .multilineTextAlignment(.trailing)
+                Spacer(minLength: 0)
+            } else {
+                name
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                status(alignment: .trailing)
             }
         }
         .accessibilityElement(children: .combine)
     }
 
+    private var name: Text {
+        Text(isMe ? String(localized: "You") : row.person.name)
+    }
+
+    @ViewBuilder
+    private func status(alignment: HorizontalAlignment) -> some View {
+        if row.isSettled {
+            Text("Settled up")
+                .foregroundStyle(Ink.secondary)
+        } else {
+            VStack(alignment: alignment, spacing: 2) {
+                ForEach(row.amounts, id: \.currencyCode) { amount in
+                    caption(for: amount)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            .monospacedDigit()
+            .foregroundStyle(Ink.secondary)
+            .multilineTextAlignment(alignment == .leading ? .leading : .trailing)
+        }
+    }
+
     /// The words stay grey and the figure takes the direction's color, as in the transfer rows.
     private func caption(for amount: Money) -> Text {
-        let value = Text(MoneyFormatting.magnitudeString(amount))
+        let value = Text(MoneyFormatting.magnitudeString(amount, locale: locale))
             .font(Typeface.figure)
             .foregroundStyle(Ink.direction(of: amount.minorUnits))
         switch (amount.minorUnits > 0, isMe) {

@@ -11,13 +11,15 @@ struct ExpenseHeaderSection: View {
                 Text(expense.title)
                     .font(Typeface.heading)
                     .multilineTextAlignment(.center)
-                HeroAmount(expense.total, showsSign: false)
+                // a refund keeps its minus sign so it never reads as spending
+                HeroAmount(expense.total, showsSign: expense.isRefund)
                 Text(quietLine)
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)
                     .multilineTextAlignment(.center)
                 ShareStrip(
-                    colors: model.shareLines.map { PersonPalette.color(for: $0.person.id) },
+                    people: model.shareLines.map(\.person.id),
+                    members: model.memberIDs,
                     weights: model.shareLines.map { Double(max($0.share.minorUnits, 0)) },
                     isGrooved: true
                 )

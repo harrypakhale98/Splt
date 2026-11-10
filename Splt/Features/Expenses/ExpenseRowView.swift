@@ -65,7 +65,7 @@ struct ExpenseRowView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(expense.title)
                 .font(.headline)
-            Text("\(summary.paidBy) \(MoneyFormatting.magnitudeString(expense.total, locale: locale))")
+            Text("\(summary.paidBy) \(MoneyFormatting.string(expense.total, locale: locale, showsSign: expense.isRefund))")
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
             Text(expense.date, format: .dateTime.day().month(.abbreviated).year())
@@ -96,7 +96,8 @@ struct ExpenseRowView: View {
     }
 
     private func accessibilityText(_ summary: ExpenseSummary) -> String {
-        let total = MoneyFormatting.magnitudeString(expense.total, locale: locale)
+        let amount = MoneyFormatting.magnitudeString(expense.total, locale: locale)
+        let total = expense.isRefund ? String(localized: "refund \(amount)") : amount
         let date = expense.date.formatted(date: .long, time: .omitted)
         var parts = [expense.title, "\(summary.paidBy) \(total)"]
         if expense.isDeleted {

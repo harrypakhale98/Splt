@@ -18,7 +18,7 @@ struct SettleHeroCard: View {
     var body: some View {
         VStack(spacing: 10) {
             SettleStage(
-                layout: stageLayout, fraction: model.fraction, isAdjustable: canDrag,
+                layout: stageLayout, members: model.memberIDs, fraction: model.fraction, isAdjustable: canDrag,
                 contraction: ceremony.contraction, ring: ceremony.ring,
                 onFraction: { model.setFraction($0) }, onStep: { model.nudge(by: $0) }
             )

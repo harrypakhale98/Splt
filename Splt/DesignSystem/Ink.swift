@@ -173,23 +173,26 @@ struct ShareStrip: View {
     var height: CGFloat = 3
     /// Sets the bar into the page as a thin groove, for use under the one big number.
     var isGrooved = false
+    /// Read as the strip draws, in place of `colors`, so the strip follows any change of hues.
+    /// `ShareStrip(people:members:)` sets it.
+    var liveColors: (@MainActor () -> [Color])?
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
 
     private var showsGroove: Bool { isGrooved && contrast != .increased }
 
-    private var total: Double { weights?.reduce(0, +) ?? Double(colors.count) }
-
     var body: some View {
+        let shown = liveColors?() ?? colors
+        let total = weights?.reduce(0, +) ?? Double(shown.count)
         GeometryReader { proxy in
-            let gaps = CGFloat(max(colors.count - 1, 0)) * 2
+            let gaps = CGFloat(max(shown.count - 1, 0)) * 2
             let room = max(proxy.size.width - gaps, 0)
             HStack(spacing: 2) {
-                ForEach(colors.indices, id: \.self) { index in
+                ForEach(shown.indices, id: \.self) { index in
                     Rectangle()
                         .fill(
-                            colors[index].shadow(
+                            shown[index].shadow(
                                 .inner(color: .black.opacity(showsGroove ? 0.4 : 0), radius: 0.5, y: 1)
                             )
                         )

@@ -36,6 +36,8 @@ final class SettleModel {
 
     private(set) var me: Person?
     private(set) var peopleByID: [PersonID: Person] = [:]
+    /// The group's members, so everyone keeps their color within this group.
+    private(set) var memberIDs: [PersonID] = []
 
     static let methodKey = "settle.lastMethod"
 
@@ -60,6 +62,7 @@ final class SettleModel {
         peopleByID = Dictionary(
             ((try? services.people.allPeople()) ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
         )
+        memberIDs = (try? services.groups.group(id: route.groupID))?.memberIDs ?? []
     }
 
     // MARK: What is being paid
@@ -200,7 +203,7 @@ final class SettleModel {
         }
         return ordered.map {
             SettleParticipant(
-                id: $0, name: name(of: $0), color: PersonPalette.color(for: $0), avatarName: peopleByID[$0]?.name
+                id: $0, name: name(of: $0), color: PersonPalette.color(for: $0, in: memberIDs), avatarName: peopleByID[$0]?.name
             )
         }
     }

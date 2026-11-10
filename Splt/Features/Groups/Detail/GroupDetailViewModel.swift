@@ -192,7 +192,7 @@ final class GroupDetailViewModel {
         Set(expenses.map(\.category)).sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
     }
 
-    /// The numbers for the recap story, or nil when nothing was spent in the group's currency.
+    /// The numbers for the recap story, in the same currency the totals lead with. Nil when nothing was spent.
     var recapStats: RecapStats? {
         _ = expenses
         if memo.recapRevision == revision { return memo.recapStats }
@@ -263,7 +263,7 @@ final class GroupDetailViewModel {
     var totals: [GroupTotals] {
         _ = expenses
         if memo.totalsRevision == revision { return memo.totals }
-        let built = GroupTotals.make(expenses: expenses, names: chartNames)
+        let built = GroupTotals.make(expenses: expenses, names: chartNames, leadCurrency: group?.currencyCode)
         memo.totalsRevision = revision
         memo.totals = built
         return built

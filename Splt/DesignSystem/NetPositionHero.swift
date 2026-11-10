@@ -54,7 +54,7 @@ struct NetPositionHero: View {
                 .fixedSize(horizontal: false, vertical: true)
             let everyone = owedBy + owedTo
             if !everyone.isEmpty {
-                ShareStrip(colors: everyone.map { PersonPalette.color(for: $0.id) }, isGrooved: true)
+                ShareStrip(people: everyone.map(\.id), isGrooved: true)
                     .padding(.top, 6)
             }
         }

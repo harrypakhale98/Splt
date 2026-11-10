@@ -41,7 +41,7 @@ private struct ShareLineRow: View {
             AvatarView(person: line.person, members: model.memberIDs, size: 28)
             Text(line.name)
             Spacer(minLength: 8)
-            MoneyLabel(money: line.share).font(Typeface.figure)
+            SignedAmount(money: line.share).font(Typeface.figure)
         }
     }
 }
@@ -78,11 +78,12 @@ private struct ExpandableShareRow: View {
 
             if isExpanded {
                 VStack(spacing: 6) {
-                    LabeledContent("Items") { MoneyLabel(money: breakdown.items) }
-                    if !breakdown.tax.isZero { LabeledContent("Tax") { MoneyLabel(money: breakdown.tax) } }
-                    if !breakdown.tip.isZero { LabeledContent("Tip") { MoneyLabel(money: breakdown.tip) } }
+                    LabeledContent("Items") { SignedAmount(money: breakdown.items) }
+                    if !breakdown.tax.isZero { LabeledContent("Tax") { SignedAmount(money: breakdown.tax) } }
+                    if !breakdown.tip.isZero { LabeledContent("Tip") { SignedAmount(money: breakdown.tip) } }
                     if !breakdown.discount.isZero {
-                        LabeledContent("Discount") { MoneyLabel(money: breakdown.discount) }
+                        // a discount takes off the share, so it reads as a minus
+                        LabeledContent("Discount") { SignedAmount(money: breakdown.discount, isDeduction: true) }
                     }
                 }
                 .font(.footnote)
@@ -90,5 +91,28 @@ private struct ExpandableShareRow: View {
                 .padding(.leading, 36)
             }
         }
+    }
+}
+
+/// An amount with a minus sign when it takes money off: a refund's share, or a discount.
+/// `MoneyLabel` shows the size only, which would make a refund read as spending.
+struct SignedAmount: View {
+    let money: Money
+    /// Whether the amount is taken off, like a discount, rather than added.
+    var isDeduction = false
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        let magnitude = MoneyFormatting.magnitudeString(money, locale: locale)
+        let isNegative = Self.isNegative(money, isDeduction: isDeduction)
+        Text(isNegative ? "\u{2212}" + magnitude : magnitude)
+            .monospacedDigit()
+            .foregroundStyle(Ink.text)
+            .accessibilityLabel(isNegative ? String(localized: "minus \(magnitude)") : magnitude)
+    }
+
+    /// A deduction flips the sign: a positive discount takes off, a negative one adds back.
+    static func isNegative(_ money: Money, isDeduction: Bool) -> Bool {
+        isDeduction ? money.minorUnits > 0 : money.minorUnits < 0
     }
 }

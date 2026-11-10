@@ -14,6 +14,8 @@ struct BalanceOrbitView: View {
     @State private var pairs: [MorphPair] = []
     @State private var progress = 1.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.locale) private var locale
 
     init(board: OrbitBoard, members: [PersonID], initialFocus: OrbitFocus = .none, onSettle: @escaping (Debt) -> Void) {
@@ -24,6 +26,7 @@ struct BalanceOrbitView: View {
     }
 
     var body: some View {
+        let _ = PersonColorRevision.shared.value
         let colors = OrbitColors(members: members)
         GeometryReader { proxy in
             let scene = OrbitScene(size: proxy.size, people: board.people, transfers: board.transfers)
@@ -32,9 +35,12 @@ struct BalanceOrbitView: View {
                 arcLayer(scene: scene, colors: colors)
                 nodeLayer(scene: scene, colors: colors)
                 amountLabels(scene: scene)
-                OrbitCenterView(center: board.center(for: focus), diameter: scene.layout.centerRadius * 2)
-                    .position(scene.layout.center)
-                    .allowsHitTesting(false)
+                OrbitCenterView(
+                    center: board.center(for: focus), diameter: scene.layout.centerRadius * 2,
+                    moreCount: pairs.isEmpty ? pillArcs(scene).hidden : 0
+                )
+                .position(scene.layout.center)
+                .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
             .gesture(SpatialTapGesture().onEnded { value in
@@ -66,46 +72,76 @@ struct BalanceOrbitView: View {
     private func arcLayer(scene: OrbitScene, colors: OrbitColors) -> some View {
         if pairs.isEmpty {
             ForEach(scene.arcs, id: \.transfer.id) { transfer, geometry in
-                OrbitArcShape(from: geometry, to: geometry, progress: 1)
+                OrbitArcShape(from: geometry, to: geometry, progress: 1, headScale: headScale)
                     .fill(colors.ribbon(for: transfer))
-                    .opacity(scene.emphasis(of: transfer, focus: focus).opacity)
+                    .opacity(arcOpacity(scene.emphasis(of: transfer, focus: focus)))
                     .motionTransition(.opacity)
             }
         } else {
             let old = OrbitScene(size: scene.layout.size, people: board.people, transfers: previous)
             ForEach(pairs) { pair in
                 if let shapes = OrbitMorph.geometry(for: pair, in: old, target: scene) {
-                    let transfer = pair.end ?? pair.start
-                    OrbitArcShape(from: shapes.from, to: shapes.to, progress: progress)
-                        .fill(transfer.map { colors.ribbon(for: $0) } ?? Ink.tertiary)
-                        .opacity(0.75)
+                    // an arc that merges blends from the old debtor's color to the new one's and keeps
+                    // the focus dimming of each end, so nothing snaps while it moves
+                    let first = pair.start ?? pair.end
+                    let last = pair.end ?? pair.start
+                    let fromOpacity = pair.start.map { arcOpacity(old.emphasis(of: $0, focus: focus)) }
+                    let toOpacity = pair.end.map { arcOpacity(scene.emphasis(of: $0, focus: focus)) }
+                    OrbitMorphArc(
+                        from: shapes.from, to: shapes.to,
+                        fromColor: first.map { colors.ribbon(for: $0) } ?? Ink.tertiary,
+                        toColor: last.map { colors.ribbon(for: $0) } ?? Ink.tertiary,
+                        fromOpacity: fromOpacity ?? toOpacity ?? 0.75,
+                        toOpacity: toOpacity ?? fromOpacity ?? 0.75,
+                        headScale: headScale,
+                        progress: progress
+                    )
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private func amountLabels(scene: OrbitScene) -> some View {
+    private var headScale: CGFloat { contrast == .increased ? 1.3 : 1 }
+
+    private func arcOpacity(_ emphasis: OrbitEmphasis) -> Double {
+        emphasis.opacity(increasedContrast: contrast == .increased)
+    }
+
+    /// The arcs that get an amount pill: the only one when nobody is focused, or the focused
+    /// person's, largest first and at most `OrbitPills.limit`. `hidden` counts the rest.
+    private func pillArcs(_ scene: OrbitScene) -> (shown: [(transfer: OrbitTransfer, geometry: ArcGeometry)], hidden: Int) {
         let visible = scene.arcs.filter { arc in
             let emphasis = scene.emphasis(of: arc.transfer, focus: focus)
             return board.transfers.count == 1 && focus == .none || emphasis == .highlighted
         }
-        if pairs.isEmpty, !visible.isEmpty, visible.count <= 4 {
-            let requests = visible.map {
-                OrbitPills.Request(
-                    id: $0.transfer.id, geometry: $0.geometry,
-                    full: MoneyFormatting.string($0.transfer.amount, locale: locale),
-                    compact: OrbitPills.compactText($0.transfer.amount, locale: locale)
+        let shown = Array(visible.prefix(OrbitPills.limit))
+        return (shown, visible.count - shown.count)
+    }
+
+    @ViewBuilder
+    private func amountLabels(scene: OrbitScene) -> some View {
+        let visible = pillArcs(scene).shown
+        if pairs.isEmpty, !visible.isEmpty {
+            let metrics = OrbitTextMetrics(dynamicTypeSize: typeSize)
+            let requests = visible.map { arc -> OrbitPills.Request in
+                let full = MoneyFormatting.string(arc.transfer.amount, locale: locale)
+                let compact = OrbitPills.compactText(arc.transfer.amount, locale: locale)
+                return OrbitPills.Request(
+                    id: arc.transfer.id, geometry: arc.geometry, full: full, compact: compact,
+                    fullSize: OrbitPills.pill(around: metrics.size(of: full, style: .caption1, monospacedDigits: true)),
+                    compactSize: OrbitPills.pill(
+                        around: metrics.size(of: compact, style: .caption2, monospacedDigits: true), compact: true
+                    )
                 )
             }
-            let placements = OrbitPills.place(requests, in: scene.layout)
+            let placements = OrbitPills.place(requests, in: scene.layout, labelSizes: labelSizes(scene.layout, metrics: metrics))
             ForEach(requests, id: \.id) { request in
                 if let placement = placements[request.id] {
                     Text(placement.isCompact ? request.compact : request.full)
                         .font((placement.isCompact ? Font.caption2 : Font.caption).monospacedDigit())
                         .foregroundStyle(Ink.text)
                         .lineLimit(1)
-                        .fixedSize()
+                        .minimumScaleFactor(0.8)
                         .frame(width: placement.rect.width, height: placement.rect.height)
                         .background(Ink.paper, in: .capsule)
                         .overlay(Capsule().strokeBorder(Ink.hairline))
@@ -146,10 +182,23 @@ struct BalanceOrbitView: View {
                 Text(label(for: node, layout: layout))
                     .font(layout.labelStyle == .name ? .caption.weight(.medium) : .caption2)
                     .lineLimit(1)
+                    .truncationMode(.tail)
                     .foregroundStyle(emphasis == .dimmed ? Ink.tertiary : Ink.secondary)
-                    .fixedSize()
+                    .frame(maxWidth: layout.labelMaxWidth(index))
                     .position(layout.labelPosition(index))
             }
+        }
+    }
+
+    /// The size each name label takes on screen, capped as it is drawn, or zero where no label
+    /// shows, so pills keep clear of long names.
+    private func labelSizes(_ layout: OrbitLayout, metrics: OrbitTextMetrics) -> [CGSize] {
+        board.nodes.enumerated().map { index, node in
+            guard showsLabel(for: node, layout: layout) else { return .zero }
+            let measured = layout.labelStyle == .name
+                ? metrics.size(of: label(for: node, layout: layout), style: .caption1, weight: .medium)
+                : metrics.size(of: label(for: node, layout: layout), style: .caption2)
+            return CGSize(width: min(measured.width, layout.labelMaxWidth(index)), height: measured.height)
         }
     }
 
@@ -220,10 +269,17 @@ struct BalanceOrbitView: View {
     }
 }
 
-/// The big number in the middle: your balance, or the balance of whoever is focused.
+/// The big number in the middle: your balance, or the balance of whoever is focused. The figure is
+/// sized from the width of the disc so it never ends in an ellipsis, and falls back to whole units
+/// when even that would be too small to read.
 struct OrbitCenterView: View {
     let center: OrbitCenter
     let diameter: CGFloat
+    /// Transfers of the focused person that have no pill on the ring.
+    var moreCount = 0
+
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = HeroAmount.baseSize
+    @Environment(\.locale) private var locale
 
     var body: some View {
         VStack(spacing: 2) {
@@ -246,7 +302,14 @@ struct OrbitCenterView: View {
                     .foregroundStyle(Ink.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                HeroAmount(signed, showsSign: false)
+                figure
+                if moreCount > 0 {
+                    Text("+\(moreCount) more")
+                        .font(.caption2)
+                        .foregroundStyle(Ink.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
         }
         .frame(width: diameter * 0.84)
@@ -254,6 +317,40 @@ struct OrbitCenterView: View {
         .overlay(Circle().strokeBorder(Ink.hairline))
         .motion(.smooth, value: center)
         .accessibilityHidden(true)
+    }
+
+    /// The amount without a sign: the caption above it says which way the money goes.
+    private var figure: some View {
+        let width = diameter * 0.84
+        let preferred = min(heroSize, HeroAmount.maxSize, diameter * 0.42)
+        let magnitude = Money(minorUnits: Int64(clamping: center.amount.minorUnits.magnitude), currencyCode: center.amount.currencyCode)
+        let full = MoneyFormatting.magnitudeString(magnitude, locale: locale)
+        let compact = OrbitPills.compactText(magnitude, locale: locale)
+        let fullSize = Self.fittedSize(for: full, width: width, preferred: preferred)
+        let useCompact = fullSize < Self.smallestFigure && compact != full
+        return Text(useCompact ? compact : full)
+            .font(Typeface.hero(size: useCompact ? Self.fittedSize(for: compact, width: width, preferred: preferred) : fullSize))
+            .monospacedDigit()
+            .foregroundStyle(Ink.text)
+            .lineLimit(1)
+            .minimumScaleFactor(0.25)
+            .contentTransition(.numericText(value: Double(signed.minorUnits)))
+            .letterpress()
+    }
+
+    /// Below this the full amount gives way to whole units.
+    static let smallestFigure: CGFloat = 16
+
+    /// The largest serif size, up to `preferred`, at which `text` fits in `width`. Digits are about
+    /// six tenths of the size wide, separators half that, and anything else a little wider.
+    static func fittedSize(for text: String, width: CGFloat, preferred: CGFloat) -> CGFloat {
+        let ems = text.reduce(CGFloat(0)) { sum, character in
+            if character.isNumber { return sum + 0.6 }
+            if character == "." || character == "," || character.isWhitespace || character == "'" { return sum + 0.3 }
+            return sum + 0.7
+        }
+        guard ems > 0, width > 0 else { return preferred }
+        return min(preferred, width / ems)
     }
 
     private var signed: Money {
@@ -271,5 +368,27 @@ struct OrbitCenterView: View {
         case (.owes, false): return String(localized: "\(name) owes")
         default: return String(localized: "To settle")
         }
+    }
+}
+
+/// Measures text the way the ring draws it, capped at the ring's largest text size, so pills and
+/// labels are laid out from their real widths instead of a guess.
+@MainActor
+struct OrbitTextMetrics {
+    private let traits: UITraitCollection
+
+    init(dynamicTypeSize: DynamicTypeSize) {
+        traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(min(dynamicTypeSize, .xLarge)))
+    }
+
+    func size(
+        of text: String, style: UIFont.TextStyle, weight: UIFont.Weight = .regular, monospacedDigits: Bool = false
+    ) -> CGSize {
+        let pointSize = UIFont.preferredFont(forTextStyle: style, compatibleWith: traits).pointSize
+        let font = monospacedDigits
+            ? UIFont.monospacedDigitSystemFont(ofSize: pointSize, weight: weight)
+            : UIFont.systemFont(ofSize: pointSize, weight: weight)
+        let bounds = (text as NSString).size(withAttributes: [.font: font])
+        return CGSize(width: ceil(bounds.width), height: ceil(font.lineHeight))
     }
 }

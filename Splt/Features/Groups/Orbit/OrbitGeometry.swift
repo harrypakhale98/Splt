@@ -69,6 +69,19 @@ struct OrbitLayout: Equatable {
         return CGPoint(x: positions[index].x, y: positions[index].y + direction * (nodeRadius + 11))
     }
 
+    /// The widest a name label may be before it truncates: it stays on the canvas and clear of the
+    /// labels of the people on either side.
+    func labelMaxWidth(_ index: Int) -> CGFloat {
+        guard positions.indices.contains(index) else { return 0 }
+        let x = positions[index].x
+        var cap = 2 * min(x, size.width - x) - 4
+        if count >= 3 {
+            let neighbor = 2 * ringRadius * CGFloat(sin(Double.pi / Double(count)))
+            cap = min(cap, neighbor - 6)
+        }
+        return max(cap, nodeRadius * 2)
+    }
+
     /// The widest an arc may be.
     var maxArcWidth: CGFloat { min(nodeRadius * 0.3, 5) }
     var minArcWidth: CGFloat { 1.5 }
@@ -165,6 +178,52 @@ struct ArcGeometry: Equatable {
             right.append(CGPoint(x: p.x + d.dy * half, y: p.y - d.dx * half))
         }
         return (left, right)
+    }
+
+    /// The outline an arc is drawn with: a ribbon that narrows a little toward the end, finished by a
+    /// small arrowhead whose tip stops at `end`, short of the disc of the person who is owed. The
+    /// head never gets smaller than what reads on the thinnest arc, and shrinks away with the arc
+    /// itself while it morphs to nothing. `headScale` above 1 makes it bolder for Increase Contrast.
+    func arrowOutline(samples: Int = 24, taper: CGFloat = 0.3, headScale: CGFloat = 1) -> [CGPoint] {
+        let count = max(samples, 2)
+        let fade = min(max(width / 1.5, 0), 1)
+        let endWidth = width * (1 - taper)
+        let headHalf = max(endWidth * 1.2, 2.25 * headScale) * fade
+        let headLength = max(endWidth * 2.2, 5 * headScale) * fade
+
+        // walk back from the end along the curve to where the head begins
+        let line = polyline(samples: count)
+        var remaining = headLength
+        var baseT: CGFloat = 0
+        var index = count
+        while index > 0 {
+            let step = hypot(line[index].x - line[index - 1].x, line[index].y - line[index - 1].y)
+            if step >= remaining {
+                baseT = (CGFloat(index) - remaining / max(step, 0.0001)) / CGFloat(count)
+                break
+            }
+            remaining -= step
+            index -= 1
+        }
+
+        var left: [CGPoint] = []
+        var right: [CGPoint] = []
+        for step in 0...count {
+            let fraction = CGFloat(step) / CGFloat(count)
+            let t = baseT * fraction
+            let p = point(at: t)
+            let d = tangent(at: t)
+            let half = width * (1 - taper * fraction) / 2
+            left.append(CGPoint(x: p.x - d.dy * half, y: p.y + d.dx * half))
+            right.append(CGPoint(x: p.x + d.dy * half, y: p.y - d.dx * half))
+        }
+        let base = point(at: baseT)
+        let dx = end.x - base.x, dy = end.y - base.y
+        let length = max(hypot(dx, dy), 0.0001)
+        let across = CGVector(dx: -dy / length * headHalf, dy: dx / length * headHalf)
+        let headLeft = CGPoint(x: base.x + across.dx, y: base.y + across.dy)
+        let headRight = CGPoint(x: base.x - across.dx, y: base.y - across.dy)
+        return left + [headLeft, end, headRight] + right.reversed()
     }
 
     /// The point at 0.5.

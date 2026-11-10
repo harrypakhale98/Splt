@@ -7,7 +7,8 @@ import UIKit
 ///
 /// Twelve muted pigments, each tuned for light and dark. A person has one hue on every screen: the app
 /// assigns hues once across everyone it knows (`PersonColorBook`), you first, and until it has
-/// done so a person falls back to the hue their id points to.
+/// done so a person falls back to the hue their id points to. Twelve hues cannot cover everyone, so
+/// screens about one group ask for `colors(for:)`: there no two members of up to twelve share a hue.
 enum PersonPalette {
     /// The hue that belongs to you.
     static let meIndex = 5
@@ -32,10 +33,15 @@ enum PersonPalette {
 
     // MARK: Colors
 
-    /// The color of a person. The member list is kept for older callers: the color is the same
-    /// whichever list is passed.
+    /// The color of a person within a group, from `indices(for:)`. Someone outside `members` gets
+    /// their own color.
     static func color(for person: PersonID, in members: [PersonID]) -> Color {
-        color(at: index(for: person))
+        color(at: index(for: person, in: members))
+    }
+
+    /// Every member's color within one group: no two alike up to twelve members.
+    static func colors(for members: [PersonID]) -> [PersonID: Color] {
+        indices(for: members).mapValues { color(at: $0) }
     }
 
     /// The color of a person, the same on every screen.
@@ -116,13 +122,53 @@ enum PersonPalette {
         return result
     }
 
-    /// The global hue of each listed person, never depending on who else is in the list.
+    /// Each member's hue within one group, the same as `indices(for:)`.
     static func assignments(for members: [PersonID]) -> [PersonID: Int] {
-        Dictionary(members.map { ($0, index(for: $0)) }, uniquingKeysWith: { first, _ in first })
+        indices(for: members)
     }
 
+    /// Each member's hue within one group. Everyone keeps their own hue unless a member who got it
+    /// first (`PersonColorBook`, you before anyone) already holds it here; then they move to the next
+    /// hue no member holds. Up to twelve members never share a hue, and the order of the list does not
+    /// matter.
+    static func indices(for members: [PersonID]) -> [PersonID: Int] {
+        let unique = Array(Set(members))
+        guard unique.count > 1 else { return Dictionary(uniqueKeysWithValues: unique.map { ($0, index(for: $0)) }) }
+        let book = PersonColorBook.entries(for: unique)
+        typealias Ranked = (id: PersonID, rank: Int, hue: Int)
+        let ranked: [Ranked] = unique.map { id in
+            let entry = book[id]
+            return (id: id, rank: entry?.rank ?? Int.max, hue: entry?.hue ?? preferredIndex(for: id))
+        }
+        let ordered = ranked.sorted { (a: Ranked, b: Ranked) -> Bool in
+            if a.rank != b.rank { return a.rank < b.rank }
+            return a.id.description < b.id.description
+        }
+        var result: [PersonID: Int] = [:]
+        var taken = Set<Int>()
+        var movers: [(id: PersonID, hue: Int)] = []
+        for member in ordered {
+            if taken.insert(member.hue).inserted {
+                result[member.id] = member.hue
+            } else {
+                movers.append((member.id, member.hue))
+            }
+        }
+        for mover in movers {
+            var candidate = mover.hue
+            if taken.count < count {
+                while taken.contains(candidate) { candidate = (candidate + 1) % count }
+            }
+            taken.insert(candidate)
+            result[mover.id] = candidate
+        }
+        return result
+    }
+
+    /// A person's hue within a group, or their own hue when they are not in `members`.
     static func index(for person: PersonID, in members: [PersonID]) -> Int {
-        index(for: person)
+        guard members.contains(person) else { return index(for: person) }
+        return indices(for: members)[person] ?? index(for: person)
     }
 
     /// The hue of a person on every screen.
@@ -152,6 +198,22 @@ enum PersonPalette {
 
     private static func dynamic(light: UInt32, dark: UInt32) -> Color {
         Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) })
+    }
+}
+
+extension ShareStrip {
+    /// A strip of these people's colors that follows any change of hues. Pass the group as `members`
+    /// so no two members share a color; without it everyone has their own color.
+    init(
+        people: [PersonID], members: [PersonID]? = nil, weights: [Double]? = nil, height: CGFloat = 3,
+        isGrooved: Bool = false
+    ) {
+        self.init(colors: [], weights: weights, height: height, isGrooved: isGrooved, liveColors: {
+            _ = PersonColorRevision.shared.value
+            guard let members else { return people.map { PersonPalette.color(for: $0) } }
+            let scoped = PersonPalette.colors(for: members)
+            return people.map { scoped[$0] ?? PersonPalette.color(for: $0) }
+        })
     }
 }
 

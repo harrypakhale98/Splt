@@ -103,7 +103,7 @@ struct GroupReportTests {
         #expect(rows.contains(ReportRow(.body, "Me", trailing: "is owed $15.00")))
         #expect(rows.contains(ReportRow(.body, "Priya paid Me", trailing: "$5.00")))
         let headings = rows.filter { $0.style == .heading }.map(\.leading)
-        #expect(headings == ["Balances", "To Settle Up", "Expenses", "Payments"])
+        #expect(headings == ["Balances", "To Settle Up", "By Person", "Expenses", "Payments"])
     }
 
     @Test func plainTextHasEveryRow() {

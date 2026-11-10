@@ -19,14 +19,23 @@ private struct GroupSpotlightModifier: ViewModifier {
         var name: String
         var symbol: String
         var members: [PersonID]
+        /// The members' names are search keywords, so renaming someone must re-index.
+        var memberNames: [String]
         var isIndexed: Bool
     }
 
     private var entries: [Entry] {
-        (services?.groupsStore.summaries ?? []).map {
+        let summaries = services?.groupsStore.summaries ?? []
+        guard let services, !summaries.isEmpty else { return [] }
+        let names = Dictionary(
+            ((try? services.people.allPeople()) ?? []).map { ($0.id, $0.name) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return summaries.map {
             Entry(
                 id: $0.group.id, name: $0.group.name, symbol: $0.group.symbol,
-                members: $0.group.memberIDs, isIndexed: GroupSpotlight.isIndexed($0.group)
+                members: $0.group.memberIDs, memberNames: $0.group.memberIDs.map { names[$0] ?? "" },
+                isIndexed: GroupSpotlight.isIndexed($0.group)
             )
         }
     }

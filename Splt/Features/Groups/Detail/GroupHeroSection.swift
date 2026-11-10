@@ -18,7 +18,7 @@ struct GroupHeroSection: View {
                 identity
                 balance
                 if !members.isEmpty {
-                    ShareStrip(colors: members.map { PersonPalette.color(for: $0.id) }, isGrooved: true)
+                    ShareStrip(people: members.map(\.id), members: members.map(\.id), isGrooved: true)
                 }
                 if canSettle {
                     Button(action: onSettleUp) {

@@ -29,15 +29,18 @@ struct SplitBarView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let layout = SplitBarLayout.make(weights: data.weights, scale: data.scale, width: width)
+            let _ = PersonColorRevision.shared.value
+            let palette = PersonPalette.colors(for: members)
             ZStack(alignment: .topLeading) {
-                segmentsRow(layout: layout)
+                segmentsRow(layout: layout, palette: palette)
                 if data.canDrag {
                     ForEach(0..<max(data.segments.count - 1, 0), id: \.self) { divider in
                         handle(divider: divider, layout: layout)
                     }
+                    handleGrip(layout: layout)
                 }
                 if let divider = draggingDivider, divider + 1 < layout.visual.count {
-                    callout(divider: divider, x: layout.visual[divider + 1], width: width)
+                    callout(divider: divider, x: layout.visual[divider + 1], width: width, palette: palette)
                 }
             }
             .coordinateSpace(name: barSpace)
@@ -50,12 +53,16 @@ struct SplitBarView: View {
 
     // MARK: Segments
 
-    private func segmentsRow(layout: SplitBarLayout) -> some View {
+    private func fill(for person: PersonID, in palette: [PersonID: Color]) -> Color {
+        palette[person] ?? PersonPalette.color(for: person)
+    }
+
+    private func segmentsRow(layout: SplitBarLayout, palette: [PersonID: Color]) -> some View {
         HStack(spacing: 0) {
             ForEach(Array(data.segments.enumerated()), id: \.element.id) { index, segment in
                 let segmentWidth = layout.widths.indices.contains(index) ? layout.widths[index] : 0
                 SegmentView(
-                    segment: segment, members: members, width: segmentWidth, locale: locale, scale: data.scale,
+                    segment: segment, fill: fill(for: segment.id, in: palette), width: segmentWidth, locale: locale, scale: data.scale,
                     method: data.method, style: colorScheme == .dark ? .dark : .light
                 )
                 .frame(width: segmentWidth, height: height)
@@ -96,11 +103,23 @@ struct SplitBarView: View {
             .scaleEffect(draggingDivider == divider ? 1.2 : 1)
             .motion(Motion.quick, value: draggingDivider)
             .frame(width: 44, height: height)
-            .contentShape(.rect)
             .position(x: position, y: height / 2)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    /// One touch area for every divider: 44pt around each, and a touch moves the divider nearest to
+    /// where it landed. Separate areas per divider overlap where a segment is narrow, and then the
+    /// later divider would always win.
+    private func handleGrip(layout: SplitBarLayout) -> some View {
+        let positions = Array(layout.visual.dropFirst().dropLast())
+        return Color.clear
+            .contentShape(DividerZones(positions: positions, reach: 22))
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .named(barSpace))
                     .onChanged { value in
+                        guard let divider = draggingDivider
+                            ?? SplitBarLayout.nearest(to: value.startLocation.x, in: positions) else { return }
                         if draggingDivider != divider {
                             Motion.perform(Motion.quick) { draggingDivider = divider }
                         }
@@ -119,7 +138,7 @@ struct SplitBarView: View {
     }
 
     /// The floating label above the divider being dragged: both neighbors and what they get.
-    private func callout(divider: Int, x: CGFloat, width: CGFloat) -> some View {
+    private func callout(divider: Int, x: CGFloat, width: CGFloat, palette: [PersonID: Color]) -> some View {
         let pair = Array(data.segments[divider...(divider + 1)])
         return Group {
             HStack(spacing: 12) {
@@ -127,7 +146,7 @@ struct SplitBarView: View {
                     let label = SplitBarLabels.make(method: data.method, segment: segment, scale: data.scale, wide: true, locale: locale)
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(PersonPalette.color(for: segment.id, in: members))
+                            .fill(fill(for: segment.id, in: palette))
                             .frame(width: 10, height: 10)
                         Text(firstName(of: segment.person))
                             .font(.caption)
@@ -163,9 +182,23 @@ struct SplitBarView: View {
     }
 }
 
+/// The touch areas of the dividers: a band `reach` points either side of each.
+private struct DividerZones: Shape {
+    var positions: [CGFloat]
+    var reach: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for x in positions {
+            path.addRect(CGRect(x: x - reach, y: rect.minY, width: reach * 2, height: rect.height))
+        }
+        return path
+    }
+}
+
 private struct SegmentView: View {
     let segment: SplitBarSegment
-    let members: [PersonID]
+    let fill: Color
     let width: CGFloat
     let locale: Locale
     let scale: Int64
@@ -173,7 +206,6 @@ private struct SegmentView: View {
     let style: UIUserInterfaceStyle
 
     var body: some View {
-        let fill = PersonPalette.color(for: segment.id, in: members)
         let ink = ContrastInk.ink(on: fill, style: style)
         ZStack {
             Rectangle().fill(fill)

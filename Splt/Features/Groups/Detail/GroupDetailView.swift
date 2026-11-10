@@ -188,7 +188,10 @@ private struct GroupDetailContent: View {
                     RaisedRows {
                         ForEach(section.expenses) { expense in
                             NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                                GroupExpenseRow(expense: expense, summary: model.rowSummary(for: expense))
+                                GroupExpenseRow(
+                                    expense: expense, summary: model.rowSummary(for: expense),
+                                    memberIDs: model.group?.memberIDs ?? []
+                                )
                             }
                         }
                     }

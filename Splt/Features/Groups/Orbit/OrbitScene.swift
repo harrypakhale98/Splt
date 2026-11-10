@@ -54,6 +54,15 @@ enum OrbitEmphasis: Equatable, Sendable {
         case .dimmed: 0.14
         }
     }
+
+    /// Under Increase Contrast every arc that matters is drawn solid and faded ones stay findable.
+    func opacity(increasedContrast: Bool) -> Double {
+        guard increasedContrast else { return opacity }
+        switch self {
+        case .normal, .highlighted: return 1
+        case .dimmed: return 0.3
+        }
+    }
 }
 
 /// What a tap landed on.
