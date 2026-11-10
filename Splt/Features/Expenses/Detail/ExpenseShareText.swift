@@ -6,11 +6,15 @@ enum ExpenseShareText {
     static func make(
         expense: Expense, groupName: String?, names: [PersonID: String], locale: Locale = .current
     ) -> String {
-        func amount(_ money: Money) -> String { MoneyFormatting.magnitudeString(money, locale: locale) }
+        // A refund keeps its minus sign, as on the expense itself, so it never reads as spending.
+        func amount(_ money: Money) -> String {
+            MoneyFormatting.string(money, locale: locale, showsSign: expense.isRefund && money.isNegative)
+        }
         let date = expense.date.formatted(Date.FormatStyle(date: .long, time: .omitted).locale(locale))
         var lines = [expense.title]
         var headline = "\(amount(expense.total)), \(date)"
         if let groupName { headline += ", \(groupName)" }
+        if expense.isRefund { headline = String(localized: "Refund") + ", " + headline }
         lines.append(headline)
 
         let payers = expense.payers.keys.sorted()

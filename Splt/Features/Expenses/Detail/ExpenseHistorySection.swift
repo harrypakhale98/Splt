@@ -12,7 +12,7 @@ struct ExpenseHistorySection: View {
                     ForEach(details.history.reversed()) { entry in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(summary(of: entry))
-                            if let detail = previousValues(of: entry) {
+                            if let detail = Self.previousValues(of: entry, locale: locale) {
                                 Text(detail).font(.footnote).foregroundStyle(Ink.secondary)
                             }
                             Text(entry.date.formatted(date: .abbreviated, time: .shortened))
@@ -39,11 +39,12 @@ struct ExpenseHistorySection: View {
         return String(localized: "\(who) changed the \(fields)")
     }
 
-    private func previousValues(of entry: ExpenseEditEntry) -> String? {
+    static func previousValues(of entry: ExpenseEditEntry, locale: Locale) -> String? {
         var parts: [String] = []
         if let title = entry.previousTitle { parts.append(String(localized: "Title was \(title)")) }
         if let total = entry.previousTotal {
-            parts.append(String(localized: "Amount was \(MoneyFormatting.magnitudeString(total, locale: locale))"))
+            // a refund's old total keeps its minus sign, or it would read as a purchase
+            parts.append(String(localized: "Amount was \(MoneyFormatting.string(total, locale: locale, showsSign: total.isNegative))"))
         }
         return parts.isEmpty ? nil : parts.joined(separator: ". ")
     }

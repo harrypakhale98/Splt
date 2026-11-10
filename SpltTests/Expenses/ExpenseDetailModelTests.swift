@@ -119,6 +119,27 @@ struct ExpenseDetailModelTests {
         #expect(text.contains("Flat"))
     }
 
+    @Test func sharedTextSaysARefundIsOne() throws {
+        let fixture = try Fixture()
+        let refund = Expense(
+            groupID: fixture.group.id, title: "Hotel", total: usd(-3000), date: fixture.clock.start,
+            paidBy: fixture.me.id, split: .equal(participants: fixture.everyone)
+        )
+        try fixture.services.expenses.add(refund)
+        let model = ExpenseDetailModel(expenseID: refund.id, services: fixture.services, locale: us)
+        let text = model.shareText
+        #expect(text.hasPrefix("Hotel\nRefund, -$30.00,"))
+        #expect(text.contains("  Sam: -$10.00"))
+    }
+
+    @Test func historyKeepsTheSignOfARefundsOldTotal() {
+        let refund = ExpenseEditEntry(date: Date(), changedFields: [.total], previousTotal: usd(-3000))
+        #expect(ExpenseHistorySection.previousValues(of: refund, locale: us) == "Amount was -$30.00")
+        let purchase = ExpenseEditEntry(date: Date(), changedFields: [.total, .title], previousTitle: "Lunch", previousTotal: usd(3000))
+        #expect(ExpenseHistorySection.previousValues(of: purchase, locale: us) == "Title was Lunch. Amount was $30.00")
+        #expect(ExpenseHistorySection.previousValues(of: ExpenseEditEntry(date: Date(), changedFields: [.note]), locale: us) == nil)
+    }
+
     @Test func duplicatingMakesADraft() throws {
         let fixture = try Fixture()
         let expense = try fixture.addExpense("Dinner", cents: 3000)
