@@ -180,6 +180,14 @@ struct SyncConvergenceTests {
         #expect(kinds.contains(.groupCreated))
     }
 
+    @Test func onlyWhatSomeoneElseDidIsUnread() throws {
+        try a.services.expenses.add(expense())
+        #expect(try a.services.activity.unreadCount() == 0)
+        try exchange()
+        #expect(try a.services.activity.unreadCount() == 0)
+        #expect(try b.services.activity.unreadCount() > 0)
+    }
+
     @Test func readStateStaysOnTheDevice() throws {
         try a.services.expenses.add(expense())
         try exchange()

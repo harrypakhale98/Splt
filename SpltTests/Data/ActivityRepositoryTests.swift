@@ -59,10 +59,38 @@ struct ActivityRepositoryTests {
         ])
     }
 
-    @Test func readStateCanBeTrackedPerEntryOrAllAtOnce() throws {
+    /// Delivers an event the way sync does, as something Sam did on another device.
+    private func receive(_ event: ActivityEvent, in fixture: Fixture) throws {
+        let record = ActivityRecord(ActivityEntry(
+            groupID: fixture.group.id, actorID: fixture.sam.id, event: event, createdAt: fixture.clock.now()
+        ))
+        try fixture.services.makeChangeTracker().applyRemote(record.syncPayload)
+    }
+
+    @Test func whatYouDidYourselfIsNotUnread() throws {
         let fixture = try Fixture()
         try fixture.addExpense()
-        try fixture.addExpense("Second")
+        try fixture.services.groups.setArchived(true, id: fixture.group.id)
+        let entries = try fixture.services.activity.entries(limit: 10)
+        #expect(entries.count == 3)
+        #expect(entries.allSatisfy { $0.isRead && $0.actorID == fixture.me.id })
+        #expect(try fixture.services.activity.unreadCount() == 0)
+    }
+
+    @Test func whatOthersDidArrivesUnread() throws {
+        let fixture = try Fixture()
+        try receive(.groupRenamed(from: "Flat", to: "Home"), in: fixture)
+        #expect(try fixture.services.activity.unreadCount() == 1)
+        let entry = try #require(try fixture.services.activity.entries(limit: 1).first)
+        #expect(entry.actorID == fixture.sam.id)
+        #expect(!entry.isRead)
+    }
+
+    @Test func readStateCanBeTrackedPerEntryOrAllAtOnce() throws {
+        let fixture = try Fixture()
+        try receive(.groupRenamed(from: "Flat", to: "Home"), in: fixture)
+        try receive(.groupArchived, in: fixture)
+        try receive(.groupRestored, in: fixture)
         let services = fixture.services
         #expect(try services.activity.unreadCount() == 3)
         let first = try #require(try services.activity.entries(limit: 10).first)

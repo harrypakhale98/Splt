@@ -138,9 +138,13 @@ final class RepositoryContext {
         try log(event, groupID: groupID, actor: try currentUser()?.personID)
     }
 
-    /// Writes an activity row for a known actor, which saves looking the current user up again.
+    /// Writes an activity row for the current user when the caller has already looked them up.
+    /// What you did yourself is not news to you, so the row starts out read and stays off the
+    /// unread count. Rows for what other people did arrive through sync, which makes them unread.
     func log(_ event: ActivityEvent, groupID: GroupID?, actor: PersonID?, id: UUID = UUID()) throws {
-        let entry = ActivityEntry(id: id, groupID: groupID, actorID: actor, event: event, createdAt: now())
+        let entry = ActivityEntry(
+            id: id, groupID: groupID, actorID: actor, event: event, createdAt: now(), isRead: actor != nil
+        )
         let record = ActivityRecord(entry)
         context.insert(record)
         tracker.recordEdit(record)

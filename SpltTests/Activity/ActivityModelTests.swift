@@ -101,8 +101,18 @@ struct ActivityModelTests {
 
     @Test func tracksAndClearsUnreadEntries() throws {
         let (fixture, model, _) = try scene()
+        #expect(model.unreadCount == 0)
+        // what you did yourself starts out read; these two came from Sam's device
+        for name in ["Home", "Flat"] {
+            let record = ActivityRecord(ActivityEntry(
+                groupID: fixture.group.id, actorID: fixture.sam.id, event: .groupRenamed(from: "Old", to: name),
+                createdAt: fixture.clock.now()
+            ))
+            try fixture.services.makeChangeTracker().applyRemote(record.syncPayload)
+        }
+        model.refresh()
         let unread = model.unreadCount
-        #expect(unread > 0)
+        #expect(unread == 2)
         let store = UnreadActivityStore(services: fixture.services)
         #expect(store.count == unread)
 
