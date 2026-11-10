@@ -89,6 +89,15 @@ extension SyncStoreAdapter {
             if let server = error.serverRecord {
                 let report = try applyFetched(modifications: [server], deletions: [])
                 outcome.requeue = report.requeue.contains(record.recordID)
+                if server.recordType != record.recordType {
+                    // a record of another type holds this name, so nothing sent from here can replace it
+                    outcome.requeue = false
+                    outcome.failure = .other(SyncFailure.genericMessage)
+                } else if report.refused.contains(server.recordID) {
+                    // the server holds a copy this device does not believe. With that copy's change tag the
+                    // local version replaces it on the next send, instead of failing the same way for ever.
+                    outcome.requeue = try adoptSystemFields(of: server)
+                }
             } else {
                 outcome.requeue = true
             }
@@ -118,6 +127,27 @@ extension SyncStoreAdapter {
             try didSend(saved: [], deleted: [id])
         }
         return failure
+    }
+
+    /// Takes the change tag of a server record without taking anything it says. Returns true when the
+    /// local version is still waiting to be sent.
+    private func adoptSystemFields(of server: CKRecord) throws -> Bool {
+        let id = server.recordID
+        let zone = id.zoneID.zoneName
+        guard let type = try resolveType(of: id),
+              let model = try type.modelType.find(recordName: id.recordName, in: tracker.context) else { return false }
+        let systemFields = RecordMapper.encodeSystemFields(server)
+        if type == .person {
+            updateMetadata { metadata in
+                metadata.setCopy(PersonCopy(systemFields: systemFields, sentModifiedAt: .distantPast), zoneName: zone, recordName: id.recordName)
+                metadata.personQueue.insert(PersonCopyKey(zoneName: zone, recordName: id.recordName))
+            }
+            return true
+        }
+        guard model.isDirty, model.pendingOperation == .save else { return false }
+        model.systemFields = systemFields
+        try tracker.save()
+        return true
     }
 
     private func forgetSystemFields(of id: CKRecord.ID) throws {

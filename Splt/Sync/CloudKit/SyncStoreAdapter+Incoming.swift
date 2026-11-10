@@ -7,6 +7,8 @@ import SwiftData
 struct ApplyReport {
     /// Changes the local version won, to be uploaded again with fresh system fields.
     var requeue: [CKRecord.ID] = []
+    /// Records that were not believed and left unapplied.
+    var refused: [CKRecord.ID] = []
     var inserted: [SyncPayload] = []
     var shares: [CKShare] = []
     var touchedZones: Set<String> = []
@@ -33,7 +35,10 @@ extension SyncStoreAdapter {
                 report.shares.append(share)
                 continue
             }
-            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload) else { continue }
+            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload) else {
+                report.refused.append(record.recordID)
+                continue
+            }
             registerZone(record.recordID.zoneID)
             report.touchedZones.insert(record.recordID.zoneID.zoneName)
             if payload.recordType == .person {

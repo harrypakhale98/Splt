@@ -132,6 +132,71 @@ struct SyncCoordinatorTests {
         #expect(rig.coordinator.status == .idle)
     }
 
+    /// A server copy this device does not believe. Anyone in a shared group can save one.
+    enum RefusedCopy: CaseIterable {
+        case noModifiedDate, dateFarAhead, amountAboveTheLimit
+
+        func spoil(_ record: CKRecord) {
+            switch self {
+            case .noModifiedDate: record[RecordSchema.modifiedAtKey] = nil
+            case .dateFarAhead: record[RecordSchema.modifiedAtKey] = Date(timeIntervalSinceReferenceDate: 1e14) as NSDate
+            case .amountAboveTheLimit: record["totalMinorUnits"] = NSNumber(value: Int64.max)
+            }
+        }
+    }
+
+    /// An edited expense as it was just sent, and the copy the server answers the conflict with.
+    private func conflict(_ rig: Rig, serverType: String = "Expense") throws -> (sent: CKRecord, server: CKRecord, marker: CKRecord.ID) {
+        rig.coordinator.markReady()
+        let expense = try #require(try rig.device.services.expenses.expenses(in: rig.populated.group.id).first)
+        try FakeCloud().upload(from: rig.device)
+        var edited = expense
+        edited.title = "Newer local title"
+        try rig.device.services.expenses.update(edited)
+        let sent = try #require(try rig.device.outgoing().records.first { $0.recordType == "Expense" })
+        let server = CKRecord(recordType: serverType, recordID: sent.recordID)
+        for key in sent.allKeys() { server[key] = sent[key] }
+        server["title"] = "Forged" as NSString
+        // the parent is a system field, so it shows which copy the next upload is built on
+        let marker = CKRecord.ID(recordName: "marker", zoneID: sent.recordID.zoneID)
+        server.parent = CKRecord.Reference(recordID: marker, action: .none)
+        return (sent, server, marker)
+    }
+
+    @Test(arguments: RefusedCopy.allCases)
+    func aConflictWithACopyThatIsRefusedEndsAfterOneMoreSend(refused: RefusedCopy) throws {
+        let rig = try rig()
+        let (sent, server, marker) = try conflict(rig)
+        refused.spoil(server)
+        let error = CKError(.serverRecordChanged, userInfo: [CKRecordChangedErrorServerRecordKey: server])
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, error)], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
+        #expect(rig.privateQueue.savedAgain == [sent.recordID])
+
+        let next = try #require(try rig.device.adapter.outgoingRecord(for: sent.recordID))
+        #expect(next.parent?.recordID == marker)
+        #expect(next["title"] as? String == "Newer local title")
+        try rig.coordinator.sentRecords(saved: [next], failedSaves: [], deleted: [], failedDeletes: [:], scope: .privateDatabase)
+        #expect(try rig.device.tracker.pendingChanges().filter { $0.recordType == .expense }.isEmpty)
+        #expect(try rig.device.services.expenses.expense(id: ExpenseID(rawValue: try #require(UUID(uuidString: sent.recordID.recordName))))?.title == "Newer local title")
+        #expect(rig.coordinator.status == .idle)
+    }
+
+    @Test func aConflictWithARecordOfAnotherTypeIsShownInsteadOfSentAgainAtOnce() throws {
+        let rig = try rig()
+        let (sent, server, _) = try conflict(rig, serverType: "Payment")
+        RefusedCopy.noModifiedDate.spoil(server)
+        let error = CKError(.serverRecordChanged, userInfo: [CKRecordChangedErrorServerRecordKey: server])
+        try rig.coordinator.sentRecords(
+            saved: [], failedSaves: [(sent, error)], deleted: [], failedDeletes: [:], scope: .privateDatabase
+        )
+        #expect(rig.privateQueue.savedAgain.isEmpty)
+        #expect(rig.privateQueue.plans.isEmpty)
+        #expect(rig.coordinator.status == .error(SyncFailure.genericMessage))
+        #expect(try rig.device.tracker.pendingChanges().contains { $0.recordType == .expense })
+    }
+
     @Test func fullStorageIsShownAndRetriedLaterWithoutLosingChanges() async throws {
         let rig = try rig()
         let sent = try #require(try rig.device.outgoing().records.first)
