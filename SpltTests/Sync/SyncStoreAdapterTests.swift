@@ -339,6 +339,34 @@ struct SyncStoreAdapterTests {
         #expect(populated.device.adapter.metadata.zones[populated.zone] != nil)
     }
 
+    @Test func aSaveStillOnItsWayDoesNotBringBackTheZoneOfADeletedGroup() throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let cloud = FakeCloud()
+        try cloud.upload(from: populated.device)
+        // an edit is handed to the engine, then the group is deleted and its zone with it
+        try populated.addExpense("Late")
+        let sent = try #require(try populated.device.outgoing().records.first { $0.recordType == "Expense" })
+        try populated.device.services.groups.delete(id: populated.group.id)
+        let zone = CKRecordZone.ID(zoneName: populated.zone, ownerName: CKCurrentUserDefaultName)
+        try populated.device.adapter.zoneDeleteConfirmed(zone)
+        #expect(!populated.device.adapter.metadata.isKnown(zoneName: populated.zone))
+
+        let outcome = try populated.device.adapter.saveFailed(record: sent, error: CKError(.zoneNotFound))
+        #expect(outcome.recreateZone == nil)
+        #expect(!outcome.requeue)
+        #expect(outcome.askServerAbout == nil)
+    }
+
+    @Test func aSaveIntoAZoneThatWasNeverMadeMakesItFirst() throws {
+        let populated = try PopulatedDevice()
+        try populated.addExpense()
+        let sent = try #require(try populated.device.outgoing().records.first { $0.recordType == "Expense" })
+        let outcome = try populated.device.adapter.saveFailed(record: sent, error: CKError(.zoneNotFound))
+        #expect(outcome.recreateZone?.zoneName == populated.zone)
+        #expect(outcome.requeue)
+    }
+
     @Test func otherFailuresKeepTheChangesAndReportWhy() throws {
         let populated = try PopulatedDevice()
         try populated.addExpense()
