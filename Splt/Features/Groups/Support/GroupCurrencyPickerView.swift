@@ -11,29 +11,35 @@ struct GroupCurrencyPickerView: View {
     var body: some View {
         let options = CurrencyCatalog.filter(CurrencyCatalog.options(locale: locale), query: query)
 
-        List(options) { option in
-            Button {
-                selection = option.code
-                dismiss()
-            } label: {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(option.name)
-                            .foregroundStyle(.primary)
-                        Text(option.code)
-                            .font(.subheadline)
-                            .foregroundStyle(Ink.secondary)
+        List {
+            RaisedRows {
+                ForEach(options) { option in
+                    Button {
+                        selection = option.code
+                        dismiss()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(option.name)
+                                    .foregroundStyle(Ink.text)
+                                Text(option.code)
+                                    .font(.footnote)
+                                    .foregroundStyle(Ink.secondary)
+                            }
+                            Spacer()
+                            if option.code == selection {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Ink.text)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                     }
-                    Spacer()
-                    if option.code == selection {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(Ink.text)
-                            .accessibilityHidden(true)
-                    }
+                    .accessibilityAddTraits(option.code == selection ? .isSelected : [])
                 }
             }
-            .accessibilityAddTraits(option.code == selection ? .isSelected : [])
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
         .paperBackground()
         .overlay {
             if options.isEmpty {

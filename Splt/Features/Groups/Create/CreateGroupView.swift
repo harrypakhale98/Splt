@@ -55,47 +55,56 @@ private struct CreateGroupForm: View {
 
         Form {
             Section {
-                TextField("Group Name", text: $model.name)
-                    .focused($nameFocused)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                NavigationLink {
-                    SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
-                } label: {
-                    HStack {
-                        Text("Symbol")
-                        Spacer()
-                        Image(systemName: model.symbol)
-                            .foregroundStyle(Ink.text)
-                            .accessibilityHidden(true)
+                RaisedRows {
+                    TextField("Group Name", text: $model.name)
+                        .focused($nameFocused)
+                        .textInputAutocapitalization(.words)
+                        .submitLabel(.done)
+                    NavigationLink {
+                        SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
+                    } label: {
+                        HStack {
+                            Text("Symbol")
+                            Spacer()
+                            Image(systemName: model.symbol)
+                                .foregroundStyle(Ink.text)
+                                .accessibilityHidden(true)
+                        }
                     }
                 }
             }
+            .raisedSection()
 
             Section {
-                Picker("Type", selection: Binding(get: { model.template }, set: { model.selectTemplate($0) })) {
-                    ForEach(GroupTemplate.allCases) { template in
-                        Label(template.title, systemImage: template.systemImage).tag(template)
+                RaisedRows {
+                    Picker("Type", selection: Binding(get: { model.template }, set: { model.selectTemplate($0) })) {
+                        ForEach(GroupTemplate.allCases) { template in
+                            Label(template.title, systemImage: template.systemImage).tag(template)
+                        }
+                    }
+                    if model.template == .trip {
+                        DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
+                        DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
+                    }
+                    NavigationLink {
+                        GroupCurrencyPickerView(selection: $model.currencyCode)
+                    } label: {
+                        LabeledContent("Currency", value: model.currencyCode)
                     }
                 }
-                if model.template == .trip {
-                    DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
-                    DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
-                }
-                NavigationLink {
-                    GroupCurrencyPickerView(selection: $model.currencyCode)
-                } label: {
-                    LabeledContent("Currency", value: model.currencyCode)
-                }
             }
+            .raisedSection()
 
             membersSection
 
             Section {
                 Toggle("Simplify Debts", isOn: $model.simplifiesDebts)
+                    .raisedRow()
             } footer: {
                 Text("Combines debts so the group settles with as few payments as possible.")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             }
+            .raisedSection()
         }
         .paperBackground()
         .navigationTitle("New Group")
@@ -125,49 +134,67 @@ private struct CreateGroupForm: View {
 
     private var membersSection: some View {
         Section {
-            Label("You", systemImage: "person.crop.circle")
-                .foregroundStyle(Ink.secondary)
-            ForEach(model.members) { member in
-                HStack {
-                    AvatarView(name: member.name, size: 28)
-                    VStack(alignment: .leading) {
-                        Text(member.name)
-                        if let hint = member.contactHint {
-                            Text(hint)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            RaisedRows {
+                HStack(spacing: 12) {
+                    if let me = model.me {
+                        AvatarView(person: me, size: 28)
+                    } else {
+                        AvatarView(name: String(localized: "You"), size: 28)
+                    }
+                    Text("You")
+                }
+                .accessibilityElement(children: .combine)
+                ForEach(model.members) { member in
+                    HStack(spacing: 12) {
+                        AvatarView(name: member.name, size: 28)
+                        VStack(alignment: .leading) {
+                            Text(member.name)
+                            if let hint = member.contactHint {
+                                Text(hint)
+                                    .font(.footnote)
+                                    .foregroundStyle(Ink.secondary)
+                            }
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .swipeActions(edge: .trailing) {
+                        Button("Remove", systemImage: "person.badge.minus", role: .destructive) {
+                            if let index = model.members.firstIndex(where: { $0.id == member.id }) {
+                                model.removeMembers(at: IndexSet(integer: index))
+                            }
                         }
                     }
                 }
-                .accessibilityElement(children: .combine)
-            }
-            .onDelete { model.removeMembers(at: $0) }
 
-            HStack {
-                TextField("Add by name", text: $newMemberName)
-                    .focused($memberFocused)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                    .onSubmit(addTypedMember)
-                Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
-                    .labelStyle(.iconOnly)
-                    .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            NavigationLink {
-                FriendPickerView(
-                    friends: model.friends, isSelected: { model.isSelected($0) }, toggle: { model.toggle($0) }
-                )
-            } label: {
-                Label("Add from Friends", systemImage: "person.2")
-            }
-            Button("Add from Contacts", systemImage: "person.crop.circle.badge.plus") {
-                showsContacts = true
+                HStack {
+                    TextField("Add by name", text: $newMemberName)
+                        .focused($memberFocused)
+                        .textInputAutocapitalization(.words)
+                        .submitLabel(.done)
+                        .onSubmit(addTypedMember)
+                    Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
+                        .labelStyle(.iconOnly)
+                        .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                NavigationLink {
+                    FriendPickerView(
+                        friends: model.friends, isSelected: { model.isSelected($0) }, toggle: { model.toggle($0) }
+                    )
+                } label: {
+                    Label("Add from Friends", systemImage: "person.2")
+                }
+                Button("Add from Contacts", systemImage: "person.crop.circle.badge.plus") {
+                    showsContacts = true
+                }
             }
         } header: {
-            Text("Members")
+            SectionHeader("Members")
+                .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
             Text("People who don't have Splt yet are added by name. They can join later.")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var errorBinding: Binding<Bool> {

@@ -264,7 +264,7 @@ struct OrbitCenterView: View {
     private var caption: String {
         let name = center.subject
         switch (center.kind, center.subjectIsMe) {
-        case (.owed, true): return String(localized: "You are owed")
+        case (.owed, true): return String(localized: "You're owed")
         case (.owes, true): return String(localized: "You owe")
         case (.owed, false): return String(localized: "\(name) is owed")
         case (.owes, false): return String(localized: "\(name) owes")

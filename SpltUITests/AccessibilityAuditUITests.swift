@@ -52,7 +52,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 
         openAccount(in: app)
         audit(app, "Account")
-        app.buttons["Done"].firstMatch.tap()
+        app.buttons["Close"].firstMatch.tap()
 
         openTab("Search", in: app)
         XCTAssertTrue(app.navigationBars["Search"].waitForExistence(timeout: 10))

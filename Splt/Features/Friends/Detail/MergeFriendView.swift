@@ -24,12 +24,22 @@ struct MergeFriendView: View {
         NavigationStack {
             List {
                 if !model.suggestions.isEmpty {
-                    Section("Possible Matches") { rows(model.suggestions) }
+                    Section {
+                        RaisedRows { rows(model.suggestions) }
+                    } header: {
+                        SectionHeader("Possible matches")
+                    }
                 }
                 if !model.others.isEmpty {
-                    Section("Everyone Else") { rows(model.others) }
+                    Section {
+                        RaisedRows { rows(model.others) }
+                    } header: {
+                        SectionHeader("Everyone else")
+                    }
                 }
             }
+            .listStyle(.plain)
+            .listRowSeparatorTint(Ink.hairline)
             .paperBackground()
             .overlay {
                 if model.suggestions.isEmpty, model.others.isEmpty {
@@ -75,12 +85,12 @@ struct MergeFriendView: View {
                 choice = person
             } label: {
                 HStack(spacing: 12) {
-                    AvatarView(person: person, size: 36)
-                    Text(person.name).foregroundStyle(.primary)
+                    AvatarView(person: person, size: 28)
+                    Text(person.name).foregroundStyle(Ink.text)
                     Spacer()
                     if person.isPlaceholder {
                         Text("Not on Splt yet")
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(Ink.secondary)
                     }
                 }

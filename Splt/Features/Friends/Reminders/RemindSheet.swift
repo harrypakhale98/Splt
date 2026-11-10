@@ -47,7 +47,7 @@ struct RemindSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done", role: .close) { dismiss() }
+                    Button("Close", role: .close) { dismiss() }
                 }
             }
             // Account is a sheet too, so it opens only once this one has gone

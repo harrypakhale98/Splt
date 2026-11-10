@@ -5,24 +5,29 @@ struct NotesSection: View {
     @Bindable var model: ExpenseFormModel
 
     var body: some View {
-        Section(header: Text("Notes and Receipt").foregroundStyle(Ink.secondary)) {
-            TextField("Notes", text: $model.note, prompt: Text("Add a note"), axis: .vertical)
-                .lineLimit(1...6)
+        Section {
+            RaisedRows {
+                TextField("Notes", text: $model.note, prompt: Text("Add a note"), axis: .vertical)
+                    .lineLimit(1...6)
 
-            if !model.receipt.isEmpty {
-                ReceiptAttachmentRow(model: model)
-            } else if model.isEditing {
-                ReceiptActions(model: model)
-                    .labelStyle(.titleAndIcon)
-            }
-            if model.isScanning {
-                HStack {
-                    ProgressView()
-                    Text("Reading the receipt")
+                if !model.receipt.isEmpty {
+                    ReceiptAttachmentRow(model: model)
+                } else if model.isEditing {
+                    ReceiptActions(model: model)
+                        .labelStyle(.titleAndIcon)
                 }
-                .accessibilityElement(children: .combine)
+                if model.isScanning {
+                    HStack {
+                        ProgressView()
+                        Text("Reading the receipt")
+                    }
+                    .accessibilityElement(children: .combine)
+                }
             }
+        } header: {
+            SectionHeader("Notes and receipt")
         }
+        .raisedSection()
     }
 }
 

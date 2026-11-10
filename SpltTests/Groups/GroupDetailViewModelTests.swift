@@ -241,7 +241,7 @@ struct GroupDetailViewModelTests {
         let totals = try #require(makeModel(fixture).primaryTotals)
         #expect(totals.total == usdAmount(9500))
         #expect(totals.expenseCount == 3)
-        #expect(totals.byPerson.map(\.name) == ["Sam", "Me", "Priya"])
+        #expect(totals.byPerson.map(\.name) == ["Sam", "You", "Priya"])
         #expect(totals.byPerson.map(\.paid) == [usdAmount(6000), usdAmount(2000), usdAmount(1500)])
         #expect(totals.byCategory.map(\.category) == [.dining, .transport, .entertainment])
     }

@@ -25,16 +25,16 @@ struct MoneyLabel: View {
     }
 
     private var color: Color {
-        style == .balance ? Self.balanceTint(for: money) : .primary
+        style == .balance ? Self.balanceTint(for: money) : Ink.text
     }
 
     /// The one rule for money you owe or are owed in a row: green when you are owed, red when you owe,
     /// quiet when settled. Heroes use the primary color and write the sign. Person colors never
     /// color an amount, only avatars and bars.
     static func balanceTint(for money: Money) -> Color {
-        if money.minorUnits > 0 { return MoneyTint.owed }
-        if money.minorUnits < 0 { return MoneyTint.owes }
-        return .secondary
+        if money.minorUnits > 0 { return Ink.owed }
+        if money.minorUnits < 0 { return Ink.owe }
+        return Ink.secondary
     }
 
     private var accessibilityText: String {
@@ -43,20 +43,6 @@ struct MoneyLabel: View {
         if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
         if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
         return String(localized: "Settled up")
-    }
-}
-
-/// Green and red for money text. Darker than the system colors in light mode and lighter in dark
-/// mode, so text reaches 4.5 to 1 on the system backgrounds. Use the system colors for shapes.
-enum MoneyTint {
-    static let owedHex: (light: UInt32, dark: UInt32) = (0x1F7A33, 0x4CD964)
-    static let owesHex: (light: UInt32, dark: UInt32) = (0xC62828, 0xFF6B6B)
-
-    static let owed = adaptive(owedHex)
-    static let owes = adaptive(owesHex)
-
-    private static func adaptive(_ pair: (light: UInt32, dark: UInt32)) -> Color {
-        Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: pair.dark) : UIColor(hex: pair.light) })
     }
 }
 

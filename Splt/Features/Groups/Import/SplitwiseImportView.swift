@@ -96,20 +96,27 @@ private struct SplitwiseImportContent: View {
     private var instructions: some View {
         List {
             Section {
-                step(1, "Open your Splitwise account on the web.")
-                step(2, "Choose Export.")
-                step(3, "Pick CSV and save the file to Files.")
-                step(4, "Come back here and choose the file.")
+                RaisedRows {
+                    step(1, "Open your Splitwise account on the web.")
+                    step(2, "Choose Export.")
+                    step(3, "Pick CSV and save the file to Files.")
+                    step(4, "Come back here and choose the file.")
+                }
             } header: {
-                Text("Export from Splitwise")
+                SectionHeader("Export from Splitwise")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             } footer: {
                 Text("Splt reads the file on this device. Nothing is uploaded, and your Splitwise group stays as it is.")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             }
+            .raisedSection()
             Section {
                 Button("Choose CSV File", systemImage: "doc.badge.plus") {
                     showsPicker = true
                 }
+                .raisedRow()
             }
+            .raisedSection()
         }
     }
 
@@ -135,51 +142,75 @@ private struct SplitwiseImportContent: View {
             Form {
                 if let existing = model.existingGroupID {
                     Section {
-                        Label("You already imported this file.", systemImage: "checkmark.circle")
-                        Button("Open Group") { open(existing) }
+                        RaisedRows {
+                            Label("You already imported this file.", systemImage: "checkmark.circle")
+                            Button("Open Group") { open(existing) }
+                        }
                     } footer: {
                         Text("Importing it again would add every expense twice, so it is turned off.")
+                            .padding(.horizontal, Depth.pageMargin + 4)
                     }
+                    .raisedSection()
                 }
 
-                Section("Group") {
-                    TextField("Group Name", text: $model.groupName)
-                        .textInputAutocapitalization(.words)
-                    NavigationLink {
-                        GroupCurrencyPickerView(selection: $model.currencyCode)
-                    } label: {
-                        LabeledContent("Currency", value: model.currencyCode)
+                Section {
+                    RaisedRows {
+                        TextField("Group Name", text: $model.groupName)
+                            .textInputAutocapitalization(.words)
+                        NavigationLink {
+                            GroupCurrencyPickerView(selection: $model.currencyCode)
+                        } label: {
+                            LabeledContent("Currency", value: model.currencyCode)
+                        }
                     }
+                } header: {
+                    SectionHeader("Group")
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 }
+                .raisedSection()
 
-                Section("In the File") {
-                    LabeledContent("Expenses") { Text(preview.expenseCount, format: .number).monospacedDigit() }
-                    LabeledContent("Payments") { Text(preview.paymentCount, format: .number).monospacedDigit() }
-                    ForEach(preview.totals, id: \.currencyCode) { total in
-                        LabeledContent("Total Spent") { MoneyLabel(money: total) }
+                Section {
+                    RaisedRows {
+                        LabeledContent("Expenses") { Text(preview.expenseCount, format: .number).monospacedDigit() }
+                        LabeledContent("Payments") { Text(preview.paymentCount, format: .number).monospacedDigit() }
+                        ForEach(preview.totals, id: \.currencyCode) { total in
+                            LabeledContent("Total Spent") { MoneyLabel(money: total) }
+                        }
                     }
+                } header: {
+                    SectionHeader("In the file")
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 }
+                .raisedSection()
 
                 membersSection
 
                 if !preview.warnings.isEmpty {
                     Section {
-                        ForEach(preview.warnings, id: \.self) { warning in
-                            Text("Line \(warning.line): \(warning.message)")
-                                .font(.subheadline)
+                        RaisedRows {
+                            ForEach(preview.warnings, id: \.self) { warning in
+                                Text("Line \(warning.line): \(warning.message)")
+                                    .font(.subheadline)
+                            }
                         }
                     } header: {
                         Text("^[\(preview.warnings.count) row](inflect: true) skipped")
+                            .sectionHeaderStyle()
+                            .padding(.horizontal, Depth.pageMargin + 4)
                     } footer: {
                         Text("These rows can't be imported. Everything else will be.")
+                            .padding(.horizontal, Depth.pageMargin + 4)
                     }
+                    .raisedSection()
                 }
 
                 Section {
                     Button("Choose Another File", systemImage: "arrow.uturn.backward") {
                         model.chooseAnotherFile()
                     }
+                    .raisedRow()
                 }
+                .raisedSection()
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -192,28 +223,35 @@ private struct SplitwiseImportContent: View {
 
     private var membersSection: some View {
         Section {
-            ForEach(model.mappings) { mapping in
-                Picker(mapping.name, selection: Binding(
-                    get: { model.choice(for: mapping.name) },
-                    set: { model.setChoice($0, for: mapping.name) }
-                )) {
-                    Text("New Person").tag(MemberMapping.Choice.newPerson)
-                    ForEach(model.candidates) { person in
-                        Text(person.isMe ? String(localized: "\(person.name) (You)") : person.name)
-                            .tag(MemberMapping.Choice.existing(person.id))
+            RaisedRows {
+                ForEach(model.mappings) { mapping in
+                    Picker(mapping.name, selection: Binding(
+                        get: { model.choice(for: mapping.name) },
+                        set: { model.setChoice($0, for: mapping.name) }
+                    )) {
+                        Text("New Person").tag(MemberMapping.Choice.newPerson)
+                        ForEach(model.candidates) { person in
+                            Text(person.isMe ? String(localized: "\(person.name) (You)") : person.name)
+                                .tag(MemberMapping.Choice.existing(person.id))
+                        }
                     }
                 }
             }
         } header: {
-            Text("Match People")
+            SectionHeader("Match people")
+                .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
-            if let problem = model.mappingProblem {
-                Text(problem)
-                    .foregroundStyle(Ink.owe)
-            } else {
-                Text("Match each Splitwise member to someone you already split with, or add them as a new person.")
+            Group {
+                if let problem = model.mappingProblem {
+                    Text(problem)
+                        .foregroundStyle(Ink.owe)
+                } else {
+                    Text("Match each Splitwise member to someone you already split with, or add them as a new person.")
+                }
             }
+            .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     // MARK: Actions

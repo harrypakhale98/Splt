@@ -54,6 +54,8 @@ struct SyncStatusSectionContent: View {
             .raisedRow()
         } footer: {
             Text(SyncStatusPresentation.detail(for: status))
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
         }
         // a section footer in a sheet defaults to a lighter shade than the paper behind it
         .listRowBackground(Ink.paper)

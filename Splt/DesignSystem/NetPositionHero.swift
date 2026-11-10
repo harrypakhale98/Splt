@@ -73,7 +73,7 @@ struct NetPositionHero: View {
                     .monospacedDigit()
             }
         } else {
-            Text("All Square")
+            Text("All settled up")
                 .font(Typeface.hero(size: 44))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
@@ -92,9 +92,9 @@ struct NetPositionHero: View {
         let owe = ListFormatter.localizedString(byJoining: totals.youOwe.map { MoneyFormatting.magnitudeString($0, locale: locale) })
         switch (totals.owedToYou.isEmpty, totals.youOwe.isEmpty) {
         case (true, true): return String(localized: "Nobody owes anybody. Enjoy it.")
-        case (false, true): return String(localized: "You are owed \(owed).")
+        case (false, true): return String(localized: "You're owed \(owed).")
         case (true, false): return String(localized: "You owe \(owe).")
-        case (false, false): return String(localized: "You are owed \(owed) and you owe \(owe).")
+        case (false, false): return String(localized: "You're owed \(owed) and you owe \(owe).")
         }
     }
 }

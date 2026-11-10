@@ -49,7 +49,7 @@ private struct FriendsContent: View {
             if !model.hasNoFriends, model.query.isEmpty {
                 Section {
                     NetPositionHero(
-                        scope: "With Friends",
+                        scope: "With friends",
                         totals: model.totals,
                         owedBy: model.summaries.filter { $0.balance.contains(where: \.isPositive) }.map(\.person),
                         owedTo: model.summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }.map(\.person)
@@ -106,7 +106,7 @@ private struct FriendsContent: View {
                         .zoomSource(for: .friend(summary.id.rawValue))
                         .swipeActions(edge: .leading) {
                             if !summary.isSettled {
-                                Button("Settle", systemImage: "checkmark.circle") {
+                                Button("Settle Up", systemImage: "checkmark.circle") {
                                     settleRequest = model.settleRequest(for: summary)
                                 }
                                 .tint(Ink.owed)
@@ -129,10 +129,7 @@ private struct FriendsContent: View {
                     }
                 }
             } header: {
-                Text(title)
-                    .font(.footnote)
-                    .foregroundStyle(Ink.secondary)
-                    .textCase(nil)
+                SectionHeader(title)
             }
         }
     }

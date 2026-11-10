@@ -57,10 +57,11 @@ struct FriendHero: View {
                         .foregroundStyle(Ink.secondary)
                 }
             } else {
-                Text("All square")
+                Text("All settled up")
                     .font(Typeface.hero(size: 44))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
+                    .letterpress()
                 Text("Nothing owed between you and \(ReminderMessage.firstName(friend.name)).")
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)

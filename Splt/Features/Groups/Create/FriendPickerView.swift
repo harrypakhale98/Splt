@@ -10,25 +10,32 @@ struct FriendPickerView: View {
     @State private var changeCount = 0
 
     var body: some View {
-        List(friends) { friend in
-            Button {
-                toggle(friend)
-                changeCount += 1
-            } label: {
-                HStack {
-                    AvatarView(person: friend, size: 36)
-                    Text(friend.name)
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if isSelected(friend) {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(.tint)
-                            .accessibilityHidden(true)
+        List {
+            RaisedRows {
+                ForEach(friends) { friend in
+                    Button {
+                        toggle(friend)
+                        changeCount += 1
+                    } label: {
+                        HStack(spacing: 12) {
+                            AvatarView(person: friend, size: 28)
+                            Text(friend.name)
+                                .foregroundStyle(Ink.text)
+                            Spacer()
+                            if isSelected(friend) {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Ink.text)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                     }
+                    .accessibilityAddTraits(isSelected(friend) ? .isSelected : [])
                 }
             }
-            .accessibilityAddTraits(isSelected(friend) ? .isSelected : [])
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .overlay {
             if friends.isEmpty {
                 EmptyStateView(

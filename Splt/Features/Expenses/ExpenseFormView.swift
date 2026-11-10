@@ -13,9 +13,9 @@ struct ExpenseFormView: View {
         } else {
             NavigationStack {
                 EmptyStateView(
-                    title: "Expenses Unavailable",
+                    title: "Data Unavailable",
                     systemImage: "exclamationmark.triangle",
-                    description: "Splt could not open its data. Restart the app and try again."
+                    description: "Splt couldn't open its data. Restart the app and try again."
                 )
                 .navigationTitle("Expense")
                 .navigationBarTitleDisplayMode(.inline)
@@ -180,7 +180,7 @@ private struct ExpenseFormScreen: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
-            Button("Close", role: .close) {
+            Button("Cancel", role: .cancel) {
                 if model.isDirty { confirmsDiscard = true } else { dismiss() }
             }
         }

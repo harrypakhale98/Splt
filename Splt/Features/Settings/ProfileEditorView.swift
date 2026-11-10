@@ -11,17 +11,20 @@ struct ProfileEditorView: View {
     @FocusState private var nameFocused: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        List {
+            Section {
                 avatar
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 8)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Name")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(Ink.secondary)
-                    TextField("Name", text: $profile.displayName, prompt: Text("Your Name"))
-                        .font(.title3.weight(.semibold))
+            Section {
+                RaisedRows {
+                    TextField("Name", text: $profile.displayName, prompt: Text("Your name"))
+                        .font(Typeface.heading)
+                        .foregroundStyle(Ink.text)
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
@@ -29,23 +32,29 @@ struct ProfileEditorView: View {
                         .onSubmit(commit)
                         .accessibilityIdentifier("profile.name")
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .cardSurface()
+            } header: {
+                SectionHeader("Name")
+            } footer: {
                 note("Friends see this name in groups and when you invite them. It stays on your devices.")
+            }
+            // a section header or footer in a sheet defaults to a lighter shade than the paper behind it
+            .listRowBackground(Ink.paper)
+            .listSectionSeparator(.hidden)
 
-                VStack(spacing: 0) {
-                    ForEach(Array(AccountProfile.handleMethods.enumerated()), id: \.element) { index, method in
-                        if index > 0 { Divider().padding(.leading, 56) }
+            Section {
+                RaisedRows {
+                    ForEach(AccountProfile.handleMethods, id: \.self) { method in
                         HandleField(profile: profile, method: method)
                     }
                 }
-                .cardSurface()
+            } footer: {
                 note("Optional. Added to reminders you send so friends know how to pay you. Splt never sends money.")
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 32)
+            .listRowBackground(Ink.paper)
+            .listSectionSeparator(.hidden)
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
         .scrollDismissesKeyboard(.interactively)
         .paperBackground()
         .navigationTitle("Your Profile")
@@ -63,8 +72,6 @@ struct ProfileEditorView: View {
         Text(text)
             .font(.footnote)
             .foregroundStyle(Ink.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
     }
 
     @ViewBuilder
@@ -114,8 +121,6 @@ private struct HandleField: View {
                 .foregroundStyle(Ink.secondary)
                 .onChange(of: text) { profile.setHandle(text, for: method) }
         }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 52)
         .onAppear { text = profile.handle(for: method) }
     }
 }

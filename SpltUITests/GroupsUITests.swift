@@ -33,7 +33,7 @@ final class GroupsUITests: XCTestCase {
         app.buttons["Create"].tap()
 
         XCTAssertTrue(app.navigationBars["Weekend Away"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["You are all settled up"].exists)
+        XCTAssertTrue(app.staticTexts["All settled up"].exists)
         XCTAssertFalse(app.buttons["Settle Up"].exists)
 
         app.navigationBars.buttons["Groups"].tap()

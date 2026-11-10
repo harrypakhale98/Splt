@@ -231,7 +231,7 @@ struct GroupSettingsViewModelTests {
         let leftGroups = isolatedLeftGroups()
         let model = makeModel(fixture, leftGroups: leftGroups)
         let block = try #require(model.leaveBlock)
-        #expect(block.contains("You are owed $20.00"))
+        #expect(block.contains("You're owed $20.00"))
         #expect(await model.leave(using: LocalGroupSharing()) == false)
         #expect(model.blockedMessage == block)
         #expect(!leftGroups.contains(fixture.group.id))

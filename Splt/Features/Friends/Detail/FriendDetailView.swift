@@ -120,23 +120,24 @@ private struct FriendDetailContent: View {
     private var groupBreakdown: some View {
         if !model.groupRows.isEmpty {
             Section {
-                ForEach(model.groupRows) { row in
-                    NavigationLink(value: Route.group(row.groupID.rawValue)) {
-                        HStack {
-                            Text(row.name)
-                            Spacer(minLength: 8)
-                            VStack(alignment: .trailing) {
-                                ForEach(row.amounts, id: \.currencyCode) { amount in
-                                    BalanceFigure(money: amount)
+                RaisedRows {
+                    ForEach(model.groupRows) { row in
+                        NavigationLink(value: Route.group(row.groupID.rawValue)) {
+                            HStack {
+                                Text(row.name)
+                                Spacer(minLength: 8)
+                                VStack(alignment: .trailing) {
+                                    ForEach(row.amounts, id: \.currencyCode) { amount in
+                                        BalanceFigure(money: amount)
+                                    }
                                 }
                             }
+                            .accessibilityElement(children: .combine)
                         }
-                        .accessibilityElement(children: .combine)
                     }
-                    .listRowBackground(Color.clear)
                 }
             } header: {
-                sectionLabel(Text("By group"))
+                SectionHeader("By group")
             }
         }
     }
@@ -147,24 +148,25 @@ private struct FriendDetailContent: View {
             Section {
                 Text("Nothing shared yet.")
                     .foregroundStyle(Ink.secondary)
-                    .listRowBackground(Color.clear)
+                    .raisedRow()
             } header: {
-                sectionLabel(Text("Shared expenses"))
+                SectionHeader("Shared expenses")
             }
         } else {
             ForEach(model.timeline) { month in
                 Section {
-                    ForEach(month.expenses, id: \.id) { expense in
-                        NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                            FriendTimelineRow(
-                                expense: expense, payerName: model.payerText(for: expense),
-                                myNet: model.myNet(in: expense)
-                            )
+                    RaisedRows {
+                        ForEach(month.expenses, id: \.id) { expense in
+                            NavigationLink(value: Route.expense(expense.id.rawValue)) {
+                                FriendTimelineRow(
+                                    expense: expense, payerName: model.payerText(for: expense),
+                                    myNet: model.myNet(in: expense)
+                                )
+                            }
                         }
-                        .listRowBackground(Color.clear)
                     }
                 } header: {
-                    sectionLabel(Text(month.start, format: .dateTime.month(.wide).year()))
+                    Text(month.start, format: .dateTime.month(.wide).year()).sectionHeaderStyle()
                 }
             }
         }
@@ -174,21 +176,15 @@ private struct FriendDetailContent: View {
     private var paymentHistory: some View {
         if !model.payments.isEmpty {
             Section {
-                ForEach(model.payments) { payment in
-                    PaymentRow(payment: payment, model: model)
-                        .listRowBackground(Color.clear)
+                RaisedRows {
+                    ForEach(model.payments) { payment in
+                        PaymentRow(payment: payment, model: model)
+                    }
                 }
             } header: {
-                sectionLabel(Text("Payments"))
+                SectionHeader("Payments")
             }
         }
-    }
-
-    private func sectionLabel(_ text: Text) -> some View {
-        text
-            .font(.footnote)
-            .foregroundStyle(Ink.secondary)
-            .textCase(nil)
     }
 
     // MARK: Toolbar
@@ -264,18 +260,18 @@ private struct PaymentRow: View {
                     Text("Undone")
                 }
             }
-            .font(.caption)
+            .font(.footnote)
             .foregroundStyle(Ink.secondary)
         }
         .foregroundStyle(isUndone ? Ink.secondary : Ink.text)
         .accessibilityElement(children: .combine)
         .swipeActions {
             if isUndone {
-                Button("Restore", systemImage: "arrow.uturn.forward") { model.restore(payment) }
+                Button("Restore Payment", systemImage: "arrow.uturn.forward") { model.restore(payment) }
                     .tint(Ink.owed)
             } else {
-                Button("Undo", systemImage: "arrow.uturn.backward") { model.undo(payment) }
-                    .tint(Ink.text)
+                Button("Undo Payment", systemImage: "arrow.uturn.backward") { model.undo(payment) }
+                    .tint(Ink.owe)
             }
         }
     }

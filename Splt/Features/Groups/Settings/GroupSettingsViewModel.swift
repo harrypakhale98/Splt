@@ -196,7 +196,7 @@ final class GroupSettingsViewModel {
         if !myRow.balance.isEmpty {
             let amounts = myRow.balance.map { MoneyFormatting.magnitudeString($0, locale: locale) }.joined(separator: ", ")
             return myRow.balance.contains { $0.minorUnits > 0 }
-                ? String(localized: "You are owed \(amounts). Settle up before leaving.")
+                ? String(localized: "You're owed \(amounts). Settle up before leaving.")
                 : String(localized: "You owe \(amounts). Settle up before leaving.")
         }
         return nil

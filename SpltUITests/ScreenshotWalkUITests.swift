@@ -63,7 +63,7 @@ final class ScreenshotWalkUITests: XCTestCase {
             shot("08-add-expense")
             for key in ["6", "0"] { app.buttons[key].firstMatch.tap() }
             shot("09-add-expense-split")
-            app.buttons["Close"].tap()
+            app.buttons["Cancel"].tap()
             let discard = app.buttons["Discard Changes"].firstMatch
             if discard.waitForExistence(timeout: 5) { discard.tap() }
         }

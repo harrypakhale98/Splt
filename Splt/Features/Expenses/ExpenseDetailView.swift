@@ -15,7 +15,7 @@ struct ExpenseDetailView: View {
             EmptyStateView(
                 title: "Expense Unavailable",
                 systemImage: "exclamationmark.triangle",
-                description: "Splt could not open its data. Restart the app and try again."
+                description: "Splt couldn't open its data. Restart the app and try again."
             )
             .navigationTitle("Expense")
             .navigationBarTitleDisplayMode(.inline)
@@ -90,12 +90,18 @@ private struct ExpenseDetailScreen: View {
             PaidBySection(model: model)
             ReceiptSection(model: model)
             if !expense.note.isEmpty {
-                Section(header: Text("Notes").foregroundStyle(Ink.secondary)) { Text(expense.note) }
+                Section {
+                    RaisedRows { Text(expense.note) }
+                } header: {
+                    SectionHeader("Notes")
+                }
             }
             if model.details?.extras.recurringExpenseID != nil, let groupID = expense.groupID {
                 Section {
-                    NavigationLink(value: Route.recurringExpenses(groupID.rawValue)) {
-                        Label("Part of a recurring expense", systemImage: "arrow.triangle.2.circlepath")
+                    RaisedRows {
+                        NavigationLink(value: Route.recurringExpenses(groupID.rawValue)) {
+                            Label("Part of a recurring expense", systemImage: "arrow.triangle.2.circlepath")
+                        }
                     }
                 }
             }
@@ -147,6 +153,9 @@ private struct DeletedBanner: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
+        .cardSurface()
+        .padding(.horizontal, Depth.pageMargin)
+        .padding(.bottom, 8)
         .accessibilityElement(children: .contain)
     }
 }

@@ -37,7 +37,7 @@ struct SettingsSections: View {
             }
         }
 
-        Section("About") {
+        Section {
             RaisedRows {
                 LabeledContent("Version", value: AppInfo.versionDescription)
                 LabeledContent("License") {
@@ -46,6 +46,8 @@ struct SettingsSections: View {
                 Link("Source Code", destination: AppInfo.sourceCodeURL)
                     .foregroundStyle(Ink.text)
             }
+        } header: {
+            SectionHeader("About")
         }
     }
 }

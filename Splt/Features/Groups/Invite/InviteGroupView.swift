@@ -25,43 +25,52 @@ struct InviteGroupView: View {
                     Text("Preparing invite")
                         .foregroundStyle(Ink.secondary)
                 }
+                .listRowBackground(Color.clear)
             case .ready(let url, let image):
                 Section {
-                    if let image {
-                        Image(uiImage: image)
-                            .interpolation(.none)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: 240)
-                            .padding(12)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .frame(maxWidth: .infinity)
-                            .accessibilityLabel("QR code to join \(groupName)")
+                    RaisedRows {
+                        if let image {
+                            Image(uiImage: image)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: 240)
+                                .padding(12)
+                                .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                                .frame(maxWidth: .infinity)
+                                .accessibilityLabel("QR code to join \(groupName)")
+                        }
+                        Text(url.absoluteString)
+                            .font(.footnote.monospaced())
+                            .foregroundStyle(Ink.secondary)
+                            .textSelection(.enabled)
                     }
-                    Text(url.absoluteString)
-                        .font(.footnote.monospaced())
-                        .foregroundStyle(Ink.secondary)
-                        .textSelection(.enabled)
                 }
+                .raisedSection()
                 Section {
-                    ShareLink(
-                        item: url,
-                        subject: Text("Join \(groupName) on Splt"),
-                        message: Text("Join \(groupName) on Splt.")
-                    ) {
-                        Label("Share Link", systemImage: "square.and.arrow.up")
-                    }
-                    Button("Copy Link", systemImage: "doc.on.doc") {
-                        UIPasteboard.general.string = url.absoluteString
-                        copyCount += 1
+                    RaisedRows {
+                        ShareLink(
+                            item: url,
+                            subject: Text("Join \(groupName) on Splt"),
+                            message: Text("Join \(groupName) on Splt.")
+                        ) {
+                            Label("Share Link", systemImage: "square.and.arrow.up")
+                        }
+                        Button("Copy Link", systemImage: "doc.on.doc") {
+                            UIPasteboard.general.string = url.absoluteString
+                            copyCount += 1
+                        }
                     }
                 }
+                .raisedSection()
             case .failed(let message):
-                ContentUnavailableView(
-                    "Can't Invite Yet",
+                EmptyStateView(
+                    title: "Can't Invite Yet",
                     systemImage: "person.badge.plus",
-                    description: Text(message)
+                    description: "\(message)"
                 )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
         }
         .paperBackground()

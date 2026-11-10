@@ -167,7 +167,9 @@ private struct GroupDetailContent: View {
                 Button("Clear Filters", systemImage: "xmark.circle") {
                     model.filter.clearFilters()
                 }
+                .raisedRow()
             }
+            .raisedSection()
         }
         if model.expenses.isEmpty {
             Section {
@@ -188,12 +190,14 @@ private struct GroupDetailContent: View {
         } else {
             ForEach(sections) { section in
                 Section {
-                    ForEach(section.expenses) { expense in
-                        NavigationLink(value: Route.expense(expense.id.rawValue)) {
-                            GroupExpenseRow(
-                                expense: expense, currentPerson: model.me?.id,
-                                people: model.members, members: model.group?.memberIDs ?? []
-                            )
+                    RaisedRows {
+                        ForEach(section.expenses) { expense in
+                            NavigationLink(value: Route.expense(expense.id.rawValue)) {
+                                GroupExpenseRow(
+                                    expense: expense, currentPerson: model.me?.id,
+                                    people: model.members, members: model.group?.memberIDs ?? []
+                                )
+                            }
                         }
                     }
                 } header: {
@@ -211,12 +215,12 @@ private struct GroupDetailContent: View {
                                 .fixedSize(horizontal: true, vertical: false)
                         }
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.secondary)
-                    .textCase(nil)
+                    .sectionHeaderStyle()
+                    .padding(.horizontal, Depth.pageMargin + 4)
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(.isHeader)
                 }
+                .raisedSection()
             }
         }
     }
@@ -315,18 +319,40 @@ private struct DateRangeSheet: View {
     @Binding var end: Date
 
     @Environment(\.dismiss) private var dismiss
+    @State private var draftStart: Date
+    @State private var draftEnd: Date
+
+    init(start: Binding<Date>, end: Binding<Date>) {
+        _start = start
+        _end = end
+        _draftStart = State(initialValue: start.wrappedValue)
+        _draftEnd = State(initialValue: end.wrappedValue)
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                DatePicker("From", selection: $start, displayedComponents: .date)
-                DatePicker("To", selection: $end, in: start..., displayedComponents: .date)
+                Section {
+                    RaisedRows {
+                        DatePicker("From", selection: $draftStart, displayedComponents: .date)
+                        DatePicker("To", selection: $draftEnd, in: draftStart..., displayedComponents: .date)
+                    }
+                }
+                .raisedSection()
             }
+            .paperBackground()
             .navigationTitle("Custom Range")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", role: .cancel) { dismiss() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Apply") {
+                        start = draftStart
+                        end = max(draftEnd, draftStart)
+                        dismiss()
+                    }
                 }
             }
         }

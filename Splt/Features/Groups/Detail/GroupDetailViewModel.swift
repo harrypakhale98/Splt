@@ -110,6 +110,13 @@ final class GroupDetailViewModel {
         peopleByID.mapValues(\.name)
     }
 
+    /// Names as charts show them, with you as "You".
+    var chartNames: [PersonID: String] {
+        var all = names
+        if let me { all[me.id] = String(localized: "You") }
+        return all
+    }
+
     func name(of id: PersonID) -> String {
         if id == me?.id { return String(localized: "You") }
         return peopleByID[id]?.name ?? String(localized: "Someone")
@@ -239,7 +246,7 @@ final class GroupDetailViewModel {
     var totals: [GroupTotals] {
         _ = expenses
         if memo.totalsRevision == revision { return memo.totals }
-        let built = GroupTotals.make(expenses: expenses, names: names)
+        let built = GroupTotals.make(expenses: expenses, names: chartNames)
         memo.totalsRevision = revision
         memo.totals = built
         return built

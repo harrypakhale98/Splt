@@ -12,7 +12,7 @@ struct WhoIsInSection: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(headline)
-                    .font(.headline)
+                    .sectionHeaderStyle()
                 Spacer()
                 if model.split.method != .itemized {
                     Button(allIn ? "None" : "Everyone") {
@@ -53,11 +53,12 @@ struct WhoIsInSection: View {
     }
 
     private func chip(for person: Person, members: [PersonID]) -> some View {
-        var shown = person
-        if typeSize.isAccessibilitySize, let first = person.name.split(separator: " ").first {
-            shown.name = String(first)
+        let fullName = model.displayName(for: person.id)
+        var name = fullName
+        if typeSize.isAccessibilitySize, let first = fullName.split(separator: " ").first {
+            name = String(first)
         }
-        return PersonToggle(person: shown, members: members, isSelected: isHighlighted(person.id)) {
+        return PersonToggle(person: person, name: name, members: members, isSelected: isHighlighted(person.id)) {
             model.tapPerson(person.id)
             onChange()
         }
@@ -74,7 +75,7 @@ struct WhoIsInSection: View {
                 onChange()
             }
         }
-        .accessibilityLabel(person.name)
+        .accessibilityLabel(fullName)
         .accessibilityValue(model.isPayer(person.id) ? String(localized: "Paid") : "")
         .accessibilityAction(named: Text("Paid by \(model.displayName(for: person.id))")) { model.makeSolePayer(person.id) }
         .accessibilityAction(named: Text("Also paid")) { model.toggleAlsoPaid(person.id) }
@@ -93,6 +94,8 @@ struct WhoIsInSection: View {
 /// and the others are dimmed, so the state never rests on color alone.
 private struct PersonToggle: View {
     let person: Person
+    /// What the chip says: "You" for the person using the app.
+    let name: String
     let members: [PersonID]
     let isSelected: Bool
     var action: () -> Void
@@ -103,7 +106,7 @@ private struct PersonToggle: View {
                 HStack(spacing: 6) {
                     AvatarView(person: person, members: members, size: 24)
                         .opacity(isSelected ? 1 : 0.4)
-                    Text(person.name)
+                    Text(name)
                         .font(.subheadline.weight(isSelected ? .semibold : .regular))
                         .foregroundStyle(isSelected ? Ink.text : Ink.secondary)
                         .lineLimit(1)
@@ -124,7 +127,7 @@ private struct PersonToggle: View {
         .buttonStyle(.plain)
         .motion(Motion.quick, value: isSelected)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(person.name)
+        .accessibilityLabel(name)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         .haptics(.tick, trigger: isSelected)
     }

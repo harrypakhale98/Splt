@@ -11,7 +11,7 @@ struct ItemsTray: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Items").font(.headline)
+                SectionHeader("Items")
                 Spacer()
                 Button("Edit Items", action: onEdit)
                     .font(.subheadline.weight(.medium))

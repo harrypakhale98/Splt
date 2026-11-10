@@ -7,15 +7,23 @@ struct GroupActivityView: View {
     let text: GroupActivityText
 
     var body: some View {
-        List(entries) { entry in
-            VStack(alignment: .leading, spacing: 2) {
-                Text(text.sentence(for: entry))
-                Text(entry.createdAt, format: .relative(presentation: .named))
-                    .font(.caption)
-                    .foregroundStyle(Ink.secondary)
+        List {
+            RaisedRows {
+                ForEach(entries) { entry in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(text.sentence(for: entry))
+                            .foregroundStyle(Ink.text)
+                        Text(entry.createdAt, format: .relative(presentation: .named))
+                            .font(.footnote)
+                            .foregroundStyle(Ink.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
             }
-            .accessibilityElement(children: .combine)
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
+        .paperBackground()
         .overlay {
             if entries.isEmpty {
                 EmptyStateView(

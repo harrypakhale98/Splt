@@ -149,20 +149,15 @@ struct UIBalanceTintTests {
     }
 
     @Test func oneRuleForGreenRedAndQuiet() {
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == MoneyTint.owed)
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: -100, currencyCode: "USD")) == MoneyTint.owes)
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == .secondary)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == Ink.owed)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: -100, currencyCode: "USD")) == Ink.owe)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == Ink.secondary)
     }
 
     @Test(arguments: [false, true])
-    func moneyTextReaches4Point5OnSystemBackgrounds(dark: Bool) {
-        let style = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
-        let system: [UIColor] = [
-            .systemBackground, .secondarySystemBackground, .systemGroupedBackground,
-            .secondarySystemGroupedBackground
-        ]
-        let backgrounds = system.map { $0.resolvedColor(with: style) }
-        for tint in [MoneyTint.owed, MoneyTint.owes] {
+    func moneyTextReaches4Point5OnPaperAndCards(dark: Bool) {
+        let backgrounds = [Ink.paper, Ink.sheet].map { resolved($0, dark: dark) }
+        for tint in [Ink.owed, Ink.owe] {
             for background in backgrounds {
                 let ratio = contrast(resolved(tint, dark: dark), background)
                 #expect(ratio >= 4.5, "\(dark ? "dark" : "light") text has contrast \(ratio)")

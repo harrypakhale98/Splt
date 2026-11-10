@@ -10,7 +10,8 @@ struct SettleDoneCard: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 44))
+                .font(.largeTitle)
+                .imageScale(.large)
                 .foregroundStyle(Ink.text)
                 .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? false : finished)
                 .accessibilityHidden(true)

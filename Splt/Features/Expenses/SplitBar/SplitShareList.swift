@@ -70,14 +70,23 @@ struct SplitShareList: View {
 
     private func steppers(_ segment: SplitBarSegment, name: String) -> some View {
         HStack(spacing: 4) {
-            Button { onStep(segment.id, false) } label: { Image(systemName: "minus") }
+            Button { onStep(segment.id, false) } label: { stepLabel("minus") }
                 .accessibilityLabel("Less for \(name)")
-            Button { onStep(segment.id, true) } label: { Image(systemName: "plus") }
+            Button { onStep(segment.id, true) } label: { stepLabel("plus") }
                 .accessibilityLabel("More for \(name)")
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.circle)
-        .controlSize(.small)
+        .buttonStyle(.plain)
+    }
+
+    /// QuietButtonStyle's hairline outline, as a small circle that fits beside the amounts.
+    private func stepLabel(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.footnote)
+            .foregroundStyle(Ink.text)
+            .frame(width: 32, height: 32)
+            .overlay { Circle().strokeBorder(Ink.hairline) }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
     }
 
     private func spoken(_ segment: SplitBarSegment, percent: Double) -> String {

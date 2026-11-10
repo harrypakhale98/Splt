@@ -169,7 +169,7 @@ private struct AddFriendContent: View {
                 if let scanMessage {
                     Text(scanMessage)
                         .padding()
-                        .background(Ink.sheet, in: .capsule)
+                        .cardSurface()
                         .padding()
                 }
             }

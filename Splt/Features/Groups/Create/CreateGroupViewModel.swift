@@ -15,6 +15,8 @@ final class CreateGroupViewModel {
     var simplifiesDebts = true
     private(set) var members: [MemberDraft] = []
     private(set) var friends: [Person] = []
+    /// You, when you are already set up, so your own disc can lead the member list.
+    private(set) var me: Person?
 
     @ObservationIgnored private let groups: any GroupRepository
     @ObservationIgnored private let people: any PersonRepository
@@ -33,6 +35,7 @@ final class CreateGroupViewModel {
         tripStart = start
         tripEnd = calendar.date(byAdding: .day, value: 6, to: start) ?? start
         friends = (try? people.friends()) ?? []
+        me = try? people.me()
     }
 
     var trimmedName: String {

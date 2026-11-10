@@ -14,7 +14,7 @@ struct RecurringExpensesView: View {
             EmptyStateView(
                 title: "Recurring Unavailable",
                 systemImage: "exclamationmark.triangle",
-                description: "Splt could not open its data. Restart the app and try again."
+                description: "Splt couldn't open its data. Restart the app and try again."
             )
             .navigationTitle("Recurring")
             .navigationBarTitleDisplayMode(.inline)
@@ -34,19 +34,23 @@ private struct RecurringExpensesScreen: View {
 
     var body: some View {
         List {
-            ForEach(model.templates) { template in
-                Button { editing = template } label: {
-                    RecurringRow(model: model, template: template)
-                }
-                .buttonStyle(.plain)
-                .swipeActions(edge: .trailing) {
-                    Button("Delete", systemImage: "trash", role: .destructive) { pendingDelete = template }
-                }
-                .swipeActions(edge: .leading) {
-                    Button(template.isActive ? "Pause" : "Resume", systemImage: template.isActive ? "pause" : "play") {
-                        model.setActive(!template.isActive, for: template)
+            Section {
+                RaisedRows {
+                    ForEach(model.templates) { template in
+                        Button { editing = template } label: {
+                            RecurringRow(model: model, template: template)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", systemImage: "trash", role: .destructive) { pendingDelete = template }
+                        }
+                        .swipeActions(edge: .leading) {
+                            Button(template.isActive ? "Pause" : "Resume", systemImage: template.isActive ? "pause" : "play") {
+                                model.setActive(!template.isActive, for: template)
+                            }
+                            .tint(Ink.secondary)
+                        }
                     }
-                    .tint(Ink.secondary)
                 }
             }
         }
@@ -110,7 +114,7 @@ private struct RecurringRow: View {
             CategoryBadge(category: template.category)
             VStack(alignment: .leading, spacing: 2) {
                 Text(template.title).font(.headline)
-                Text(template.rule.frequency.title).font(.subheadline).foregroundStyle(Ink.secondary)
+                Text(template.rule.frequency.title).font(.footnote).foregroundStyle(Ink.secondary)
                 Text(statusText).font(.caption).foregroundStyle(Ink.secondary)
             }
             Spacer(minLength: 8)

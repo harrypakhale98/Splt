@@ -6,39 +6,52 @@ struct ItemizedSplitEditor: View {
 
     var body: some View {
         Section {
-            if let notice = model.scanNotice {
-                Label(notice, systemImage: "doc.text.viewfinder")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.secondary)
-            }
-            ForEach($model.split.items) { $item in
-                ItemRow(model: model, item: $item)
-            }
-            .onDelete(perform: model.removeItems)
-            Button {
-                model.addItem()
-            } label: {
-                Label("Add Item", systemImage: "plus.circle")
-            }
-        } header: {
-            Text("Items").foregroundStyle(Ink.secondary)
-        }
-
-        Section {
-            chargeField("Tax", text: $model.split.taxText)
-            chargeField("Tip", text: $model.split.tipText)
-            chargeField("Discount", text: $model.split.discountText)
-            if let remaining = model.splitRemaining {
-                RemainingRow(remaining: remaining, title: "Difference from total")
-                if !remaining.isZero {
-                    Button("Use Items Total as Amount", action: model.useItemsAsTotal)
+            RaisedRows {
+                if let notice = model.scanNotice {
+                    Label(notice, systemImage: "doc.text.viewfinder")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.secondary)
+                }
+                // RaisedRows rebuilds the rows, so a swipe action stands in for onDelete.
+                ForEach($model.split.items) { $item in
+                    ItemRow(model: model, item: $item)
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                if let index = model.split.items.firstIndex(where: { $0.id == item.id }) {
+                                    model.removeItems(at: IndexSet(integer: index))
+                                }
+                            }
+                        }
+                }
+                Button {
+                    model.addItem()
+                } label: {
+                    Label("Add Item", systemImage: "plus.circle")
                 }
             }
         } header: {
-            Text("Tax, Tip and Discount").foregroundStyle(Ink.secondary)
+            SectionHeader("Items")
+        }
+        .raisedSection()
+
+        Section {
+            RaisedRows {
+                chargeField("Tax", text: $model.split.taxText)
+                chargeField("Tip", text: $model.split.tipText)
+                chargeField("Discount", text: $model.split.discountText)
+                if let remaining = model.splitRemaining {
+                    RemainingRow(remaining: remaining, title: "Difference from total")
+                    if !remaining.isZero {
+                        Button("Use Items Total as Amount", action: model.useItemsAsTotal)
+                    }
+                }
+            }
+        } header: {
+            SectionHeader("Tax, tip and discount")
         } footer: {
             Text("These are shared in proportion to what each person ordered.").foregroundStyle(Ink.secondary)
         }
+        .raisedSection()
     }
 
     private func chargeField(_ title: LocalizedStringKey, text: Binding<String>) -> some View {

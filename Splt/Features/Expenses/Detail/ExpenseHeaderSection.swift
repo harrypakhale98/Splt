@@ -50,19 +50,23 @@ struct PaidBySection: View {
 
     var body: some View {
         if model.payerLines.count > 1 {
-            Section(header: Text("Paid By").foregroundStyle(Ink.secondary)) {
-                ForEach(model.payerLines, id: \.person.id) { line in
-                    HStack {
-                        AvatarView(person: line.person, members: model.memberIDs, size: 28)
-                        Text(line.name)
-                        Spacer(minLength: 8)
-                        MoneyLabel(money: line.amount).font(Typeface.figure)
+            Section {
+                RaisedRows {
+                    ForEach(model.payerLines, id: \.person.id) { line in
+                        HStack {
+                            AvatarView(person: line.person, members: model.memberIDs, size: 28)
+                            Text(line.name)
+                            Spacer(minLength: 8)
+                            MoneyLabel(money: line.amount).font(Typeface.figure)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(
+                            String(localized: "\(line.name) paid \(MoneyFormatting.magnitudeString(line.amount, locale: locale))")
+                        )
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(
-                        String(localized: "\(line.name) paid \(MoneyFormatting.magnitudeString(line.amount, locale: locale))")
-                    )
                 }
+            } header: {
+                SectionHeader("Paid by")
             }
         }
     }

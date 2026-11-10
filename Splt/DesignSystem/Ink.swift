@@ -42,6 +42,27 @@ extension View {
         scrollContentBackground(.hidden)
             .background(Ink.paper.ignoresSafeArea())
     }
+
+    /// The one style for a section's label: small, secondary, in the case it was written in.
+    /// Write the label in sentence case, such as "Paid by" or "Who owes whom".
+    func sectionHeaderStyle() -> some View {
+        font(.footnote)
+            .foregroundStyle(Ink.secondary)
+            .textCase(nil)
+    }
+}
+
+/// A section's label in the one shared style. Use it as a List or Form section header, or above a card.
+struct SectionHeader: View {
+    let title: LocalizedStringKey
+
+    init(_ title: LocalizedStringKey) {
+        self.title = title
+    }
+
+    var body: some View {
+        Text(title).sectionHeaderStyle()
+    }
 }
 
 /// The app's type. Serif is for figures and titles, and the system sans is for everything else.
@@ -56,6 +77,9 @@ enum Typeface {
 
     /// A serif heading for a section or a card.
     static let heading = Font.system(.title3, design: .serif)
+
+    /// A serif title set in the content, such as a group's name above its figure.
+    static let title = Font.system(.title, design: .serif)
 
     /// Sets screen titles in the serif face. Call once at launch.
     @MainActor

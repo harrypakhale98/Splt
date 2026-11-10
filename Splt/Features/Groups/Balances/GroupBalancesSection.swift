@@ -84,31 +84,43 @@ struct GroupBalancesSection: View {
         .raisedSection()
 
         if mode == .list {
-            Section("Who Owes Whom") {
-                if model.transfers.isEmpty {
-                    Text("Everyone is settled up")
-                        .foregroundStyle(Ink.secondary)
-                } else {
-                    ForEach(model.transfers, id: \.self) { debt in
-                        TransferRow(
-                            debt: debt,
-                            debtorName: model.name(of: debt.debtor),
-                            avatarName: model.peopleByID[debt.debtor]?.name ?? model.name(of: debt.debtor),
-                            creditorName: model.name(of: debt.creditor),
-                            currentPerson: model.me?.id,
-                            members: model.group?.memberIDs ?? [],
-                            onTap: { onSettle(debt) }
-                        )
+            Section {
+                RaisedRows {
+                    if model.transfers.isEmpty {
+                        Text("Everyone is settled up")
+                            .foregroundStyle(Ink.secondary)
+                    } else {
+                        ForEach(model.transfers, id: \.self) { debt in
+                            TransferRow(
+                                debt: debt,
+                                debtorName: model.name(of: debt.debtor),
+                                avatarName: model.peopleByID[debt.debtor]?.name ?? model.name(of: debt.debtor),
+                                creditorName: model.name(of: debt.creditor),
+                                currentPerson: model.me?.id,
+                                members: model.group?.memberIDs ?? [],
+                                onTap: { onSettle(debt) }
+                            )
+                        }
                     }
                 }
+            } header: {
+                SectionHeader("Who owes whom")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             }
+            .raisedSection()
 
             if model.netRows.contains(where: { !$0.isSettled }) {
-                Section("Net Balances") {
-                    ForEach(model.netRows) { row in
-                        NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id, members: model.group?.memberIDs ?? [])
+                Section {
+                    RaisedRows {
+                        ForEach(model.netRows) { row in
+                            NetBalanceRowView(row: row, isMe: row.person.id == model.me?.id, members: model.group?.memberIDs ?? [])
+                        }
                     }
+                } header: {
+                    SectionHeader("Net balances")
+                        .padding(.horizontal, Depth.pageMargin + 4)
                 }
+                .raisedSection()
             }
         }
     }

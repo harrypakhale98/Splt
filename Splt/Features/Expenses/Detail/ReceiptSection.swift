@@ -8,28 +8,32 @@ struct ReceiptSection: View {
 
     var body: some View {
         if let fileName = model.receiptFileName {
-            Section(header: Text("Receipt").foregroundStyle(Ink.secondary)) {
-                if store.exists(fileName) {
-                    Button {
-                        showsFullScreen = true
-                    } label: {
-                        HStack {
-                            ReceiptThumbnail(fileName: fileName, store: store, side: 88)
-                            Text("View Receipt")
-                            Spacer()
-                            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                .foregroundStyle(Ink.secondary)
-                                .accessibilityHidden(true)
+            Section {
+                RaisedRows {
+                    if store.exists(fileName) {
+                        Button {
+                            showsFullScreen = true
+                        } label: {
+                            HStack {
+                                ReceiptThumbnail(fileName: fileName, store: store, side: 88)
+                                Text("View Receipt")
+                                Spacer()
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .foregroundStyle(Ink.secondary)
+                                    .accessibilityHidden(true)
+                            }
                         }
+                        .accessibilityHint("Opens the receipt photo full screen")
+                        .fullScreenCover(isPresented: $showsFullScreen) {
+                            FullScreenReceiptView(fileName: fileName, store: store)
+                        }
+                    } else {
+                        Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
+                            .foregroundStyle(Ink.secondary)
                     }
-                    .accessibilityHint("Opens the receipt photo full screen")
-                    .fullScreenCover(isPresented: $showsFullScreen) {
-                        FullScreenReceiptView(fileName: fileName, store: store)
-                    }
-                } else {
-                    Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
-                        .foregroundStyle(Ink.secondary)
                 }
+            } header: {
+                SectionHeader("Receipt")
             }
         }
     }
@@ -62,7 +66,11 @@ struct FullScreenReceiptView: View {
                         .accessibilityHint("Double tap to reset the zoom")
                         .accessibilityAddTraits(.isImage)
                 } else {
-                    ContentUnavailableView("Receipt Unavailable", systemImage: "doc.text.image")
+                    EmptyStateView(
+                        title: "Receipt Unavailable",
+                        systemImage: "doc.text.image",
+                        description: "The receipt photo could not be opened."
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

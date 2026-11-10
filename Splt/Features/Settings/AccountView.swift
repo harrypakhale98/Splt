@@ -29,7 +29,7 @@ struct AccountView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done", role: .close) { dismiss() }
+                    Button("Close", role: .close) { dismiss() }
                 }
             }
             .settingsBehavior()
@@ -61,7 +61,6 @@ struct AccountHero: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)
                     .buttonStyle(.plain)
-                    .underline()
                     .frame(minHeight: 44)
                     .contentShape(Rectangle())
                     .accessibilityIdentifier("account.editProfile")

@@ -27,25 +27,40 @@ struct GroupTotalsSection: View {
             ForEach(model.totals) { totals in
                 Section {
                     hero(totals)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
 
                 if totals.byPerson.contains(where: { $0.paid.minorUnits > 0 }) {
-                    Section("Paid by Person") {
+                    Section {
                         let colors = OrbitColors(members: members)
-                        SpendingBarChart(
-                            bars: totals.byPerson.filter { $0.paid.minorUnits > 0 }.map {
-                                SpendingBar(label: $0.name, money: $0.paid, color: colors.color(for: $0.personID))
-                            }
-                        )
+                        RaisedRows {
+                            SpendingBarChart(
+                                bars: totals.byPerson.filter { $0.paid.minorUnits > 0 }.map {
+                                    SpendingBar(label: $0.name, money: $0.paid, color: colors.color(for: $0.personID))
+                                }
+                            )
+                        }
+                    } header: {
+                        SectionHeader("Paid by person")
+                            .padding(.horizontal, Depth.pageMargin + 4)
                     }
+                    .raisedSection()
                 }
                 if totals.byCategory.contains(where: { $0.amount.minorUnits > 0 }) {
-                    Section("By Category") {
-                        SpendingBarChart(
-                            bars: totals.byCategory.filter { $0.amount.minorUnits > 0 }
-                                .map { SpendingBar(label: $0.category.title, money: $0.amount, color: nil) }
-                        )
+                    Section {
+                        RaisedRows {
+                            SpendingBarChart(
+                                bars: totals.byCategory.filter { $0.amount.minorUnits > 0 }
+                                    .map { SpendingBar(label: $0.category.title, money: $0.amount, color: nil) }
+                            )
+                        }
+                    } header: {
+                        SectionHeader("By category")
+                            .padding(.horizontal, Depth.pageMargin + 4)
                     }
+                    .raisedSection()
                 }
             }
             if model.recapStats != nil {
@@ -63,14 +78,16 @@ struct GroupTotalsSection: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .raisedRow()
                 }
+                .raisedSection()
             }
         }
     }
 
     private func hero(_ totals: GroupTotals) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Total Spent")
+            Text("Total spent")
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
             HeroAmount(totals.total, showsSign: false)
@@ -81,7 +98,6 @@ struct GroupTotalsSection: View {
             if let summary, totals.currencyCode == model.primaryTotals?.currencyCode {
                 Text(summary)
                     .font(.body)
-                    .fontDesign(.serif)
                     .padding(.top, 10)
                     .foregroundStyle(Ink.text)
             }

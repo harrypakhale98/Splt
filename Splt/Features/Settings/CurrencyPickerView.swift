@@ -12,29 +12,31 @@ struct CurrencyPickerView: View {
         let options = CurrencyCatalog.filter(CurrencyCatalog.options(locale: locale), query: query)
 
         List {
-            ForEach(options) { option in
-                Button {
-                    preferences.defaultCurrencyCode = option.code
-                    changeCount += 1
-                    dismiss()
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(option.name)
-                                .foregroundStyle(Ink.text)
-                            Text(option.code)
-                                .font(.subheadline)
-                                .foregroundStyle(Ink.secondary)
-                        }
-                        Spacer()
-                        if option.code == preferences.defaultCurrencyCode {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(Ink.text)
-                                .accessibilityHidden(true)
+            RaisedRows {
+                ForEach(options) { option in
+                    Button {
+                        preferences.defaultCurrencyCode = option.code
+                        changeCount += 1
+                        dismiss()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(option.name)
+                                    .foregroundStyle(Ink.text)
+                                Text(option.code)
+                                    .font(.footnote)
+                                    .foregroundStyle(Ink.secondary)
+                            }
+                            Spacer()
+                            if option.code == preferences.defaultCurrencyCode {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Ink.text)
+                                    .accessibilityHidden(true)
+                            }
                         }
                     }
+                    .accessibilityAddTraits(option.code == preferences.defaultCurrencyCode ? .isSelected : [])
                 }
-                .accessibilityAddTraits(option.code == preferences.defaultCurrencyCode ? .isSelected : [])
             }
         }
         .listStyle(.plain)

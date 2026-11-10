@@ -6,28 +6,31 @@ struct SplitSection: View {
 
     var body: some View {
         Section {
-            Picker("Split", selection: $model.split.method) {
-                ForEach(SplitMethod.allCases) { method in
-                    Label(method.title, systemImage: method.symbolName).tag(method)
+            RaisedRows {
+                Picker("Split", selection: $model.split.method) {
+                    ForEach(SplitMethod.allCases) { method in
+                        Label(method.title, systemImage: method.symbolName).tag(method)
+                    }
                 }
-            }
 
-            if model.split.method != .itemized {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Split with")
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.secondary)
-                    PeopleChips(
-                        people: model.members, selected: model.participants,
-                        currentPerson: model.me?.id, toggle: model.toggleParticipant
-                    )
+                if model.split.method != .itemized {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Split with")
+                            .font(.subheadline)
+                            .foregroundStyle(Ink.secondary)
+                        PeopleChips(
+                            people: model.members, selected: model.participants,
+                            currentPerson: model.me?.id, toggle: model.toggleParticipant
+                        )
+                    }
                 }
             }
         } header: {
-            Text("Split").foregroundStyle(Ink.secondary)
+            SectionHeader("Split")
         } footer: {
             Text(model.split.method.explanation).foregroundStyle(Ink.secondary)
         }
+        .raisedSection()
 
         editor
         SharePreviewSection(model: model)
@@ -59,20 +62,25 @@ struct SharePreviewSection: View {
     var body: some View {
         let rows = model.sharePreview
         if !rows.isEmpty {
-            Section(header: Text("Each Person Pays").foregroundStyle(Ink.secondary)) {
-                ForEach(rows, id: \.person.id) { row in
-                    HStack {
-                        AvatarView(person: row.person, members: model.members.map(\.id), size: 28)
-                        Text(model.displayName(for: row.person.id))
-                        Spacer(minLength: 8)
-                        MoneyLabel(money: row.amount)
+            Section {
+                RaisedRows {
+                    ForEach(rows, id: \.person.id) { row in
+                        HStack {
+                            AvatarView(person: row.person, members: model.members.map(\.id), size: 28)
+                            Text(model.displayName(for: row.person.id))
+                            Spacer(minLength: 8)
+                            MoneyLabel(money: row.amount)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(
+                            "\(model.displayName(for: row.person.id)) pays \(MoneyFormatting.magnitudeString(row.amount, locale: model.locale))"
+                        )
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(
-                        "\(model.displayName(for: row.person.id)) pays \(MoneyFormatting.magnitudeString(row.amount, locale: model.locale))"
-                    )
                 }
+            } header: {
+                SectionHeader("Each person pays")
             }
+            .raisedSection()
         }
     }
 }

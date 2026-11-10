@@ -40,7 +40,7 @@ struct GroupHeroSection: View {
     private var identity: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(group.name)
-                .font(.system(.title, design: .serif))
+                .font(Typeface.title)
                 .lineLimit(3)
                 .minimumScaleFactor(0.7)
             Text(subtitle)
@@ -63,12 +63,12 @@ struct GroupHeroSection: View {
     @ViewBuilder
     private var balance: some View {
         if totals.isSettled {
-            Text("You are all settled up")
+            Text("All settled up")
                 .font(Typeface.heading)
         } else {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(totals.owedToYou, id: \.currencyCode) { amount in
-                    line("You are owed", money: amount)
+                    line("You're owed", money: amount)
                 }
                 ForEach(totals.youOwe, id: \.currencyCode) { amount in
                     line("You owe", money: amount)

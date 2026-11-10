@@ -127,25 +127,28 @@ private struct GroupSettingsForm: View {
 
         return Form {
             Section {
-                TextField("Group Name", text: $model.name)
-                    .textInputAutocapitalization(.words)
-                NavigationLink {
-                    SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
-                } label: {
-                    HStack {
-                        Text("Symbol")
-                        Spacer()
-                        Image(systemName: model.symbol)
-                            .foregroundStyle(Ink.text)
-                            .accessibilityHidden(true)
+                RaisedRows {
+                    TextField("Group Name", text: $model.name)
+                        .textInputAutocapitalization(.words)
+                    NavigationLink {
+                        SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
+                    } label: {
+                        HStack {
+                            Text("Symbol")
+                            Spacer()
+                            Image(systemName: model.symbol)
+                                .foregroundStyle(Ink.text)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    NavigationLink {
+                        GroupCurrencyPickerView(selection: $model.currencyCode)
+                    } label: {
+                        LabeledContent("Currency", value: model.currencyCode)
                     }
                 }
-                NavigationLink {
-                    GroupCurrencyPickerView(selection: $model.currencyCode)
-                } label: {
-                    LabeledContent("Currency", value: model.currencyCode)
-                }
             }
+            .raisedSection()
 
             if model.isTrip {
                 tripSection
@@ -160,26 +163,29 @@ private struct GroupSettingsForm: View {
             exportSection
 
             Section {
-                if model.group?.isArchived == true {
-                    Button("Restore Group", systemImage: "tray.and.arrow.up") {
-                        model.toggleArchived()
-                    }
-                } else {
-                    Button("Archive Group", systemImage: "archivebox") {
-                        model.toggleArchived()
-                    }
-                }
-                Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                    if let reason = model.leaveBlock {
-                        model.blockedMessage = reason
+                RaisedRows {
+                    if model.group?.isArchived == true {
+                        Button("Restore Group", systemImage: "tray.and.arrow.up") {
+                            model.toggleArchived()
+                        }
                     } else {
-                        showsLeaveConfirmation = true
+                        Button("Archive Group", systemImage: "archivebox") {
+                            model.toggleArchived()
+                        }
                     }
-                }
-                Button("Delete Group", systemImage: "trash", role: .destructive) {
-                    showsDeleteConfirmation = true
+                    Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                        if let reason = model.leaveBlock {
+                            model.blockedMessage = reason
+                        } else {
+                            showsLeaveConfirmation = true
+                        }
+                    }
+                    Button("Delete Group", systemImage: "trash", role: .destructive) {
+                        showsDeleteConfirmation = true
+                    }
                 }
             }
+            .raisedSection()
         }
         .paperBackground()
         .onChange(of: model.tripStart) { model.tripStartChanged() }
@@ -189,90 +195,106 @@ private struct GroupSettingsForm: View {
         @Bindable var model = model
 
         return Section {
-            DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
-            DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
-            Toggle("Pin Exchange Rate", isOn: $model.pinsRate)
-            if model.pinsRate {
-                NavigationLink {
-                    GroupCurrencyPickerView(selection: $model.rateCurrencyCode)
-                } label: {
-                    LabeledContent("Other Currency", value: model.rateCurrencyCode)
-                }
-                LabeledContent("1 \(model.rateCurrencyCode) in \(model.currencyCode)") {
-                    TextField("Rate", text: $model.rateText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .monospacedDigit()
+            RaisedRows {
+                DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
+                DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
+                Toggle("Pin Exchange Rate", isOn: $model.pinsRate)
+                if model.pinsRate {
+                    NavigationLink {
+                        GroupCurrencyPickerView(selection: $model.rateCurrencyCode)
+                    } label: {
+                        LabeledContent("Other Currency", value: model.rateCurrencyCode)
+                    }
+                    LabeledContent("1 \(model.rateCurrencyCode) in \(model.currencyCode)") {
+                        TextField("Rate", text: $model.rateText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .monospacedDigit()
+                    }
                 }
             }
         } header: {
-            Text("Trip")
+            SectionHeader("Trip")
+                .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
             if model.pinsRate {
                 Text("Expenses in the other currency use this rate instead of the daily one.")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             }
         }
+        .raisedSection()
     }
 
     private var membersSection: some View {
         Section {
-            ForEach(model.memberRows) { row in
-                HStack(spacing: 12) {
-                    AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
-                    VStack(alignment: .leading) {
-                        Text(row.isMe ? String(localized: "You") : row.person.name)
-                        if row.person.isPlaceholder {
-                            Text("Hasn't joined yet")
-                                .font(.caption)
-                                .foregroundStyle(Ink.secondary)
+            RaisedRows {
+                ForEach(model.memberRows) { row in
+                    HStack(spacing: 12) {
+                        AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
+                        VStack(alignment: .leading) {
+                            Text(row.isMe ? String(localized: "You") : row.person.name)
+                            if row.person.isPlaceholder {
+                                Text("Hasn't joined yet")
+                                    .font(.footnote)
+                                    .foregroundStyle(Ink.secondary)
+                            }
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .swipeActions(edge: .trailing) {
+                        if !row.isMe {
+                            Button("Remove", systemImage: "person.badge.minus", role: .destructive) {
+                                model.remove(row)
+                            }
                         }
                     }
                 }
-                .accessibilityElement(children: .combine)
-                .swipeActions(edge: .trailing) {
-                    if !row.isMe {
-                        Button("Remove", systemImage: "person.badge.minus", role: .destructive) {
-                            model.remove(row)
+                HStack {
+                    TextField("Add by name", text: $newMemberName)
+                        .textInputAutocapitalization(.words)
+                        .submitLabel(.done)
+                        .onSubmit(addTypedMember)
+                    Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
+                        .labelStyle(.iconOnly)
+                        .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                if !model.friendsToAdd.isEmpty {
+                    Menu {
+                        ForEach(model.friendsToAdd) { friend in
+                            Button(friend.name) { model.addMember(friend) }
                         }
+                    } label: {
+                        Label("Add from Friends", systemImage: "person.2")
                     }
                 }
-            }
-            HStack {
-                TextField("Add by name", text: $newMemberName)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                    .onSubmit(addTypedMember)
-                Button("Add", systemImage: "plus.circle.fill", action: addTypedMember)
-                    .labelStyle(.iconOnly)
-                    .disabled(newMemberName.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            if !model.friendsToAdd.isEmpty {
-                Menu {
-                    ForEach(model.friendsToAdd) { friend in
-                        Button(friend.name) { model.addMember(friend) }
-                    }
-                } label: {
-                    Label("Add from Friends", systemImage: "person.2")
+                Button("Add from Contacts", systemImage: "person.crop.circle.badge.plus") {
+                    showsContacts = true
                 }
-            }
-            Button("Add from Contacts", systemImage: "person.crop.circle.badge.plus") {
-                showsContacts = true
             }
         } header: {
-            Text("Members")
+            SectionHeader("Members")
+                .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
             Text("Someone can be removed once they are settled up. Swipe a member to remove them.")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var exportSection: some View {
-        Section("Export") {
-            ForEach(GroupExportKind.allCases) { kind in
-                GroupExportRow(kind: kind, state: model.exportState(kind)) {
-                    Task { await model.prepareExport(kind) }
+        Section {
+            RaisedRows {
+                ForEach(GroupExportKind.allCases) { kind in
+                    GroupExportRow(kind: kind, state: model.exportState(kind)) {
+                        Task { await model.prepareExport(kind) }
+                    }
                 }
             }
+        } header: {
+            SectionHeader("Export")
+                .padding(.horizontal, Depth.pageMargin + 4)
         }
+        .raisedSection()
     }
 
     private var blockedBinding: Binding<Bool> {

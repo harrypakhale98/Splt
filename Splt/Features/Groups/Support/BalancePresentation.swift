@@ -19,7 +19,7 @@ enum BalanceDirection: Equatable, Sendable {
 
     var caption: String {
         switch self {
-        case .owed: String(localized: "you are owed")
+        case .owed: String(localized: "you're owed")
         case .owes: String(localized: "you owe")
         case .settled: String(localized: "settled up")
         }

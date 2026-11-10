@@ -87,13 +87,13 @@ final class JourneyUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Payment Recorded"].waitForExistence(timeout: 10))
         app.buttons["Done"].tap()
-        XCTAssertTrue(app.staticTexts["You are all settled up"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["All settled up"].waitForExistence(timeout: 10))
 
         let undo = app.buttons["Undo"].firstMatch
         XCTAssertTrue(undo.waitForExistence(timeout: 10))
         undo.tap()
         XCTAssertTrue(app.staticTexts["Payment undone"].waitForExistence(timeout: 10))
-        XCTAssertFalse(app.staticTexts["You are all settled up"].exists)
+        XCTAssertFalse(app.staticTexts["All settled up"].exists)
     }
 
     @MainActor

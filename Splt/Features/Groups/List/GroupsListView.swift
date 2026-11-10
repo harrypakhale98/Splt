@@ -47,7 +47,7 @@ private struct GroupsListContent: View {
         List {
             if model.hasGroups && !model.isSearching {
                 Section {
-                    NetPositionHero(scope: "Across All Groups", totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
+                    NetPositionHero(scope: "Across all groups", totals: model.totals, owedBy: model.owedBy, owedTo: model.owedTo)
                         .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
@@ -61,10 +61,12 @@ private struct GroupsListContent: View {
                 }
             }
             if !model.archived.isEmpty {
-                Section("Archived") {
+                Section {
                     ForEach(model.archived) { summary in
                         row(summary)
                     }
+                } header: {
+                    SectionHeader("Archived")
                 }
             }
         }
@@ -99,7 +101,7 @@ private struct GroupsListContent: View {
         .confirmationDialog(
             "Delete Group?", isPresented: deleteBinding, titleVisibility: .visible, presenting: pendingDelete
         ) { group in
-            Button("Delete \(group.name)", role: .destructive) {
+            Button("Delete Group", role: .destructive) {
                 model.delete(group.id)
             }
         } message: { _ in

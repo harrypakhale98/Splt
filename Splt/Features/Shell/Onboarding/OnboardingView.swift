@@ -70,7 +70,7 @@ private struct OnboardingBeat: View {
             VStack(alignment: .leading, spacing: 24) {
                 ShareStrip(colors: (0..<5).map { PersonPalette.color(at: $0 * 2) }, height: 4)
                 Text("Split with people, not spreadsheets")
-                    .font(Typeface.hero(size: 40))
+                    .font(.system(.largeTitle, design: .serif))
                     .foregroundStyle(Ink.text)
                     .accessibilityAddTraits(.isHeader)
                 Text("Add what you paid, and Splt works out who owes whom.")
@@ -94,7 +94,7 @@ private struct SetupBeat: View {
             VStack(alignment: .leading, spacing: 24) {
                 ShareStrip(colors: [PersonPalette.color(at: PersonPalette.meIndex)], height: 4)
                 Text("Make it yours")
-                    .font(Typeface.hero(size: 40))
+                    .font(.system(.largeTitle, design: .serif))
                     .foregroundStyle(Ink.text)
                     .accessibilityAddTraits(.isHeader)
                 Text("Your name is what friends see. You can change both later.")
@@ -103,7 +103,7 @@ private struct SetupBeat: View {
 
                 VStack(spacing: 0) {
                     Divider().overlay(Ink.hairline)
-                    TextField("Your name", text: $profile.displayName, prompt: Text("Your Name"))
+                    TextField("Your name", text: $profile.displayName, prompt: Text("Your name"))
                         .font(.title3)
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)

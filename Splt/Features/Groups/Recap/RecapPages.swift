@@ -268,7 +268,7 @@ struct RecapShareCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(group.name)
-                .font(.system(.title2, design: .serif))
+                .font(Typeface.title)
             Text(recapAmount(stats.total, hidden: hidesAmounts))
                 .font(Typeface.hero(size: 54))
                 .monospacedDigit()
@@ -301,7 +301,6 @@ struct RecapShareCard: View {
             if let summary {
                 Text(summary)
                     .font(.callout)
-                    .fontDesign(.serif)
                     .foregroundStyle(Ink.secondary)
             }
             Spacer(minLength: 0)

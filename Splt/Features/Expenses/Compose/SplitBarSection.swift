@@ -18,7 +18,7 @@ struct SplitBarSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Split").font(.headline)
+                SectionHeader("Split")
                 Spacer()
                 if model.barData != nil {
                     Button {

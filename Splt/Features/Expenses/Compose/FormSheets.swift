@@ -129,11 +129,11 @@ private struct ReceiptSheet: View {
     var body: some View {
         VStack(spacing: 20) {
             if model.receipt.isEmpty {
-                ContentUnavailableView {
-                    Label("No Receipt", systemImage: "doc.text.viewfinder")
-                } description: {
-                    Text("Scan a receipt and the items fly onto the people who shared them.")
-                }
+                EmptyStateView(
+                    title: "No Receipt",
+                    systemImage: "doc.text.viewfinder",
+                    description: "Scan a receipt and the items fly onto the people who shared them."
+                )
             } else {
                 ReceiptThumbnail(
                     fileName: model.receipt.storedFileName, pendingImage: model.receipt.pendingImage,

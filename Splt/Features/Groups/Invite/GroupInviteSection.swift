@@ -12,30 +12,35 @@ struct GroupInviteSection: View {
 
     var body: some View {
         Section {
-            if runtime.status.isConnected {
-                Button(action: prepare) {
-                    HStack {
-                        Label("Invite with iCloud", systemImage: "person.badge.plus")
-                        if sharing?.phase == .preparing {
-                            Spacer()
-                            ProgressView()
+            RaisedRows {
+                if runtime.status.isConnected {
+                    Button(action: prepare) {
+                        HStack {
+                            Label("Invite with iCloud", systemImage: "person.badge.plus")
+                            if sharing?.phase == .preparing {
+                                Spacer()
+                                ProgressView()
+                            }
                         }
                     }
+                    .disabled(sharing?.phase == .preparing)
                 }
-                .disabled(sharing?.phase == .preparing)
-            }
-            NavigationLink {
-                InviteGroupView(groupID: groupID, groupName: groupName)
-            } label: {
-                Label("Invite with Link or QR Code", systemImage: "qrcode")
+                NavigationLink {
+                    InviteGroupView(groupID: groupID, groupName: groupName)
+                } label: {
+                    Label("Invite with Link or QR Code", systemImage: "qrcode")
+                }
             }
         } header: {
-            Text("Invite")
+            SectionHeader("Invite")
+                .padding(.horizontal, Depth.pageMargin + 4)
         } footer: {
             if !runtime.status.isConnected {
                 Text("Turn on iCloud to invite people straight from Splt. The link only opens this group on a device that already has it.")
+                    .padding(.horizontal, Depth.pageMargin + 4)
             }
         }
+        .raisedSection()
         .sheet(item: preparedBinding) { prepared in
             CloudSharingView(groupShare: prepared.groupShare, onStopped: { sharing?.prepared = nil })
                 .ignoresSafeArea()

@@ -30,6 +30,7 @@ struct ActivityView: View {
 private struct ActivityContent: View {
     @Environment(Router.self) private var router
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var model: ActivityModel
 
@@ -39,6 +40,7 @@ private struct ActivityContent: View {
 
     var body: some View {
         List {
+            if !model.entries.isEmpty { typePicker }
             ForEach(model.sections) { section in
                 Section {
                     RaisedRows(padding: EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)) {
@@ -62,17 +64,12 @@ private struct ActivityContent: View {
                     }
                 } header: {
                     Text(model.title(for: section, locale: locale))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Ink.secondary)
-                        .textCase(nil)
+                        .sectionHeaderStyle()
                 }
             }
         }
         .listStyle(.plain)
         .paperBackground()
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if !model.entries.isEmpty { ActivityFilterChips(model: model) }
-        }
         .overlay { emptyState }
         .toolbar { toolbar }
         .alert("Couldn't Finish", isPresented: errorBinding) {
@@ -107,10 +104,58 @@ private struct ActivityContent: View {
                 action: { router.present(.addExpense) }
             )
         } else if model.sections.isEmpty, model.didLoad {
-            ContentUnavailableView(
-                "Nothing Matches",
+            EmptyStateView(
+                title: "Nothing Matches",
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: Text("Try a different filter.")
+                description: "Try a different filter."
+            )
+        }
+    }
+
+    /// Switches the kind of event shown, like the group screen's picker: segmented, and scrolling with the feed.
+    @ViewBuilder
+    private var typePicker: some View {
+        @Bindable var model = model
+
+        Section {
+            Group {
+                if typeSize.isAccessibilitySize {
+                    Picker("Show", selection: $model.typeFilter) {
+                        ForEach(ActivityTypeFilter.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .accessibilityLabel("Show")
+                } else {
+                    Picker("Show", selection: $model.typeFilter) {
+                        ForEach(ActivityTypeFilter.allCases) { Text($0.shortTitle).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 4, leading: Depth.pageMargin, bottom: 8, trailing: Depth.pageMargin))
+        }
+    }
+
+    /// Narrows the feed to one group, from the toolbar, the way the group screen filters its expenses.
+    private var groupFilterMenu: some View {
+        @Bindable var model = model
+
+        return Menu {
+            Picker("Group", selection: $model.groupFilter) {
+                Text("All Groups").tag(GroupID?.none)
+                ForEach(model.filterGroups) { group in
+                    Label(group.name, systemImage: group.symbol).tag(Optional(group.id))
+                }
+            }
+        } label: {
+            Label(
+                "Filter",
+                systemImage: model.groupFilter != nil
+                    ? "line.3.horizontal.decrease.circle.fill"
+                    : "line.3.horizontal.decrease.circle"
             )
         }
     }
@@ -118,7 +163,8 @@ private struct ActivityContent: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         AccountToolbarItem()
-        ToolbarItem(placement: .primaryAction) {
+        ToolbarItemGroup(placement: .primaryAction) {
+            if model.filterGroups.count > 1 { groupFilterMenu }
             Button("Mark All Read", systemImage: "envelope.open") { model.markAllRead() }
                 .disabled(model.unreadCount == 0)
         }

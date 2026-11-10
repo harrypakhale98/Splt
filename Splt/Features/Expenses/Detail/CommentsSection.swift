@@ -23,25 +23,27 @@ struct CommentsSection: View {
 
     var body: some View {
         Section {
-            ForEach(model.comments) { comment in
-                CommentRow(model: model, comment: comment, translate: translate)
-            }
-            if model.me != nil {
-                HStack(alignment: .bottom) {
-                    TextField("Add a comment", text: $draft, axis: .vertical)
-                        .lineLimit(1...5)
-                        .submitLabel(.send)
-                        .onSubmit(send)
-                    Button(action: send) {
-                        Image(systemName: "arrow.up.circle.fill").font(.title2)
+            RaisedRows {
+                ForEach(model.comments) { comment in
+                    CommentRow(model: model, comment: comment, translate: translate)
+                }
+                if model.me != nil {
+                    HStack(alignment: .bottom) {
+                        TextField("Add a comment", text: $draft, axis: .vertical)
+                            .lineLimit(1...5)
+                            .submitLabel(.send)
+                            .onSubmit(send)
+                        Button(action: send) {
+                            Image(systemName: "arrow.up.circle.fill").font(.title2)
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityLabel("Send comment")
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityLabel("Send comment")
                 }
             }
         } header: {
-            Text("Comments").foregroundStyle(Ink.secondary)
+            SectionHeader("Comments")
         }
     }
 
@@ -60,7 +62,7 @@ private struct CommentRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 AvatarView(name: model.people[comment.authorID]?.name ?? "?", id: comment.authorID, members: model.memberIDs, size: 28)
-                Text(model.name(for: comment.authorID)).font(.subheadline.weight(.semibold))
+                Text(model.name(for: comment.authorID)).font(.subheadline)
                 Spacer(minLength: 8)
                 Text(comment.createdAt, format: .relative(presentation: .named))
                     .font(.caption)
@@ -71,6 +73,7 @@ private struct CommentRow: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .contain)
+        .raisedContextMenuShape()
         .contextMenu {
             Button("Translate", systemImage: "translate") { translate(comment.text) }
             if comment.authorID == model.me?.id {
@@ -87,10 +90,14 @@ private struct CommentRow: View {
                 } label: {
                     Text("\(group.emoji) \(group.count)")
                         .monospacedDigit()
+                        .font(.subheadline)
+                        .foregroundStyle(group.mine ? Ink.text : Ink.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .overlay { Capsule().strokeBorder(group.mine ? Ink.text : Ink.hairline) }
+                        .contentShape(Capsule())
                 }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .tint(group.mine ? .accentColor : .secondary)
+                .buttonStyle(.plain)
                 .accessibilityLabel(CommentReactions.name(for: group.emoji))
                 .accessibilityValue(group.mine ? "\(group.count), including you" : "\(group.count)")
             }
@@ -100,10 +107,12 @@ private struct CommentRow: View {
                 }
             } label: {
                 Image(systemName: "face.smiling")
+                    .foregroundStyle(Ink.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .contentShape(Capsule())
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .tint(.secondary)
+            .buttonStyle(.plain)
             .accessibilityLabel("Add reaction")
         }
     }

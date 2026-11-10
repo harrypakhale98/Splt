@@ -6,33 +6,36 @@ struct RepeatSection: View {
 
     var body: some View {
         Section {
-            Picker("Repeat", selection: $model.repeatChoice.frequency) {
-                if !model.isEditingRecurring {
-                    Text("Never").tag(RecurrenceFrequency?.none)
+            RaisedRows {
+                Picker("Repeat", selection: $model.repeatChoice.frequency) {
+                    if !model.isEditingRecurring {
+                        Text("Never").tag(RecurrenceFrequency?.none)
+                    }
+                    ForEach(RecurrenceFrequency.allCases, id: \.self) { frequency in
+                        Text(frequency.title).tag(Optional(frequency))
+                    }
                 }
-                ForEach(RecurrenceFrequency.allCases, id: \.self) { frequency in
-                    Text(frequency.title).tag(Optional(frequency))
-                }
-            }
-            if model.repeatChoice.frequency != nil {
-                Toggle("End Date", isOn: Binding(
-                    get: { model.repeatChoice.endDate != nil },
-                    set: { model.repeatChoice.endDate = $0 ? Calendar.current.date(byAdding: .year, value: 1, to: model.date) : nil }
-                ))
-                if let end = model.repeatChoice.endDate {
-                    DatePicker(
-                        "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = $0 }),
-                        in: model.date..., displayedComponents: .date
-                    )
+                if model.repeatChoice.frequency != nil {
+                    Toggle("End Date", isOn: Binding(
+                        get: { model.repeatChoice.endDate != nil },
+                        set: { model.repeatChoice.endDate = $0 ? Calendar.current.date(byAdding: .year, value: 1, to: model.date) : nil }
+                    ))
+                    if let end = model.repeatChoice.endDate {
+                        DatePicker(
+                            "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = $0 }),
+                            in: model.date..., displayedComponents: .date
+                        )
+                    }
                 }
             }
         } header: {
-            Text("Repeat").foregroundStyle(Ink.secondary)
+            SectionHeader("Repeat")
         } footer: {
             if let frequency = model.repeatChoice.frequency, !model.isEditingRecurring {
                 Text("A new expense is added automatically \(frequency.footerPhrase), starting after this one.")
             }
         }
+        .raisedSection()
     }
 }
 

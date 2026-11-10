@@ -6,6 +6,7 @@ struct SettleUpSheet: View {
     let route: SettleRoute
 
     @Environment(\.dataServices) private var services
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         if let services {
@@ -13,10 +14,15 @@ struct SettleUpSheet: View {
         } else {
             NavigationStack {
                 EmptyStateView(
-                    title: "Can't Settle Up",
+                    title: "Data Unavailable",
                     systemImage: "exclamationmark.triangle",
-                    description: "Splt couldn't open its storage."
+                    description: "Splt couldn't open its data. Restart the app and try again."
                 )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close", role: .close) { dismiss() }
+                    }
+                }
             }
         }
     }
