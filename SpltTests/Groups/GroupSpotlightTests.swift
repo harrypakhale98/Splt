@@ -56,6 +56,15 @@ struct GroupSpotlightTests {
         #expect(GroupSpotlight.groupID(from: noInfo) == nil)
     }
 
+    @Test func aGroupYouLeftIsNotIndexed() {
+        let group = SplitGroup(name: "Lisbon Trip", symbol: "airplane", currencyCode: "EUR")
+        let left = isolatedLeftGroups()
+        #expect(GroupSpotlight.isIndexed(group, left: left))
+        left.insert(group.id)
+        #expect(!GroupSpotlight.isIndexed(group, left: left))
+        #expect(GroupSpotlight.isIndexed(group))
+    }
+
     @Test func itemsCarryTheNameAndMembers() {
         let group = SplitGroup(name: "Lisbon Trip", symbol: "airplane", currencyCode: "EUR")
         let item = GroupSpotlight.item(for: group, memberNames: ["Maya", "Jonas"])

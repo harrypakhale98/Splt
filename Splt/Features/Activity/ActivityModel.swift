@@ -32,12 +32,13 @@ final class ActivityModel {
     // Worked out when the entries or the filters change, not on every redraw.
     private(set) var visibleEntries: [ActivityEntry] = []
     private(set) var sections: [DaySection] = []
-    /// Groups that have events, for the group filter. Hidden two person groups are left out.
+    /// Groups that have events, for the group filter. Hidden two person groups and groups you left are left out.
     private(set) var filterGroups: [SplitGroup] = []
     private(set) var unreadCount = 0
 
     @ObservationIgnored private let services: DataServices
     @ObservationIgnored private let calendar: Calendar
+    @ObservationIgnored private let leftGroups: LeftGroupsStore
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
     @ObservationIgnored private var sentences: [UUID: String] = [:]
@@ -45,9 +46,10 @@ final class ActivityModel {
 
     static let pageSize = 300
 
-    init(services: DataServices, calendar: Calendar = .current) {
+    init(services: DataServices, calendar: Calendar = .current, leftGroups: LeftGroupsStore = LeftGroupsStore()) {
         self.services = services
         self.calendar = calendar
+        self.leftGroups = leftGroups
         observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
@@ -69,7 +71,7 @@ final class ActivityModel {
         sentences = [:]
         filterGroups = Set(entries.compactMap(\.groupID))
             .compactMap { groups[$0] }
-            .filter { $0.kind != .friend }
+            .filter { $0.kind != .friend && !leftGroups.contains($0.id) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         unreadCount = entries.filter { !$0.isRead }.count
         rebuildVisible()

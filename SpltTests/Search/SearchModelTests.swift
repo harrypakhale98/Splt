@@ -23,11 +23,15 @@ struct SearchModelTests {
         return calendar
     }
 
-    private func model(_ fixture: Fixture, reader: FakeReader = FakeReader(isAvailable: false)) -> SearchModel {
+    private func model(
+        _ fixture: Fixture, reader: FakeReader = FakeReader(isAvailable: false),
+        leftGroups: LeftGroupsStore = isolatedLeftGroups()
+    ) -> SearchModel {
         SearchModel(
             services: fixture.services,
             recentStore: RecentSearchesStore(defaults: isolatedDefaults()),
             visibility: FriendVisibilityStore(defaults: isolatedDefaults()),
+            leftGroups: leftGroups,
             reader: reader,
             now: { Date(timeIntervalSince1970: 1_781_524_800) },
             calendar: calendar
@@ -45,6 +49,29 @@ struct SearchModelTests {
         try fixture.addExpense("Taxi home", cents: 1500, paidBy: fixture.sam, date: date(3, 21))
         try fixture.addExpense("Dinner again", cents: 5200, paidBy: fixture.sam, date: date(4, 2))
         return fixture
+    }
+
+    @Test func aGroupYouLeftAndItsExpensesAreNotFound() async throws {
+        let fixture = try scene()
+        let leftGroups = isolatedLeftGroups()
+        let model = model(fixture, leftGroups: leftGroups)
+        model.query = "flat"
+        await model.search()
+        #expect(model.groups.map(\.name) == ["Flat"])
+        model.query = "taxi"
+        await model.search()
+        #expect(model.expenses.map(\.title) == ["Taxi home"])
+
+        leftGroups.insert(fixture.group.id)
+        model.query = "flat"
+        await model.search()
+        #expect(model.groups.isEmpty)
+        model.query = "taxi"
+        await model.search()
+        #expect(model.expenses.isEmpty)
+        model.query = "dinners paid by sam"
+        await model.search()
+        #expect(model.expenses.isEmpty)
     }
 
     @Test func plainWordsFindPeopleGroupsAndExpenses() async throws {

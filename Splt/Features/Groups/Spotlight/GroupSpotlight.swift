@@ -30,6 +30,11 @@ enum GroupSpotlight {
         !group.isArchived && group.kind != .friend
     }
 
+    /// A group you left stays in the shared data but must not be found from outside the app.
+    static func isIndexed(_ group: SplitGroup, left: LeftGroupsStore) -> Bool {
+        isIndexed(group) && !left.contains(group.id)
+    }
+
     static func item(for group: SplitGroup, memberNames: [String]) -> CSSearchableItem {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.title = group.name

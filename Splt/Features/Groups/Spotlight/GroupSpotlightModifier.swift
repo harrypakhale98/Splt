@@ -31,11 +31,12 @@ private struct GroupSpotlightModifier: ViewModifier {
             ((try? services.people.allPeople()) ?? []).map { ($0.id, $0.name) },
             uniquingKeysWith: { first, _ in first }
         )
+        let left = LeftGroupsStore()
         return summaries.map {
             Entry(
                 id: $0.group.id, name: $0.group.name, symbol: $0.group.symbol,
                 members: $0.group.memberIDs, memberNames: $0.group.memberIDs.map { names[$0] ?? "" },
-                isIndexed: GroupSpotlight.isIndexed($0.group)
+                isIndexed: GroupSpotlight.isIndexed($0.group, left: left)
             )
         }
     }
@@ -49,7 +50,8 @@ private struct GroupSpotlightModifier: ViewModifier {
             }
             .task(id: entries) {
                 guard let services else { return }
-                let groups = services.groupsStore.summaries.map(\.group)
+                let left = LeftGroupsStore()
+                let groups = services.groupsStore.summaries.map(\.group).filter { !left.contains($0.id) }
                 let people = Dictionary(
                     ((try? services.people.allPeople()) ?? []).map { ($0.id, $0) },
                     uniquingKeysWith: { first, _ in first }

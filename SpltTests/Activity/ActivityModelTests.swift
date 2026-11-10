@@ -30,6 +30,17 @@ struct ActivityModelTests {
         #expect(model.text(for: payment, locale: Locale(identifier: "en_US")) == "Sam paid you $10.00")
     }
 
+    @Test func aGroupYouLeftIsNotOfferedAsAFilter() throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000)
+        let leftGroups = isolatedLeftGroups()
+        let model = ActivityModel(services: fixture.services, calendar: calendar, leftGroups: leftGroups)
+        #expect(model.filterGroups.map(\.id) == [fixture.group.id])
+        leftGroups.insert(fixture.group.id)
+        model.refresh()
+        #expect(model.filterGroups.isEmpty)
+    }
+
     @Test func groupsEntriesByDay() throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000)
