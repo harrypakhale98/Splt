@@ -73,7 +73,8 @@ struct SplitBarView: View {
                 let segmentWidth = layout.widths.indices.contains(index) ? layout.widths[index] : 0
                 SegmentView(
                     segment: segment, fill: fill(for: segment.id, in: palette), width: segmentWidth, locale: locale, scale: data.scale,
-                    method: data.method, style: colorScheme == .dark ? .dark : .light
+                    method: data.method, style: colorScheme == .dark ? .dark : .light,
+                    isCurrentPerson: segment.id == currentPerson
                 )
                 .frame(width: segmentWidth, height: height)
                 .contentShape(.rect)
@@ -180,8 +181,10 @@ struct SplitBarView: View {
         return min(max(x, half), barWidth - half)
     }
 
+    /// The short name on the bar. You are "You" here as on the chips above it.
     private func firstName(of person: Person) -> String {
-        person.name.split(separator: " ").first.map(String.init) ?? person.name
+        if person.id == currentPerson { return String(localized: "You") }
+        return person.name.split(separator: " ").first.map(String.init) ?? person.name
     }
 }
 
@@ -225,6 +228,7 @@ private struct SegmentView: View {
     let scale: Int64
     let method: SplitMethod
     let style: UIUserInterfaceStyle
+    let isCurrentPerson: Bool
 
     var body: some View {
         let ink = ContrastInk.ink(on: fill, style: style)
@@ -257,6 +261,7 @@ private struct SegmentView: View {
     }
 
     private var firstName: String {
-        segment.person.name.split(separator: " ").first.map(String.init) ?? segment.person.name
+        if isCurrentPerson { return String(localized: "You") }
+        return segment.person.name.split(separator: " ").first.map(String.init) ?? segment.person.name
     }
 }
