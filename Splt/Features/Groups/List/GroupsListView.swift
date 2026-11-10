@@ -102,7 +102,10 @@ private struct GroupsListContent: View {
             settingsGroup = nil
         }
         .onAppear { model.refresh() }
-        .task(id: model.listedIDs) { await model.loadSharing(using: sharing) }
+        // again when sync connects, which is when it first knows whose group is whose
+        .task(id: SharingQuestion(groups: model.listedIDs, isConnected: SyncRuntime.shared.status.isConnected)) {
+            await model.loadSharing(using: sharing)
+        }
         .confirmationDialog(
             "Delete Group?", isPresented: deleteBinding, titleVisibility: .visible, presenting: pendingDelete
         ) { group in
@@ -198,3 +201,9 @@ private struct GroupsListContent: View {
         .environment(\.dataServices, try? DataServices.inMemory())
 }
 #endif
+
+/// What the list last asked about sharing, so it asks again when either part changes.
+private struct SharingQuestion: Hashable {
+    let groups: Set<GroupID>
+    let isConnected: Bool
+}

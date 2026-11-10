@@ -116,17 +116,27 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     func isSharedByMe(group: GroupID) async -> Bool {
-        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+        if answersFromLastKnownState {
             return stateStore.loadMetadata().ownedShares?.contains(group.description) == true
         }
         return await current.isSharedByMe(group: group)
     }
 
     var groupsSharedWithMe: Set<GroupID> {
-        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
+        if answersFromLastKnownState {
             return stateStore.loadMetadata().groupsSharedWithMe
         }
         return current.groupsSharedWithMe
+    }
+
+    /// Before the account has been looked at, and while it cannot be reached, whose group is whose
+    /// is what was last saved. Answering "nobody's" would offer Delete for a group you only joined.
+    private var answersFromLastKnownState: Bool {
+        switch choice {
+        case nil: true
+        case .noOp(let reason)?: reason.isAboutTheAccount
+        case .cloudKit?: false
+        }
     }
 
     /// Looks at the environment and account again and swaps the engine if the answer changed.

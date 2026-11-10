@@ -245,6 +245,8 @@ struct AutomaticSyncEngineTests {
             environment: { .signedDevice() }, probe: FakeAccountProbe(.unknown), accountChanges: { AsyncStream { _ in } },
             stateStore: store, makeCloudKitEngine: { FakeSyncEngine(identifier: $0) }
         )
+        // and already before the account has been looked at, as at a cold launch
+        #expect(engine.groupsSharedWithMe == [group])
         await engine.start()
         #expect(engine.groupsSharedWithMe == [group])
         await engine.stop()
