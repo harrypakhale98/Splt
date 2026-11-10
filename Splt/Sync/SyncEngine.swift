@@ -47,6 +47,7 @@ protocol SyncEngine: AnyObject {
     func fetchChanges() async throws
     /// Prepares the group for the invite sheet, creating the share on first use. With
     /// `anyoneWithLink` the owner's share is opened so its link works for anyone who has it.
+    /// Someone who joined the group only gets its share with `anyoneWithLink`, for the link.
     func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare
     func accept(_ invitation: ShareInvitation) async throws
     /// Leaves a group someone else shared. A group in your own iCloud is not affected.

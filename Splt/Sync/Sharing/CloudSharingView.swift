@@ -2,8 +2,9 @@ import CloudKit
 import SwiftUI
 import UIKit
 
-/// The system invite sheet for a shared group: add people, set who can edit, stop sharing or leave.
-/// Present it in a sheet once `GroupSharingModel` has a share ready.
+/// The system invite sheet for a group you shared: add people, set who can join, or stop sharing.
+/// Present it in a sheet once `GroupSharingModel` has a share ready. A participant is never given it,
+/// because its Remove Me option leaves the share without leaving the member list.
 struct CloudSharingView: UIViewControllerRepresentable {
     let groupShare: GroupShare
     var onSaved: () -> Void = {}

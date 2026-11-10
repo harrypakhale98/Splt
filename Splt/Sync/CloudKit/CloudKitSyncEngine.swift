@@ -173,6 +173,9 @@ final class CloudKitSyncEngine: SyncEngine {
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
         let service = backend.shareService
         if zoneID.scope == .sharedDatabase {
+            // the system sheet lets a participant remove themselves without leaving the member list,
+            // so only the owner is given it. Everyone else leaves with Leave Group.
+            guard anyoneWithLink else { throw SyncError.ownerInvites }
             guard let existing = try await service.share(zoneID: zoneID) else { throw SyncError.notShared }
             if anyoneWithLink, existing.publicPermission == .none { throw SyncError.linkNotOpen }
             return try backend.groupShare(existing, groupName: value.name)

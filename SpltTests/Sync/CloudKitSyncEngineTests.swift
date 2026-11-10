@@ -174,6 +174,19 @@ struct CloudKitSyncEngineTests {
         await rig.engine.stop()
     }
 
+    @Test func someoneWhoJoinedIsNotGivenTheSystemInviteSheet() async throws {
+        let (rig, engine, zone) = try sharedRig()
+        let share = CKShare(recordZoneID: zone)
+        share.publicPermission = .readWrite
+        rig.backend.sharedDatabase.put(share)
+        await engine.start()
+        let group = rig.populated.group.id
+        await #expect(throws: SyncError.ownerInvites) { _ = try await engine.share(group: group, anyoneWithLink: false) }
+        // the link of a share that is open to anyone is still theirs to pass on
+        await #expect(throws: FakeBackendError.noContainer) { _ = try await engine.share(group: group, anyoneWithLink: true) }
+        await engine.stop()
+    }
+
     @Test func invitationsWithoutMetadataAreRejected() async throws {
         let rig = try Rig()
         await rig.engine.start()

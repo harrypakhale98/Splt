@@ -12,6 +12,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
     case notReady
     /// The group is shared invite-only and only its owner can open the link to anyone.
     case linkNotOpen
+    /// The system invite sheet is only for the person who shared the group.
+    case ownerInvites
 
     var errorDescription: String? {
         switch self {
@@ -27,6 +29,8 @@ enum SyncError: LocalizedError, Equatable, Sendable {
             String(localized: "Sync is still getting ready. Try again in a moment.")
         case .linkNotOpen:
             String(localized: "Only the person who shared this group can make a link anyone can join.")
+        case .ownerInvites:
+            String(localized: "Only the person who shared this group can invite people with iCloud.")
         }
     }
 }
