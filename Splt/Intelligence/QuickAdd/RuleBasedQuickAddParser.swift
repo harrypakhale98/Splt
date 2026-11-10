@@ -291,6 +291,23 @@ private struct Pass {
         "table", "room", "seat", "no", "number", "order", "flight", "gate", "route", "bus"
     ]
 
+    private static let monthNames = "january|february|march|april|may|june|july|august|september|october|november|december"
+        + "|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec"
+    /// "on March 15", "March 15th" or "15 March".
+    private static let datePattern = TextPattern(
+        #"(?<![\p{L}\d])(?:on\s+)?(?:(?:"# + monthNames + #")\.?\s+(?<day>\d{1,2})(?:st|nd|rd|th)?"#
+            + #"|(?<first>\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(?:"# + monthNames + #")(?!\s+\d{1,2}(?![\d.,])))(?![\p{L}\d]|[.,:/]\d)"#
+    )
+
+    /// Where the note names a day of a month.
+    private func datePhrases() -> [NSRange] {
+        Self.datePattern.matches(in: text).filter { match in
+            let day = match.group(named: "day", in: text) ?? match.group(named: "first", in: text)
+            return day.flatMap { Int($0) }.map { (1...31).contains($0) } ?? false
+        }
+        .map(\.range)
+    }
+
     mutating func takeAmount(defaultCode: String) -> FoundAmount? {
         struct Candidate {
             var range: NSRange
@@ -299,6 +316,7 @@ private struct Pass {
         }
         var candidates: [Candidate] = []
         var unlikely: [Candidate] = []
+        let dates = datePhrases()
         for match in Self.amountPattern.matches(in: text) {
             guard let whole = Range(match.range, in: text) else { continue }
             let following = text[whole.upperBound...].drop { $0 == " " }
@@ -310,7 +328,18 @@ private struct Pass {
                 || match.group(named: "word", in: text) != nil
             // letters stuck to a number make it a measure or a code, unless they name a currency
             let isGlued = !hasMarker && text[whole.upperBound...].first?.isLetter == true
+            let isThousands = match.group(named: "k", in: text) != nil
+            // a whole number with nothing attached, which is how a day, an hour or a year is written
+            let bare = hasMarker || isThousands ? nil : match.group(named: "num", in: text).flatMap { Int($0) }
+            let isDay = bare != nil && dates.contains { NSIntersectionRange($0, match.range).length > 0 }
+            let isClockOrDay = nextWord.isEmpty && bare.map { value in
+                (previousWord == "at" && (1...12).contains(value)) || (previousWord == "on" && (1...31).contains(value))
+            } == true
+            let isYear = bare.map { (1900...2099).contains($0) } == true
+            // "5k race" is a distance. An amount in thousands ends the phrase or meets a small word, as in "2k for rent".
+            let isDistance = isThousands && !hasMarker && !nextWord.isEmpty && !Self.fillerWords.contains(nextWord)
             let isUnlikely = (Self.notMoneyBefore.contains(previousWord) && !hasMarker) || isGlued
+                || isDay || isClockOrDay || isYear || isDistance
 
             let marker = match.group(named: "sym", in: text)
                 ?? match.group(named: "pre", in: text)
@@ -319,7 +348,7 @@ private struct Pass {
             let code = explicit ?? defaultCode
             guard let numberText = match.group(named: "num", in: text)?.filter({ $0 != " " }),
                   var minor = MinorUnitParser.minorUnits(from: numberText, currencyCode: code), minor > 0 else { continue }
-            if match.group(named: "k", in: text) != nil {
+            if isThousands {
                 let (scaled, overflow) = minor.multipliedReportingOverflow(by: 1000)
                 guard !overflow else { continue }
                 minor = scaled
@@ -331,10 +360,15 @@ private struct Pass {
             )
             if isUnlikely { unlikely.append(candidate) } else { candidates.append(candidate) }
         }
+        // A number written with its currency wins. Then the largest of the rest, because a count or a
+        // detail is usually smaller than the bill. A number that reads as a day, an hour, a year or a
+        // distance is only taken when the note has no other.
         let marked = candidates.filter(\.hasCurrency)
         let pool = !marked.isEmpty ? marked : !candidates.isEmpty ? candidates : unlikely
         guard let chosen = pool.max(by: { $0.found.minorUnits < $1.found.minorUnits }) else { return nil }
-        blank(chosen.range)
+        // a date that is not the price is not part of the title either
+        let spent = dates.filter { NSIntersectionRange($0, chosen.range).length == 0 } + [chosen.range]
+        for range in spent.sorted(by: { $0.location > $1.location }) { blank(range) }
         return chosen.found
     }
 

@@ -120,4 +120,24 @@ struct QuickAddParserTests {
         #expect(parse("snacks 3 12.50").amount?.minorUnits == 1250)
         #expect(parse("dinner at table 4 125.50").amount?.minorUnits == 12_550)
     }
+
+    @Test func datesTimesAndYearsAreNotThePrice() {
+        let lunch = parse("lunch 8 on March 15 with Sam")
+        #expect(lunch.amount?.minorUnits == 800)
+        #expect(lunch.title == "Lunch")
+        #expect(parse("lunch 8 on 15 March with Sam").amount?.minorUnits == 800)
+        #expect(parse("NYE 2026 dinner 120 with Sam").amount?.minorUnits == 12_000)
+        #expect(parse("5k race entry 35 with Sam").amount?.minorUnits == 3500)
+        #expect(parse("coffee 5 at 8 with Sam").amount?.minorUnits == 500)
+    }
+
+    @Test func aNumberThatLooksLikeADateIsStillThePriceWhenAlone() {
+        #expect(parse("rent 2000 with Sam").amount?.minorUnits == 200_000)
+        #expect(parse("lunch at 12 with Sam").amount?.minorUnits == 1200)
+        #expect(parse("tickets for May 20").amount?.minorUnits == 2000)
+        #expect(parse("trip 5k with Sam").amount?.minorUnits == 500_000)
+        #expect(parse("deposit 2k for 12 months").amount?.minorUnits == 200_000)
+        #expect(parse("spent 40 on 3 pizzas").amount?.minorUnits == 4000)
+        #expect(parse("spent 40 on 3 pizzas").title == "3 pizzas")
+    }
 }
