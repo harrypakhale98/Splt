@@ -310,4 +310,20 @@ struct GroupDetailViewModelTests {
         )))
         #expect(text.sentence(for: entry) == "Someone paid Someone $12.50")
     }
+
+    @Test func activitySaysJoinedAndLeftAndCallsTheReaderYou() {
+        let sam = PersonID(), me = PersonID(), priya = PersonID()
+        let text = GroupActivityText(currentPerson: me, names: [sam: "Sam", priya: "Priya"], locale: GroupsTestCalendar.english)
+        func sentence(_ actor: PersonID, _ event: ActivityEvent) -> String {
+            text.sentence(for: ActivityEntry(actorID: actor, event: event))
+        }
+        #expect(sentence(sam, .memberAdded(sam)) == "Sam joined the group")
+        #expect(sentence(sam, .memberRemoved(sam)) == "Sam left the group")
+        #expect(sentence(me, .memberAdded(me)) == "You joined the group")
+        #expect(sentence(me, .memberRemoved(me)) == "You left the group")
+        #expect(sentence(sam, .memberAdded(me)) == "Sam added you")
+        #expect(sentence(sam, .memberRemoved(me)) == "Sam removed you")
+        #expect(sentence(sam, .memberAdded(priya)) == "Sam added Priya")
+        #expect(sentence(me, .memberRemoved(priya)) == "You removed Priya")
+    }
 }

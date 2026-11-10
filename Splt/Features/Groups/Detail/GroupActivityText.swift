@@ -19,11 +19,12 @@ struct GroupActivityText {
         case .groupRestored:
             return String(localized: "\(actor) restored the group")
         case .memberAdded(let id):
-            let member = name(id)
-            return String(localized: "\(actor) added \(member)")
+            // someone who adds themselves joined, as ChangeMessages says it too
+            if id == entry.actorID { return String(localized: "\(actor) joined the group") }
+            return String(localized: "\(actor) added \(member(id))")
         case .memberRemoved(let id):
-            let member = name(id)
-            return String(localized: "\(actor) removed \(member)")
+            if id == entry.actorID { return String(localized: "\(actor) left the group") }
+            return String(localized: "\(actor) removed \(member(id))")
         case .expenseAdded(let expense):
             return String(localized: "\(actor) added \(expense.title)")
         case .expenseEdited(let expense):
@@ -46,6 +47,11 @@ struct GroupActivityText {
         case .expensesImported(let expenses, let payments):
             return String(localized: "\(actor) imported \(expenses) expenses and \(payments) payments")
         }
+    }
+
+    /// The person something was done to, which for the reader is "you" in the middle of a sentence.
+    private func member(_ id: PersonID) -> String {
+        id == currentPerson ? String(localized: "you") : name(id)
     }
 
     private func name(_ id: PersonID?) -> String {

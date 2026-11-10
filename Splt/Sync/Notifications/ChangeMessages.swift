@@ -45,14 +45,16 @@ enum ChangeMessages {
             return nil
         }
         let groupName = payload.fields.uuid("groupID").flatMap { names.group(GroupID(rawValue: $0)) }
-        guard let body = sentence(for: event, actor: actorName, group: groupName, names: names) else { return nil }
+        guard let body = sentence(for: event, actor: actorName, actorID: actor, group: groupName, names: names) else { return nil }
         return Item(
             content: LocalNotificationContent(identifier: "splt.activity.\(payload.recordName)", title: "Splt", body: body),
             date: created
         )
     }
 
-    private static func sentence(for event: ActivityEvent, actor: String, group: String?, names: Names) -> String? {
+    private static func sentence(
+        for event: ActivityEvent, actor: String, actorID: PersonID, group: String?, names: Names
+    ) -> String? {
         let place = group
         switch event {
         case .expenseAdded(let expense):
@@ -73,11 +75,18 @@ enum ChangeMessages {
             }
             return inGroup(String(localized: "\(actor) left a comment"), place)
         case .memberAdded(let person):
-            let name = names.person(person) ?? String(localized: "someone")
-            return inGroup(String(localized: "\(actor) added \(name)"), place)
+            // someone who adds themselves joined, as GroupActivityText says it too
+            if person == actorID {
+                guard let place, !place.isEmpty else { return String(localized: "\(actor) joined the group") }
+                return String(localized: "\(actor) joined \(place)")
+            }
+            return inGroup(String(localized: "\(actor) added \(member(person, names))"), place)
         case .memberRemoved(let person):
-            let name = names.person(person) ?? String(localized: "someone")
-            return inGroup(String(localized: "\(actor) removed \(name)"), place)
+            if person == actorID {
+                guard let place, !place.isEmpty else { return String(localized: "\(actor) left the group") }
+                return String(localized: "\(actor) left \(place)")
+            }
+            return inGroup(String(localized: "\(actor) removed \(member(person, names))"), place)
         case .groupRenamed(_, let to):
             return String(localized: "\(actor) renamed the group to \(to)")
         case .groupArchived:
@@ -89,6 +98,11 @@ enum ChangeMessages {
         case .groupCreated:
             return nil
         }
+    }
+
+    private static func member(_ person: PersonID, _ names: Names) -> String {
+        if person == names.me { return String(localized: "you") }
+        return names.person(person) ?? String(localized: "someone")
     }
 
     private static func inGroup(_ sentence: String, _ group: String?) -> String {

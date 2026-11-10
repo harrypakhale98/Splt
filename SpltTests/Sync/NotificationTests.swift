@@ -66,13 +66,26 @@ struct ChangeMessagesTests {
             (.paymentRecorded(PaymentReference(id: PaymentID(), payer: sam, receiver: me, amount: Money(minorUnits: 1, currencyCode: "EUR"))), "Sam recorded a payment in Lisbon"),
             (.commentAdded(expense: reference("Taxi"), text: "ha"), "Sam commented on Taxi in Lisbon"),
             (.commentAdded(expense: nil, text: "hi"), "Sam left a comment in Lisbon"),
-            (.memberAdded(me), "Sam added Me in Lisbon"),
+            (.memberAdded(me), "Sam added you in Lisbon"),
+            (.memberRemoved(me), "Sam removed you in Lisbon"),
+            (.memberAdded(sam), "Sam joined Lisbon"),
+            (.memberRemoved(sam), "Sam left Lisbon"),
+            (.memberAdded(PersonID()), "Sam added someone in Lisbon"),
             (.groupRenamed(from: "A", to: "B"), "Sam renamed the group to B"),
         ]
         for (event, expected) in events {
             let contents = ChangeMessages.contents(for: [activity(event)], names: names, now: now)
             #expect(contents.first?.body == expected)
         }
+    }
+
+    @Test func joiningAndLeavingReadWellWithoutAGroupName() {
+        var names = names
+        names.group = { _ in nil }
+        let joined = ChangeMessages.contents(for: [activity(.memberAdded(sam))], names: names, now: now)
+        #expect(joined.first?.body == "Sam joined the group")
+        let left = ChangeMessages.contents(for: [activity(.memberRemoved(sam))], names: names, now: now)
+        #expect(left.first?.body == "Sam left the group")
     }
 
     @Test func yourOwnChangesOldChangesAndStrangersAreSkipped() {
