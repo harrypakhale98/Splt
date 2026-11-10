@@ -108,4 +108,29 @@ struct GroupTotalsTests {
         #expect(totals.insightInput(groupName: "x", kind: .standard).kind == .other)
         #expect(totals.insightInput(groupName: "x", kind: .friend).kind == .other)
     }
+
+    @Test func summaryFactsListMembersWhoPaidNothing() throws {
+        let cal = PersonID(rawValue: UUID(uuidString: "00000000-0000-4000-8000-0000000000C3")!)
+        let dee = PersonID(rawValue: UUID(uuidString: "00000000-0000-4000-8000-0000000000D4")!)
+        let everyone = names.merging([cal: "Cal", dee: "Dee"]) { first, _ in first }
+        let totals = try #require(GroupTotals.make(expenses: [
+            expense("Dinner", 10_000, category: .dining, payers: [ana: 5000, ben: 5000])
+        ], names: everyone).first)
+
+        let input = totals.insightInput(groupName: "Flat", kind: .standard, members: [ana, ben, cal, dee], names: everyone)
+        #expect(input.members == [
+            InsightInput.MemberAmount(name: "Ana", paidMinorUnits: 5000),
+            InsightInput.MemberAmount(name: "Ben", paidMinorUnits: 5000),
+            InsightInput.MemberAmount(name: "Cal", paidMinorUnits: 0),
+            InsightInput.MemberAmount(name: "Dee", paidMinorUnits: 0)
+        ])
+        #expect(!InsightSummarizer.template(for: input).contains("Everyone"))
+
+        // when all four paid about the same, everyone did
+        let even = try #require(GroupTotals.make(expenses: [
+            expense("Dinner", 10_000, category: .dining, payers: [ana: 2500, ben: 2500, cal: 2500, dee: 2500])
+        ], names: everyone).first)
+        let evenInput = even.insightInput(groupName: "Flat", kind: .standard, members: [ana, ben, cal, dee], names: everyone)
+        #expect(InsightSummarizer.template(for: evenInput).contains("Everyone has paid a similar amount."))
+    }
 }

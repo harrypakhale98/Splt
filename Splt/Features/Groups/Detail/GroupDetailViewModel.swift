@@ -328,7 +328,7 @@ final class GroupDetailViewModel {
     /// The facts for the on-device summary, read off the group's main currency. Nil when nothing was spent.
     var insightInput: InsightInput? {
         guard let group, let totals = primaryTotals else { return nil }
-        return totals.insightInput(groupName: group.name, kind: group.kind)
+        return totals.insightInput(groupName: group.name, kind: group.kind, members: group.memberIDs, names: chartNames)
     }
 
     // MARK: Activity

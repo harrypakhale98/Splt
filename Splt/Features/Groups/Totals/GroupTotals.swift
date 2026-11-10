@@ -84,20 +84,27 @@ struct GroupTotals: Equatable, Sendable, Identifiable {
         }
     }
 
-    /// The facts the on-device summarizer describes.
-    func insightInput(groupName: String, kind: GroupKind) -> InsightInput {
+    /// The facts the on-device summarizer describes. `members` is everyone in the group, in order, so
+    /// people who paid nothing are listed with zero and "everyone" really means everyone.
+    func insightInput(
+        groupName: String, kind: GroupKind, members: [PersonID] = [], names: [PersonID: String] = [:]
+    ) -> InsightInput {
         let insightKind: InsightInput.Kind
         switch kind {
         case .trip: insightKind = .trip
         case .couple: insightKind = .household
         case .standard, .friend: insightKind = .other
         }
+        let payers = Set(byPerson.map(\.personID))
+        let unknown = String(localized: "Someone")
+        let paidNothing = members.filter { !payers.contains($0) }
+            .map { InsightInput.MemberAmount(name: names[$0] ?? unknown, paidMinorUnits: 0) }
         return InsightInput(
             groupName: groupName,
             kind: insightKind,
             expenseCount: expenseCount,
             categories: byCategory.map { InsightInput.CategoryAmount(name: $0.category.title, minorUnits: $0.amount.minorUnits) },
-            members: byPerson.map { InsightInput.MemberAmount(name: $0.name, paidMinorUnits: $0.paid.minorUnits) }
+            members: byPerson.map { InsightInput.MemberAmount(name: $0.name, paidMinorUnits: $0.paid.minorUnits) } + paidNothing
         )
     }
 }

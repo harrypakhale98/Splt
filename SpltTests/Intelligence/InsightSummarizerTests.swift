@@ -111,4 +111,23 @@ struct InsightSummarizerTests {
         #expect(input.totalPaid == .max)
         #expect(InsightSummarizer.percent(.max, of: 1) == Int.max)
     }
+
+    @Test func membersWhoPaidNothingDoNotChangeTheOtherSentences() {
+        let quiet = [InsightInput.MemberAmount(name: "Alex", paidMinorUnits: 0), InsightInput.MemberAmount(name: "Jo", paidMinorUnits: 0)]
+        let food = [InsightInput.CategoryAmount(name: "Food", minorUnits: 100)]
+        let split = InsightInput(
+            groupName: "Flat", expenseCount: 2, categories: food,
+            members: [.init(name: "Sam", paidMinorUnits: 50), .init(name: "Priya", paidMinorUnits: 50)] + quiet
+        )
+        #expect(InsightSummarizer.template(for: split) == "Most of this group's spending went on food.")
+
+        let lead = InsightInput(
+            groupName: "Flat", expenseCount: 2, categories: food,
+            members: [.init(name: "Sam", paidMinorUnits: 100)] + quiet
+        )
+        #expect(InsightSummarizer.template(for: lead) == "Most of this group's spending went on food. Sam covered most of it.")
+        let facts = InsightSummarizer.facts(for: lead)
+        #expect(facts.contains("Sam paid 100 percent of the bills"))
+        #expect(!facts.contains("Alex"))
+    }
 }
