@@ -108,6 +108,16 @@ extension ChangeTracker {
         return group.deletedAt != nil
     }
 
+    private func isCurrentUser(_ id: UUID) throws -> Bool {
+        let me = PersonKind.me.rawValue
+        let name = id.uuidString
+        var descriptor = FetchDescriptor<PersonRecord>(
+            predicate: #Predicate { $0.recordName == name && $0.kindRaw == me && $0.deletedAt == nil }
+        )
+        descriptor.fetchLimit = 1
+        return try !context.fetch(descriptor).isEmpty
+    }
+
     private func applyWithoutSaving(_ payload: SyncPayload) throws -> RemoteApplyOutcome {
         let existing = try payload.recordType.modelType.find(recordName: payload.recordName, in: context)
         if let existing { noteBalanceChange(existing) }
@@ -115,6 +125,10 @@ extension ChangeTracker {
         guard let local = existing else {
             let record = payload.recordType.modelType.blank(recordName: payload.recordName)
             adopt(payload, into: record)
+            // what you did on another device is not news to you
+            if let entry = record as? ActivityRecord, let actor = entry.actorID, try isCurrentUser(actor) {
+                entry.isRead = true
+            }
             context.insert(record)
             return .inserted
         }

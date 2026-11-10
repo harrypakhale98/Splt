@@ -60,9 +60,9 @@ struct ActivityRepositoryTests {
     }
 
     /// Delivers an event the way sync does, as something Sam did on another device.
-    private func receive(_ event: ActivityEvent, in fixture: Fixture) throws {
+    private func receive(_ event: ActivityEvent, in fixture: Fixture, from actor: PersonID? = nil) throws {
         let record = ActivityRecord(ActivityEntry(
-            groupID: fixture.group.id, actorID: fixture.sam.id, event: event, createdAt: fixture.clock.now()
+            groupID: fixture.group.id, actorID: actor ?? fixture.sam.id, event: event, createdAt: fixture.clock.now()
         ))
         try fixture.services.makeChangeTracker().applyRemote(record.syncPayload)
     }
@@ -84,6 +84,12 @@ struct ActivityRepositoryTests {
         let entry = try #require(try fixture.services.activity.entries(limit: 1).first)
         #expect(entry.actorID == fixture.sam.id)
         #expect(!entry.isRead)
+    }
+
+    @Test func whatYouDidOnAnotherDeviceArrivesRead() throws {
+        let fixture = try Fixture()
+        try receive(.groupRenamed(from: "Flat", to: "Home"), in: fixture, from: fixture.me.id)
+        #expect(try fixture.services.activity.unreadCount() == 0)
     }
 
     @Test func readStateCanBeTrackedPerEntryOrAllAtOnce() throws {
