@@ -8,6 +8,8 @@ struct GroupHeroSection: View {
     let members: [Person]
     let totals: BalanceTotals
     let canSettle: Bool
+    /// What each person paid in the group's main currency, which sizes the strip.
+    var paid: [GroupTotals.PersonAmount] = []
     let onSettleUp: () -> Void
 
     @Environment(\.locale) private var locale
@@ -18,7 +20,16 @@ struct GroupHeroSection: View {
                 identity
                 balance
                 if !members.isEmpty {
-                    ShareStrip(people: members.map(\.id), members: members.map(\.id), isGrooved: true)
+                    let strip = PaidStrip(members: members.map(\.id), paid: paid)
+                    ShareStrip(people: strip.people, members: members.map(\.id), weights: strip.weights, isGrooved: true)
+                        .accessibilityHidden(true)
+                        // the strip is only a few points tall, so VoiceOver gets a full-height stand-in
+                        .overlay {
+                            Color.clear
+                                .frame(height: 44)
+                                .accessibilityElement()
+                                .accessibilityLabel(strip.spoken(names: names))
+                        }
                 }
                 if canSettle {
                     Button(action: onSettleUp) {
@@ -122,3 +133,54 @@ private struct HeroLine: Identifiable {
     .paperBackground()
 }
 #endif
+
+private extension GroupHeroSection {
+    var names: [PersonID: String] {
+        Dictionary(members.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+    }
+}
+
+/// The group's strip as a small chart: each person's slice is what they paid, largest first.
+/// Someone who paid nothing keeps a thin sliver, so the strip still shows everyone in the group.
+/// With no spending yet, everyone gets an equal slice.
+struct PaidStrip: Equatable {
+    let people: [PersonID]
+    let weights: [Double]?
+    private let shares: [PersonID: Double]
+
+    /// The sliver's size, as a share of what everyone paid.
+    static let sliver = 0.02
+
+    init(members: [PersonID], paid: [GroupTotals.PersonAmount]) {
+        var amounts: [PersonID: Double] = [:]
+        for entry in paid where members.contains(entry.personID) {
+            amounts[entry.personID, default: 0] += Double(max(entry.paid.minorUnits, 0))
+        }
+        let total = amounts.values.reduce(0, +)
+        guard total > 0 else {
+            people = members
+            weights = nil
+            shares = [:]
+            return
+        }
+        let order = Dictionary(members.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        people = members.sorted {
+            let left = amounts[$0] ?? 0, right = amounts[$1] ?? 0
+            return left != right ? left > right : (order[$0] ?? 0) < (order[$1] ?? 0)
+        }
+        weights = people.map { max(amounts[$0] ?? 0, total * Self.sliver) }
+        shares = amounts.mapValues { $0 / total }
+    }
+
+    /// "Paid: Maya Chen 55%, You 16%, …", or nil-safe plain list when nothing is spent yet.
+    func spoken(names: [PersonID: String]) -> String {
+        guard weights != nil else {
+            return ListFormatter.localizedString(byJoining: people.map { names[$0] ?? "" })
+        }
+        let parts = people.map { person -> String in
+            let percent = Int(((shares[person] ?? 0) * 100).rounded())
+            return String(localized: "\(names[person] ?? "") \(percent)%")
+        }
+        return String(localized: "Paid: \(parts.joined(separator: ", "))")
+    }
+}

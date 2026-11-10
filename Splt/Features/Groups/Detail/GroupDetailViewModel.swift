@@ -25,6 +25,8 @@ final class GroupDetailViewModel {
 
     let groupID: GroupID
     var segment: Segment = .expenses
+    /// Goes up each time a chart opens the expenses behind a bar, so the screen can scroll back to the list.
+    private(set) var drillRevision = 0
     var filter = ExpenseFilter()
     var errorMessage: String?
 
@@ -179,6 +181,54 @@ final class GroupDetailViewModel {
         ExpenseSectioning.title(
             for: section, grouping: grouping, tripStart: group?.tripStart, calendar: calendar, locale: locale
         )
+    }
+
+    /// Opens the expenses a person paid for, from their bar on Totals.
+    func showExpenses(paidBy person: PersonID) {
+        drill { $0.payer = person }
+    }
+
+    /// Opens the expenses in a category, from its bar on Totals.
+    func showExpenses(in category: ExpenseCategory) {
+        drill { $0.category = category }
+    }
+
+    private func drill(_ change: (inout ExpenseFilter) -> Void) {
+        var next = filter
+        next.clearFilters()
+        next.query = ""
+        change(&next)
+        Motion.perform(Motion.smooth) {
+            filter = next
+            segment = .expenses
+        }
+        drillRevision += 1
+    }
+
+    /// What a filtered list is showing, in words: "Paid by Maya Chen · Dining · This Month".
+    func filterDescription(locale: Locale) -> String? {
+        guard filter.isFiltering else { return nil }
+        var parts: [String] = []
+        if let payer = filter.payer {
+            if payer == me?.id {
+                parts.append(String(localized: "Paid by you"))
+            } else {
+                parts.append(String(localized: "Paid by \(names[payer] ?? String(localized: "someone"))"))
+            }
+        }
+        if let category = filter.category {
+            parts.append(category.title)
+        }
+        switch filter.period {
+        case .anytime:
+            break
+        case .custom:
+            let end = max(filter.customEnd, filter.customStart.addingTimeInterval(1))
+            parts.append((filter.customStart..<end).formatted(.interval.day().month(.abbreviated).locale(locale)))
+        default:
+            parts.append(filter.period.title)
+        }
+        return parts.joined(separator: " · ")
     }
 
     /// People who paid for at least one expense, for the payer filter.

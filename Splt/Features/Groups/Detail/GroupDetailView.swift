@@ -42,6 +42,7 @@ private struct GroupDetailContent: View {
 
         Group {
             if let group = model.group {
+                ScrollViewReader { proxy in
                 List {
                     if model.segment == .expenses {
                         GroupHeroSection(
@@ -49,6 +50,7 @@ private struct GroupDetailContent: View {
                             members: model.members,
                             totals: model.myTotals,
                             canSettle: !model.transfers.isEmpty,
+                            paid: model.primaryTotals?.byPerson ?? [],
                             onSettleUp: { settleRoute = model.settleRoute() }
                         )
                     }
@@ -67,6 +69,11 @@ private struct GroupDetailContent: View {
                 }
                 .modifier(ExpenseSearch(isOn: model.segment == .expenses, text: $model.filter.query))
                 .toolbar { toolbar }
+                // a bar on Totals opened its expenses: bring the filtered list into view from its top
+                .onChange(of: model.drillRevision) {
+                    Motion.perform(Motion.smooth) { proxy.scrollTo(Self.listTop, anchor: .top) }
+                }
+                }
             } else if model.didLoad {
                 EmptyStateView(
                     title: "Group Not Found",
@@ -126,6 +133,7 @@ private struct GroupDetailContent: View {
         @Bindable var model = model
 
         Section {
+            Group {
             if typeSize.isAccessibilitySize {
                 Picker("Show", selection: $model.segment) {
                     ForEach(GroupDetailViewModel.Segment.allCases) { Text($0.title).tag($0) }
@@ -141,8 +149,12 @@ private struct GroupDetailContent: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
+            }
+            .id(Self.listTop)
         }
     }
+
+    private static let listTop = "group-list-top"
 
     @ViewBuilder
     private var content: some View {
@@ -161,10 +173,22 @@ private struct GroupDetailContent: View {
         let sections = model.sections
         if model.filter.isFiltering {
             Section {
-                Button("Clear Filters", systemImage: "xmark.circle") {
-                    model.filter.clearFilters()
+                // says what the list is narrowed to, so a tap on a chart never leaves you guessing
+                HStack(spacing: 12) {
+                    Text(model.filterDescription(locale: locale) ?? "")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.text)
+                    Spacer(minLength: 8)
+                    Button("Clear") {
+                        Motion.perform(Motion.smooth) { model.filter.clearFilters() }
+                    }
+                    .font(.subheadline)
+                    .buttonStyle(.borderless)
+                    .frame(minHeight: 44)
+                    .accessibilityLabel("Clear Filters")
                 }
-                .raisedRow()
+                // the Clear button is already 44pt tall, so the row adds no padding of its own
+                .raisedRow(padding: EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14))
             }
             .raisedSection()
         }

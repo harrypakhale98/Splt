@@ -43,7 +43,8 @@ struct GroupTotalsSection: View {
                                     ? String(localized: "Paid by person in \(totals.currencyCode)")
                                     : String(localized: "Paid by person"),
                                 rows: people,
-                                color: { row in row.personID.map { colors.color(for: $0) } }
+                                color: { row in row.personID.map { colors.color(for: $0) } },
+                                onSelect: { row in if let person = row.personID { model.showExpenses(paidBy: person) } }
                             )
                         }
                     } header: {
@@ -64,7 +65,8 @@ struct GroupTotalsSection: View {
                                     : String(localized: "By category"),
                                 rows: categories,
                                 // only the largest category speaks; the rest stay grey, as in the recap
-                                color: { row in row.id == categories.first?.id ? Ink.text : Ink.tertiary }
+                                color: { row in row.id == categories.first?.id ? Ink.text : Ink.tertiary },
+                                onSelect: { row in if let category = row.category { model.showExpenses(in: category) } }
                             )
                         }
                     } header: {
@@ -144,6 +146,8 @@ private struct SpendingBarChart: View {
     let rows: [SpendingRow]
     /// A person's color, or nil to use ink.
     let color: (SpendingRow) -> Color?
+    /// Opens the expenses behind a bar.
+    var onSelect: ((SpendingRow) -> Void)?
 
     @Environment(\.locale) private var locale
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -152,16 +156,26 @@ private struct SpendingBarChart: View {
         let scale = SpendingScale(values: rows.map(\.money.minorUnits))
         VStack(alignment: .leading, spacing: 14) {
             ForEach(rows) { row in
-                VStack(alignment: .leading, spacing: 6) {
-                    caption(for: row)
-                    SpendingBarTrack(scale: scale, value: row.money.minorUnits, color: color(row) ?? Ink.text)
+                Button {
+                    onSelect?(row)
+                } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        caption(for: row)
+                        SpendingBarTrack(scale: scale, value: row.money.minorUnits, color: color(row) ?? Ink.text)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(SpendingRowButtonStyle())
+                .disabled(onSelect == nil)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(SpendingRow.spokenSummary([row], locale: locale))
+                .accessibilityHint(onSelect == nil ? "" : String(localized: "Shows these expenses"))
+                .accessibilityAddTraits(onSelect == nil ? [] : .isButton)
             }
         }
         .padding(.vertical, 8)
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
-        .accessibilityValue(SpendingRow.spokenSummary(rows, locale: locale))
         .accessibilityChartDescriptor(SpendingChartDescriptor(title: title, rows: rows, locale: locale))
     }
 
@@ -178,7 +192,10 @@ private struct SpendingBarChart: View {
         if typeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: 2) {
                 name
-                amount.minimumScaleFactor(0.5)
+                HStack(spacing: 8) {
+                    amount.minimumScaleFactor(0.5)
+                    if onSelect != nil { chevron }
+                }
             }
         } else {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -189,8 +206,28 @@ private struct SpendingBarChart: View {
                 amount
                     .minimumScaleFactor(0.6)
                     .layoutPriority(1)
+                if onSelect != nil { chevron }
             }
         }
+    }
+}
+
+private extension SpendingBarChart {
+    /// The same quiet chevron as other rows that open something.
+    var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Ink.tertiary)
+            .accessibilityHidden(true)
+    }
+}
+
+/// A bar row that dims a little while pressed, like the app's other rows.
+private struct SpendingRowButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.6 : 1)
+            .motion(Motion.quick, value: configuration.isPressed)
     }
 }
 

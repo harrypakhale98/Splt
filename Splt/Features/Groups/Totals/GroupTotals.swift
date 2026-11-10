@@ -110,6 +110,8 @@ struct SpendingRow: Equatable, Sendable, Identifiable {
     /// Signed: a refund is negative and pulls the total down.
     var money: Money
     var personID: PersonID?
+    /// The category a category row stands for, so tapping it can open those expenses.
+    var category: ExpenseCategory? = nil
 
     /// The amount as printed beside the bar, with a minus sign for a refund so it never reads as spending.
     func amountText(locale: Locale) -> String {
@@ -149,7 +151,10 @@ extension GroupTotals {
     /// Every category that did not cancel out, refunds included, so the rows add up to `total`.
     var categoryRows: [SpendingRow] {
         byCategory.filter { $0.amount.minorUnits != 0 }.map {
-            SpendingRow(id: "category-\($0.category.rawValue)", label: $0.category.title, money: $0.amount, personID: nil)
+            SpendingRow(
+                id: "category-\($0.category.rawValue)", label: $0.category.title, money: $0.amount, personID: nil,
+                category: $0.category
+            )
         }
     }
 }
