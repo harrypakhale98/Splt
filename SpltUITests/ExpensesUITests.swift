@@ -117,7 +117,8 @@ final class ExpensesUITests: XCTestCase {
         app.buttons["Fill In"].tap()
 
         let amount = field("expense-amount", in: app)
-        let filled = NSPredicate(format: "value BEGINSWITH '30'")
+        // the value is read with its currency, such as $30.00
+        let filled = NSPredicate(format: "value CONTAINS '30.00'")
         expectation(for: filled, evaluatedWith: amount)
         waitForExpectations(timeout: 10)
         XCTAssertTrue(field("expense-save", in: app).isEnabled)
