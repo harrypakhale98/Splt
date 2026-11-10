@@ -9,6 +9,7 @@ private final class FakeReminderCenter: ReminderCenter {
     var grants: Bool
     var added: [ReminderRequest] = []
     var removed: [String] = []
+    var removedPrefixes: [String] = []
     var asked = 0
 
     init(authorized: Bool = true, grants: Bool = true) {
@@ -26,6 +27,7 @@ private final class FakeReminderCenter: ReminderCenter {
 
     func add(_ request: ReminderRequest) async throws { added.append(request) }
     func remove(identifier: String) async { removed.append(identifier) }
+    func removeAll(withPrefix prefix: String) async { removedPrefixes.append(prefix) }
 }
 
 @MainActor
@@ -146,6 +148,28 @@ struct ReminderTests {
         let friend = Person(name: "Sam")
         await scheduler(center).cancel(for: friend.id)
         #expect(center.removed == [ReminderScheduler.identifier(for: friend.id)])
+    }
+
+    @Test func turningNotificationsOffDropsEveryReminder() async {
+        let center = FakeReminderCenter()
+        await scheduler(center, enabled: false).cancelAll()
+        #expect(center.removedPrefixes == [ReminderScheduler.identifierPrefix])
+        #expect(ReminderScheduler.identifier(for: PersonID()).hasPrefix(ReminderScheduler.identifierPrefix))
+        #expect(center.removed.isEmpty)
+    }
+
+    @Test func blockingAFriendDropsTheirReminder() async throws {
+        let fixture = try Fixture()
+        let center = FakeReminderCenter()
+        let model = FriendsViewModel(
+            services: fixture.services, visibility: FriendVisibilityStore(defaults: isolatedDefaults()),
+            reminders: scheduler(center)
+        )
+        model.setState(.hidden, for: fixture.sam.id)
+        #expect(model.reminderCancellation == nil)
+        model.setState(.blocked, for: fixture.sam.id)
+        await model.reminderCancellation?.value
+        #expect(center.removed == [ReminderScheduler.identifier(for: fixture.sam.id)])
     }
 
     @Test func remindersForSettledFriendsAreDropped() async throws {

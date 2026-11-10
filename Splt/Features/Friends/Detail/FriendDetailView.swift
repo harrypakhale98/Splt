@@ -239,6 +239,11 @@ private struct FriendDetailContent: View {
     /// The store tells the Friends list, which refreshes before this screen finishes closing.
     private func setVisibility(_ state: FriendVisibilityStore.State) {
         visibility.set(state, for: model.friendID)
+        if state == .blocked {
+            // a reminder that is already scheduled must not arrive for someone you blocked
+            let friend = model.friendID
+            Task { await ReminderScheduler().cancel(for: friend) }
+        }
         dismiss()
     }
 

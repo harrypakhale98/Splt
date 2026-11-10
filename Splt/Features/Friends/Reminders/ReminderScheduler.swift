@@ -49,6 +49,8 @@ protocol ReminderCenter {
     func requestAuthorization() async -> Bool
     func add(_ request: ReminderRequest) async throws
     func remove(identifier: String) async
+    /// Removes every pending request whose identifier starts with `prefix`.
+    func removeAll(withPrefix prefix: String) async
 }
 
 struct SystemReminderCenter: ReminderCenter {
@@ -79,6 +81,12 @@ struct SystemReminderCenter: ReminderCenter {
     func remove(identifier: String) async {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
     }
+
+    func removeAll(withPrefix prefix: String) async {
+        let center = UNUserNotificationCenter.current()
+        let identifiers = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
+    }
 }
 
 /// Schedules one gentle local reminder per friend who owes you. Reminders are opt in: nothing is
@@ -103,8 +111,10 @@ struct ReminderScheduler {
     var now: @Sendable () -> Date = { Date() }
     var calendar: Calendar = .current
 
+    static let identifierPrefix = "reminder."
+
     static func identifier(for friend: PersonID) -> String {
-        "reminder.\(friend.description)"
+        identifierPrefix + friend.description
     }
 
     func schedule(for friend: Person, owed amounts: [Money], after delay: ReminderDelay) async -> Outcome {
@@ -130,5 +140,10 @@ struct ReminderScheduler {
 
     func cancel(for friend: PersonID) async {
         await center.remove(identifier: Self.identifier(for: friend))
+    }
+
+    /// Drops every scheduled reminder, for when Notifications is turned off in Settings.
+    func cancelAll() async {
+        await center.removeAll(withPrefix: Self.identifierPrefix)
     }
 }

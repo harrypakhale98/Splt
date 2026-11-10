@@ -14,10 +14,17 @@ final class FriendsViewModel {
 
     @ObservationIgnored private let services: DataServices
     @ObservationIgnored private let visibility: FriendVisibilityStore
+    @ObservationIgnored private let reminders: ReminderScheduler
+    /// The cancellation a block started last, so tests can wait for it.
+    @ObservationIgnored private(set) var reminderCancellation: Task<Void, Never>?
 
-    init(services: DataServices, visibility: FriendVisibilityStore = FriendVisibilityStore()) {
+    init(
+        services: DataServices, visibility: FriendVisibilityStore = FriendVisibilityStore(),
+        reminders: ReminderScheduler = ReminderScheduler()
+    ) {
         self.services = services
         self.visibility = visibility
+        self.reminders = reminders
     }
 
     var sections: FriendSections {
@@ -45,6 +52,10 @@ final class FriendsViewModel {
     func setState(_ state: FriendVisibilityStore.State?, for id: PersonID) {
         visibility.set(state, for: id)
         visibilityRevision += 1
+        // a blocked friend gets no reminders, so one that is already scheduled must not arrive either
+        if state == .blocked {
+            reminderCancellation = Task { [reminders] in await reminders.cancel(for: id) }
+        }
     }
 
     /// Picks up a hide or block made elsewhere, such as on a friend's screen.

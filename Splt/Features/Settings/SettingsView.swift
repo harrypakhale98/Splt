@@ -107,7 +107,11 @@ private struct SettingsBehavior: ViewModifier {
         content
             .haptic(.selection, trigger: preferences.hapticsEnabled)
             .onChange(of: preferences.notificationsEnabled) { _, isOn in
-                guard isOn else { return }
+                guard isOn else {
+                    // reminders scheduled while it was on would still arrive
+                    Task { await ReminderScheduler().cancelAll() }
+                    return
+                }
                 Task {
                     if await SyncRuntime.shared.requestNotificationAuthorization() == false {
                         preferences.notificationsEnabled = false
