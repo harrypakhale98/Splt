@@ -171,7 +171,7 @@ private struct GroupDetailContent: View {
         case .balances:
             GroupBalancesSection(model: model, onSettle: { settleRoute = model.settleRoute(for: $0) })
         case .totals:
-            GroupTotalsSection(model: model, summary: summary, onRecap: { showsRecap = true })
+            GroupSpendingSection(model: model, onRecap: { showsRecap = true })
         }
     }
 

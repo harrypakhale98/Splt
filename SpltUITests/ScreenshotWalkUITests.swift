@@ -40,7 +40,7 @@ final class ScreenshotWalkUITests: XCTestCase {
         shot("03-group-expenses")
         selectSegment("Balances", in: app)
         shot("04-group-balances")
-        selectSegment("Totals", in: app)
+        selectSegment("Spending", in: app)
         shot("05-group-totals")
         selectSegment("Expenses", in: app)
 
