@@ -96,7 +96,8 @@ struct LiveCloudKitTests {
             // A uploads a group with every kind of record in it
             await a.engine.start()
             try await a.push()
-            #expect(a.engine.status == .idle, "A after its first upload: \(a.engine.status)")
+            // the first fetch can still be finishing when the last send returns
+            #expect(await eventually(timeout: .seconds(10)) { a.engine.status == .idle }, "A after its first upload: \(a.engine.status)")
 
             // B starts from nothing and downloads all of it
             await b.engine.start()
@@ -172,7 +173,8 @@ struct LiveCloudKitTests {
             await d.engine.start()
             try? await d.engine.fetchChanges()
             #expect(try d.services.groups.group(id: group) == nil)
-            #expect(b.engine.status == .idle, "B at the end: \(b.engine.status)")
+            // the first fetch can still be finishing when the last send returns
+            #expect(await eventually(timeout: .seconds(10)) { b.engine.status == .idle }, "B at the end: \(b.engine.status)")
         } catch {
             await cleanUp(zone, container: container, devices: devices)
             throw error
