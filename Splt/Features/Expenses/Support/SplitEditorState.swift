@@ -140,7 +140,9 @@ struct SplitEditorState: Equatable, Sendable {
         case .percentages(let basisPoints):
             percent = basisPoints.mapValues { AmountInput.hundredthsText($0, locale: locale) }
         case .shares(let values):
-            weights = values.mapValues { String($0) }
+            // a split such as 1.5 to 1 is stored as 150 to 100, so it comes back in its smallest whole terms
+            let divisor = values.values.reduce(0) { Self.gcd($0, $1) }
+            weights = values.mapValues { String(divisor > 1 ? $0 / divisor : $0) }
         case .adjustments(_, let values):
             adjustments = values.mapValues { AmountInput.text(for: $0, locale: locale) }
         case .itemized(let itemized):
@@ -154,4 +156,12 @@ struct SplitEditorState: Equatable, Sendable {
     }
 
     init() {}
+}
+
+extension SplitEditorState {
+    fileprivate static func gcd(_ a: Int64, _ b: Int64) -> Int64 {
+        var (x, y) = (abs(a), abs(b))
+        while y != 0 { (x, y) = (y, x % y) }
+        return x
+    }
 }

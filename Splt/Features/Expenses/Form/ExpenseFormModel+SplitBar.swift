@@ -196,10 +196,17 @@ extension ExpenseFormModel {
         }
     }
 
+    /// Writes counts the bar worked out. Counts with a fraction were worked in hundredths, and go back as such.
     private func writeShares(_ weights: [Int64], for segments: [SplitBarSegment]) {
+        let inHundredths = sharesHaveFractions
         for (segment, weight) in zip(segments, weights) {
-            split.weights[segment.id] = String(weight)
+            split.weights[segment.id] = inHundredths ? AmountInput.hundredthsText(weight, locale: locale) : String(weight)
         }
+    }
+
+    /// True when a share count such as 1.5 makes the bar work in hundredths of a share.
+    private var sharesHaveFractions: Bool {
+        participantList.contains { (AmountInput.hundredths(split.weights[$0.id, default: "1"], locale: locale) ?? 0) % 100 != 0 }
     }
 
     // MARK: Switching the model
@@ -269,7 +276,8 @@ extension ExpenseFormModel {
         switch split.method {
         case .shares:
             var weights = current.weights
-            weights[index] = max(weights[index] + sign, 1)
+            let one: Int64 = sharesHaveFractions ? 100 : 1
+            weights[index] = max(weights[index] + sign * one, one)
             guard weights != current.weights else { return false }
             writeShares(weights, for: current.segments)
             return true

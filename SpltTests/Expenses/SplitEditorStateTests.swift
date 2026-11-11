@@ -123,6 +123,13 @@ struct SplitEditorStateTests {
         #expect(shares.weights[a] == "2")
     }
 
+    /// 1.5 to 1 is stored as 150 to 100, and reads back as 3 to 2 rather than 150 to 100.
+    @Test func fractionalSharesComeBackInSmallestTerms() {
+        let shares = SplitEditorState(definition: .shares(weights: [a: 150, b: 100]), locale: us)
+        #expect(shares.weights[a] == "3")
+        #expect(shares.weights[b] == "2")
+    }
+
     @Test func rebuildingAnUnchangedSplitGivesTheSameDefinition() {
         let original: SplitDefinition = .shares(weights: [a: 2, b: 1, c: 1])
         let state = SplitEditorState(definition: original, locale: us)
