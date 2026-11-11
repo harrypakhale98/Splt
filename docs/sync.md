@@ -19,7 +19,7 @@ CloudKit creates record types on the fly in the Development environment, but Tes
 
 1. Open the CloudKit Dashboard, choose the container and stay in Development.
 2. Choose Import Schema and pick `Config/CloudKitSchema.ckdb`. It holds every record type and every field the app can write, including the ones it only sets sometimes. Running the app once is not enough, because Development only learns a field the first time a value is saved in it.
-3. Under Record Types, check that `Person`, `Group`, `Expense`, `Payment`, `Comment`, `Activity` and `RecurringExpense` are there.
+3. Under Record Types, check that `Person`, `Group`, `Expense`, `Payment`, `Comment`, `Activity`, `RecurringExpense` and `ItemClaim` are there.
 4. Choose Deploy Schema Changes and confirm, then switch to Production and check the same types.
 
 When a release adds a field to `RecordSchema.swift`, add it to `Config/CloudKitSchema.ckdb` too (a test fails until you do), then import and deploy again before the release ships. Deploying only adds, so it is safe to repeat.
@@ -53,7 +53,7 @@ CloudKit gives everyone in a shared zone write access to the whole zone, and any
 - Amounts larger than the app itself allows, and modified dates more than ten years ahead, are refused.
 - Each device makes a recurring expense's occurrences itself, so a template only catches up on the last year, at most 100 expenses each time the app opens.
 - A person record cannot delete anyone, and only your own devices can rename you here.
-- A file name on a synced expense can only ever point at a receipt photo.
+- A file name on a synced expense can only ever point at a receipt photo, and one on a synced group only at a cover photo.
 
 Inside one group, members are trusted: anyone can edit or delete its expenses, payments and members. They can also change the name of anyone they share a group with, on the devices of everyone else in that group, because a person record has no owner. Change this only with a real test across accounts: other people's devices upload copies of a person, so the last writer is often not that person.
 
