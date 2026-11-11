@@ -63,8 +63,11 @@ struct AccountHero: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)
                     .buttonStyle(.plain)
-                    .frame(minHeight: 44)
+                    // A full-size tap target that takes no room in the layout,
+                    // so the name and this line sit together beside the avatar.
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
+                    .padding(.vertical, -12)
                     .accessibilityIdentifier("account.editProfile")
             }
             Spacer(minLength: 0)
