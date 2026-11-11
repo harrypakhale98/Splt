@@ -30,12 +30,18 @@ final class RetryScheduler {
         guard failure.isRetryable, task == nil else { return }
         let delay = policy.delay(afterFailures: attempts, for: failure)
         attempts += 1
-        task = Task { [weak self, sleep] in
+        // Detached: failures are reported from inside CKSyncEngine's delegate callbacks, and a plain
+        // Task would carry that context into the send and fetch the retry starts, which CKSyncEngine traps on.
+        task = Task.detached { [weak self, sleep] in
             await sleep(delay)
-            guard !Task.isCancelled, let self else { return }
-            self.task = nil
-            await self.action()
+            await self?.fire()
         }
+    }
+
+    private func fire() async {
+        guard !Task.isCancelled else { return }
+        task = nil
+        await action()
     }
 
     func succeeded() {

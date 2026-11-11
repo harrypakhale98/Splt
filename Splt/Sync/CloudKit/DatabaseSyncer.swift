@@ -183,7 +183,7 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
     /// does not recover from by itself. The state is dropped and a new engine fetches everything
     /// again. Once per run, so a server that keeps saying it cannot cause a loop.
     private func startOver() {
-        guard !hasStartedOver, !isStopped, let makeEngine else { return }
+        guard !hasStartedOver, !isStopped, makeEngine != nil else { return }
         hasStartedOver = true
         // the old engine may still report its state while it winds down: that state is the expired one
         isReplacingEngine = true

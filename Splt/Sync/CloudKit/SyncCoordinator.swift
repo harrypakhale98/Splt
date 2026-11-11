@@ -29,6 +29,9 @@ final class SyncCoordinator {
     private(set) var isReady = false
     private var queues: [DatabaseScope: any EngineQueue] = [:]
     private var retry: RetryScheduler?
+    /// The databases whose last send or fetch failed. One retry serves both, so a success in one must
+    /// not call off the retry the other is waiting for.
+    private var failingScopes: Set<DatabaseScope> = []
 
     /// Called with the report of every batch of remote changes, for notifications and similar.
     var onRemoteChanges: (@MainActor (ApplyReport) -> Void)?
@@ -52,6 +55,7 @@ final class SyncCoordinator {
     }
 
     func cancelRetry() {
+        failingScopes.removeAll()
         retry?.cancel()
     }
 
@@ -328,10 +332,12 @@ final class SyncCoordinator {
         let source = SyncStatusMachine.Source(scope: scope, isSending: true)
         if let worst = failures.first(where: { $0.status != nil }) ?? failures.first {
             updateStatus { $0.failed(worst, source: source) }
+            failingScopes.insert(scope)
             retry?.failed(worst)
         } else {
             updateStatus { $0.succeeded(source: source) }
-            retry?.succeeded()
+            failingScopes.remove(scope)
+            if failingScopes.isEmpty { retry?.succeeded() }
         }
     }
 
@@ -342,6 +348,7 @@ final class SyncCoordinator {
     func fetchFailed(_ error: any Error, scope: DatabaseScope) {
         let failure = SyncFailure(error)
         updateStatus { $0.failed(failure, source: .init(scope: scope, isSending: false)) }
+        failingScopes.insert(scope)
         retry?.failed(failure)
     }
 
