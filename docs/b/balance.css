@@ -1,0 +1,175 @@
+/* Splt balance link page. Every value comes from the app: Ink, PersonPalette, Depth and Typeface. */
+
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("fonts/SourceSerif4-Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Source Serif 4", Georgia, serif;
+
+  /* Ink */
+  --paper: #F3F0EA;
+  --sheet: #FFFEFB;
+  --text: #1A1917;
+  --secondary: #66635B;
+  --tertiary: #9A968C;
+  --hairline: #E2DED5;
+  --owed: #1F6B4A;
+  --owe: #B83A1E;
+
+  /* Depth: stacked card stock under one light */
+  --shadow: 0 0 0 .5px rgba(42, 33, 24, .05), 0 1px 2px rgba(42, 33, 24, .06), 0 6px 14px -4px rgba(42, 33, 24, .12);
+  --toplight: inset 0 1px 0 #fff;
+  --letterpress: rgba(255, 255, 255, .85);
+  --press: rgba(26, 25, 23, .05);
+
+  /* PersonPalette, light fills carry white text */
+  --on: #FFFFFF;
+  --p0: #B5432F; --p1: #A85510; --p2: #8A660C; --p3: #62722A;
+  --p4: #3B7A4B; --p5: #1F7668; --p6: #1F7488; --p7: #2F66A8;
+  --p8: #4B55A0; --p9: #6F4FA3; --p10: #96437F; --p11: #AF3F62;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131210;
+    --sheet: #23211D;
+    --text: #EFEDE6;
+    --secondary: #A3A097;
+    --tertiary: #6E6B63;
+    --hairline: #2E2C28;
+    --owed: #6FBF96;
+    --owe: #EE7B5C;
+    --shadow: 0 1px 1px rgba(0, 0, 0, .5);
+    --toplight: inset 0 1px 0 rgba(255, 255, 255, .07);
+    --letterpress: rgba(255, 255, 255, .05);
+    --press: rgba(239, 237, 230, .06);
+    --on: #0E0E12;
+    --p0: #E58E7A; --p1: #E3A26A; --p2: #D9BC6A; --p3: #B4C676;
+    --p4: #8CC99A; --p5: #6FC7B5; --p6: #74C1D3; --p7: #8DB3E5;
+    --p8: #A3A9E8; --p9: #BDA3E6; --p10: #DD9CCB; --p11: #E895AE;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root { --shadow: 0 0 0 1px var(--hairline); --toplight: none; --letterpress: transparent; }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { background: var(--paper); -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: -.2px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px max(28px, env(safe-area-inset-bottom));
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  background: none;
+  border: 0;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 6px; }
+
+/* Header */
+
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0 14px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 18px; letter-spacing: 0; }
+.mark { display: flex; }
+.mark i { display: block; width: 13px; height: 13px; border-radius: 50%; }
+.mark i:first-child { background: #D9694F; }
+.mark i:last-child { background: #3D8C86; margin-left: -4px; opacity: .9; }
+.whoami { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.whoami .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link { text-decoration: underline; text-underline-offset: 3px; color: var(--text); }
+
+/* Type */
+
+.title { font-family: var(--serif); font-size: 28px; font-weight: 400; letter-spacing: .2px; line-height: 1.2; overflow-wrap: anywhere; }
+.sub { font-size: 15px; color: var(--secondary); letter-spacing: -.24px; }
+.foot { font-size: 13px; color: var(--secondary); letter-spacing: -.08px; line-height: 1.38; }
+.sh { font-weight: 400; font-size: 13px; color: var(--secondary); letter-spacing: -.08px; padding: 20px 0 4px; }
+.hero {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-weight: 400;
+  letter-spacing: -.6px;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 var(--letterpress);
+  overflow-wrap: anywhere;
+}
+.settled { font-family: var(--serif); font-size: 22px; margin-top: 14px; }
+.lead { display: flex; align-items: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.owe { color: var(--owe); }
+.owed { color: var(--owed); }
+.center { text-align: center; }
+
+/* The share strip, grooved under the one big number */
+
+.strip { display: flex; gap: 2px; height: 4px; margin: 14px 0 8px; }
+.strip i { display: block; height: 4px; min-width: 2px; box-shadow: inset 0 1px .5px rgba(0, 0, 0, .35), 0 1px 0 var(--letterpress); }
+
+.snapline { display: flex; gap: 6px; align-items: flex-start; margin-top: 4px; }
+.snapline svg { flex: none; margin-top: 2px; }
+
+/* Cards and rows */
+
+.card { background: var(--sheet); border-radius: 24px; box-shadow: var(--toplight), var(--shadow); margin: 4px 0 12px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; min-height: 50px; position: relative; width: 100%; }
+.row + .row::before { content: ""; position: absolute; top: 0; left: 14px; right: 0; border-top: .5px solid var(--hairline); }
+.row.inset + .row.inset::before { left: 56px; }
+button.row:active { background: var(--press); }
+.grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.chev { flex: none; color: var(--tertiary); }
+.amt { font-family: var(--serif); font-variant-numeric: tabular-nums; font-size: 17px; letter-spacing: 0; text-align: right; white-space: nowrap; }
+.dir { font-size: 13px; letter-spacing: -.08px; text-align: right; color: var(--secondary); white-space: nowrap; }
+
+/* A person's disc */
+
+.av {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: inline-grid; place-items: center; flex: none;
+  font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--on);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 1px 2px rgba(0, 0, 0, .18);
+}
+.av.s { width: 24px; height: 24px; font-size: 11px; }
+.av.r { margin: 0 4px; }
+.p0 { background: var(--p0); } .p1 { background: var(--p1); } .p2 { background: var(--p2); } .p3 { background: var(--p3); }
+.p4 { background: var(--p4); } .p5 { background: var(--p5); } .p6 { background: var(--p6); } .p7 { background: var(--p7); }
+.p8 { background: var(--p8); } .p9 { background: var(--p9); } .p10 { background: var(--p10); } .p11 { background: var(--p11); }
+
+.quiet { display: block; width: 100%; text-align: center; font-size: 15px; padding: 6px 0 18px; }
+.get { padding: 8px 0 4px; }
+.get a { color: var(--text); font-weight: 600; text-decoration: none; }
+
+/* A link that doesn't open */
+
+.problem { padding-top: 18vh; text-align: center; }
+.problem .title { margin: 18px 0 8px; }
+.problem .sub { max-width: 320px; margin: 0 auto; }
+.problem .mark { justify-content: center; }
+.problem .mark i { width: 22px; height: 22px; }
+.problem .mark i:last-child { margin-left: -7px; }

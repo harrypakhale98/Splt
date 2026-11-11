@@ -32,18 +32,23 @@ extension SyncStoreAdapter {
         var sources: [CKRecord.ID] = []
         var copyUpdates: [(PersonCopyKey, PersonCopy)] = []
         var queueAdds: Set<PersonCopyKey> = []
+        var attachmentSlots: [String: [String: String?]] = [:]
 
         for record in modifications where !isImpostor(record.recordID.zoneID) {
             if let share = record as? CKShare {
                 report.shares.append(share)
                 continue
             }
-            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload) else {
+            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload),
+                  try isWrittenByItsClaimant(payload, record) else {
                 report.refused.append(record.recordID)
                 continue
             }
             registerZone(record.recordID.zoneID)
             report.touchedZones.insert(record.recordID.zoneID.zoneName)
+            // the server hands over a photo only during this call, so it is kept now, whichever copy wins
+            attachmentSlots[record.recordID.zoneID.zoneName, default: [:]]
+                .merge(attachments.received(record, type: payload.recordType, keepFiles: true)) { $1 }
             if payload.recordType == .person {
                 let key = PersonCopyKey(zoneName: record.recordID.zoneID.zoneName, recordName: payload.recordName)
                 copyUpdates.append((key, PersonCopy(systemFields: payload.systemFields, sentModifiedAt: payload.modifiedAt)))
@@ -85,6 +90,13 @@ extension SyncStoreAdapter {
         for deletion in deletions where !isImpostor(deletion.id.zoneID) {
             try applyDeletion(id: deletion.id, recordType: deletion.recordType)
         }
+        if !attachmentSlots.isEmpty {
+            updateMetadata { metadata in
+                for (zone, slots) in attachmentSlots {
+                    metadata.setAttachments(slots, zoneName: zone)
+                }
+            }
+        }
         if !copyUpdates.isEmpty || !queueAdds.isEmpty {
             updateMetadata { metadata in
                 for (key, copy) in copyUpdates {
@@ -112,6 +124,21 @@ extension SyncStoreAdapter {
         }
         // records never move between groups, so the same name in another zone is someone else's
         return local.zoneName == payload.zoneName
+    }
+
+    /// A claim says which items a person had, and anyone in the group can write one. It only counts
+    /// for the person who wrote it: the iCloud user that person is, or this person's own devices.
+    /// It must also have the one id a person's claim on that expense has, so nobody holds two.
+    private func isWrittenByItsClaimant(_ payload: SyncPayload, _ record: CKRecord) throws -> Bool {
+        guard payload.recordType == .itemClaim else { return true }
+        guard let expense = payload.fields.uuid("expenseID"), let person = payload.fields.uuid("personID"),
+              payload.recordName == ItemClaimRecord.claimID(expenseID: expense, personID: person).uuidString else {
+            return false
+        }
+        guard !isFromMe(record), let author = lastModifier(record) else { return true }
+        if CloudIdentity.personID(forUserRecordName: author).rawValue == person { return true }
+        // someone who joined in place of a person added by name keeps that person's id
+        return try PersonRecord.find(recordName: person.uuidString, in: tracker.context)?.claimedByCloudUserID == author
     }
 
     /// Zones are looked up by name alone, and anyone can create a zone with any name and share it.
@@ -246,13 +273,14 @@ extension SyncStoreAdapter {
         case .comment: try context.fetch(FetchDescriptor<CommentRecord>()).forEach { $0.systemFields = nil }
         case .activity: try context.fetch(FetchDescriptor<ActivityRecord>()).forEach { $0.systemFields = nil }
         case .recurringExpense: try context.fetch(FetchDescriptor<RecurringExpenseRecord>()).forEach { $0.systemFields = nil }
+        case .itemClaim: try context.fetch(FetchDescriptor<ItemClaimRecord>()).forEach { $0.systemFields = nil }
         }
     }
 }
 
 extension SyncPayload {
     /// Larger amounts cannot be typed or imported, so one that arrives was made to overflow the sums on some screen.
-    fileprivate var amountsAreEnterable: Bool {
+    var amountsAreEnterable: Bool {
         let limit = UInt64(MoneyParser.maximumMinorUnits)
         switch recordType {
         case .expense, .recurringExpense:
@@ -262,7 +290,7 @@ extension SyncPayload {
             }
         case .payment:
             return (fields.int("amountMinorUnits")?.magnitude ?? 0) <= limit
-        case .person, .group, .comment, .activity:
+        case .person, .group, .comment, .activity, .itemClaim:
             return true
         }
     }

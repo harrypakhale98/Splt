@@ -22,6 +22,7 @@ struct PayerSection: View {
                     get: { model.payer.isMultiple },
                     set: { model.setMultiplePayers($0) }
                 ))
+                    .tint(Ink.switchOn)
 
                 if model.payer.isMultiple {
                     PeopleChips(

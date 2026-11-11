@@ -46,6 +46,10 @@ struct GroupActivityText {
             return String(localized: "\(actor) commented on \(expense.title): \(text)")
         case .expensesImported(let expenses, let payments):
             return String(localized: "\(actor) imported \(expenses) expenses and \(payments) payments")
+        case .reminderSent(let recipient, let amounts):
+            let owed = ListFormatter.localizedString(byJoining: amounts.map { MoneyFormatting.magnitudeString($0, locale: locale) })
+            if recipient == currentPerson { return String(localized: "\(actor) reminded you: you owe \(owed)") }
+            return String(localized: "\(actor) reminded \(member(recipient)) about \(owed)")
         }
     }
 

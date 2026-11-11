@@ -32,6 +32,7 @@ private struct GroupDetailContent: View {
     @State private var summary: String?
     @State private var condensed = false
     @State private var showsRecap = false
+    @State private var showsBalanceLink = false
 
     init(groupID: GroupID, services: DataServices) {
         _model = State(initialValue: GroupDetailViewModel(groupID: groupID, services: services))
@@ -116,12 +117,21 @@ private struct GroupDetailContent: View {
         .sheet(item: $settleRoute) { route in
             SettleUpSheet(route: route)
         }
+        .sheet(isPresented: $showsBalanceLink) {
+            if let group = model.group {
+                ShareBalanceLinkView(
+                    group: group, me: model.me?.id, people: model.peopleByID,
+                    expenses: model.expenses, balances: model.balances
+                )
+            }
+        }
         .closingSheetsOnLink {
             showsRecap = false
             showsAddExpense = false
             showsSettings = false
             showsCustomRange = false
             settleRoute = nil
+            showsBalanceLink = false
         }
         .navigationDestination(isPresented: $showsActivity) {
             GroupActivityView(entries: model.activity, text: model.activityText)
@@ -171,7 +181,7 @@ private struct GroupDetailContent: View {
         case .balances:
             GroupBalancesSection(model: model, onSettle: { settleRoute = model.settleRoute(for: $0) })
         case .totals:
-            GroupTotalsSection(model: model, summary: summary, onRecap: { showsRecap = true })
+            GroupSpendingSection(model: model, onRecap: { showsRecap = true })
         }
     }
 
@@ -267,6 +277,13 @@ private struct GroupDetailContent: View {
             if model.segment == .expenses { filterMenu }
             Button("Add Expense", systemImage: "plus") {
                 showsAddExpense = true
+            }
+        }
+        if let group = model.group, group.memberIDs.contains(where: { $0 != model.me?.id }) {
+            ToolbarItem(placement: .primaryAction) {
+                Menu("Share", systemImage: "square.and.arrow.up") {
+                    Button("Share as a Link", systemImage: "link") { showsBalanceLink = true }
+                }
             }
         }
         ToolbarItemGroup(placement: .secondaryAction) {

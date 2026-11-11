@@ -1,13 +1,13 @@
 import SwiftData
 
 /// Lists every schema version in order and the steps between them.
-/// Version 1 is the first release, so there is nothing to migrate yet.
 enum SpltMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SpltSchemaV1.self]
+        [SpltSchemaV1.self, SpltSchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
-        []
+        // version 2 only adds optional fields and a new kind of record
+        [.lightweight(fromVersion: SpltSchemaV1.self, toVersion: SpltSchemaV2.self)]
     }
 }

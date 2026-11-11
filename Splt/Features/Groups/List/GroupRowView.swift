@@ -1,7 +1,7 @@
 import SpltCore
 import SwiftUI
 
-/// One group in the list: its glyph, name, one quiet line and your balance in a word and a figure.
+/// One group in the list: its glyph or cover photo, name, one quiet line and your balance in a word and a figure.
 struct GroupRowView: View {
     let summary: GroupSummary
 
@@ -9,7 +9,7 @@ struct GroupRowView: View {
 
     var body: some View {
         let lines = BalanceLine.lines(for: summary.myBalance)
-        let glyph = GroupGlyph(symbol: summary.group.symbol, size: 32)
+        let glyph = GroupGlyph(symbol: summary.group.symbol, cover: summary.group.shownCoverFileName, size: 32)
         Group {
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 8) {

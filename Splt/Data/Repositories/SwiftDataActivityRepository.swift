@@ -19,15 +19,20 @@ final class SwiftDataActivityRepository: ActivityRepository {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         descriptor.fetchLimit = limit
-        return try env.context.fetch(descriptor).compactMap(ActivityEntry.init)
+        let me = try env.currentUser()?.personID
+        return try env.context.fetch(descriptor).compactMap(ActivityEntry.init).filter { $0.isShown(to: me) }
     }
 
-    /// Counts only what the Activity screen can show. A later version may sync kinds of activity
-    /// this one cannot read, and a badge for a row nobody can see or mark read would never clear.
+    /// Only rows the feed can show count, so a kind from a newer version, which this one can't read,
+    /// never leaves a badge that nothing on screen can clear.
     func unreadCount() throws -> Int {
-        try env.context.fetch(FetchDescriptor<ActivityRecord>(
+        let me = try env.currentUser()?.personID
+        return try env.context.fetch(FetchDescriptor<ActivityRecord>(
             predicate: #Predicate { $0.isRead == false && $0.deletedAt == nil }
-        )).compactMap(ActivityEntry.init).count
+        ))
+        .compactMap(ActivityEntry.init)
+        .filter { $0.isShown(to: me) }
+        .count
     }
 
     func markRead(ids: [UUID]) throws {
@@ -39,6 +44,28 @@ final class SwiftDataActivityRepository: ActivityRepository {
             record.isRead = true
         }
         try env.save()
+    }
+
+    func recordReminder(to person: PersonID, amounts: [Money], in group: GroupID) throws {
+        try env.log(.reminderSent(to: person, amounts: amounts), groupID: group)
+        try env.save()
+    }
+
+    @discardableResult
+    func expireReminders(sentBefore cutoff: Date) throws -> Int {
+        guard let me = try env.currentUser()?.id else { return 0 }
+        let kind = ActivityKind.reminderSent.rawValue
+        let old = try env.context.fetch(FetchDescriptor<ActivityRecord>(
+            predicate: #Predicate { $0.kindRaw == kind && $0.deletedAt == nil && $0.createdAt < cutoff }
+        ))
+        // only the sender's devices remove a reminder; everyone else just receives the deletion
+        let mine = old.filter { $0.actorID == me }
+        guard !mine.isEmpty else { return 0 }
+        for record in mine {
+            env.tracker.tombstone(record)
+        }
+        try env.save()
+        return mine.count
     }
 
     func markAllRead() throws {

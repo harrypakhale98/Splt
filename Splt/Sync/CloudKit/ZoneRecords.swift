@@ -12,6 +12,7 @@ extension ChangeTracker {
         all += try context.fetch(FetchDescriptor<CommentRecord>(predicate: #Predicate { $0.zoneName == zone }))
         all += try context.fetch(FetchDescriptor<ActivityRecord>(predicate: #Predicate { $0.zoneName == zone }))
         all += try context.fetch(FetchDescriptor<RecurringExpenseRecord>(predicate: #Predicate { $0.zoneName == zone }))
+        all += try context.fetch(FetchDescriptor<ItemClaimRecord>(predicate: #Predicate { $0.zoneName == zone }))
         return all
     }
 

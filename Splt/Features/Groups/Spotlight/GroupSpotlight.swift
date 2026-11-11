@@ -35,14 +35,15 @@ enum GroupSpotlight {
         isIndexed(group) && !left.contains(group.id)
     }
 
-    static func item(for group: SplitGroup, memberNames: [String]) -> CSSearchableItem {
+    static func item(for group: SplitGroup, memberNames: [String], covers: PhotoStore = .covers) -> CSSearchableItem {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.title = group.name
         attributes.contentDescription = memberNames.isEmpty
             ? String(localized: "Splt group")
             : String(localized: "Splt group with \(memberNames.joined(separator: ", "))")
         attributes.keywords = [group.name, "Splt", "group"] + memberNames
-        attributes.thumbnailData = thumbnail(symbol: group.symbol)
+        // the cover photo, as in the app, or the symbol while there is none on this device
+        attributes.thumbnailData = group.shownCoverFileName.flatMap { covers.thumbnail(named: $0) } ?? thumbnail(symbol: group.symbol)
         let item = CSSearchableItem(
             uniqueIdentifier: identifier(for: group.id), domainIdentifier: domain, attributeSet: attributes
         )

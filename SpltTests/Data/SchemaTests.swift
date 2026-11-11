@@ -7,16 +7,21 @@ import Testing
 @MainActor
 @Suite("Schema and container")
 struct SchemaTests {
-    @Test func versionOneListsEveryRecordType() {
+    @Test func versionOneKeepsTheSevenFirstRecordTypes() {
         #expect(SpltSchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(SpltSchemaV1.models.count == 7)
-        #expect(SpltSchemaV1.models.count == SyncRecordType.allCases.count)
     }
 
-    @Test func migrationPlanHasOneSchemaAndNoStagesYet() {
-        #expect(SpltMigrationPlan.schemas.count == 1)
-        #expect(SpltMigrationPlan.schemas.first.map(ObjectIdentifier.init) == ObjectIdentifier(SpltSchemaV1.self))
-        #expect(SpltMigrationPlan.stages.isEmpty)
+    @Test func currentVersionListsEveryRecordType() {
+        #expect(SpltSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
+        #expect(SpltSchemaV2.models.count == SyncRecordType.allCases.count)
+    }
+
+    @Test func migrationPlanGoesFromOneToTwo() {
+        #expect(SpltMigrationPlan.schemas.map(ObjectIdentifier.init) == [
+            ObjectIdentifier(SpltSchemaV1.self), ObjectIdentifier(SpltSchemaV2.self)
+        ])
+        #expect(SpltMigrationPlan.stages.count == 1)
     }
 
     @Test func inMemoryContainersAreIndependent() throws {

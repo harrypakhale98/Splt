@@ -18,7 +18,7 @@ final class GroupDetailViewModel {
             switch self {
             case .expenses: String(localized: "Expenses")
             case .balances: String(localized: "Balances")
-            case .totals: String(localized: "Totals")
+            case .totals: String(localized: "Spending")
             }
         }
     }
@@ -62,8 +62,15 @@ final class GroupDetailViewModel {
 
         var totalsRevision = -1
         var totals: [GroupTotals] = []
+        var spendingKey: SpendingKey?
+        var spending: SpendingSummary?
         var recapRevision = -1
         var recapStats: RecapStats?
+        struct SpendingKey: Equatable {
+            var revision: Int
+            var range: SpendingRange
+        }
+
         var sectionsKey: SectionsKey?
         var sections: [ExpenseSection] = []
         var summariesRevision = -1
@@ -183,20 +190,26 @@ final class GroupDetailViewModel {
         )
     }
 
-    /// Opens the expenses a person paid for, from their bar on Totals.
-    func showExpenses(paidBy person: PersonID) {
-        drill { $0.payer = person }
+    /// Opens the expenses a person paid for, from their bar on Spending, over the dates the tab covers.
+    func showExpenses(paidBy person: PersonID, during dates: Range<Date>? = nil) {
+        drill(dates) { $0.payer = person }
     }
 
-    /// Opens the expenses in a category, from its bar on Totals.
-    func showExpenses(in category: ExpenseCategory) {
-        drill { $0.category = category }
+    /// Opens the expenses in a category, from its bar on Spending, over the dates the tab covers.
+    func showExpenses(in category: ExpenseCategory, during dates: Range<Date>? = nil) {
+        drill(dates) { $0.category = category }
     }
 
-    private func drill(_ change: (inout ExpenseFilter) -> Void) {
+    private func drill(_ dates: Range<Date>? = nil, _ change: (inout ExpenseFilter) -> Void) {
         var next = filter
         next.clearFilters()
         next.query = ""
+        if let dates {
+            // the filter's custom range counts whole days, up to and including its last one
+            next.period = .custom
+            next.customStart = dates.lowerBound
+            next.customEnd = calendar.date(byAdding: .day, value: -1, to: dates.upperBound) ?? dates.upperBound
+        }
         change(&next)
         Motion.perform(Motion.smooth) {
             filter = next
@@ -317,6 +330,24 @@ final class GroupDetailViewModel {
         memo.totalsRevision = revision
         memo.totals = built
         return built
+    }
+
+    /// Your share and the group's spending over a range, a bucket per currency with the group's own first.
+    func spending(in range: SpendingRange) -> SpendingSummary {
+        _ = expenses
+        let key = Memo.SpendingKey(revision: revision, range: range)
+        if memo.spendingKey == key, let cached = memo.spending { return cached }
+        let built = SpendingSummary.make(
+            expenses: expenses, me: me?.id, range: range, now: now(), calendar: calendar, lead: group?.currencyCode
+        )
+        memo.spendingKey = key
+        memo.spending = built
+        return built
+    }
+
+    /// The dates a range covers, for opening the expenses behind a bar. Nil for all time.
+    func dates(of range: SpendingRange) -> Range<Date>? {
+        range.dateRange(now: now(), calendar: calendar)
     }
 
     /// The totals in the group's own currency, or the biggest one when that has no spending.

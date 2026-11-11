@@ -21,6 +21,7 @@ struct RepeatSection: View {
                         get: { model.repeatChoice.endDate != nil },
                         set: { model.repeatChoice.endDate = $0 ? RepeatChoice.defaultEnd(from: earliest) : nil }
                     ))
+                        .tint(Ink.switchOn)
                     if let end = model.repeatChoice.endDate {
                         DatePicker(
                             "Ends", selection: Binding(get: { end }, set: { model.repeatChoice.endDate = RepeatChoice.lastMoment(of: $0) }),

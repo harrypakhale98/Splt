@@ -1,7 +1,7 @@
 import SwiftUI
 import UserNotifications
 
-/// The preference, sync, import and about sections of the Account screen.
+/// The preference, sync, import, backup and about sections of the Account screen.
 struct SettingsSections: View {
     @Environment(Router.self) private var router
     @Environment(\.scenePhase) private var scenePhase
@@ -19,8 +19,15 @@ struct SettingsSections: View {
                         value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
                     )
                 }
+                Picker("Appearance", selection: preferences.$appearance) {
+                    ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.menu)
+                .tint(Ink.secondary)
                 Toggle("Haptics", isOn: preferences.$hapticsEnabled)
+                    .tint(Ink.switchOn)
                 Toggle("Notifications", isOn: preferences.$notificationsEnabled)
+                    .tint(Ink.switchOn)
                     .task(id: preferences.notificationsEnabled) { await checkNotifications() }
                     .onChange(of: scenePhase) { _, phase in
                         if phase == .active { Task { await checkNotifications() } }
@@ -58,6 +65,8 @@ struct SettingsSections: View {
         } header: {
             SectionHeader("Import")
         }
+
+        BackupSection()
 
         Section {
             RaisedRows {

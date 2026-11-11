@@ -3,10 +3,16 @@ import UIKit
 
 struct ReceiptSection: View {
     let model: ExpenseDetailModel
-    private let store = ReceiptStore.standard
+    private let store = PhotoStore.receipts
     @State private var showsFullScreen = false
     /// Whether the photo file is here, checked once per file rather than on every redraw.
-    @State private var isOnDevice = true
+    @State private var isOnDevice: Bool
+
+    init(model: ExpenseDetailModel) {
+        self.model = model
+        // checked up front, so a photo that hasn't arrived never flashes an empty thumbnail first
+        _isOnDevice = State(initialValue: model.receiptFileName.map { PhotoStore.receipts.exists($0) } ?? true)
+    }
 
     var body: some View {
         if let fileName = model.receiptFileName {
@@ -29,7 +35,8 @@ struct ReceiptSection: View {
                             }
                             .closingSheetsOnLink { showsFullScreen = false }
                         } else {
-                            Label("The receipt photo is not on this device.", systemImage: "icloud.slash")
+                            // another phone took it; sync brings it, so this is a wait, not an error
+                            Label("The receipt photo hasn't arrived on this iPhone yet.", systemImage: "icloud.and.arrow.down")
                                 .foregroundStyle(Ink.secondary)
                         }
                     }
@@ -51,7 +58,7 @@ struct ReceiptSection: View {
 
 struct FullScreenReceiptView: View {
     let fileName: String
-    let store: ReceiptStore
+    let store: PhotoStore
 
     @Environment(\.dismiss) private var dismiss
     /// The photo, decoded once when the viewer opens rather than on every pinch.

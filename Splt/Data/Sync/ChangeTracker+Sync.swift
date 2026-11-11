@@ -129,6 +129,10 @@ extension ChangeTracker {
             if let entry = record as? ActivityRecord, let actor = entry.actorID, try isCurrentUser(actor) {
                 entry.isRead = true
             }
+            // a reminder between two other people is theirs: it never shows here, so it isn't news either
+            if let entry = record as? ActivityRecord, let recipient = entry.reminderRecipient, try !isCurrentUser(recipient) {
+                entry.isRead = true
+            }
             context.insert(record)
             return .inserted
         }

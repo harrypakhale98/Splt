@@ -39,6 +39,8 @@ final class Router {
     var activityPath: [Route] = []
     var searchPath: [Route] = []
     var accountPath: [Route] = []
+    /// A backup file opened from Files or another app, waiting for Account to show what it holds.
+    var openedBackup: OpenedBackup?
 
     init(selectedTab: AppTab = .groups) {
         self.selectedTab = selectedTab
@@ -94,6 +96,12 @@ final class Router {
 
     @discardableResult
     func open(_ url: URL) -> Bool {
+        if url.isFileURL, url.pathExtension.lowercased() == BackupDocument.fileExtension {
+            openedBackup = OpenedBackup(url: url)
+            // a form with typed work stays open; the backup waits for the next time Account opens
+            if !hasUnsavedForm { openAccount() }
+            return true
+        }
         guard let link = DeepLink(url: url) else { return false }
         open(link)
         return true
@@ -131,4 +139,10 @@ final class Router {
             sheet = .newFriend
         }
     }
+}
+
+/// A backup file handed to the app, shown in its own restore sheet.
+struct OpenedBackup: Identifiable, Hashable, Sendable {
+    let id = UUID()
+    let url: URL
 }

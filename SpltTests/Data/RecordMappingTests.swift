@@ -146,7 +146,7 @@ struct RecordMappingTests {
             .memberAdded(a), .memberRemoved(b), .expenseAdded(ref), .expenseEdited(ref), .expenseDeleted(ref),
             .expenseRestored(ref), .paymentRecorded(pay), .paymentUndone(pay),
             .commentAdded(expense: ref, text: "hi"), .commentAdded(expense: nil, text: "hi"),
-            .expensesImported(expenses: 4, payments: 1)
+            .expensesImported(expenses: 4, payments: 1), .reminderSent(to: b, amounts: [usdAmount(1200)])
         ]
         for event in events {
             let entry = ActivityEntry(groupID: group, actorID: a, event: event, createdAt: when, isRead: true)

@@ -108,6 +108,7 @@ private struct CreateGroupForm: View {
 
             Section {
                 Toggle("Simplify Debts", isOn: $model.simplifiesDebts)
+                    .tint(Ink.switchOn)
                     .raisedRow()
             } footer: {
                 Text("Combines debts so the group settles with as few payments as possible.")

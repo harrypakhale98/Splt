@@ -15,6 +15,8 @@ protocol ExpenseRepository {
     /// Stores the edit, appends to the edit history and writes an activity entry.
     /// Pass nil extras to leave the receipt, location and recurrence as they are. Does nothing if nothing changed.
     func update(_ expense: Expense, extras: ExpenseExtras?) throws
+    /// The activity entries of the expense's edits, oldest first, in whichever group they were made.
+    func edits(of id: ExpenseID) throws -> [ActivityEntry]
     /// Soft deletes the expense. It leaves balances but stays in history.
     func delete(id: ExpenseID) throws
     /// Undoes `delete`.

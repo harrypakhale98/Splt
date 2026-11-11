@@ -11,6 +11,8 @@ struct GroupInviteSection: View {
 
     private let runtime = SyncRuntime.shared
     @State private var sharing: GroupSharingModel?
+    @State private var didShare = false
+    @State private var asksForNotifications = false
 
     var body: some View {
         Section {
@@ -46,10 +48,17 @@ struct GroupInviteSection: View {
             }
         }
         .raisedSection()
-        .sheet(item: preparedBinding) { prepared in
-            CloudSharingView(groupShare: prepared.groupShare, onStopped: { sharing?.prepared = nil })
-                .ignoresSafeArea()
+        .sheet(item: preparedBinding, onDismiss: {
+            // once the invite sheet is gone, the people invited will start adding things
+            if didShare, NotificationAsk.shouldAsk() { asksForNotifications = true }
+            didShare = false
+        }) { prepared in
+            CloudSharingView(
+                groupShare: prepared.groupShare, onSaved: { didShare = true }, onStopped: { sharing?.prepared = nil }
+            )
+            .ignoresSafeArea()
         }
+        .notificationAsk(isPresented: $asksForNotifications)
         .alert("Couldn't Invite", isPresented: failureBinding) {
             Button("OK", role: .cancel) { sharing?.dismissError() }
         } message: {

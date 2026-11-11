@@ -5,9 +5,9 @@ import UIKit
 @testable import Splt
 
 @Suite("Receipt store")
-struct ReceiptStoreTests {
-    private func store() -> ReceiptStore {
-        ReceiptStore(directory: FileManager.default.temporaryDirectory.appending(path: "splt-store-\(UUID().uuidString)"))
+struct PhotoStoreTests {
+    private func store() -> PhotoStore {
+        PhotoStore(directory: FileManager.default.temporaryDirectory.appending(path: "splt-store-\(UUID().uuidString)"))
     }
 
     private func photo(side: CGFloat) -> Data {
@@ -32,10 +32,10 @@ struct ReceiptStoreTests {
 
     @Test func compressionShrinksLargeImages() throws {
         let big = photo(side: 3_000)
-        let small = try #require(ReceiptStore.compressed(big))
+        let small = try #require(PhotoStore.compressed(big))
         #expect(small.count < big.count)
         let image = try #require(UIImage(data: small))
-        #expect(max(image.size.width, image.size.height) * image.scale <= CGFloat(ReceiptStore.maximumPixels))
+        #expect(max(image.size.width, image.size.height) * image.scale <= CGFloat(PhotoStore.maximumPixels))
     }
 
     private func page(width: CGFloat, height: CGFloat, color: UIColor) -> Data {
@@ -62,7 +62,7 @@ struct ReceiptStoreTests {
     @Test func pagesOfAScanAreJoinedTopToBottom() throws {
         let first = page(width: 400, height: 600, color: .red)
         let second = page(width: 200, height: 150, color: .blue)
-        let data = try #require(ReceiptStore.stitched([first, second]))
+        let data = try #require(PhotoStore.stitched([first, second]))
         let image = try #require(UIImage(data: data)?.cgImage)
         // the narrow page is drawn as wide as the first, so it is 300 tall
         #expect(image.width == 400)
@@ -75,23 +75,23 @@ struct ReceiptStoreTests {
 
     @Test func aLongScanIsScaledDownToWhatOnePhotoMayHold() throws {
         let pages = (0..<3).map { _ in page(width: 2_000, height: 2_000, color: .orange) }
-        let data = try #require(ReceiptStore.stitched(pages))
+        let data = try #require(PhotoStore.stitched(pages))
         let image = try #require(UIImage(data: data)?.cgImage)
-        #expect(image.width * image.height <= ReceiptStore.maximumPixels * ReceiptStore.maximumPixels)
+        #expect(image.width * image.height <= PhotoStore.maximumPixels * PhotoStore.maximumPixels)
         #expect(image.width > 1_100)
         #expect(abs(image.height - image.width * 3) <= 3)
     }
 
     @Test func oneReadablePageIsKeptAsItIs() {
         let only = page(width: 300, height: 400, color: .orange)
-        #expect(ReceiptStore.stitched([only]) == only)
-        #expect(ReceiptStore.stitched([Data("not an image".utf8), only]) == only)
-        #expect(ReceiptStore.stitched([Data("not an image".utf8)]) == nil)
-        #expect(ReceiptStore.stitched([]) == nil)
+        #expect(PhotoStore.stitched([only]) == only)
+        #expect(PhotoStore.stitched([Data("not an image".utf8), only]) == only)
+        #expect(PhotoStore.stitched([Data("not an image".utf8)]) == nil)
+        #expect(PhotoStore.stitched([]) == nil)
     }
 
     @Test func unreadableDataIsRejected() {
-        #expect(ReceiptStore.compressed(Data("not an image".utf8)) == nil)
+        #expect(PhotoStore.compressed(Data("not an image".utf8)) == nil)
     }
 
     @Test func namesCannotEscapeTheFolder() {
@@ -103,7 +103,7 @@ struct ReceiptStoreTests {
     @Test(arguments: ["..", ".", "", "/", "../..", "Thumbnails", "../Thumbnails", "secret.sqlite"])
     func aNameFromAnotherDeviceCannotReachOtherFiles(name: String) throws {
         let base = FileManager.default.temporaryDirectory.appending(path: "splt-base-\(UUID().uuidString)")
-        let store = ReceiptStore(directory: base.appending(path: "Receipts"))
+        let store = PhotoStore(directory: base.appending(path: "Receipts"))
         let kept = try store.save(photo(side: 50))
         let beside = base.appending(path: "default.store")
         try Data("store".utf8).write(to: beside)

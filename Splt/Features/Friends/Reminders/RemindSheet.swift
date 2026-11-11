@@ -1,7 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// Asks a friend to pay you back: share a short message, or schedule a reminder for yourself.
+/// Asks a friend to pay you back: remind them in Splt when you share a group, share a short
+/// message, or schedule a reminder for yourself.
 struct RemindSheet: View {
     let friend: Person
     /// What the friend owes you, one amount per currency.
@@ -12,6 +13,10 @@ struct RemindSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
     @Environment(Router.self) private var router
+    @Environment(\.dataServices) private var services
+    @Environment(\.groupSharing) private var sharing
+    @State private var inApp: InAppReminder.State = .unavailable
+    @State private var inAppFailed = false
     @State private var outcome: ReminderScheduler.Outcome?
     @State private var opensAccount = false
     @State private var showsSettingsPrompt = false
@@ -29,12 +34,19 @@ struct RemindSheet: View {
                     RaisedRows {
                         Text(message)
                             .textSelection(.enabled)
+                        if inApp != .unavailable {
+                            Button("Remind in Splt", systemImage: "bell", action: remindInApp)
+                                .disabled(!inApp.isReady)
+                        }
                         ShareLink(item: message) {
                             Label("Send Reminder", systemImage: "paperplane")
                         }
                     }
                 } header: {
                     SectionHeader("Message")
+                        .padding(.horizontal, Depth.pageMargin + 4)
+                } footer: {
+                    inAppFooter
                         .padding(.horizontal, Depth.pageMargin + 4)
                 }
                 .raisedSection()
@@ -65,6 +77,12 @@ struct RemindSheet: View {
             .onDisappear {
                 if opensAccount { router.openAccount() }
             }
+            .task { await loadInApp() }
+            .alert("Couldn't Send", isPresented: $inAppFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The reminder couldn't be saved. Please try again.")
+            }
             .alert("Turn On Notifications", isPresented: $showsSettingsPrompt) {
                 Button("Open Settings") {
                     opensAccount = true
@@ -76,6 +94,42 @@ struct RemindSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    @ViewBuilder
+    private var inAppFooter: some View {
+        let first = ReminderMessage.firstName(friend.name)
+        switch inApp {
+        case .unavailable:
+            EmptyView()
+        case .ready:
+            Text("\(first) gets a notification from Splt.")
+        case .sentToday:
+            Text("You already reminded \(first) in Splt today. You can again tomorrow.")
+        case .sent:
+            Text("Sent. \(first) will see it in Splt.")
+        }
+    }
+
+    private func loadInApp() async {
+        guard let services else { return }
+        var synced = await sharing.groupsSharedWithMe()
+        let groups = (try? services.groups.groups(includeArchived: false)) ?? []
+        for group in groups where group.memberIDs.contains(friend.id) && !synced.contains(group.id) {
+            if await sharing.isSharedByMe(groupID: group.id) { synced.insert(group.id) }
+        }
+        inApp = InAppReminder(services: services).state(for: friend, synced: synced)
+    }
+
+    private func remindInApp() {
+        guard let services, case .ready(let targets) = inApp else { return }
+        do {
+            try InAppReminder(services: services).send(to: friend.id, targets: targets)
+            inApp = .sent
+            AccessibilityNotification.Announcement(String(localized: "Reminder sent")).post()
+        } catch {
+            inAppFailed = true
+        }
     }
 
     @ViewBuilder

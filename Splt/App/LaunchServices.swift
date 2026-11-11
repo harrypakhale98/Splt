@@ -23,10 +23,14 @@ enum LaunchServices {
     }
 
     /// Files that outlived what they belong to: photos of deleted groups, and exports already sent.
+    /// Then, once, photos from before 1.1 are queued for sync.
     @MainActor
     private static func removeLeftovers(_ services: DataServices) {
-        try? ReceiptStore.standard.removeUnreferenced(in: services.environment.context)
+        try? PhotoStore.receipts.removeUnreferenced(in: services.environment.context)
+        try? PhotoStore.covers.removeUnreferencedCovers(in: services.environment.context)
         try? FileManager.default.removeItem(at: GroupExportFile.defaultDirectory)
+        // after the leftovers are gone, so only photos something still shows are sent
+        PhotoBackfill.runOnce(tracker: services.environment.tracker)
     }
 }
 

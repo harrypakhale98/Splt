@@ -20,6 +20,10 @@ enum ActivityDestination {
         case .memberAdded(let person), .memberRemoved(let person):
             if person != me, group?.kind != .friend { return .friend(person.rawValue) }
             return groupRoute(entry, group, me: me)
+        case .reminderSent(let recipient, _):
+            let other = entry.actorID == me ? recipient : entry.actorID
+            if let other, other != me, group?.kind != .friend { return .friend(other.rawValue) }
+            return groupRoute(entry, group, me: me)
         case .expenseDeleted, .groupCreated, .groupRenamed, .groupArchived, .groupRestored, .expensesImported:
             return groupRoute(entry, group, me: me)
         }

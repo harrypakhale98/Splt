@@ -9,8 +9,8 @@ settings:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     TARGETED_DEVICE_FAMILY: "1"
-    MARKETING_VERSION: "1.0.1"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "1.1"
+    CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: DUHVN68KBA
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 packages:
@@ -40,6 +40,21 @@ targets:
             CFBundleURLSchemes:
               - splt
         CKSharingSupported: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Splt Backup
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.harrypakhale.splt.backup
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.harrypakhale.splt.backup
+            UTTypeDescription: Splt Backup
+            UTTypeConformsTo:
+              - public.data
+              - public.content
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - spltbackup
+        LSSupportsOpeningDocumentsInPlace: false
         UIBackgroundModes:
           - remote-notification
         UILaunchScreen:
@@ -55,7 +70,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Dictate expenses by voice.
-        INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts and invite codes.
+        INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts and invite codes, and take group photos.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         SWIFT_EMIT_LOC_STRINGS: YES

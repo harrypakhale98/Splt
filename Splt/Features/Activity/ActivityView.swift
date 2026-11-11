@@ -29,14 +29,19 @@ private struct ActivityContent: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var model: ActivityModel
+    @State private var spending: SpendingModel
 
     init(services: DataServices) {
         _model = State(initialValue: ActivityModel(services: services))
+        _spending = State(initialValue: SpendingModel(services: services, range: .thisMonth))
     }
 
     var body: some View {
         List {
-            if !model.entries.isEmpty { typePicker }
+            if !model.entries.isEmpty {
+                spendingHeader
+                typePicker
+            }
             ForEach(model.sections) { section in
                 Section {
                     RaisedRows(padding: EdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)) {
@@ -114,6 +119,50 @@ private struct ActivityContent: View {
                 actionTitle: "Clear Filters",
                 action: { model.clearFilters() }
             )
+        }
+    }
+
+    /// Your share this month, in the label-and-figure pattern of the Groups balance. Not a card:
+    /// it sits on the paper, and "See spending" opens the whole picture.
+    private var spendingHeader: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Your share in \(Date().formatted(.dateTime.month(.wide).locale(locale)))")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                    HeroAmount(spending.share, showsSign: spending.share.minorUnits < 0)
+                    let left = spending.notConvertedAmounts
+                    if !left.isEmpty {
+                        Text("Also \(ListFormatter.localizedString(byJoining: left.map { MoneyFormatting.string($0, locale: locale, showsSign: $0.minorUnits < 0) }))")
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .foregroundStyle(Ink.secondary)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                Button {
+                    router.push(.spending, in: .activity)
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("See spending")
+                            .foregroundStyle(Ink.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Ink.tertiary)
+                            .accessibilityHidden(true)
+                    }
+                    .font(.subheadline)
+                    .frame(minHeight: 32)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 2, leading: 20, bottom: 8, trailing: 20))
         }
     }
 

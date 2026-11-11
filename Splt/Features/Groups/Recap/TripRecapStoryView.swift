@@ -110,6 +110,7 @@ struct TripRecapStoryView: View {
 
     private var hideToggle: some View {
         Toggle("Hide Amounts", isOn: $hidesAmounts)
+            .tint(Ink.switchOn)
             .font(.subheadline)
     }
 

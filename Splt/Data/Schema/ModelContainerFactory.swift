@@ -8,7 +8,7 @@ enum ModelContainerFactory {
     /// SwiftData's own CloudKit mirroring is switched off: sync is done by the sync engine
     /// through the change tracker, not by SwiftData.
     static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: SpltSchemaV1.self)
+        let schema = Schema(versionedSchema: SpltSchemaV2.self)
         let configuration: ModelConfiguration
         if inMemory {
             configuration = ModelConfiguration(

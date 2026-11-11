@@ -1,8 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// The top of a group, straight on paper: its name, dates and people, your balance in big numerals,
-/// a strip of its members and the Settle Up button when there is something to settle.
+/// The top of a group, straight on paper: its name, beside a small cover photo if it has one, its dates
+/// and people, your balance in big numerals, a strip of its members and the Settle Up button when there is something to settle.
 struct GroupHeroSection: View {
     let group: SplitGroup
     let members: [Person]
@@ -13,6 +13,7 @@ struct GroupHeroSection: View {
     let onSettleUp: () -> Void
 
     @Environment(\.locale) private var locale
+    @State private var showsCover = false
 
     var body: some View {
         Section {
@@ -49,16 +50,46 @@ struct GroupHeroSection: View {
     }
 
     private var identity: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(group.name)
-                .font(Typeface.title)
-                .lineLimit(3)
-                .minimumScaleFactor(0.7)
+        let cover = shownCover
+        return VStack(alignment: .leading, spacing: 4) {
+            if let cover {
+                HStack(spacing: 10) {
+                    Button { showsCover = true } label: {
+                        CoverThumbnail(fileName: cover, store: .covers, side: 32) { EmptyView() }
+                    }
+                    .buttonStyle(.plain)
+                    // VoiceOver reaches the photo through the header's action instead
+                    .accessibilityHidden(true)
+                    title
+                }
+            } else {
+                title
+            }
             Text(subtitle)
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
         }
         .accessibilityElement(children: .combine)
+        .accessibilityActions {
+            if cover != nil {
+                Button("View Cover Photo") { showsCover = true }
+            }
+        }
+        .fullScreenCover(isPresented: $showsCover) {
+            if let cover { CoverPhotoViewer(fileName: cover) }
+        }
+    }
+
+    private var title: some View {
+        Text(group.name)
+            .font(Typeface.title)
+            .lineLimit(3)
+            .minimumScaleFactor(0.7)
+    }
+
+    /// The cover, once its photo is on this device. Until then the header is the one without a photo.
+    private var shownCover: String? {
+        group.shownCoverFileName.flatMap { PhotoStore.covers.exists($0) ? $0 : nil }
     }
 
     private var subtitle: String {

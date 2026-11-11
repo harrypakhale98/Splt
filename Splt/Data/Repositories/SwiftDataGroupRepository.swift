@@ -5,9 +5,12 @@ import SwiftData
 @MainActor
 final class SwiftDataGroupRepository: GroupRepository {
     let env: RepositoryContext
+    /// Where cover photos are kept. Tests use a folder of their own.
+    let covers: PhotoStore
 
-    init(_ env: RepositoryContext) {
+    init(_ env: RepositoryContext, covers: PhotoStore = .covers) {
         self.env = env
+        self.covers = covers
     }
 
     func groups(includeArchived: Bool) throws -> [SplitGroup] {
@@ -69,6 +72,9 @@ final class SwiftDataGroupRepository: GroupRepository {
         }
         for template in try env.context.fetch(FetchDescriptor<RecurringExpenseRecord>(predicate: #Predicate { $0.groupID == gid })) {
             env.tracker.tombstone(template)
+        }
+        for claim in try env.context.fetch(FetchDescriptor<ItemClaimRecord>(predicate: #Predicate { $0.groupID == gid })) {
+            env.tracker.tombstone(claim)
         }
         env.tracker.tombstone(record)
         try env.save()
