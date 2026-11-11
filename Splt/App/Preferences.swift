@@ -8,18 +8,21 @@ struct Preferences: DynamicProperty {
         static let hapticsEnabled = "preferences.hapticsEnabled"
         static let notificationsEnabled = "preferences.notificationsEnabled"
         static let onboardingCompleted = "preferences.onboardingCompleted"
+        static let appearance = "preferences.appearance"
     }
 
     @AppStorage var defaultCurrencyCode: String
     @AppStorage var hapticsEnabled: Bool
     @AppStorage var notificationsEnabled: Bool
     @AppStorage var onboardingCompleted: Bool
+    @AppStorage var appearance: AppAppearance
 
     init(store: UserDefaults = .standard) {
         _defaultCurrencyCode = AppStorage(wrappedValue: Self.systemCurrencyCode, Key.defaultCurrency, store: store)
         _hapticsEnabled = AppStorage(wrappedValue: true, Key.hapticsEnabled, store: store)
         _notificationsEnabled = AppStorage(wrappedValue: false, Key.notificationsEnabled, store: store)
         _onboardingCompleted = AppStorage(wrappedValue: false, Key.onboardingCompleted, store: store)
+        _appearance = AppStorage(wrappedValue: .system, Key.appearance, store: store)
     }
 
     /// The currency of the phone's region, so a phone set to India starts in rupees and one set to

@@ -19,6 +19,11 @@ struct SettingsSections: View {
                         value: CurrencyCatalog.name(for: preferences.defaultCurrencyCode)
                     )
                 }
+                Picker("Appearance", selection: preferences.$appearance) {
+                    ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.menu)
+                .tint(Ink.secondary)
                 Toggle("Haptics", isOn: preferences.$hapticsEnabled)
                 Toggle("Notifications", isOn: preferences.$notificationsEnabled)
                     .task(id: preferences.notificationsEnabled) { await checkNotifications() }
