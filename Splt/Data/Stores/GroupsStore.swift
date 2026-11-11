@@ -35,12 +35,14 @@ final class GroupsStore {
         do {
             let me = try people.me()?.id
             summaries = try groups.groups(includeArchived: true).map { group in
-                let mine = try me.map { try groups.balances(for: group.id).net(for: $0) } ?? []
+                let balances = try groups.balances(for: group.id)
+                let mine = me.map { balances.net(for: $0) } ?? []
                 return GroupSummary(
                     group: group,
                     memberCount: group.memberIDs.count,
                     myBalance: mine,
-                    lastActivity: try activity.entries(in: group.id, limit: 1).first?.createdAt
+                    lastActivity: try activity.entries(in: group.id, limit: 1).first?.createdAt,
+                    hasPairDebts: me.map { mine.isEmpty && !balances.isSquare($0) } ?? false
                 )
             }
         } catch {}

@@ -35,6 +35,21 @@ struct GroupDetailViewModelTests {
         #expect(model.myTotals.owedToYou.isEmpty)
     }
 
+    /// Sam owes you 10 and you owe Priya 10. Your net is even, but the group settles pair by pair.
+    @Test func pairDebtsShowInTheHeaderWhenTheGroupDoesNotSimplify() throws {
+        let fixture = try Fixture(simplifies: false)
+        try fixture.addExpense(cents: 1000, splitBetween: [fixture.sam.id])
+        try fixture.addExpense(cents: 1000, paidBy: fixture.priya, splitBetween: [fixture.me.id])
+        let model = makeModel(fixture)
+        #expect(model.myBalance.isEmpty)
+        #expect(model.myTotals.owedToYou == [usdAmount(1000)])
+        #expect(model.myTotals.youOwe == [usdAmount(1000)])
+        #expect(!model.myTotals.isSettled)
+        fixture.services.groupsStore.refresh()
+        let row = fixture.services.groupsStore.summaries.first { $0.id == fixture.group.id }
+        #expect(row?.isSettled == false)
+    }
+
     @Test func aGroupWithoutExpensesIsSettled() throws {
         let fixture = try Fixture()
         let model = makeModel(fixture)

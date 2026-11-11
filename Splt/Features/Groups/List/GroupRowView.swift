@@ -44,7 +44,7 @@ struct GroupRowView: View {
     @ViewBuilder
     private func balance(_ lines: [BalanceLine]) -> some View {
         if lines.isEmpty {
-            Text("Settled up")
+            Text(summary.isSettled ? "Settled up" : "Not settled up")
                 .font(.subheadline)
                 .foregroundStyle(Ink.secondary)
         } else {

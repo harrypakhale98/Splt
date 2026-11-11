@@ -142,8 +142,13 @@ final class GroupDetailViewModel {
         return BalanceLine.lines(for: balances.net(for: me.id))
     }
 
+    /// What you are owed and owe in the group. A group that does not simplify debts settles pair by
+    /// pair, so a debt to one person and a credit from another both count there, even when they cancel.
     var myTotals: BalanceTotals {
-        BalanceTotals(amounts: myBalance.map(\.money))
+        guard let me, let balances, !balances.simplifiesDebts else {
+            return BalanceTotals(amounts: myBalance.map(\.money))
+        }
+        return BalanceTotals(amounts: balances.ledger.balances(with: me.id).values.flatMap { $0 })
     }
 
     var isSettled: Bool {
