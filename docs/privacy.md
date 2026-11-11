@@ -43,6 +43,10 @@ When an expense is in another currency than its group, Splt can look up a rate f
 
 Exporting a group as CSV, PDF or JSON creates a file on your device. It goes where you send it from the share sheet, and nowhere else.
 
+## Balance links
+
+Share as a Link, in a group's share menu, makes a web link for a friend without an iPhone. The group's name, trip dates, people's names and colours, who pays whom and, if you leave Recent expenses on, the latest ten expenses with each person's share are packed into the link itself, after the "#". Browsers never send that part to a server, so the page on this website reads it in the browser and nothing is uploaded. The page loads nothing from any other site and runs no analytics. The link holds no contact details, no account and no identifiers. It is a snapshot that never changes, and it can't be taken back: anyone who has it can see those names and amounts, so send it only to the people in the group. The page remembers which person you chose, in your browser only.
+
 ## Deleting your data
 
 Deleting a group in the app removes it from your devices and your iCloud. Its receipt photos are removed from a device the next time Splt opens there. If you own a shared group, it is removed for everyone in it. To clear everything Splt has stored in iCloud, open Settings, then your name, then iCloud, then Manage Account Storage, choose Splt and delete its data. Your groups then stay on your devices as local copies. Versions after 1.0.0 do not upload them again. Deleting the app removes what it stored on the device.

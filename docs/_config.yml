@@ -2,3 +2,7 @@ title: Splt
 description: Split costs with friends. Free forever, private, no accounts.
 theme: jekyll-theme-minimal
 show_downloads: false
+# docs/b/ is the balance link page. Its files have no front matter, so Jekyll copies them as they
+# are; its tests stay out of the site.
+exclude:
+  - b/test

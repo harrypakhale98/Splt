@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Adibk8FXMjsaPVKAwHfxx6dbD6RMDKYnRqj85iKrF68='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>Splt balances</title>
+<link rel="stylesheet" href="balance.css">
+</head>
+<body>
+<main id="app">
+<noscript><div class="problem"><p class="title">This page needs JavaScript</p><p class="sub">The balances are inside the link, and the page reads them in your browser.</p></div></noscript>
+</main>
+<script>
+"use strict";
+// Reads a Splt balance link. The snapshot sits after the "#", which the browser never sends to a
+// server: base64url, then raw deflate, then compact JSON. Splt/Features/Groups/BalanceLink/
+// BalanceSnapshot.swift documents the layout. Anyone can craft a link, so every field is checked
+// and everything is drawn with textContent and createElement, never as HTML.
+
+// The App Store listing. Until Splt has one, this points at the Splt website.
+// REPLACE with https://apps.apple.com/app/id<number> once the listing is live.
+const APP_STORE_URL = "https://harrypakhale98.github.io/Splt/";
+
+const FORMAT_VERSION = 1;
+const MAX_FRAGMENT = 12000;
+const MAX_JSON_BYTES = 262144;
+const HUES = 12;
+const STORE_PREFIX = "splt-balance-";
+
+class LinkProblem extends Error {
+  constructor(kind) { super(kind); this.kind = kind; }
+}
+
+let locale;
+
+// MARK: Decoding
+
+function bytesFromBase64Url(text) {
+  if (typeof text !== "string" || text.length === 0 || text.length > MAX_FRAGMENT || !/^[A-Za-z0-9_-]+$/.test(text)) {
+    throw new LinkProblem("broken");
+  }
+  let plain = text.replace(/-/g, "+").replace(/_/g, "/");
+  while (plain.length % 4) plain += "=";
+  let binary;
+  try { binary = atob(plain); } catch (_) { throw new LinkProblem("broken"); }
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream !== "function" || typeof Blob !== "function") throw new LinkProblem("browser");
+  let stream;
+  try { stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")); } catch (_) {
+    throw new LinkProblem("browser");
+  }
+  const reader = stream.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.length;
+      if (total > MAX_JSON_BYTES) { reader.cancel().catch(() => {}); throw new LinkProblem("broken"); }
+      chunks.push(value);
+    }
+  } catch (error) {
+    throw error instanceof LinkProblem ? error : new LinkProblem("broken");
+  }
+  const all = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { all.set(chunk, offset); offset += chunk.length; }
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(all); } catch (_) { throw new LinkProblem("broken"); }
+}
+
+async function decodeFragment(fragment) {
+  const json = await inflateRaw(bytesFromBase64Url(fragment));
+  let raw;
+  try { raw = JSON.parse(json); } catch (_) { throw new LinkProblem("broken"); }
+  return validate(raw);
+}
+
+// MARK: Checking
+
+function fail() { throw new LinkProblem("broken"); }
+function isList(value, max) { return Array.isArray(value) && value.length <= max; }
+function text(value, max) {
+  if (typeof value !== "string") fail();
+  const clean = value.replace(/[\u0000-\u001F\u007F\u2028\u2029]/g, " ").trim();
+  if (clean.length === 0 || clean.length > max) fail();
+  return clean;
+}
+function whole(value, min, max) {
+  if (!Number.isSafeInteger(value) || value < min || value > max) fail();
+  return value;
+}
+function day(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) fail();
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) fail();
+  return date;
+}
+
+function validate(raw) {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) fail();
+  if (raw.v !== FORMAT_VERSION) {
+    if (Number.isSafeInteger(raw.v) && raw.v > FORMAT_VERSION) throw new LinkProblem("newer");
+    fail();
+  }
+  const big = Number.MAX_SAFE_INTEGER;
+  const name = text(raw.n, 200);
+
+  let trip = null;
+  if (raw.d !== undefined) {
+    if (!isList(raw.d, 2) || raw.d.length !== 2) fail();
+    trip = [day(raw.d[0]), day(raw.d[1])];
+    if (trip[1] < trip[0]) fail();
+  }
+
+  if (!isList(raw.c, 50) || raw.c.length === 0) fail();
+  const currencies = raw.c.map((item) => {
+    if (!isList(item, 2) || item.length !== 2) fail();
+    if (typeof item[0] !== "string" || !/^[A-Z]{3}$/.test(item[0])) fail();
+    return { code: item[0], digits: whole(item[1], 0, 4) };
+  });
+
+  if (!isList(raw.m, 1000) || raw.m.length === 0) fail();
+  const members = raw.m.map((item) => {
+    if (!isList(item, 4) || item.length < 3) fail();
+    const left = item.length === 4 ? whole(item[3], 0, 1) === 1 : false;
+    return { name: text(item[0], 100), hue: whole(item[1], 0, HUES - 1), paid: whole(item[2], 0, big), left };
+  });
+  const person = (value) => whole(value, 0, members.length - 1);
+  const currency = (value) => whole(value, 0, currencies.length - 1);
+
+  if (!isList(raw.x, 10000)) fail();
+  const transfers = raw.x.map((item) => {
+    if (!isList(item, 4) || item.length !== 4) fail();
+    const transfer = { from: person(item[0]), to: person(item[1]), amount: whole(item[2], 1, big), currency: currency(item[3]) };
+    if (transfer.from === transfer.to) fail();
+    return transfer;
+  });
+
+  let expenses = null;
+  if (raw.e !== undefined) {
+    if (!isList(raw.e, 50)) fail();
+    const parts = (list) => {
+      if (!isList(list, 1000)) fail();
+      return list.map((pair) => {
+        if (!isList(pair, 2) || pair.length !== 2) fail();
+        return { person: person(pair[0]), amount: whole(pair[1], -big, big) };
+      });
+    };
+    expenses = raw.e.map((item) => {
+      if (!isList(item, 6) || item.length !== 6) fail();
+      return {
+        title: text(item[0], 200), day: day(item[1]), currency: currency(item[2]),
+        total: whole(item[3], -big, big), payers: parts(item[4]), shares: parts(item[5])
+      };
+    });
+  }
+
+  const sharedBy = whole(raw.s, -1, members.length - 1);
+  const createdAt = new Date(whole(raw.t, 0, 32503680000) * 1000);
+  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt };
+}
+
+// MARK: Formatting
+
+const formatters = new Map();
+
+function money(snapshot, minorUnits, currencyIndex) {
+  const { code, digits } = snapshot.currencies[currencyIndex];
+  const key = code + digits;
+  if (!formatters.has(key)) {
+    let format;
+    try {
+      const formatter = new Intl.NumberFormat(locale, {
+        style: "currency", currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits
+      });
+      format = (value) => formatter.format(value);
+    } catch (_) {
+      const plain = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      format = (value) => plain.format(value) + " " + code;
+    }
+    formatters.set(key, format);
+  }
+  return formatters.get(key)(minorUnits / Math.pow(10, digits));
+}
+
+function snapshotTime(date) {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit"
+  }).format(date);
+}
+
+function shortDay(date) {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }).format(date);
+}
+
+function subtitle(snapshot) {
+  const count = snapshot.members.filter((member) => !member.left).length;
+  const people = count === 1 ? "1 person" : count + " people";
+  if (snapshot.trip) {
+    const format = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+    const range = typeof format.formatRange === "function"
+      ? format.formatRange(snapshot.trip[0], snapshot.trip[1])
+      : format.format(snapshot.trip[0]) + " – " + format.format(snapshot.trip[1]);
+    return range + " · " + people;
+  }
+  return snapshot.currencies[0].code + " · " + people;
+}
+
+function initial(name) {
+  const first = Array.from(name)[0] || "?";
+  return first.toLocaleUpperCase(locale);
+}
+
+// The strip as the app draws it: each slice is what that person paid, largest first, and someone
+// who paid nothing keeps a thin sliver.
+function stripSlices(snapshot) {
+  const members = snapshot.members.map((member, index) => ({ member, index })).filter((entry) => !entry.member.left);
+  const total = members.reduce((sum, entry) => sum + entry.member.paid, 0);
+  if (total <= 0) return members.map((entry) => ({ hue: entry.member.hue, weight: 1 }));
+  return members
+    .slice()
+    .sort((a, b) => (b.member.paid - a.member.paid) || (a.index - b.index))
+    .map((entry) => ({ hue: entry.member.hue, weight: Math.max(entry.member.paid, total * 0.02) }));
+}
+
+// What one person pays and gets back, by currency.
+function describePerson(snapshot, index) {
+  const pays = snapshot.transfers.filter((transfer) => transfer.from === index);
+  const gets = snapshot.transfers.filter((transfer) => transfer.to === index);
+  const sum = (list) => {
+    const byCurrency = new Map();
+    for (const transfer of list) byCurrency.set(transfer.currency, (byCurrency.get(transfer.currency) || 0) + transfer.amount);
+    return Array.from(byCurrency, ([currency, amount]) => ({ currency, amount })).sort((a, b) => a.currency - b.currency);
+  };
+  return { pays, gets, paysTotal: sum(pays), getsTotal: sum(gets) };
+}
+
+// One expense from one person's side: what they paid less their share.
+function expenseFor(expense, index) {
+  const paid = expense.payers.filter((part) => part.person === index).reduce((sum, part) => sum + part.amount, 0);
+  const share = expense.shares.filter((part) => part.person === index).reduce((sum, part) => sum + part.amount, 0);
+  const involved = paid !== 0 || share !== 0 || expense.shares.some((part) => part.person === index);
+  return { paid, share, net: paid - share, involved };
+}
+
+// MARK: Drawing
+
+function el(tag, className, content) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (content !== undefined && content !== null) node.textContent = String(content);
+  return node;
+}
+
+function add(parent, ...children) {
+  for (const child of children) if (child) parent.appendChild(child);
+  return parent;
+}
+
+const SVG = "http://www.w3.org/2000/svg";
+
+function icon(kind, size) {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  const shapes = kind === "clock"
+    ? [["circle", { cx: "12", cy: "12", r: "9", "stroke-width": "2" }], ["path", { d: "M12 7v5l3 2", "stroke-width": "2" }]]
+    : [["path", { d: "M9 5l7 7-7 7", "stroke-width": "2.6" }]];
+  for (const [name, attributes] of shapes) {
+    const shape = document.createElementNS(SVG, name);
+    for (const [key, value] of Object.entries(attributes)) shape.setAttribute(key, value);
+    svg.appendChild(shape);
+  }
+  if (kind !== "clock") svg.setAttribute("class", "chev");
+  return svg;
+}
+
+function disc(member, small) {
+  const node = el("span", "av p" + member.hue + (small ? " s" : ""), initial(member.name));
+  node.setAttribute("aria-hidden", "true");
+  return node;
+}
+
+function brand() {
+  const mark = el("span", "mark");
+  add(mark, el("i"), el("i"));
+  return add(el("span", "brand"), mark, document.createTextNode("Splt"));
+}
+
+function strip(snapshot) {
+  const bar = el("div", "strip");
+  bar.setAttribute("aria-hidden", "true");
+  for (const slice of stripSlices(snapshot)) {
+    const piece = el("i", "p" + slice.hue);
+    piece.style.flex = String(slice.weight) + " 1 0";
+    bar.appendChild(piece);
+  }
+  return bar;
+}
+
+function snapLine(snapshot, after) {
+  const line = el("p", "foot snapline");
+  add(line, icon("clock", 13), el("span", null, "A snapshot from " + snapshotTime(snapshot.createdAt) + ". " + after));
+  return line;
+}
+
+function header(snapshot) {
+  const block = el("div");
+  add(block, el("h1", "title", snapshot.name), el("p", "sub", subtitle(snapshot)));
+  return block;
+}
+
+function rowButton(onClick, inset) {
+  const button = el("button", "row" + (inset ? " inset" : ""));
+  button.type = "button";
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function amountCell(figure, words, tone) {
+  const cell = el("div");
+  add(cell, el("div", "amt" + (tone ? " " + tone : ""), figure), words ? el("div", "dir", words) : null);
+  return cell;
+}
+
+function getSplt(snapshot) {
+  const line = el("p", "foot center get");
+  const sharer = snapshot.members[snapshot.sharedBy];
+  line.appendChild(document.createTextNode((sharer ? sharer.name + " uses Splt, free on iPhone. " : "Splt is free on iPhone. ")));
+  const link = el("a", null, "Get Splt");
+  link.href = APP_STORE_URL;
+  link.rel = "noopener noreferrer";
+  line.appendChild(link);
+  return line;
+}
+
+// Step 1: which one are you?
+function drawPicker(root, snapshot, state) {
+  const sharer = snapshot.members[snapshot.sharedBy];
+  add(root, add(el("div", "top"), brand()));
+  root.appendChild(el("p", "sub", sharer ? sharer.name + " shared the balances for" : "The balances for"));
+  root.appendChild(header(snapshot));
+  root.appendChild(strip(snapshot));
+  root.appendChild(el("h2", "sh", "Which one are you?"));
+
+  const card = el("div", "card");
+  const order = snapshot.members.map((member, index) => ({ member, index }));
+  order.sort((a, b) => (a.index === snapshot.sharedBy) - (b.index === snapshot.sharedBy));
+  for (const { member, index } of order) {
+    const row = rowButton(() => state.choose(index), true);
+    const label = el("div", "grow", member.name);
+    if (index === snapshot.sharedBy) label.appendChild(el("div", "foot", "Shared this link"));
+    else if (member.left) label.appendChild(el("div", "foot", "Left the group"));
+    add(row, disc(member, false), label, icon("chevron", 14));
+    card.appendChild(row);
+  }
+  root.appendChild(card);
+
+  const everyone = el("button", "quiet", "Show everyone instead");
+  everyone.type = "button";
+  everyone.addEventListener("click", () => state.show("everyone"));
+  root.appendChild(everyone);
+  root.appendChild(snapLine(snapshot, "It won't change when the group does."));
+}
+
+function counterpartRows(snapshot, transfers, side, words) {
+  const card = el("div", "card");
+  for (const transfer of transfers) {
+    const other = snapshot.members[transfer[side]];
+    const row = el("div", "row inset");
+    add(row, disc(other, false), el("div", "grow", other.name),
+      amountCell(money(snapshot, transfer.amount, transfer.currency), words, null));
+    card.appendChild(row);
+  }
+  return card;
+}
+
+// Step 2: one person's view.
+function drawPerson(root, snapshot, index, state) {
+  const me = snapshot.members[index];
+  const top = add(el("div", "top"), brand());
+  const whoami = el("span", "sub whoami");
+  const notMe = el("button", "link", "Not you?");
+  notMe.type = "button";
+  notMe.addEventListener("click", () => state.choose(null));
+  add(whoami, disc(me, true), el("span", "name", me.name + " ·"), notMe);
+  root.appendChild(add(top, whoami));
+  root.appendChild(header(snapshot));
+
+  const { pays, gets, paysTotal, getsTotal } = describePerson(snapshot, index);
+  const lead = pays.length ? pays : gets;
+  const leadTotal = pays.length ? paysTotal : getsTotal;
+  const paying = pays.length > 0;
+
+  if (lead.length === 0) {
+    root.appendChild(el("p", "settled", "You're all settled up"));
+  } else {
+    const line = el("p", "sub lead");
+    if (lead.length === 1) {
+      const other = snapshot.members[paying ? lead[0].to : lead[0].from];
+      if (paying) add(line, document.createTextNode("You pay"), disc(other, true), document.createTextNode(other.name));
+      else add(line, disc(other, true), document.createTextNode(other.name + " pays you"));
+    } else {
+      line.textContent = paying ? "You pay" : "You get back";
+    }
+    root.appendChild(line);
+    for (const part of leadTotal) root.appendChild(el("p", "hero", money(snapshot, part.amount, part.currency)));
+  }
+  root.appendChild(strip(snapshot));
+  root.appendChild(snapLine(snapshot, "Expenses added later aren't here."));
+
+  if (lead.length > 1) {
+    root.appendChild(el("h2", "sh", paying ? "Who you pay" : "Who pays you"));
+    root.appendChild(counterpartRows(snapshot, lead, paying ? "to" : "from", paying ? "you pay" : "pays you"));
+  }
+  if (paying && gets.length) {
+    root.appendChild(el("h2", "sh", "You also get back"));
+    root.appendChild(counterpartRows(snapshot, gets, "from", "pays you"));
+  }
+
+  if (snapshot.expenses && snapshot.expenses.length) {
+    root.appendChild(el("h2", "sh", "Your share of recent expenses"));
+    const card = el("div", "card");
+    for (const expense of snapshot.expenses) {
+      const mine = expenseFor(expense, index);
+      const payer = snapshot.members[(expense.payers[0] || { person: index }).person];
+      const total = money(snapshot, Math.abs(expense.total), expense.currency);
+      let who;
+      if (expense.payers.length > 1) who = expense.payers.length + " people paid " + total;
+      else if (expense.payers.length === 1 && expense.payers[0].person === index) who = "You paid " + total;
+      else if (expense.payers.length === 1) who = payer.name + " paid " + total;
+      else who = total;
+      if (expense.total < 0) who += " back";
+      const label = add(el("div", "grow", expense.title), el("div", "foot", who + " · " + shortDay(expense.day)));
+      let cell;
+      if (!mine.involved) cell = amountCell(null, "not involved", null);
+      else if (mine.net > 0) cell = amountCell(money(snapshot, mine.net, expense.currency), "you lent", "owed");
+      else if (mine.net < 0) cell = amountCell(money(snapshot, -mine.net, expense.currency), "you borrowed", "owe");
+      else cell = amountCell(null, "even", null);
+      const avatar = disc(payer, true);
+      avatar.classList.add("r");
+      card.appendChild(add(el("div", "row inset"), avatar, label, cell));
+    }
+    root.appendChild(card);
+  }
+
+  const card = el("div", "card");
+  const everyone = rowButton(() => state.show("everyone"), false);
+  add(everyone, el("span", "grow", "Everyone in the group"), icon("chevron", 14));
+  root.appendChild(add(card, everyone));
+  root.appendChild(getSplt(snapshot));
+}
+
+// Everyone: who pays whom across the group.
+function drawEveryone(root, snapshot, state) {
+  add(root, add(el("div", "top"), brand()));
+  root.appendChild(header(snapshot));
+  root.appendChild(strip(snapshot));
+  root.appendChild(snapLine(snapshot, "It won't change when the group does."));
+  root.appendChild(el("h2", "sh", "Who pays whom"));
+  const card = el("div", "card");
+  if (snapshot.transfers.length === 0) {
+    card.appendChild(el("div", "row", "Everyone is settled up."));
+  }
+  for (const transfer of snapshot.transfers) {
+    const from = snapshot.members[transfer.from];
+    const to = snapshot.members[transfer.to];
+    const row = el("div", "row inset");
+    add(row, disc(from, false), el("div", "grow", from.name + " pays " + to.name),
+      amountCell(money(snapshot, transfer.amount, transfer.currency), null, null));
+    card.appendChild(row);
+  }
+  root.appendChild(card);
+
+  if (snapshot.expenses && snapshot.expenses.length) {
+    root.appendChild(el("h2", "sh", "Recent expenses"));
+    const list = el("div", "card");
+    for (const expense of snapshot.expenses) {
+      const payer = expense.payers.length === 1 ? snapshot.members[expense.payers[0].person] : null;
+      const who = payer ? payer.name + " paid" : expense.payers.length + " people paid";
+      const label = add(el("div", "grow", expense.title), el("div", "foot", who + " · " + shortDay(expense.day)));
+      const avatar = payer ? disc(payer, true) : el("span", "av s");
+      avatar.classList.add("r");
+      avatar.setAttribute("aria-hidden", "true");
+      list.appendChild(add(el("div", "row inset"), avatar, label,
+        amountCell(money(snapshot, expense.total, expense.currency), null, null)));
+    }
+    root.appendChild(list);
+  }
+
+  const back = el("div", "card");
+  const row = rowButton(() => state.show("back"), false);
+  add(row, el("span", "grow", state.chosen === null ? "Which one are you?" : "Back to " + snapshot.members[state.chosen].name), icon("chevron", 14));
+  root.appendChild(add(back, row));
+  root.appendChild(getSplt(snapshot));
+}
+
+function drawProblem(root, kind) {
+  const box = el("div", "problem");
+  const mark = el("span", "mark");
+  add(mark, el("i"), el("i"));
+  const messages = {
+    empty: ["Nothing to show yet", "Balance links from Splt open on this page. Open the whole link you were sent."],
+    newer: ["This link doesn't open", "It was made by a newer version of Splt than this page understands. Try again later, or ask for the balances another way."],
+    browser: ["This link doesn't open here", "This browser can't read the link. Try a recent version of Chrome, Safari, Firefox or Edge."],
+    broken: ["This link doesn't open", "It may have been cut short when it was copied. Ask for the link again."]
+  };
+  const [title, body] = messages[kind] || messages.broken;
+  add(box, mark, el("h1", "title", title), el("p", "sub", body));
+  root.appendChild(box);
+  document.title = "Splt";
+}
+
+// MARK: The page
+
+function storageKey(fragment) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < fragment.length; i++) {
+    hash ^= fragment.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return STORE_PREFIX + hash.toString(36);
+}
+
+function remembered(key, count) {
+  try {
+    const value = window.localStorage.getItem(key);
+    if (value === null) return null;
+    const index = Number(value);
+    return Number.isInteger(index) && index >= 0 && index < count ? index : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function remember(key, index) {
+  try {
+    if (index === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, String(index));
+  } catch (_) {
+    // Private browsing or blocked storage: the page just asks again next time.
+  }
+}
+
+let drawing = 0;
+
+async function start() {
+  const turn = ++drawing;
+  const root = document.getElementById("app");
+  const fragment = window.location.hash.replace(/^#/, "");
+  let snapshot = null;
+  let problem = null;
+  if (!fragment) problem = "empty";
+  else {
+    try { snapshot = await decodeFragment(fragment); } catch (error) {
+      problem = error instanceof LinkProblem ? error.kind : "broken";
+    }
+  }
+  if (turn !== drawing) return;
+  root.replaceChildren();
+  if (problem) { drawProblem(root, problem); return; }
+
+  document.title = snapshot.name + " · Splt";
+  const key = storageKey(fragment);
+  const state = { chosen: remembered(key, snapshot.members.length), view: null };
+  const draw = () => {
+    root.replaceChildren();
+    if (state.view === "everyone") drawEveryone(root, snapshot, state);
+    else if (state.chosen === null) drawPicker(root, snapshot, state);
+    else drawPerson(root, snapshot, state.chosen, state);
+    window.scrollTo(0, 0);
+  };
+  state.choose = (index) => { state.chosen = index; state.view = null; remember(key, index); draw(); };
+  state.show = (view) => { state.view = view === "back" ? null : view; draw(); };
+  draw();
+}
+
+if (typeof document !== "undefined" && typeof window !== "undefined") {
+  locale = navigator.languages && navigator.languages.length ? Array.from(navigator.languages) : undefined;
+  window.addEventListener("hashchange", start);
+  start();
+} else {
+  globalThis.SpltBalanceLink = {
+    decodeFragment, validate, money, describePerson, expenseFor, stripSlices, subtitle, LinkProblem,
+    setLocale: (value) => { locale = value; formatters.clear(); }
+  };
+}
+</script>
+</body>
+</html>
