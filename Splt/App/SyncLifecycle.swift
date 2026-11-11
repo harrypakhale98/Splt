@@ -14,19 +14,25 @@ private struct SyncLifecycle: ViewModifier {
     let router: Router
 
     @State private var failure: String?
+    @State private var asksForNotifications = false
 
     func body(content: Content) -> some View {
         content
             .environment(\.groupSharing, SyncGroupSharing())
             .task {
                 let runtime = SyncRuntime.shared
-                runtime.onGroupJoined = { router.open(.group($0.rawValue)) }
+                runtime.onGroupJoined = {
+                    router.open(.group($0.rawValue))
+                    // joining is when changes from other people start to arrive
+                    if NotificationAsk.shouldAsk() { asksForNotifications = true }
+                }
                 runtime.onInvitationFailed = { failure = $0 }
                 if let services {
                     try? AccountProfile.shared.applyNameIfNoProfile(to: services.people)
                     await runtime.start(services: services)
                 }
             }
+            .notificationAsk(isPresented: $asksForNotifications)
             .alert("Couldn't Join Group", isPresented: failureBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
