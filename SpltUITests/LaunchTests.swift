@@ -22,8 +22,8 @@ final class LaunchTests: XCTestCase {
         let currencyRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Default Currency'")).firstMatch
         XCTAssertTrue(currencyRow.waitForExistence(timeout: 5))
 
-        app.swipeUp()
         XCTAssertTrue(app.switches["Haptics"].waitForExistence(timeout: 5))
+        app.swipeUp()
         app.swipeDown()
 
         XCTAssertTrue(currencyRow.waitForExistence(timeout: 5))

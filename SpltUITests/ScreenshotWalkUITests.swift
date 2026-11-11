@@ -75,7 +75,10 @@ final class ScreenshotWalkUITests: XCTestCase {
             let hide = app.buttons["Hide number pad"].firstMatch
             if hide.waitForExistence(timeout: 2) { hide.tap() }
             shot("09-add-expense-split")
-            app.buttons["Cancel"].tap()
+            // at the largest text sizes the pad is a sheet of its own, closed with Done
+            let padDone = app.buttons["Done"].firstMatch
+            if padDone.exists, !app.buttons["Cancel"].firstMatch.isHittable { padDone.tap() }
+            app.buttons["Cancel"].firstMatch.tap()
             let discard = app.buttons["Discard Changes"].firstMatch
             if discard.waitForExistence(timeout: 5) { discard.tap() }
         }

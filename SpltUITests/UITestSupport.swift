@@ -119,7 +119,7 @@ extension XCTestCase {
         XCTAssertTrue(element.isHittable, "\(element) never became tappable", file: file, line: line)
     }
 
-    /// Picks Expenses, Balances or Totals on the group screen. The picker is a menu at accessibility text sizes.
+    /// Picks Expenses, Balances or Spending on the group screen. The picker is a menu at accessibility text sizes.
     @MainActor
     func selectSegment(_ name: String, in app: XCUIApplication) {
         let direct = app.segmentedControls.buttons[name]

@@ -71,7 +71,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         XCTAssertTrue(element(labelContaining: "owes", in: app).waitForExistence(timeout: 5), "balances did not show")
         audit(app, "Group balances")
 
-        selectSegment("Totals", in: app)
+        selectSegment("Spending", in: app)
         audit(app, "Group totals")
 
         selectSegment("Expenses", in: app)
@@ -130,8 +130,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         // changes there apply at once, so the sheet has Done and no Cancel
         app.buttons["Done"].firstMatch.tap()
 
-        // the recap opens from the bottom of Totals
-        selectSegment("Totals", in: app)
+        // the recap opens from the bottom of Spending
+        selectSegment("Spending", in: app)
         let recap = app.buttons["Watch the Recap"].firstMatch
         reveal(recap, in: app)
         recap.tap()
