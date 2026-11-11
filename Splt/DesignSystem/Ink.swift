@@ -12,6 +12,9 @@ enum Ink {
     static let hairline = dynamic(light: 0xE2DED5, dark: 0x2E2C28)
     static let owed = dynamic(light: 0x1F6B4A, dark: 0x6FBF96)
     static let owe = dynamic(light: 0xB83A1E, dark: 0xEE7B5C)
+    /// The track of a switch that is on. In dark mode plain ink is nearly white, so the white knob
+    /// would vanish into it; a mid ink keeps the knob visible and on clearly apart from off.
+    static let switchOn = dynamic(light: 0x1A1917, dark: 0x8A877E)
 
     /// The color for a signed amount: owed when positive, owe when negative, plain ink at zero.
     static func direction(of minorUnits: Int64) -> Color {
