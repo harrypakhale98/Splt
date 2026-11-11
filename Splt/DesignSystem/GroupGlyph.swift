@@ -109,11 +109,8 @@ final class CoverImageCache {
     /// Reads and shrinks the thumbnail away from the main thread. Nil when the photo is not here.
     func load(_ fileName: String, store: PhotoStore, pixels: CGFloat) async -> UIImage? {
         let loaded = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-            guard let data = store.thumbnail(named: fileName), let full = UIImage(data: data) else { return nil }
-            let shortest = min(full.size.width, full.size.height)
-            guard shortest > pixels, shortest > 0 else { return full.preparingForDisplay() ?? full }
-            let factor = pixels / shortest
-            return full.preparingThumbnail(of: CGSize(width: full.size.width * factor, height: full.size.height * factor)) ?? full
+            guard let data = store.thumbnail(named: fileName) else { return nil }
+            return UIImage.thumbnail(from: data, shortestSide: pixels)
         }.value
         if let loaded { cache.setObject(loaded, forKey: key(fileName, store)) }
         return loaded
