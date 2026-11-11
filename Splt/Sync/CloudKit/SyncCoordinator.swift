@@ -301,7 +301,9 @@ final class SyncCoordinator {
             }
         }
         if !missingZones.isEmpty {
-            Task { [weak self] in await self?.settleMissingZones(missingZones, scope: scope) }
+            // This runs inside CKSyncEngine's delegate callback. A plain Task inherits that context, and
+            // CKSyncEngine traps when a call made from it calls back into the delegate, as a fetch does.
+            Task.detached { [weak self] in await self?.settleMissingZones(missingZones, scope: scope) }
         }
         noteResult(failures: failures, scope: scope)
         // no permission means the zone is no longer ours, so a leave has nothing more to wait for
