@@ -38,6 +38,9 @@ struct AccountView: View {
                 ProfileEditorView(profile: profile)
             }
             .onAppear { summary = AccountSummary.load(from: services) }
+            .sheet(item: $router.openedBackup) { file in
+                RestoreBackupSheet(file: file)
+            }
         }
         .presentationBackground(Ink.paper)
     }

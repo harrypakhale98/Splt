@@ -280,7 +280,7 @@ extension SyncStoreAdapter {
 
 extension SyncPayload {
     /// Larger amounts cannot be typed or imported, so one that arrives was made to overflow the sums on some screen.
-    fileprivate var amountsAreEnterable: Bool {
+    var amountsAreEnterable: Bool {
         let limit = UInt64(MoneyParser.maximumMinorUnits)
         switch recordType {
         case .expense, .recurringExpense:

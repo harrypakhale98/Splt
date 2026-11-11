@@ -25,6 +25,31 @@ enum UUIDScanner {
         uuids(in: Data(text.utf8))
     }
 
+    /// The data with every UUID written in it replaced by `transform`'s answer, in upper case.
+    /// A UUID `transform` returns nil for is left as it is.
+    static func replacingUUIDs(in data: Data, _ transform: (UUID) -> UUID?) -> Data {
+        let bytes = [UInt8](data)
+        guard bytes.count >= length else { return data }
+        var result: [UInt8] = []
+        result.reserveCapacity(bytes.count)
+        var index = 0
+        while index < bytes.count {
+            if index + length <= bytes.count, looksLikeUUID(bytes, at: index),
+               let found = UUID(uuidString: String(decoding: bytes[index..<index + length], as: UTF8.self)) {
+                if let replacement = transform(found) {
+                    result.append(contentsOf: Array(replacement.uuidString.utf8))
+                } else {
+                    result.append(contentsOf: bytes[index..<index + length])
+                }
+                index += length
+            } else {
+                result.append(bytes[index])
+                index += 1
+            }
+        }
+        return Data(result)
+    }
+
     private static func looksLikeUUID(_ bytes: [UInt8], at start: Int) -> Bool {
         for offset in 0..<length {
             let byte = bytes[start + offset]
