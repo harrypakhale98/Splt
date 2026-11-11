@@ -81,7 +81,7 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         }
     }
 
-    func update(_ expense: Expense, extras: ExpenseExtras?) throws {
+    func update(_ expense: Expense, extras: ExpenseExtras?, editID: UUID?) throws {
         let expense = Self.fitted(expense)
         guard let record = try env.expenseRecord(expense.id), record.deletedAt == nil else {
             throw DataError.notFound("expense \(expense.id)")
@@ -99,7 +99,7 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         let me = try env.currentUser()?.personID
         // The history inside the expense is what version 1.0 shows. The activity entry carries the
         // full change and shares the entry's id, so the detail screen shows each edit once.
-        let editID = UUID()
+        let editID = editID ?? UUID()
         var history = record.history
         history.append(ExpenseEditEntry(
             id: editID,
@@ -115,7 +115,9 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         env.tracker.recordEdit(record)
         var reference = Self.reference(expense)
         reference.changes = ExpenseChanges(changes)
-        try env.log(.expenseEdited(reference), groupID: groupID, actor: me, id: editID)
+        if try ActivityRecord.find(recordName: editID.uuidString, in: env.context) == nil {
+            try env.log(.expenseEdited(reference), groupID: groupID, actor: me, id: editID)
+        }
         try env.save()
     }
 

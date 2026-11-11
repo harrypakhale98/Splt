@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import SpltCore
 
@@ -86,5 +87,20 @@ enum ItemClaimFold {
         var updated = expense
         updated.split = .itemized(result)
         return updated
+    }
+
+    /// The id of a fold's edit. It depends only on the expense and who was on each item before and
+    /// after, so every device that folds the same claims makes the same activity entry.
+    static func editID(expense: ExpenseID, from before: ItemizedSplit, to after: ItemizedSplit) -> UUID {
+        func people(_ split: ItemizedSplit) -> String {
+            split.items.map { item in
+                item.id.uuidString + "=" + item.assignees.map(\.rawValue.uuidString).sorted().joined(separator: ",")
+            }.joined(separator: ";")
+        }
+        let name = "splt.claims.folded:\(expense.rawValue.uuidString):\(people(before))>\(people(after))"
+        var bytes = Array(SHA256.hash(data: Data(name.utf8)).prefix(16))
+        bytes[6] = (bytes[6] & 0x0F) | 0x50
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+        return UUID(uuid: bytes.withUnsafeBytes { $0.loadUnaligned(as: uuid_t.self) })
     }
 }

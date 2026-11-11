@@ -14,7 +14,9 @@ protocol ExpenseRepository {
     func add(_ expense: Expense, extras: ExpenseExtras) throws
     /// Stores the edit, appends to the edit history and writes an activity entry.
     /// Pass nil extras to leave the receipt, location and recurrence as they are. Does nothing if nothing changed.
-    func update(_ expense: Expense, extras: ExpenseExtras?) throws
+    /// `editID` names the activity entry. An edit every device makes alike passes the same id on each,
+    /// so they write one entry. It is not written again when it is already here.
+    func update(_ expense: Expense, extras: ExpenseExtras?, editID: UUID?) throws
     /// The activity entries of the expense's edits, oldest first, in whichever group they were made.
     func edits(of id: ExpenseID) throws -> [ActivityEntry]
     /// Soft deletes the expense. It leaves balances but stays in history.
@@ -38,6 +40,10 @@ extension ExpenseRepository {
 
     func update(_ expense: Expense) throws {
         try update(expense, extras: nil)
+    }
+
+    func update(_ expense: Expense, extras: ExpenseExtras?) throws {
+        try update(expense, extras: extras, editID: nil)
     }
 
     func duplicates(of expense: Expense) throws -> [Expense] {

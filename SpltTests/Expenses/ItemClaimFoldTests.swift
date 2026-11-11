@@ -144,6 +144,47 @@ struct ItemClaimFoldTests {
         #expect(try fixture.services.expenses.details(id: expense.id)?.history.count == 1)
     }
 
+    @Test func everyDeviceGivesTheSameFoldTheSameEntry() throws {
+        let fixture = try Fixture()
+        let expense = try addItemized(fixture)
+        try receiveClaim(fixture, fixture.sam.id, [beer], on: expense)
+        try receiveClaim(fixture, fixture.priya.id, [pizza, salad], on: expense)
+        #expect(try fixture.services.claims.foldClaims(inGroups: nil) == 1)
+        let stored = try #require(try fixture.services.expenses.expense(id: expense.id))
+        guard case .itemized(let after) = stored.split else { Issue.record("not split by item"); return }
+
+        // the id comes from the expense and the fold alone, not from this device or the time
+        let edit = try #require(try fixture.services.expenses.edits(of: expense.id).last)
+        #expect(edit.id == ItemClaimFold.editID(expense: expense.id, from: split(fixture), to: after))
+        #expect(edit.id != ItemClaimFold.editID(expense: ExpenseID(rawValue: UUID()), from: split(fixture), to: after))
+        #expect(edit.id != ItemClaimFold.editID(expense: expense.id, from: after, to: split(fixture)))
+    }
+
+    @Test func aFoldFromTheCreatorsOtherDeviceIsNotLoggedTwice() throws {
+        let fixture = try Fixture()
+        let expense = try addItemized(fixture)
+        try receiveClaim(fixture, fixture.sam.id, [beer], on: expense)
+        try receiveClaim(fixture, fixture.priya.id, [pizza, salad], on: expense)
+        let record = try #require(try ExpenseRecord.find(recordName: expense.id.description, in: fixture.services.environment.context))
+        let stored = try #require(try fixture.services.expenses.expense(id: expense.id))
+        let folded = try #require(ItemClaimFold.folding(
+            try fixture.services.claims.claims(on: expense.id), into: stored, modifiedAt: record.modifiedAt
+        ))
+        guard case .itemized(let after) = folded.split else { Issue.record("not split by item"); return }
+        let id = ItemClaimFold.editID(expense: expense.id, from: split(fixture), to: after)
+        // the entry the creator's other device wrote for the same fold arrives before its edit
+        try fixture.services.environment.log(
+            .expenseEdited(SwiftDataExpenseRepository.reference(folded)), groupID: fixture.group.id, actor: fixture.me.id, id: id
+        )
+        try fixture.services.environment.save()
+        let count = try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count
+
+        #expect(try fixture.services.claims.foldClaims(inGroups: nil) == 1)
+        #expect(try items(of: expense.id, in: fixture)[pizza] == [fixture.me.id, fixture.priya.id])
+        #expect(try fixture.services.activity.entries(in: fixture.group.id, limit: 100).count == count)
+        #expect(try fixture.services.expenses.edits(of: expense.id).map(\.id) == [id])
+    }
+
     @Test func aCreatorsLaterEditWinsUntilANewerClaim() throws {
         let fixture = try Fixture()
         let expense = try addItemized(fixture)

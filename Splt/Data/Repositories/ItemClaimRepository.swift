@@ -80,13 +80,15 @@ final class SwiftDataItemClaimRepository: ItemClaimRepository {
         return changed
     }
 
-    /// Only the device of the person who added an expense calls this, so the expense has one editor.
+    /// Only the devices of the person who added an expense call this, so the expense has one editor.
+    /// Each of their devices may fold the same claims, so the edit's id comes from what it changed.
     @discardableResult
     private func fold(_ id: ExpenseID) throws -> Bool {
         guard let record = try env.expenseRecord(id), let expense = try expenses.expense(id: id),
               let updated = ItemClaimFold.folding(try claims(on: id), into: expense, modifiedAt: record.modifiedAt),
-              (try? updated.validate()) != nil else { return false }
-        try expenses.update(updated, extras: nil)
+              (try? updated.validate()) != nil,
+              case .itemized(let before) = expense.split, case .itemized(let after) = updated.split else { return false }
+        try expenses.update(updated, extras: nil, editID: ItemClaimFold.editID(expense: id, from: before, to: after))
         return true
     }
 }
