@@ -44,7 +44,7 @@ enum ActivityTypeFilter: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .all: true
         case .expenses: [.expenseAdded, .expenseEdited, .expenseDeleted, .expenseRestored, .expensesImported].contains(kind)
-        case .payments: [.paymentRecorded, .paymentUndone].contains(kind)
+        case .payments: [.paymentRecorded, .paymentUndone, .reminderSent].contains(kind)
         case .comments: kind == .commentAdded
         case .groups: [.groupCreated, .groupRenamed, .groupArchived, .groupRestored, .memberAdded, .memberRemoved].contains(kind)
         }
@@ -65,6 +65,7 @@ extension ActivityKind {
         case .paymentUndone: "arrow.uturn.backward.circle"
         case .commentAdded: "bubble.left"
         case .expensesImported: "square.and.arrow.down"
+        case .reminderSent: "bell"
         }
     }
 }

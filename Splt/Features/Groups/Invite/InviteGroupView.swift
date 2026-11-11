@@ -4,6 +4,7 @@ import SwiftUI
 /// A link and QR code for inviting people to a group.
 struct InviteGroupView: View {
     @Environment(\.groupSharing) private var sharing
+    @State private var asksForNotifications = false
     @State private var model: InviteLinkModel
     @State private var copyCount = 0
 
@@ -91,6 +92,13 @@ struct InviteGroupView: View {
         .navigationBarTitleDisplayMode(.inline)
         .haptic(.success, trigger: copyCount)
         .task { await model.load(using: sharing) }
+        .onChange(of: model.state) { _, state in
+            // a link anyone can join is ready to send, so changes from new people are on their way
+            if case .ready(let url) = state, url.scheme != DeepLink.scheme, NotificationAsk.shouldAsk() {
+                asksForNotifications = true
+            }
+        }
+        .notificationAsk(isPresented: $asksForNotifications)
     }
 
     /// The iCloud link lets anyone join; the plain app link only opens the group where it already is.

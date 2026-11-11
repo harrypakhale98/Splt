@@ -33,6 +33,7 @@ enum ActivityKind: String, Hashable, Sendable, Codable, CaseIterable {
     case paymentUndone
     case commentAdded
     case expensesImported
+    case reminderSent
 }
 
 /// Something that happened in a group, with the details needed to describe it.
@@ -51,6 +52,9 @@ enum ActivityEvent: Hashable, Sendable, Codable {
     case paymentUndone(PaymentReference)
     case commentAdded(expense: ExpenseReference?, text: String)
     case expensesImported(expenses: Int, payments: Int)
+    /// Someone asked `to` to pay them back what they owe in this group, one amount per currency.
+    /// Version 1.0 can't read it and leaves the row out of its feed.
+    case reminderSent(to: PersonID, amounts: [Money])
 
     var kind: ActivityKind {
         switch self {
@@ -68,6 +72,7 @@ enum ActivityEvent: Hashable, Sendable, Codable {
         case .paymentUndone: .paymentUndone
         case .commentAdded: .commentAdded
         case .expensesImported: .expensesImported
+        case .reminderSent: .reminderSent
         }
     }
 }

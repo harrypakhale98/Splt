@@ -8,6 +8,7 @@ enum ChangeMessages {
         var me: PersonID?
         var person: (PersonID) -> String?
         var group: (GroupID) -> String?
+        var locale: Locale = .current
     }
 
     static let freshnessWindow: TimeInterval = 60 * 60
@@ -95,6 +96,11 @@ enum ChangeMessages {
             return inGroup(String(localized: "\(actor) restored the group"), place)
         case .expensesImported(let expenses, _):
             return inGroup(String(localized: "\(actor) imported \(expenses) expenses"), place)
+        case .reminderSent(let recipient, let amounts):
+            // only the person it was for hears about it; the rest of the group syncs it silently
+            guard recipient == names.me, names.me != nil else { return nil }
+            let owed = ListFormatter.localizedString(byJoining: amounts.map { MoneyFormatting.magnitudeString($0, locale: names.locale) })
+            return inGroup(String(localized: "\(actor) reminded you: you owe \(owed)"), place)
         case .groupCreated:
             return nil
         }

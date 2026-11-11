@@ -8,6 +8,9 @@ protocol ActivityRepository {
     func unreadCount() throws -> Int
     func markRead(ids: [UUID]) throws
     func markAllRead() throws
+    /// Writes a row in the group saying you reminded `person` of what they owe you there. It syncs to
+    /// the group, which is how the reminder reaches them.
+    func recordReminder(to person: PersonID, amounts: [Money], in group: GroupID) throws
 }
 
 extension ActivityRepository {

@@ -9,6 +9,8 @@ enum Route: Hashable, Sendable {
     case expense(UUID)
     /// The recurring expenses of a group, by group id.
     case recurringExpenses(UUID)
+    /// Your share of everything, from the top of Activity.
+    case spending
 }
 
 /// Full screen flows presented as sheets over the tab bar.

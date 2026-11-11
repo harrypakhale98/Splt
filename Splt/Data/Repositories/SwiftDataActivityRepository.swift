@@ -19,7 +19,8 @@ final class SwiftDataActivityRepository: ActivityRepository {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         descriptor.fetchLimit = limit
-        return try env.context.fetch(descriptor).compactMap(ActivityEntry.init)
+        let me = try env.currentUser()?.personID
+        return try env.context.fetch(descriptor).compactMap(ActivityEntry.init).filter { $0.isShown(to: me) }
     }
 
     func unreadCount() throws -> Int {
@@ -36,6 +37,11 @@ final class SwiftDataActivityRepository: ActivityRepository {
         for record in unread where wanted.contains(record.id) {
             record.isRead = true
         }
+        try env.save()
+    }
+
+    func recordReminder(to person: PersonID, amounts: [Money], in group: GroupID) throws {
+        try env.log(.reminderSent(to: person, amounts: amounts), groupID: group)
         try env.save()
     }
 
