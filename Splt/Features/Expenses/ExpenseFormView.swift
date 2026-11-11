@@ -55,7 +55,8 @@ private struct ExpenseFormScreen: View {
             }
             .background(Ink.paper.ignoresSafeArea())
             .navigationTitle(navigationTitle)
-            .navigationSubtitle(model.group?.name ?? "")
+            // the group line under the amount names it when it can be changed
+            .navigationSubtitle(model.switchableGroups.isEmpty ? (model.group?.name ?? "") : "")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
         }
@@ -124,7 +125,7 @@ private struct ExpenseFormScreen: View {
                         focus = nil
                     }
                     TitleField(model: model, focus: $focus)
-                    PaidByMenu(model: model) { closeKeypad() }
+                    GroupAndPayerLine(model: model) { closeKeypad() }
                 }
                 WhoIsInSection(model: model) { closeKeypad() }
                 if model.split.method == .itemized {

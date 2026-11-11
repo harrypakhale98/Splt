@@ -92,15 +92,14 @@ final class ExpensesUITests: XCTestCase {
         app.buttons["Add Expense"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
 
-        let chip = field("chip-group", in: app)
-        XCTAssertTrue(chip.waitForExistence(timeout: 5))
-        reveal(chip, in: app)
-        chip.tap()
+        let picker = field("expense-group", in: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        picker.tap()
         let other = app.buttons["Flat 4B"].firstMatch
         XCTAssertTrue(other.waitForExistence(timeout: 5), visibleControls(in: app))
         other.tap()
         XCTAssertTrue(element(labelContaining: "Flat 4B", in: app).waitForExistence(timeout: 5))
-        XCTAssertEqual(chip.value as? String, "Flat 4B")
+        XCTAssertEqual(picker.value as? String, "Flat 4B")
     }
 
     @MainActor
