@@ -16,6 +16,11 @@ struct SplitGroup: Hashable, Sendable, Codable, Identifiable {
     var tripStart: Date?
     var tripEnd: Date?
     var pinnedRate: PinnedRate?
+    /// The cover photo's file name in `PhotoStore.covers`, or nil to show the symbol.
+    /// Changes through `GroupRepository.setCover` and `removeCover`, never through `update`.
+    var coverFileName: String?
+    /// How a new expense starts out split. Nil splits equally. Changes through `GroupRepository.setDefaultSplit`.
+    var defaultSplit: DefaultSplit?
     var createdAt: Date
 
     init(
@@ -30,6 +35,8 @@ struct SplitGroup: Hashable, Sendable, Codable, Identifiable {
         tripStart: Date? = nil,
         tripEnd: Date? = nil,
         pinnedRate: PinnedRate? = nil,
+        coverFileName: String? = nil,
+        defaultSplit: DefaultSplit? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -43,6 +50,13 @@ struct SplitGroup: Hashable, Sendable, Codable, Identifiable {
         self.tripStart = tripStart
         self.tripEnd = tripEnd
         self.pinnedRate = pinnedRate
+        self.coverFileName = coverFileName
+        self.defaultSplit = defaultSplit
         self.createdAt = createdAt
+    }
+
+    /// The cover to show. A two-person friend group never shows one, whatever a synced record says.
+    var shownCoverFileName: String? {
+        kind == .friend ? nil : coverFileName
     }
 }

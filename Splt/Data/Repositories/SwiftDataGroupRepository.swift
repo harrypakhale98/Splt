@@ -5,9 +5,12 @@ import SwiftData
 @MainActor
 final class SwiftDataGroupRepository: GroupRepository {
     let env: RepositoryContext
+    /// Where cover photos are kept. Tests use a folder of their own.
+    let covers: PhotoStore
 
-    init(_ env: RepositoryContext) {
+    init(_ env: RepositoryContext, covers: PhotoStore = .covers) {
         self.env = env
+        self.covers = covers
     }
 
     func groups(includeArchived: Bool) throws -> [SplitGroup] {

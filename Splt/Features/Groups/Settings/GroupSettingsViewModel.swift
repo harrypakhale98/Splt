@@ -2,8 +2,9 @@ import Foundation
 import Observation
 import SpltCore
 
-/// The state behind the group settings sheet. Text fields and dates are saved together with `save()`,
-/// which the sheet's one button, Done, calls; members, archive, leave and delete act straight away.
+/// The state behind the group settings sheet. Text fields, dates and the default split are saved together
+/// with `save()`, which the sheet's one button, Done, calls; the cover photo, members, archive, leave and
+/// delete act straight away.
 @MainActor
 @Observable
 final class GroupSettingsViewModel {
@@ -37,6 +38,11 @@ final class GroupSettingsViewModel {
     var blockedMessage: String?
     /// Why you can't leave, shown under its own title.
     var leaveBlockedMessage: String?
+    /// How new expenses in the group start out split.
+    var splitDraft = DefaultSplitDraft(split: nil, members: [])
+    /// The default split as the sheet opened, to tell an edit from what is saved.
+    private(set) var savedSplitDraft = DefaultSplitDraft(split: nil, members: [])
+    private(set) var isChangingCover = false
 
     private(set) var group: SplitGroup?
     private(set) var symbol = ""
@@ -88,6 +94,8 @@ final class GroupSettingsViewModel {
             } else {
                 rateCurrencyCode = Self.suggestedRateCurrency(excluding: loaded.currencyCode)
             }
+            splitDraft = DefaultSplitDraft(split: loaded.defaultSplit, members: loaded.memberIDs, locale: locale)
+            savedSplitDraft = splitDraft
             try reloadMembers()
         } catch {
             errorMessage = GroupErrorMessage.text(for: error)
@@ -99,6 +107,8 @@ final class GroupSettingsViewModel {
     private func reloadMembers() throws {
         guard let current = try groups.group(id: groupID) else { return }
         group = current
+        splitDraft.setMembers(current.memberIDs)
+        savedSplitDraft.setMembers(current.memberIDs)
         let me = try people.me()?.id
         let balances = try groups.balances(for: groupID)
         memberRows = try people.people(ids: current.memberIDs).map { person in
@@ -132,6 +142,8 @@ final class GroupSettingsViewModel {
 
     var canSave: Bool {
         guard !trimmedName.isEmpty else { return false }
+        // a saved split that stopped adding up can stay as it is, but an edited one has to work
+        if hasSplitEdits, !splitDraft.isValid(locale: locale) { return false }
         if isTrip, tripEnd < tripStart { return false }
         if isTrip, pinsRate, rate == nil || rateCurrencyCode == currencyCode { return false }
         return true
@@ -143,6 +155,7 @@ final class GroupSettingsViewModel {
         if trimmedName != group.name || symbol != group.symbol || currencyCode.uppercased() != group.currencyCode {
             return true
         }
+        if hasSplitEdits { return true }
         guard isTrip else { return false }
         if let start = group.tripStart, start != tripStart { return true }
         if let end = group.tripEnd, end != tripEnd { return true }
@@ -158,11 +171,37 @@ final class GroupSettingsViewModel {
         symbol = value
     }
 
+    var hasSplitEdits: Bool { splitDraft != savedSplitDraft }
+
+    // MARK: Cover photo
+
+    /// A friend group is hidden behind a person, so it never has a cover.
+    var canHaveCover: Bool { group.map { $0.kind != .friend } ?? false }
+
+    var coverFileName: String? { group?.shownCoverFileName }
+
+    func setCover(_ photo: Data) async {
+        isChangingCover = true
+        defer { isChangingCover = false }
+        do {
+            try await groups.setCover(photo, for: groupID)
+            try reloadMembers()
+        } catch is UnreadablePhotoError {
+            errorMessage = String(localized: "That photo could not be loaded.")
+        } catch {
+            errorMessage = GroupErrorMessage.text(for: error)
+        }
+    }
+
+    func removeCover() {
+        perform { try groups.removeCover(for: groupID) }
+    }
+
     func tripStartChanged() {
         if tripEnd < tripStart { tripEnd = tripStart }
     }
 
-    /// Saves the name, symbol, currency, trip dates and pinned rate.
+    /// Saves the name, symbol, currency, trip dates, pinned rate and default split.
     func save() throws {
         guard var edited = group, canSave else { return }
         edited.name = trimmedName
@@ -178,8 +217,12 @@ final class GroupSettingsViewModel {
             }
         }
         try groups.update(edited)
+        if hasSplitEdits {
+            try groups.setDefaultSplit(splitDraft.split(locale: locale), for: groupID)
+            savedSplitDraft = splitDraft
+        }
         invalidateExports()
-        group = edited
+        group = try groups.group(id: groupID) ?? edited
     }
 
     // MARK: Members

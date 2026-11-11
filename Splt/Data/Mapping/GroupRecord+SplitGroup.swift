@@ -8,6 +8,8 @@ extension SplitGroup {
             simplifiesDebts: record.simplifiesDebts, isArchived: record.isArchived,
             tripStart: record.tripStart, tripEnd: record.tripEnd,
             pinnedRate: record.pinnedRateData.flatMap { try? RecordCoding.decode(PinnedRate.self, from: $0) },
+            coverFileName: record.coverFileName,
+            defaultSplit: record.defaultSplitData.flatMap { try? RecordCoding.decode(DefaultSplit.self, from: $0) },
             createdAt: record.createdAt
         )
     }
@@ -23,8 +25,12 @@ extension GroupRecord {
             pinnedRateData: group.pinnedRate.map { RecordCoding.encode($0) },
             createdAt: group.createdAt
         )
+        coverFileName = group.coverFileName
+        defaultSplitData = group.defaultSplit.map { RecordCoding.encode($0) }
     }
 
+    /// Copies the edited fields. The cover photo and the default split are left alone: they have
+    /// their own repository methods, so an older copy of the group never puts back a replaced photo.
     func update(from group: SplitGroup) {
         name = group.name
         symbol = group.symbol

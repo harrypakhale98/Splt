@@ -1,7 +1,8 @@
+import PhotosUI
 import SpltCore
 import SwiftUI
 
-/// Rename, change the symbol, currency and trip details, manage members, invite, export, leave or delete.
+/// Rename, change the cover photo, symbol, currency and trip details, manage members, invite, export, leave or delete.
 struct GroupSettingsView: View {
     let groupID: GroupID
     /// Called after the group is deleted or you leave it, so the screen behind can step back.
@@ -26,8 +27,8 @@ struct GroupSettingsView: View {
     }
 }
 
-/// Members, archive and exports take effect as soon as they are tapped, so there is no Cancel to
-/// suggest otherwise. Done saves the name, symbol, currency and trip fields.
+/// The cover photo, members, archive and exports take effect as soon as they are tapped, so there is no
+/// Cancel to suggest otherwise. Done saves the name, symbol, currency, trip fields and default split.
 private struct GroupSettingsForm: View {
     let onGroupRemoved: () -> Void
 
@@ -40,6 +41,9 @@ private struct GroupSettingsForm: View {
     @State private var showsDeleteConfirmation = false
     @State private var showsLeaveConfirmation = false
     @State private var newMemberName = ""
+    @State private var showsPhotoPicker = false
+    @State private var pickedPhoto: PhotosPickerItem?
+    @State private var showsCamera = false
 
     init(groupID: GroupID, services: DataServices, onGroupRemoved: @escaping () -> Void) {
         self.onGroupRemoved = onGroupRemoved
@@ -130,6 +134,9 @@ private struct GroupSettingsForm: View {
                 RaisedRows {
                     TextField("Group Name", text: $model.name)
                         .textInputAutocapitalization(.words)
+                    if model.canHaveCover {
+                        coverRow
+                    }
                     NavigationLink {
                         SymbolPickerView(selection: Binding(get: { model.symbol }, set: { model.chooseSymbol($0) }))
                     } label: {
@@ -149,6 +156,11 @@ private struct GroupSettingsForm: View {
                         LabeledContent("Currency", value: model.currencyCode)
                     }
                 }
+            } footer: {
+                if model.canHaveCover {
+                    Text("The photo shows on the group and in your list of groups. Without a photo, the symbol shows.")
+                        .padding(.horizontal, Depth.pageMargin + 4)
+                }
             }
             .raisedSection()
 
@@ -157,6 +169,8 @@ private struct GroupSettingsForm: View {
             }
 
             membersSection
+
+            defaultSplitSection
 
             if let group = model.group {
                 GroupInviteSection(groupID: group.id, groupName: group.name, isSharedWithMe: model.isSharedWithMe == true)
@@ -196,6 +210,85 @@ private struct GroupSettingsForm: View {
         }
         .paperBackground()
         .onChange(of: model.tripStart) { model.tripStartChanged() }
+        .photosPicker(isPresented: $showsPhotoPicker, selection: $pickedPhoto, matching: .images)
+        .onChange(of: pickedPhoto) { _, item in
+            guard let item else { return }
+            pickedPhoto = nil
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    await model.setCover(data)
+                } else {
+                    model.errorMessage = String(localized: "That photo could not be loaded.")
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showsCamera) {
+            CameraPicker(
+                onFinish: { data in
+                    showsCamera = false
+                    Task { await model.setCover(data) }
+                },
+                onCancel: { showsCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+    }
+
+    /// Opens a menu to pick, take or remove the photo. Shows the photo itself, or Add without one.
+    private var coverRow: some View {
+        Menu {
+            Button("Choose from Photos", systemImage: "photo") { showsPhotoPicker = true }
+            if CameraPicker.isSupported {
+                Button("Take Photo", systemImage: "camera") { showsCamera = true }
+            }
+            if model.coverFileName != nil {
+                Divider()
+                Button("Remove Photo", systemImage: "trash", role: .destructive) { model.removeCover() }
+            }
+        } label: {
+            HStack {
+                Text("Cover Photo")
+                    .foregroundStyle(Ink.text)
+                Spacer()
+                if model.isChangingCover {
+                    ProgressView()
+                } else if let cover = model.coverFileName {
+                    // until the photo arrives from another phone, a plain photo mark stands in
+                    CoverThumbnail(fileName: cover, store: .covers, side: 32) {
+                        Image(systemName: "photo").foregroundStyle(Ink.secondary)
+                    }
+                } else {
+                    Text("Add")
+                        .foregroundStyle(Ink.secondary)
+                }
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Ink.tertiary)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+        .disabled(model.isChangingCover)
+        .accessibilityLabel("Cover Photo")
+        .accessibilityValue(model.coverFileName == nil ? String(localized: "None") : String(localized: "Photo"))
+    }
+
+    private var defaultSplitSection: some View {
+        @Bindable var model = model
+
+        return Section {
+            RaisedRows {
+                NavigationLink {
+                    DefaultSplitEditor(draft: $model.splitDraft, people: model.memberRows.map(\.person), me: model.myRow?.person.id)
+                } label: {
+                    LabeledContent("Default Split", value: model.splitDraft.method.title)
+                }
+            }
+        } footer: {
+            Text("New expenses in this group start with this split.")
+                .padding(.horizontal, Depth.pageMargin + 4)
+        }
+        .raisedSection()
     }
 
     private var tripSection: some View {
