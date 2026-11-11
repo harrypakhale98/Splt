@@ -33,6 +33,7 @@ extension SyncStoreAdapter {
         var copyUpdates: [(PersonCopyKey, PersonCopy)] = []
         var queueAdds: Set<PersonCopyKey> = []
         var attachmentSlots: [String: [String: String?]] = [:]
+        var photosToSend: Set<Int> = []
 
         for record in modifications where !isImpostor(record.recordID.zoneID) {
             if let share = record as? CKShare {
@@ -68,6 +69,7 @@ extension SyncStoreAdapter {
                     }
                 }
             }
+            if try hasPhotoTheServerLacks(payload, record) { photosToSend.insert(payloads.count) }
             payloads.append(payload)
             sources.append(record.recordID)
         }
@@ -82,10 +84,17 @@ extension SyncStoreAdapter {
                 if payloads[index].recordType == .person {
                     queueAdds.insert(PersonCopyKey(zoneName: sources[index].zoneID.zoneName, recordName: payloads[index].recordName))
                 }
+            case .replacedLocalChanges where photosToSend.contains(index):
+                // the server copy won, but the photo this device was sending is still missing there
+                let payload = payloads[index]
+                guard let model = try payload.recordType.modelType.find(recordName: payload.recordName, in: tracker.context) else { break }
+                tracker.recordBookkeeping(model)
+                report.requeue.append(sources[index])
             case .updated, .replacedLocalChanges:
                 break
             }
         }
+        if !photosToSend.isEmpty { try tracker.save() }
 
         for deletion in deletions where !isImpostor(deletion.id.zoneID) {
             try applyDeletion(id: deletion.id, recordType: deletion.recordType)
@@ -106,6 +115,20 @@ extension SyncStoreAdapter {
             }
         }
         return report
+    }
+
+    /// True when a local version waiting to be sent names the same photo as the server copy, the server
+    /// copy has no photo for it and the file is here. A photo from before 1.1 is queued this way.
+    private func hasPhotoTheServerLacks(_ payload: SyncPayload, _ record: CKRecord) throws -> Bool {
+        let kinds = RecordSchema.attachments(for: payload.recordType)
+        guard !kinds.isEmpty, payload.deletedAt == nil,
+              let local = try payload.recordType.modelType.find(recordName: payload.recordName, in: tracker.context),
+              local.isDirty, local.pendingOperation == .save else { return false }
+        let fields = local.syncPayload.fields
+        return kinds.contains { kind in
+            guard let name = fields.string(kind.nameKey), name == payload.fields.string(kind.nameKey) else { return false }
+            return !(record[kind.assetKey] is CKAsset) && attachments.store(kind.folder).exists(name)
+        }
     }
 
     // MARK: Untrusted records

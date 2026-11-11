@@ -138,4 +138,74 @@ struct PhotoBackfillTests {
         try cloud.download(to: phone.device)
         #expect(try phone.device.services.expenses.expense(id: expense.id)?.title == "Late dinner")
     }
+
+    /// Another phone edits the expense after 1.0 synced it. Its copy has the name but no photo.
+    private func newerEditElsewhere(of expense: Expense, phone: PopulatedDevice, cloud: FakeCloud) throws -> SyncDevice {
+        let other = try SyncDevice(start: 1_750_000_500)
+        try cloud.download(to: other)
+        var renamed = expense
+        renamed.title = "Late dinner"
+        try other.services.expenses.update(renamed)
+        try cloud.upload(from: other)
+        phone.device.clock.advance(by: 10_000)
+        return other
+    }
+
+    @Test func thePhotoStillGoesUpWhenANewerEditArrives() throws {
+        let phone = try PopulatedDevice()
+        let cloud = FakeCloud()
+        let (expense, name) = try oldReceipt(on: phone, cloud: cloud)
+        let other = try newerEditElsewhere(of: expense, phone: phone, cloud: cloud)
+        #expect(try queue(phone.device) == 1)
+
+        let report = try cloud.download(to: phone.device)
+        #expect(report.requeue.contains { $0.recordName == expense.id.description })
+        #expect(try expenseRecord(expense, on: phone.device).isDirty)
+        let sent = try #require(try phone.device.outgoing().records.first { $0.recordID.recordName == expense.id.description })
+        #expect(sent["receipt"] is CKAsset)
+        #expect(sent["title"] as? String == "Late dinner")
+
+        try cloud.upload(from: phone.device)
+        try cloud.download(to: other)
+        #expect(other.photos.store(.receipts).exists(name))
+        #expect(try other.services.expenses.expense(id: expense.id)?.title == "Late dinner")
+    }
+
+    @Test func thePhotoStillGoesUpWhenTheUploadLosesAConflict() throws {
+        let phone = try PopulatedDevice()
+        let cloud = FakeCloud()
+        let (expense, _) = try oldReceipt(on: phone, cloud: cloud)
+        _ = try newerEditElsewhere(of: expense, phone: phone, cloud: cloud)
+        #expect(try queue(phone.device) == 1)
+        let sent = try #require(try phone.device.outgoing().records.first { $0.recordID.recordName == expense.id.description })
+        let server = try #require(cloud.records[sent.recordID])
+
+        let outcome = try phone.device.adapter.saveFailed(record: sent, error: CKError(.serverRecordChanged, userInfo: [
+            CKRecordChangedErrorServerRecordKey: server, CKRecordChangedErrorClientRecordKey: sent,
+        ]))
+        #expect(outcome.requeue)
+        #expect(try phone.device.services.expenses.expense(id: expense.id)?.title == "Late dinner")
+        let again = try #require(try phone.device.outgoing().records.first { $0.recordID.recordName == expense.id.description })
+        #expect(again["receipt"] is CKAsset)
+    }
+
+    @Test func aServerCopyWithTheSamePhotoIsNotSentAgain() throws {
+        let phone = try PopulatedDevice()
+        let cloud = FakeCloud()
+        let (expense, _) = try oldReceipt(on: phone, cloud: cloud)
+        #expect(try queue(phone.device) == 1)
+        try cloud.upload(from: phone.device)
+        var renamed = expense
+        renamed.title = "Lunch"
+        try phone.device.services.expenses.update(renamed)
+        let sent = try #require(try phone.device.outgoing().records.first { $0.recordID.recordName == expense.id.description })
+        let server = try #require(cloud.records[sent.recordID])
+        server[RecordSchema.modifiedAtKey] = (server[RecordSchema.modifiedAtKey] as? Date)?.addingTimeInterval(100_000)
+
+        let outcome = try phone.device.adapter.saveFailed(record: sent, error: CKError(.serverRecordChanged, userInfo: [
+            CKRecordChangedErrorServerRecordKey: server, CKRecordChangedErrorClientRecordKey: sent,
+        ]))
+        #expect(!outcome.requeue)
+        #expect(try !expenseRecord(expense, on: phone.device).isDirty)
+    }
 }
