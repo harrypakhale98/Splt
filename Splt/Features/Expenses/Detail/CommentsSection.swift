@@ -60,6 +60,7 @@ private struct CommentRow: View {
     let model: ExpenseDetailModel
     let comment: ExpenseComment
     let translate: (String) -> Void
+    @State private var confirmsDelete = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -80,8 +81,12 @@ private struct CommentRow: View {
         .contextMenu {
             Button("Translate", systemImage: "translate") { translate(comment.text) }
             if comment.authorID == model.me?.id {
-                Button("Delete", systemImage: "trash", role: .destructive) { model.deleteComment(comment) }
+                Button("Delete", systemImage: "trash", role: .destructive) { confirmsDelete = true }
             }
+        }
+        .confirmationDialog("Delete Comment?", isPresented: $confirmsDelete, titleVisibility: .visible) {
+            Button("Delete Comment", role: .destructive) { model.deleteComment(comment) }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
