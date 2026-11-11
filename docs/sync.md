@@ -91,7 +91,7 @@ What one Mac cannot show is a change arriving from another device, and sharing b
 - Everyone needs an Apple ID and iCloud turned on. People without it can still be placeholders.
 - Claiming a placeholder is refused while the placeholder and the real person both paid, or both have a share, in one expense, or one paid the other, because their amounts would need merging by hand. Deleted expenses do not count.
 - Two people editing the same record before either has synced can lose a change, even in different fields: the later edit replaces the whole record. This also applies to a group's member list and a comment's reactions. Separate records, such as two new expenses, never conflict.
-- Receipt photos stay on the device that scanned them. Only the file name syncs.
+- A receipt photo from before 1.1 reaches other phones only once the phone that has it opens 1.1, which sends each such photo once without changing the expense. A phone still on 1.0 never sends or receives photos.
 - After switching iCloud accounts, groups already on the device stay as local copies and are not uploaded to the new account.
 - After you delete Splt's data in the iCloud storage settings, your groups stay on each device as local copies and are not uploaded again. Groups you make afterwards sync as usual. A device still on version 1.0.0 does upload them again.
 - Closing a link does not take the people it removed off the group's member list. Remove them in the group's settings, or invite them again by name.
