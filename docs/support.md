@@ -28,4 +28,18 @@ Open Account in Splt to see the sync status. Check that you are signed in to iCl
 
 ### Can I move my data out?
 
-Yes. Open a group, then Group Settings, and export it as a spreadsheet (CSV), PDF or JSON.
+Yes. Open a group, then Group Settings, and export it as a spreadsheet (CSV), PDF or JSON. To keep everything at once, make a backup, as below.
+
+### How do I back up everything?
+
+Open Account, then Back Up Everything. Leave Include Photos on to keep your receipt and group photos too; the screen shows about how large the file will be. Tap Make Backup, then Save or Share Backup, and choose Save to Files or another place you trust. The file is named like "Splt Backup 2026-11-10.spltbackup". Splt never uploads it anywhere, so it is only as safe as where you keep it.
+
+### How do I restore a backup?
+
+Open Account, then Restore from Backup, and pick the file, or tap the file in the Files app. Splt shows what the backup holds and what will happen before you confirm.
+
+- Restoring never deletes or changes anything already in Splt. It only adds what is missing.
+- A group that is already here, or was deleted here, is skipped, and Splt tells you how many were.
+- Every other group comes back as your own new group and syncs to your iCloud. If it was shared, invite the others again. You stay you, and everyone else comes back as a person you added by name, whom you can claim once they join.
+- Restoring the same backup again adds nothing.
+- A damaged file, or one from a newer version of Splt, is refused and nothing changes. Update Splt and try again.

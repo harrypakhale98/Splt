@@ -43,6 +43,10 @@ When an expense is in another currency than its group, Splt can look up a rate f
 
 Exporting a group as CSV, PDF or JSON creates a file on your device. It goes where you send it from the share sheet, and nowhere else.
 
+## Backups
+
+Back Up Everything, in Account, makes one file with your groups, people, expenses, payments, comments and activity, and your receipt and group photos unless you turn Include Photos off. It also holds the email addresses and phone numbers you picked for people. It holds no iCloud account details. The file is made on your device and goes only where you save or send it from the share sheet. Splt never uploads it anywhere, so keep it somewhere safe and treat it like any file with your finances in it. Restoring a backup reads the file on your device and adds what it holds to your own groups.
+
 ## Balance links
 
 Share as a Link, in a group's share menu, makes a web link for a friend without an iPhone. The group's name, trip dates, people's names and colours, who pays whom and, if you leave Recent expenses on, the latest ten expenses with each person's share are packed into the link itself, after the "#". Browsers never send that part to a server, so the page on this website reads it in the browser and nothing is uploaded. The page loads nothing from any other site and runs no analytics. The link holds no contact details, no account and no identifiers. It is a snapshot that never changes, and it can't be taken back: anyone who has it can see those names and amounts, so send it only to the people in the group. The page remembers which person you chose, in your browser only.
