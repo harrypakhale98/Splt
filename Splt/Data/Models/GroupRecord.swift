@@ -2,7 +2,7 @@ import Foundation
 import SpltCore
 import SwiftData
 
-extension SpltSchemaV1 {
+extension SpltSchemaV2 {
     @Model
     final class GroupRecord {
         @Attribute(.unique) var id: UUID
@@ -18,6 +18,10 @@ extension SpltSchemaV1 {
         var tripEnd: Date?
         /// A `PinnedRate` as JSON, set when the group fixes an exchange rate for a trip.
         var pinnedRateData: Data?
+        /// The cover photo's file name in the covers folder of `PhotoStore`, or nil to show the symbol.
+        var coverFileName: String?
+        /// A `DefaultSplit` as JSON: how a new expense in this group is split unless changed. Nil splits equally.
+        var defaultSplitData: Data?
         var createdAt: Date
 
         var recordName: String
@@ -53,6 +57,8 @@ extension SpltSchemaV1 {
             self.tripStart = tripStart
             self.tripEnd = tripEnd
             self.pinnedRateData = pinnedRateData
+            self.coverFileName = nil
+            self.defaultSplitData = nil
             self.createdAt = createdAt
             self.recordName = id.uuidString
             self.zoneName = id.uuidString
@@ -87,6 +93,8 @@ extension GroupRecord: SyncTracked {
         fields.set("tripStart", tripStart)
         fields.set("tripEnd", tripEnd)
         fields.set("pinnedRate", pinnedRateData)
+        fields.set("coverFileName", coverFileName)
+        fields.set("defaultSplit", defaultSplitData)
         fields.set("createdAt", createdAt)
         return fields
     }
@@ -102,6 +110,8 @@ extension GroupRecord: SyncTracked {
         tripStart = fields.date("tripStart")
         tripEnd = fields.date("tripEnd")
         pinnedRateData = fields.data("pinnedRate")
+        coverFileName = fields.string("coverFileName")
+        defaultSplitData = fields.data("defaultSplit")
         createdAt = fields.date("createdAt") ?? createdAt
     }
 

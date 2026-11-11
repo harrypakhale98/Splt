@@ -3,7 +3,7 @@ import UIKit
 
 struct ReceiptSection: View {
     let model: ExpenseDetailModel
-    private let store = ReceiptStore.standard
+    private let store = PhotoStore.receipts
     @State private var showsFullScreen = false
     /// Whether the photo file is here, checked once per file rather than on every redraw.
     @State private var isOnDevice = true
@@ -51,7 +51,7 @@ struct ReceiptSection: View {
 
 struct FullScreenReceiptView: View {
     let fileName: String
-    let store: ReceiptStore
+    let store: PhotoStore
 
     @Environment(\.dismiss) private var dismiss
     /// The photo, decoded once when the viewer opens rather than on every pinch.

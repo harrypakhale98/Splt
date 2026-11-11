@@ -8,6 +8,7 @@ extension SyncRecordType {
         case .comment: CommentRecord.self
         case .activity: ActivityRecord.self
         case .recurringExpense: RecurringExpenseRecord.self
+        case .itemClaim: ItemClaimRecord.self
         }
     }
 }

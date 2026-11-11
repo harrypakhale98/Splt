@@ -29,24 +29,36 @@
 
 /* Begin PBXFileReference section */
 		5221EDC14D74376768D4DC93 /* SpltKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpltKit; path = Packages/SpltKit; sourceTree = SOURCE_ROOT; };
-		96F33279B0DEA0DFCC8E555A /* Splt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Splt.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpltUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		96F33279B0DEA0DFCC8E555A /* Splt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Splt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		91AB7BEAAEAA8000769548EE /* Splt */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
 			path = Splt;
 			sourceTree = "<group>";
 		};
 		A9C2F22DFA6DB41AA1481EA0 /* SpltUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
 			path = SpltUITests;
 			sourceTree = "<group>";
 		};
 		FDABB17870C7B5C7334A5750 /* SpltTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
 			path = SpltTests;
 			sourceTree = "<group>";
 		};
@@ -173,9 +185,14 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					022ADBAB17BA8A292126955B = {
+						DevelopmentTeam = DUHVN68KBA;
 						TestTargetID = 8FC5153111E7AA4790072F82;
 					};
+					19920EC43439FDAF41F1F604 = {
+						DevelopmentTeam = DUHVN68KBA;
+					};
 					8FC5153111E7AA4790072F82 = {
+						DevelopmentTeam = DUHVN68KBA;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -270,7 +287,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -291,7 +307,6 @@
 				CODE_SIGN_ENTITLEMENTS = Splt/Sync/Splt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Splt;
@@ -316,7 +331,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -366,6 +380,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DUHVN68KBA;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -394,7 +409,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -444,6 +458,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DUHVN68KBA;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -482,7 +497,6 @@
 				CODE_SIGN_ENTITLEMENTS = Splt/Sync/Splt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Splt;
@@ -507,7 +521,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				DEVELOPMENT_TEAM = DUHVN68KBA;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

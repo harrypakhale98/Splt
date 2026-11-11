@@ -7,13 +7,13 @@ import Testing
 @MainActor
 struct ExpenseFormHarness {
     let fixture: Fixture
-    let receipts: ReceiptStore
+    let receipts: PhotoStore
     let defaults: UserDefaults
 
     init() throws {
         fixture = try Fixture()
         let folder = FileManager.default.temporaryDirectory.appending(path: "splt-receipts-\(UUID().uuidString)")
-        receipts = ReceiptStore(directory: folder)
+        receipts = PhotoStore(directory: folder)
         defaults = UserDefaults(suiteName: "splt-tests-\(UUID().uuidString)") ?? .standard
     }
 

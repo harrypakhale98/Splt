@@ -46,6 +46,9 @@ struct SyncMetadata: Codable, Equatable, Sendable {
     /// Shared groups whose invitation was accepted on this device before the group itself was here, so
     /// joining can finish when it arrives. Optional for the same reason.
     var pendingJoins: Set<String>?
+    /// The photo the server holds in each asset field, per group zone and then per slot
+    /// (`AttachmentSync.slot`), so an unchanged photo is not uploaded again. Optional for the same reason.
+    var attachmentsOnServer: [String: [String: String]]?
 
     func isDetached(zoneName: String) -> Bool {
         detachedZones?.contains(zoneName) == true
@@ -98,7 +101,24 @@ struct SyncMetadata: Codable, Equatable, Sendable {
         zonesHoldingCopy(of: recordName).filter { scope(forZoneName: $0) == .privateDatabase }
     }
 
+    func attachmentOnServer(zoneName: String, slot: String) -> String? {
+        attachmentsOnServer?[zoneName]?[slot]
+    }
+
+    /// Records what the server now holds in some slots of a zone: a photo name, or nil when the slot is empty or unknown.
+    mutating func setAttachments(_ slots: [String: String?], zoneName: String) {
+        guard !slots.isEmpty else { return }
+        var zone = attachmentsOnServer?[zoneName] ?? [:]
+        for (slot, name) in slots {
+            zone[slot] = name
+        }
+        var all = attachmentsOnServer ?? [:]
+        all[zoneName] = zone.isEmpty ? nil : zone
+        attachmentsOnServer = all.isEmpty ? nil : all
+    }
+
     mutating func forget(zoneName: String) {
+        attachmentsOnServer?[zoneName] = nil
         zones[zoneName] = nil
         personCopies[zoneName] = nil
         personQueue = personQueue.filter { $0.zoneName != zoneName }

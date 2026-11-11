@@ -32,6 +32,7 @@ extension SyncStoreAdapter {
         var sources: [CKRecord.ID] = []
         var copyUpdates: [(PersonCopyKey, PersonCopy)] = []
         var queueAdds: Set<PersonCopyKey> = []
+        var attachmentSlots: [String: [String: String?]] = [:]
 
         for record in modifications where !isImpostor(record.recordID.zoneID) {
             if let share = record as? CKShare {
@@ -44,6 +45,9 @@ extension SyncStoreAdapter {
             }
             registerZone(record.recordID.zoneID)
             report.touchedZones.insert(record.recordID.zoneID.zoneName)
+            // the server hands over a photo only during this call, so it is kept now, whichever copy wins
+            attachmentSlots[record.recordID.zoneID.zoneName, default: [:]]
+                .merge(attachments.received(record, type: payload.recordType, keepFiles: true)) { $1 }
             if payload.recordType == .person {
                 let key = PersonCopyKey(zoneName: record.recordID.zoneID.zoneName, recordName: payload.recordName)
                 copyUpdates.append((key, PersonCopy(systemFields: payload.systemFields, sentModifiedAt: payload.modifiedAt)))
@@ -84,6 +88,13 @@ extension SyncStoreAdapter {
 
         for deletion in deletions where !isImpostor(deletion.id.zoneID) {
             try applyDeletion(id: deletion.id, recordType: deletion.recordType)
+        }
+        if !attachmentSlots.isEmpty {
+            updateMetadata { metadata in
+                for (zone, slots) in attachmentSlots {
+                    metadata.setAttachments(slots, zoneName: zone)
+                }
+            }
         }
         if !copyUpdates.isEmpty || !queueAdds.isEmpty {
             updateMetadata { metadata in
@@ -246,6 +257,7 @@ extension SyncStoreAdapter {
         case .comment: try context.fetch(FetchDescriptor<CommentRecord>()).forEach { $0.systemFields = nil }
         case .activity: try context.fetch(FetchDescriptor<ActivityRecord>()).forEach { $0.systemFields = nil }
         case .recurringExpense: try context.fetch(FetchDescriptor<RecurringExpenseRecord>()).forEach { $0.systemFields = nil }
+        case .itemClaim: try context.fetch(FetchDescriptor<ItemClaimRecord>()).forEach { $0.systemFields = nil }
         }
     }
 }
@@ -262,7 +274,7 @@ extension SyncPayload {
             }
         case .payment:
             return (fields.int("amountMinorUnits")?.magnitude ?? 0) <= limit
-        case .person, .group, .comment, .activity:
+        case .person, .group, .comment, .activity, .itemClaim:
             return true
         }
     }

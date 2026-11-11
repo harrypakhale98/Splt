@@ -70,6 +70,9 @@ final class SwiftDataGroupRepository: GroupRepository {
         for template in try env.context.fetch(FetchDescriptor<RecurringExpenseRecord>(predicate: #Predicate { $0.groupID == gid })) {
             env.tracker.tombstone(template)
         }
+        for claim in try env.context.fetch(FetchDescriptor<ItemClaimRecord>(predicate: #Predicate { $0.groupID == gid })) {
+            env.tracker.tombstone(claim)
+        }
         env.tracker.tombstone(record)
         try env.save()
     }

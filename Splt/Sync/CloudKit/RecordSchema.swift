@@ -29,7 +29,8 @@ enum RecordSchema {
             [
                 "name": .string, "symbol": .string, "currencyCode": .string, "kind": .string,
                 "memberIDs": .data, "simplifiesDebts": .int, "isArchived": .int, "tripStart": .date,
-                "tripEnd": .date, "pinnedRate": .data, "createdAt": .date,
+                "tripEnd": .date, "pinnedRate": .data, "coverFileName": .string, "defaultSplit": .data,
+                "createdAt": .date,
             ]
         case .expense:
             [
@@ -60,6 +61,33 @@ enum RecordSchema {
                 "lastCreatedOccurrence": .date, "isActive": .int, "createdByID": .string,
                 "createdAt": .date,
             ]
+        case .itemClaim:
+            [
+                "groupID": .string, "expenseID": .string, "personID": .string, "itemIDs": .data,
+                "createdAt": .date,
+            ]
         }
     }
+
+    /// Photo files that travel as CloudKit assets next to a record's fields. The record names the file
+    /// in `nameKey`; the file itself sits in the asset field `assetKey`.
+    static func attachments(for type: SyncRecordType) -> [Attachment] {
+        switch type {
+        case .expense: [Attachment(assetKey: "receipt", nameKey: "receiptFileName", folder: .receipts)]
+        case .group: [Attachment(assetKey: "cover", nameKey: "coverFileName", folder: .covers)]
+        case .person, .payment, .comment, .activity, .recurringExpense, .itemClaim: []
+        }
+    }
+}
+
+/// A photo file carried as an asset next to a record.
+struct Attachment: Hashable, Sendable {
+    enum Folder: Hashable, Sendable {
+        case receipts
+        case covers
+    }
+
+    var assetKey: String
+    var nameKey: String
+    var folder: Folder
 }

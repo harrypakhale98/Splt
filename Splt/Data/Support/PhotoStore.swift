@@ -3,18 +3,27 @@ import ImageIO
 import SwiftData
 import UniformTypeIdentifiers
 
-/// Keeps receipt photos as files in Application Support, never inside the database. An expense
-/// stores only the file name. A small thumbnail sits next to each photo for lists.
-struct ReceiptStore: Sendable {
+/// Keeps photos as files in Application Support, never inside the database: receipts of expenses and
+/// cover photos of groups, each in their own folder. A record stores only the file name, and sync
+/// carries the file itself next to the record. A small thumbnail sits next to each photo for lists.
+struct PhotoStore: Sendable {
     let directory: URL
 
     static let maximumPixels = 2_000
     static let thumbnailPixels = 360
 
+    /// The largest photo taken from a synced record. Others in a shared group can upload anything,
+    /// and a photo saved by this app is far smaller.
+    static let maximumIncomingBytes = 20_000_000
+
     /// The app's own receipt folder.
-    static var standard: ReceiptStore {
-        let base = URL.applicationSupportDirectory
-        return ReceiptStore(directory: base.appending(path: "Receipts", directoryHint: .isDirectory))
+    static var receipts: PhotoStore {
+        PhotoStore(directory: URL.applicationSupportDirectory.appending(path: "Receipts", directoryHint: .isDirectory))
+    }
+
+    /// The app's own folder of group cover photos.
+    static var covers: PhotoStore {
+        PhotoStore(directory: URL.applicationSupportDirectory.appending(path: "Covers", directoryHint: .isDirectory))
     }
 
     private var thumbnails: URL { directory.appending(path: "Thumbnails", directoryHint: .isDirectory) }
@@ -74,6 +83,31 @@ struct ReceiptStore: Sendable {
         return name
     }
 
+    /// Keeps a photo that arrived with a synced record under the name the record gives it, with a fresh
+    /// thumbnail. Returns false, keeping nothing, when the file is too large or not a readable image.
+    /// A photo already here is left as it is: names are unique, so it is the same photo.
+    @discardableResult
+    func adopt(fileAt source: URL, named fileName: String) -> Bool {
+        guard Self.safeName(fileName) == (fileName as NSString).lastPathComponent else { return false }
+        if exists(fileName) { return true }
+        guard let size = try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+              size <= Self.maximumIncomingBytes,
+              let data = try? Data(contentsOf: source),
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              CGImageSourceGetCount(source) > 0,
+              CGImageSourceCreateImageAtIndex(source, 0, nil) != nil else { return false }
+        do {
+            try FileManager.default.createDirectory(at: thumbnails, withIntermediateDirectories: true)
+            try data.write(to: url(for: fileName), options: .atomic)
+            if let thumbnail = Self.jpeg(from: data, maximumPixels: Self.thumbnailPixels, quality: 0.7) {
+                try thumbnail.write(to: thumbnailURL(for: fileName), options: .atomic)
+            }
+            return true
+        } catch {
+            return false
+        }
+    }
+
     func url(for fileName: String) -> URL {
         directory.appending(path: Self.safeName(fileName), directoryHint: .notDirectory)
     }
@@ -100,7 +134,7 @@ struct ReceiptStore: Sendable {
         try? FileManager.default.removeItem(at: thumbnailURL(for: fileName))
     }
 
-    /// Removes the photos no expense can show again, because the expense or its whole group is gone.
+    /// Removes the receipts no expense can show again, because the expense or its whole group is gone.
     /// A deleted expense in a live group keeps its photo, as an undo can bring it back.
     @MainActor
     func removeUnreferenced(in context: ModelContext) throws {
@@ -109,6 +143,17 @@ struct ReceiptStore: Sendable {
         let kept = Set(expenses
             .filter { $0.deletedAt == nil || $0.groupID.map(groups.contains) == true }
             .compactMap(\.receiptFileName))
+        removeAll(except: kept)
+    }
+
+    /// Removes the cover photos no live group shows.
+    @MainActor
+    func removeUnreferencedCovers(in context: ModelContext) throws {
+        let groups = try context.fetch(FetchDescriptor<GroupRecord>(predicate: #Predicate { $0.deletedAt == nil }))
+        removeAll(except: Set(groups.compactMap(\.coverFileName)))
+    }
+
+    private func removeAll(except kept: Set<String>) {
         for folder in [directory, thumbnails] {
             let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
             for file in files where file.pathExtension == "jpg" && !kept.contains(file.lastPathComponent) {

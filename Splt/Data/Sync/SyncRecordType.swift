@@ -9,4 +9,5 @@ enum SyncRecordType: String, CaseIterable, Hashable, Sendable {
     case comment = "Comment"
     case activity = "Activity"
     case recurringExpense = "RecurringExpense"
+    case itemClaim = "ItemClaim"
 }

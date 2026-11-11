@@ -11,13 +11,19 @@ final class SyncDevice {
     let clock: TestClock
     let store = InMemorySyncStateStore()
     let adapter: SyncStoreAdapter
+    /// This phone's own photo folders, so devices in one test never share files.
+    let photos: AttachmentSync
 
     var tracker: ChangeTracker { services.makeChangeTracker() }
 
     init(start: TimeInterval = 1_750_000_000) throws {
         clock = TestClock(start: Date(timeIntervalSince1970: start))
         services = try DataServices.inMemory(now: clock.reading)
-        adapter = SyncStoreAdapter(tracker: services.makeChangeTracker(), store: store)
+        let root = FileManager.default.temporaryDirectory.appending(path: "SyncDevice-" + UUID().uuidString)
+        photos = AttachmentSync { folder in
+            PhotoStore(directory: root.appending(path: folder == .receipts ? "Receipts" : "Covers", directoryHint: .isDirectory))
+        }
+        adapter = SyncStoreAdapter(tracker: services.makeChangeTracker(), store: store, attachments: photos)
     }
 
     /// Everything the adapter currently wants to send, built the way the engine would build it.
@@ -97,7 +103,7 @@ struct PopulatedDevice {
         return expense
     }
 
-    /// A comment, a payment and a recurring template, so every record type is present.
+    /// A comment, a payment, a recurring template and an item claim, so every record type is present.
     func addEverythingElse() throws {
         let expense = try addExpense("Taxi", cents: 1500)
         let services = device.services
@@ -114,6 +120,14 @@ struct PopulatedDevice {
                 frequency: .monthly, startDate: device.clock.start, timeZone: TimeZone(identifier: "UTC")!
             )
         ))
+        let tracker = device.tracker
+        let claim = ItemClaimRecord(
+            groupID: group.id.rawValue, expenseID: expense.id.rawValue, personID: sam.id.rawValue,
+            itemIDs: [UUID()], createdAt: device.clock.start
+        )
+        tracker.context.insert(claim)
+        tracker.recordEdit(claim)
+        try tracker.save()
     }
 
     var zone: String { group.id.description }

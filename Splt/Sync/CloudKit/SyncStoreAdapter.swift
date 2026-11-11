@@ -13,10 +13,12 @@ final class SyncStoreAdapter {
     private var knownTypes: [CKRecord.ID: SyncRecordType] = [:]
     /// Who last saved a record, as the server reports it. A seam for tests: a record built on the device has no author.
     var lastModifier: (CKRecord) -> String? = { $0.lastModifiedUserRecordID?.recordName }
+    let attachments: AttachmentSync
 
-    init(tracker: ChangeTracker, store: any SyncStateStore) {
+    init(tracker: ChangeTracker, store: any SyncStateStore, attachments: AttachmentSync = .live) {
         self.tracker = tracker
         self.store = store
+        self.attachments = attachments
         self.metadata = store.loadMetadata()
     }
 
@@ -184,7 +186,14 @@ final class SyncStoreAdapter {
             return RecordMapper.record(for: model.syncPayload, in: id.zoneID, systemFields: systemFields)
         }
         guard model.isDirty, model.pendingOperation == .save else { return nil }
-        return RecordMapper.record(for: model.syncPayload, in: id.zoneID, systemFields: model.systemFields)
+        let payload = model.syncPayload
+        let record = RecordMapper.record(for: payload, in: id.zoneID, systemFields: model.systemFields)
+        // a record the server has never seen holds no photo yet, whatever was remembered before
+        let isNew = model.systemFields == nil
+        attachments.attach(to: record, type: type, fields: payload.fields) { slot in
+            isNew ? nil : metadata.attachmentOnServer(zoneName: zone, slot: slot)
+        }
+        return record
     }
 
     func resolveType(of id: CKRecord.ID) throws -> SyncRecordType? {

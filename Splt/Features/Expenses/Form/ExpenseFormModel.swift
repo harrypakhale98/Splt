@@ -27,7 +27,7 @@ final class ExpenseFormModel {
         var scanner: @Sendable (_ defaultCurrencyCode: String) -> any ReceiptScanning = {
             VisionReceiptScanner(defaultCurrencyCode: $0)
         }
-        var receipts: ReceiptStore = .standard
+        var receipts: PhotoStore = .receipts
         /// Nil uses the app's cached rates, `DataServices.expenseRates`.
         var rates: ExpenseRates?
         /// Looks up rates for an expense date and currency without blocking. Nil uses `DataServices.rates`.

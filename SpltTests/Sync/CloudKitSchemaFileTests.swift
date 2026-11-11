@@ -59,6 +59,9 @@ struct CloudKitSchemaFileTests {
             expected[RecordSchema.modifiedAtKey] = "TIMESTAMP"
             expected[RecordSchema.deletedAtKey] = "TIMESTAMP"
             expected[RecordSchema.schemaVersionKey] = "INT64"
+            for attachment in RecordSchema.attachments(for: type) {
+                expected[attachment.assetKey] = "ASSET"
+            }
             #expect(inFile == expected, "\(type.rawValue) in CloudKitSchema.ckdb differs from RecordSchema")
         }
     }

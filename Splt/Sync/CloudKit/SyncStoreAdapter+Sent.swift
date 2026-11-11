@@ -23,11 +23,16 @@ extension SyncStoreAdapter {
     func didSend(saved: [CKRecord], deleted: [CKRecord.ID]) throws -> [CKRecord.ID] {
         var copies: [(PersonCopyKey, PersonCopy)] = []
         var orphans: [CKRecord.ID] = []
+        var attachmentSlots: [String: [String: String?]] = [:]
         for record in saved {
             guard let type = SyncRecordType(rawValue: record.recordType) else { continue }
-            guard try type.modelType.find(recordName: record.recordID.recordName, in: tracker.context) != nil else {
+            guard let model = try type.modelType.find(recordName: record.recordID.recordName, in: tracker.context) else {
                 orphans.append(record.recordID)
                 continue
+            }
+            let sentSlots = sentAttachmentSlots(record, type: type, wasNew: model.systemFields == nil)
+            if !sentSlots.isEmpty {
+                attachmentSlots[record.recordID.zoneID.zoneName, default: [:]].merge(sentSlots) { $1 }
             }
             let sentAt = (record[RecordSchema.modifiedAtKey] as? Date) ?? .distantPast
             let systemFields = RecordMapper.encodeSystemFields(record)
@@ -56,10 +61,32 @@ extension SyncStoreAdapter {
                 }
             }
         }
+        if !attachmentSlots.isEmpty {
+            updateMetadata { metadata in
+                for (zone, slots) in attachmentSlots {
+                    metadata.setAttachments(slots, zoneName: zone)
+                }
+            }
+        }
         for id in deleted {
             try didDelete(id)
         }
         return orphans
+    }
+
+    /// What the server holds in each asset field of a record it accepted, worked out the same way
+    /// `AttachmentSync.attach` built the upload, before the record is marked as synced.
+    private func sentAttachmentSlots(_ record: CKRecord, type: SyncRecordType, wasNew: Bool) -> [String: String?] {
+        var slots: [String: String?] = [:]
+        let zone = record.recordID.zoneID.zoneName
+        for attachment in RecordSchema.attachments(for: type) {
+            let slot = AttachmentSync.slot(recordName: record.recordID.recordName, assetKey: attachment.assetKey)
+            let held = wasNew ? nil : metadata.attachmentOnServer(zoneName: zone, slot: slot)
+            slots[slot] = .some(attachments.heldAfterSave(
+                name: record[attachment.nameKey] as? String, held: held, folder: attachment.folder
+            ))
+        }
+        return slots
     }
 
     private func didDelete(_ id: CKRecord.ID) throws {
@@ -155,6 +182,11 @@ extension SyncStoreAdapter {
             return true
         }
         guard model.isDirty, model.pendingOperation == .save else { return false }
+        // the server copy may hold another photo now, so the next upload decides afresh
+        let slots = RecordSchema.attachments(for: type).map {
+            (AttachmentSync.slot(recordName: id.recordName, assetKey: $0.assetKey), String?.none)
+        }
+        updateMetadata { $0.setAttachments(Dictionary(uniqueKeysWithValues: slots), zoneName: zone) }
         model.systemFields = systemFields
         try tracker.save()
         return true

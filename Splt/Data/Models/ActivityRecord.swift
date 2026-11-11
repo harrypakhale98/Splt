@@ -2,7 +2,7 @@ import Foundation
 import SpltCore
 import SwiftData
 
-extension SpltSchemaV1 {
+extension SpltSchemaV2 {
     @Model
     final class ActivityRecord {
         @Attribute(.unique) var id: UUID

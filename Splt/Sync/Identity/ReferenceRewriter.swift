@@ -146,6 +146,7 @@ extension ChangeTracker {
         all += try context.fetch(FetchDescriptor<CommentRecord>())
         all += try context.fetch(FetchDescriptor<ActivityRecord>())
         all += try context.fetch(FetchDescriptor<RecurringExpenseRecord>())
+        all += try context.fetch(FetchDescriptor<ItemClaimRecord>())
         return all
     }
 }

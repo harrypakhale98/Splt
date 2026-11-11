@@ -181,7 +181,7 @@ extension ExpenseFormModel {
 
     /// Scans a photo from the library or the camera and fills the itemized editor.
     func importReceipt(imageData: Data) async {
-        guard let compressed = ReceiptStore.compressed(imageData) else {
+        guard let compressed = PhotoStore.compressed(imageData) else {
             scanNotice = String(localized: "That image could not be read.")
             return
         }
@@ -190,7 +190,7 @@ extension ExpenseFormModel {
 
     /// Scans the pages of a document camera result, given as image data in reading order.
     func importReceipt(pages: [Data]) async {
-        let compressed = pages.compactMap { ReceiptStore.compressed($0) }
+        let compressed = pages.compactMap { PhotoStore.compressed($0) }
         guard !compressed.isEmpty else {
             scanNotice = String(localized: "That scan could not be read.")
             return
@@ -205,7 +205,7 @@ extension ExpenseFormModel {
         let scanner = dependencies.scanner(currencyCode)
         let parsed = await scanner.scan(images.compactMap(Self.cgImage))
         // The items come from every page, so the photo kept with them shows every page too.
-        let photo = images.count > 1 ? await Task.detached { ReceiptStore.stitched(images) }.value : nil
+        let photo = images.count > 1 ? await Task.detached { PhotoStore.stitched(images) }.value : nil
         guard !Task.isCancelled else { return }
         receipt.pendingImage = photo ?? images.first
         apply(receipt: parsed)
