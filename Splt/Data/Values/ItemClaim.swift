@@ -61,10 +61,14 @@ enum ItemClaimFold {
         var result = split
         for index in result.items.indices where picked.contains(result.items[index].id) {
             let item = result.items[index].id
-            for (person, items) in applied.sorted(by: { $0.key < $1.key }) {
-                if items.contains(item) {
-                    result.items[index].assignees.insert(person)
-                } else if result.items[index].assignees != [person] {
+            let claimants = applied.sorted(by: { $0.key < $1.key })
+            // everyone who picked the item goes on first, so taking people off can never depend on
+            // the order the claimants come in
+            for (person, items) in claimants where items.contains(item) {
+                result.items[index].assignees.insert(person)
+            }
+            for (person, items) in claimants where !items.contains(item) {
+                if result.items[index].assignees != [person] {
                     result.items[index].assignees.remove(person)
                 }
             }

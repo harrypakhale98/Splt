@@ -267,4 +267,23 @@ struct ItemClaimFoldTests {
         model.reload()
         #expect(model.waitingForName == nil)
     }
+
+    /// The result must not depend on how the two people's ids happen to sort.
+    @Test(arguments: [false, true])
+    func aPickedItemMovesWholeWhateverTheIdOrder(swapped: Bool) {
+        let low = PersonID(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
+        let high = PersonID(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!)
+        let (alex, blair) = swapped ? (high, low) : (low, high)
+        let expense = ExpenseID(rawValue: UUID())
+        let split = ItemizedSplit(items: [
+            SplitItem(id: pizza, name: "Pizza", amount: usdAmount(2000), assignees: [alex]),
+            SplitItem(id: beer, name: "Beer", amount: usdAmount(600), assignees: [blair])
+        ])
+        // Alex had only the beer and Blair only the pizza
+        let folded = ItemClaimFold.folded(split, people: [alex, blair], claims: [
+            claim(alex, [beer], on: expense), claim(blair, [pizza], on: expense)
+        ])
+        #expect(folded.items.first { $0.id == pizza }?.assignees == [blair])
+        #expect(folded.items.first { $0.id == beer }?.assignees == [alex])
+    }
 }
