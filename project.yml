@@ -40,6 +40,21 @@ targets:
             CFBundleURLSchemes:
               - splt
         CKSharingSupported: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Splt Backup
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.harrypakhale.splt.backup
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.harrypakhale.splt.backup
+            UTTypeDescription: Splt Backup
+            UTTypeConformsTo:
+              - public.data
+              - public.content
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - spltbackup
+        LSSupportsOpeningDocumentsInPlace: false
         UIBackgroundModes:
           - remote-notification
         UILaunchScreen:
