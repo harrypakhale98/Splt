@@ -168,7 +168,7 @@ final class SearchModel {
         var parts: [String] = []
         if let category = filter.category { parts.append(category.title) }
         if let payer = filter.payer {
-            let name = payer == me?.id ? String(localized: "You") : peopleByID[payer]?.name ?? ""
+            let name = payer == me?.id ? String(localized: "you") : peopleByID[payer]?.name ?? ""
             parts.append(String(localized: "Paid by \(name)"))
         }
         if let participant = filter.participant, let name = peopleByID[participant]?.name {

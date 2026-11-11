@@ -38,6 +38,15 @@ struct GroupDetailDesignTests {
         #expect(summary.payerText == "Sam paid")
     }
 
+    @Test func youComeFirstWhenTwoPeoplePaid() throws {
+        let fixture = try Fixture()
+        let both = ExpenseSummary.payerText(
+            [fixture.me.id: usdAmount(1000), fixture.sam.id: usdAmount(2000)],
+            currentPerson: fixture.me.id, names: [fixture.me.id: "Me", fixture.sam.id: "Sam"]
+        )
+        #expect(both == "You and Sam paid")
+    }
+
     @Test func notBeingInvolvedHasNoNet() throws {
         let fixture = try Fixture()
         let expense = try fixture.addExpense("Lunch", cents: 2000, paidBy: fixture.sam, splitBetween: [fixture.sam.id, fixture.priya.id])

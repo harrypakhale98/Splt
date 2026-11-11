@@ -18,7 +18,8 @@ struct ExpenseHistorySection: View {
                         }
                         .accessibilityElement(children: .combine)
                     }
-                    let creator = details.createdBy.map { model.name(for: $0) } ?? String(localized: "Someone")
+                    let creator = details.createdBy.map { $0 == model.me?.id ? String(localized: "you") : model.name(for: $0) }
+                        ?? String(localized: "someone")
                     let created = details.createdAt.formatted(date: .abbreviated, time: .shortened)
                     Text("Added by \(creator) on \(created)")
                         .font(.subheadline)

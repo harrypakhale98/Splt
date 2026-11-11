@@ -33,6 +33,11 @@ struct ExpenseSummary: Equatable {
             let who = name(ordered[0])
             return ordered[0] == currentPerson ? String(localized: "You paid") : String(localized: "\(who) paid")
         case 2:
+            // you come first, so the sentence never has a capital You in the middle
+            if let other = ordered.first(where: { $0 != currentPerson }), ordered.contains(where: { $0 == currentPerson }) {
+                let name = name(other)
+                return String(localized: "You and \(name) paid")
+            }
             let first = name(ordered[0]), second = name(ordered[1])
             return String(localized: "\(first) and \(second) paid")
         default:

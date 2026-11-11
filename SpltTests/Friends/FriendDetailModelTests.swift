@@ -119,7 +119,7 @@ struct FriendDetailModelTests {
         let model = FriendDetailModel(friendID: fixture.sam.id, services: fixture.services)
         #expect(model.myNet(in: dinner) == usdAmount(2000))
         #expect(model.myNet(in: taxi) == nil)
-        #expect(model.payerText(for: dinner) == "You")
+        #expect(model.payerText(for: dinner) == "you")
         #expect(model.payerText(for: taxi) == "Priya")
     }
 

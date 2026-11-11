@@ -104,8 +104,10 @@ final class FriendDetailModel {
     }
 
     /// Who paid for an expense, in words: one name, or the first two.
+    /// Who paid, for after "Paid by": you first and in lowercase, then up to one other person.
     func payerText(for expense: Expense) -> String {
-        let names = expense.payers.keys.sorted().map { name(of: $0) }
+        let payers = expense.payers.keys.sorted { ($0 == me?.id ? 0 : 1, $0) < ($1 == me?.id ? 0 : 1, $1) }
+        let names = payers.map { $0 == me?.id ? String(localized: "you") : name(of: $0) }
         return ListFormatter.localizedString(byJoining: Array(names.prefix(2)))
     }
 
