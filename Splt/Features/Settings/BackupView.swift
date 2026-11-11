@@ -34,6 +34,9 @@ final class BackupModel {
         recordBytes.map { $0 + (includesPhotos ? photoBytes / 3 * 4 : 0) }
     }
 
+    /// True once measuring found no receipt or group photos.
+    var hasNoPhotos: Bool { recordBytes != nil && photoCount == 0 }
+
     func measure() async {
         guard let contents = try? gather() else { return }
         photoCount = contents.photos.count
@@ -86,9 +89,12 @@ private struct BackupContent: View {
         List {
             Section {
                 RaisedRows {
-                    Toggle("Include Photos", isOn: $model.includesPhotos)
-                        .tint(Ink.switchOn)
-                        .disabled(model.state == .preparing)
+                    // nothing to choose once the count shows there are no photos
+                    if !model.hasNoPhotos {
+                        Toggle("Include Photos", isOn: $model.includesPhotos)
+                            .tint(Ink.switchOn)
+                            .disabled(model.state == .preparing)
+                    }
                     LabeledContent("Estimated Size") {
                         if let bytes = model.estimatedBytes {
                             Text(Int64(bytes), format: .byteCount(style: .file))
@@ -122,7 +128,7 @@ private struct BackupContent: View {
     }
 
     private var footer: LocalizedStringKey {
-        model.photoCount == 0
+        model.hasNoPhotos
             ? "The backup holds every group, expense, payment and comment you can see. There are no receipt or group photos to include."
             : "The backup holds every group, expense, payment and comment you can see, and with Include Photos on, the receipt and group photos on this iPhone."
     }
