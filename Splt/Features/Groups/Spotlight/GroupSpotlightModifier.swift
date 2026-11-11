@@ -18,6 +18,7 @@ private struct GroupSpotlightModifier: ViewModifier {
         var id: GroupID
         var name: String
         var symbol: String
+        var cover: String?
         var members: [PersonID]
         /// The members' names are search keywords, so renaming someone must re-index.
         var memberNames: [String]
@@ -34,7 +35,7 @@ private struct GroupSpotlightModifier: ViewModifier {
         let left = LeftGroupsStore()
         return summaries.map {
             Entry(
-                id: $0.group.id, name: $0.group.name, symbol: $0.group.symbol,
+                id: $0.group.id, name: $0.group.name, symbol: $0.group.symbol, cover: $0.group.shownCoverFileName,
                 members: $0.group.memberIDs, memberNames: $0.group.memberIDs.map { names[$0] ?? "" },
                 isIndexed: GroupSpotlight.isIndexed($0.group, left: left)
             )

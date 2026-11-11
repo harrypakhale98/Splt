@@ -11,6 +11,13 @@ protocol GroupRepository {
     /// Members change through `addMember` and `removeMember` so the activity feed stays accurate.
     func update(_ group: SplitGroup) throws
     func setArchived(_ archived: Bool, id: GroupID) throws
+    /// Shrinks the photo like a receipt, keeps it as the group's cover and deletes the one it replaces.
+    /// A friend group has no cover, so nothing changes there.
+    func setCover(_ photo: Data, for group: GroupID) async throws
+    /// Takes the cover off, so the symbol shows again, and deletes its file on this device.
+    func removeCover(for group: GroupID) throws
+    /// Nil splits new expenses equally.
+    func setDefaultSplit(_ split: DefaultSplit?, for group: GroupID) throws
     /// Deletes the group and everything in it.
     func delete(id: GroupID) throws
     func addMember(_ person: PersonID, to group: GroupID) throws

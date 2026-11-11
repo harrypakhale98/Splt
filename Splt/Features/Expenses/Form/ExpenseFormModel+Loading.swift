@@ -10,6 +10,7 @@ extension ExpenseFormModel {
                 guard let group = try services.groups.group(id: groupID) else { return failToLoad() }
                 try configure(group: group, extra: [])
                 applyDefaults()
+                applyDefaultSplit(of: group)
                 if let prefill { apply(prefill) }
             case .edit(let id):
                 guard let expense = try services.expenses.expense(id: id),
@@ -125,6 +126,7 @@ extension ExpenseFormModel {
         // The items, tax, tip and discount belong to the bill, not to the group. Only who owes what starts over.
         split.keepPeople([])
         if split.method != .itemized { split.method = .equal }
+        applyDefaultSplit(of: next)
     }
 
     static let lastGroupKey = "expenses.lastGroupID"

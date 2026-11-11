@@ -93,7 +93,7 @@ private struct SearchContent: View {
                     ForEach(model.groups) { group in
                         NavigationLink(value: Route.group(group.id.rawValue)) {
                             HStack(spacing: 12) {
-                                GroupGlyph(symbol: group.symbol, size: 28)
+                                GroupGlyph(symbol: group.symbol, cover: group.shownCoverFileName, size: 28)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(group.name)
                                     Text("^[\(group.memberIDs.count) person](inflect: true)")
