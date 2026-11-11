@@ -15,6 +15,7 @@ final class DataServices {
     let comments: any CommentRepository
     let activity: any ActivityRepository
     let recurring: any RecurringExpenseRepository
+    let claims: any ItemClaimRepository
     let search: any SearchRepository
     let rates: RatesService
 
@@ -44,6 +45,7 @@ final class DataServices {
         self.comments = SwiftDataCommentRepository(environment)
         self.activity = activity
         self.recurring = SwiftDataRecurringExpenseRepository(environment)
+        self.claims = SwiftDataItemClaimRepository(environment, expenses: expenses)
         self.search = SwiftDataSearchRepository(environment)
         self.groupsStore = GroupsStore(groups: groups, people: people, activity: activity, container: container)
         self.friendsStore = FriendsStore(people: people, container: container)

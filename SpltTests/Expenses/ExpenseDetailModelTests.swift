@@ -134,10 +134,10 @@ struct ExpenseDetailModelTests {
 
     @Test func historyKeepsTheSignOfARefundsOldTotal() {
         let refund = ExpenseEditEntry(date: Date(), changedFields: [.total], previousTotal: usd(-3000))
-        #expect(ExpenseHistorySection.previousValues(of: refund, locale: us) == "Amount was -$30.00")
+        #expect(ExpenseHistoryBuilder.previousValues(of: refund, locale: us) == "Amount was -$30.00")
         let purchase = ExpenseEditEntry(date: Date(), changedFields: [.total, .title], previousTitle: "Lunch", previousTotal: usd(3000))
-        #expect(ExpenseHistorySection.previousValues(of: purchase, locale: us) == "Title was Lunch. Amount was $30.00")
-        #expect(ExpenseHistorySection.previousValues(of: ExpenseEditEntry(date: Date(), changedFields: [.note]), locale: us) == nil)
+        #expect(ExpenseHistoryBuilder.previousValues(of: purchase, locale: us) == "Title was Lunch. Amount was $30.00")
+        #expect(ExpenseHistoryBuilder.previousValues(of: ExpenseEditEntry(date: Date(), changedFields: [.note]), locale: us) == nil)
     }
 
     @Test func duplicatingMakesADraft() throws {

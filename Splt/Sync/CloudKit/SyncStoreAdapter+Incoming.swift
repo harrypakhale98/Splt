@@ -39,7 +39,8 @@ extension SyncStoreAdapter {
                 report.shares.append(share)
                 continue
             }
-            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload) else {
+            guard var payload = try? RecordMapper.payload(from: record), try belongsInItsZone(payload),
+                  try isWrittenByItsClaimant(payload, record) else {
                 report.refused.append(record.recordID)
                 continue
             }
@@ -123,6 +124,21 @@ extension SyncStoreAdapter {
         }
         // records never move between groups, so the same name in another zone is someone else's
         return local.zoneName == payload.zoneName
+    }
+
+    /// A claim says which items a person had, and anyone in the group can write one. It only counts
+    /// for the person who wrote it: the iCloud user that person is, or this person's own devices.
+    /// It must also have the one id a person's claim on that expense has, so nobody holds two.
+    private func isWrittenByItsClaimant(_ payload: SyncPayload, _ record: CKRecord) throws -> Bool {
+        guard payload.recordType == .itemClaim else { return true }
+        guard let expense = payload.fields.uuid("expenseID"), let person = payload.fields.uuid("personID"),
+              payload.recordName == ItemClaimRecord.claimID(expenseID: expense, personID: person).uuidString else {
+            return false
+        }
+        guard !isFromMe(record), let author = lastModifier(record) else { return true }
+        if CloudIdentity.personID(forUserRecordName: author).rawValue == person { return true }
+        // someone who joined in place of a person added by name keeps that person's id
+        return try PersonRecord.find(recordName: person.uuidString, in: tracker.context)?.claimedByCloudUserID == author
     }
 
     /// Zones are looked up by name alone, and anyone can create a zone with any name and share it.

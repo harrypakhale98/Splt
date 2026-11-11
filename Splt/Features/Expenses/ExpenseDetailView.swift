@@ -88,6 +88,9 @@ private struct ExpenseDetailScreen: View {
         List {
             ExpenseHeaderSection(model: model, expense: expense)
             ShareBreakdownSection(model: model, expense: expense)
+            if model.showsItemPicks, let split = model.itemizedSplit {
+                ItemPicksSection(model: model, split: split)
+            }
             PaidBySection(model: model)
             ReceiptSection(model: model)
             if !expense.note.isEmpty {
