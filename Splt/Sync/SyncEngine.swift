@@ -18,16 +18,33 @@ struct GroupShare {
 struct ShareInvitation: @unchecked Sendable {
     let metadata: CKShare.Metadata?
     let groupName: String?
+    /// An iCloud invite link whose metadata is fetched before accepting, for a link that came from
+    /// Splt's own invite page instead of the system.
+    let shareURL: URL?
+    /// The person this invite was made for, someone added by name who now joins as themselves.
+    let claim: PersonID?
 
-    init(metadata: CKShare.Metadata) {
+    init(metadata: CKShare.Metadata, claim: PersonID? = nil) {
         self.metadata = metadata
         self.groupName = nil
+        self.shareURL = nil
+        self.claim = claim
+    }
+
+    /// An invite link from Splt's invite page, made for one person.
+    init(shareURL: URL, claim: PersonID?) {
+        self.metadata = nil
+        self.groupName = nil
+        self.shareURL = shareURL
+        self.claim = claim
     }
 
     /// An invitation without CloudKit metadata, for fakes and tests.
     init(groupName: String?) {
         self.metadata = nil
         self.groupName = groupName
+        self.shareURL = nil
+        self.claim = nil
     }
 }
 
@@ -53,6 +70,8 @@ protocol SyncEngine: AnyObject {
     /// Sharing it with `anyoneWithLink` would open it, so the link screen asks before it does.
     func isSharedInviteOnly(group: GroupID) async throws -> Bool
     func accept(_ invitation: ShareInvitation) async throws
+    /// Reads an iCloud invite link, as the system does when someone taps one.
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata
     /// Leaves a group someone else shared. A group in your own iCloud is not affected.
     func leave(group: GroupID) async throws
     /// True when the group is in your own iCloud and shared with others. Stopping is done in the invite
@@ -67,4 +86,8 @@ protocol SyncEngine: AnyObject {
 
 extension SyncEngine {
     var hasFetchedOnce: Bool { true }
+
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        throw SyncError.unavailable
+    }
 }

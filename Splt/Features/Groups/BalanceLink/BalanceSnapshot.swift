@@ -4,8 +4,11 @@ import SpltCore
 /// What a balance link carries: one group's balances at one moment, for a friend without the app.
 ///
 /// It holds names, colors and amounts only. People are short indexes into `members`, so no id,
-/// contact detail or iCloud identifier ever leaves the device. The web page at `docs/b/` reads the
-/// same layout, so a change here needs a new `version` and a matching change there.
+/// contact detail or iCloud identifier ever leaves the device. The one exception is an invite link,
+/// made for one person who isn't on Splt yet: it adds the group's iCloud invite and that person's id,
+/// so they can join as themselves. The web page at `docs/b/` reads the same layout, so a change here
+/// needs a new `version` and a matching change there. A new optional key keeps the version, because
+/// both sides already skip keys they don't know.
 ///
 /// The JSON keys, all short to keep links short:
 /// - `v` version, `n` group name, `d` trip days `[start, end]` as `yyyy-MM-dd` (optional)
@@ -15,6 +18,7 @@ import SpltCore
 /// - `e` recent expenses, newest first (optional): `[title, yyyy-MM-dd, currency index, total,
 ///   [[payer, paid]], [[person, share]]]`
 /// - `s` the member who shared it, or -1, and `t` the snapshot time in seconds since 1970
+/// - `j` an invite (optional): `[iCloud invite link, the invited member, that member's id]`
 struct BalanceSnapshot: Equatable, Sendable {
     static let version = 1
     /// The most recent expenses a link carries.
@@ -49,6 +53,22 @@ struct BalanceSnapshot: Equatable, Sendable {
         var amount: Int64
     }
 
+    /// An invite for one member who isn't on Splt yet.
+    struct Join: Equatable, Sendable {
+        /// The group's iCloud invite, open to anyone with the link.
+        var shareURL: URL
+        /// The member it is for.
+        var person: Int
+        /// That member's id, so joining takes over the same person.
+        var personID: UUID
+
+        /// iCloud invite links are on icloud.com. Anything else is not one.
+        static func isShareURL(_ url: URL) -> Bool {
+            guard url.scheme?.lowercased() == "https", let host = url.host()?.lowercased() else { return false }
+            return (host == "icloud.com" || host.hasSuffix(".icloud.com")) && url.absoluteString.count <= 300
+        }
+    }
+
     struct ExpenseLine: Equatable, Sendable {
         var title: String
         var day: String
@@ -68,6 +88,8 @@ struct BalanceSnapshot: Equatable, Sendable {
     var sharedBy: Int
     /// Whole seconds, so a decoded snapshot equals the one encoded.
     var createdAt: Date
+    /// Set only on an invite link.
+    var join: Join? = nil
 }
 
 // MARK: Building
@@ -82,7 +104,8 @@ extension BalanceSnapshot {
         balances: GroupBalances?,
         includesExpenses: Bool,
         now: Date,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        invite: (shareURL: URL, person: PersonID)? = nil
     ) {
         let live = expenses.filter { !$0.isDeleted }
         let recent = includesExpenses
@@ -165,7 +188,10 @@ extension BalanceSnapshot {
             transfers: transfers,
             expenses: includesExpenses ? lines : nil,
             sharedBy: me.flatMap { index[$0] } ?? -1,
-            createdAt: Date(timeIntervalSince1970: now.timeIntervalSince1970.rounded(.down))
+            createdAt: Date(timeIntervalSince1970: now.timeIntervalSince1970.rounded(.down)),
+            join: invite.flatMap { invite in
+                index[invite.person].map { Join(shareURL: invite.shareURL, person: $0, personID: invite.person.rawValue) }
+            }
         )
     }
 
@@ -189,7 +215,7 @@ extension BalanceSnapshot {
 
 extension BalanceSnapshot: Codable {
     private enum Key: String, CodingKey {
-        case v, n, d, c, m, x, e, s, t
+        case v, n, d, c, m, x, e, s, t, j
     }
 
     enum FormatError: Error, Equatable {
@@ -244,6 +270,12 @@ extension BalanceSnapshot: Codable {
         }
         try root.encode(sharedBy, forKey: .s)
         try root.encode(Int64(createdAt.timeIntervalSince1970), forKey: .t)
+        if let join {
+            var item = root.nestedUnkeyedContainer(forKey: .j)
+            try item.encode(join.shareURL.absoluteString)
+            try item.encode(join.person)
+            try item.encode(join.personID.uuidString)
+        }
     }
 
     init(from decoder: any Decoder) throws {
@@ -309,6 +341,15 @@ extension BalanceSnapshot: Codable {
         }
         sharedBy = try root.decode(Int.self, forKey: .s)
         createdAt = Date(timeIntervalSince1970: TimeInterval(try root.decode(Int64.self, forKey: .t)))
+        if root.contains(.j) {
+            var item = try root.nestedUnkeyedContainer(forKey: .j)
+            guard let url = URL(string: try item.decode(String.self)) else { throw FormatError.invalid("join") }
+            let person = try item.decode(Int.self)
+            guard let id = UUID(uuidString: try item.decode(String.self)) else { throw FormatError.invalid("join") }
+            join = Join(shareURL: url, person: person, personID: id)
+        } else {
+            join = nil
+        }
         try validate()
     }
 
@@ -325,6 +366,9 @@ extension BalanceSnapshot: Codable {
             guard currencies.indices.contains(expense.currency),
                   (expense.payers + expense.shares).allSatisfy({ people.contains($0.person) })
             else { throw FormatError.invalid("expense") }
+        }
+        if let join {
+            guard people.contains(join.person), Join.isShareURL(join.shareURL) else { throw FormatError.invalid("join") }
         }
     }
 }

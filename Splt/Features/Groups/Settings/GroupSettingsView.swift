@@ -32,6 +32,52 @@ struct GroupSettingsView: View {
 private struct GroupSettingsForm: View {
     let onGroupRemoved: () -> Void
 
+    /// Invites go through iCloud, so without it there is nothing to send. The sample trip shows them anyway.
+    private var canInvite: Bool {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-sampledata") { return true }
+        #endif
+        return SyncRuntime.shared.status.isConnected
+    }
+
+    /// A member, and for someone added by name, an Invite that sends a link made for them.
+    @ViewBuilder
+    private func memberRow(_ row: GroupSettingsViewModel.MemberRow) -> some View {
+        let label = HStack(spacing: 12) {
+            AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
+            VStack(alignment: .leading) {
+                Text(row.isMe ? String(localized: "You") : row.person.name)
+                    .foregroundStyle(Ink.text)
+                if row.person.isPlaceholder {
+                    Text("Not on Splt yet")
+                        .font(.subheadline)
+                        .foregroundStyle(Ink.secondary)
+                }
+            }
+        }
+        if row.person.isPlaceholder, canInvite {
+            Button {
+                invitee = row.person
+            } label: {
+                HStack {
+                    label
+                    Spacer()
+                    Text("Invite")
+                        .foregroundStyle(Ink.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Ink.tertiary)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Sends \(row.person.name) a link made for them")
+            .accessibilityIdentifier("member.invite")
+        } else {
+            label
+                .accessibilityElement(children: .combine)
+        }
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.groupSharing) private var sharing
     @Environment(\.locale) private var locale
@@ -44,9 +90,13 @@ private struct GroupSettingsForm: View {
     @State private var showsPhotoPicker = false
     @State private var pickedPhoto: PhotosPickerItem?
     @State private var showsCamera = false
+    /// Someone added by name who is being sent an invite made for them.
+    @State private var invitee: Person?
+    private let services: DataServices
 
     init(groupID: GroupID, services: DataServices, onGroupRemoved: @escaping () -> Void) {
         self.onGroupRemoved = onGroupRemoved
+        self.services = services
         _model = State(initialValue: GroupSettingsViewModel(groupID: groupID, services: services))
     }
 
@@ -81,6 +131,9 @@ private struct GroupSettingsForm: View {
         }
         .onAppear { model.locale = locale }
         .task { await model.loadSharing(using: sharing) }
+        .sheet(item: $invitee) { person in
+            InvitePersonSheet(groupID: model.groupID, person: person, services: services)
+        }
         .sheet(isPresented: $showsContacts) {
             ContactPicker { drafts in
                 for draft in drafts { model.addMember(named: draft.name, contactHint: draft.contactHint) }
@@ -330,18 +383,7 @@ private struct GroupSettingsForm: View {
         Section {
             RaisedRows {
                 ForEach(model.memberRows) { row in
-                    HStack(spacing: 12) {
-                        AvatarView(person: row.person, members: model.memberRows.map(\.person.id), size: 28)
-                        VStack(alignment: .leading) {
-                            Text(row.isMe ? String(localized: "You") : row.person.name)
-                            if row.person.isPlaceholder {
-                                Text("Not on Splt yet")
-                                    .font(.subheadline)
-                                    .foregroundStyle(Ink.secondary)
-                            }
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
+                    memberRow(row)
                     .swipeActions(edge: .trailing) {
                         if !row.isMe {
                             Button("Remove", systemImage: "person.badge.minus", role: .destructive) {

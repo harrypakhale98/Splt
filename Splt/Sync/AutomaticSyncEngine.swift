@@ -106,6 +106,20 @@ final class AutomaticSyncEngine: SyncEngine {
         }
     }
 
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        switch choice {
+        case nil, .noOp(.accountUnavailable)?:
+            // the account is still being checked, so the answer can be different in a moment
+            throw SyncError.notReady
+        case .noOp(.noAccount)?:
+            throw SyncError.noAccount
+        case .noOp(.restricted)?:
+            throw SyncError.restricted
+        case .cloudKit?, .noOp?:
+            try await current.shareMetadata(for: url)
+        }
+    }
+
     func leave(group: GroupID) async throws {
         if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
             // iCloud is only out of reach for now: the CloudKit engine finishes this when it starts

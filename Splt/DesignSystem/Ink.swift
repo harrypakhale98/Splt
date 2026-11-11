@@ -15,6 +15,9 @@ enum Ink {
     /// The track of a switch that is on. In dark mode plain ink is nearly white, so the white knob
     /// would vanish into it; a mid ink keeps the knob visible and on clearly apart from off.
     static let switchOn = dynamic(light: 0x1A1917, dark: 0x8A877E)
+    /// The fill of a system control that draws its own white label, such as Apple's Paste button.
+    /// Ink in light mode; in dark mode a deep ink, so white still reads at 6.8 to 1.
+    static let whiteLabelFill = dynamic(light: 0x1A1917, dark: 0x5E5B54)
 
     /// The color for a signed amount: owed when positive, owe when negative, plain ink at zero.
     static func direction(of minorUnits: Int64) -> Color {

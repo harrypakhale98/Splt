@@ -228,6 +228,13 @@ final class CloudKitSyncEngine: SyncEngine {
         try? await fetchChanges()
     }
 
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        guard !syncers.isEmpty else { throw SyncError.notReady }
+        let metadata = try await backend.shareMetadata(for: url)
+        guard metadata.containerIdentifier == backend.containerIdentifier else { throw SyncError.invalidInvitation }
+        return metadata
+    }
+
     func isSharedByMe(group: GroupID) async -> Bool {
         let zoneID = adapter.metadata.zoneID(forZoneName: group.description)
         guard zoneID.scope == .privateDatabase else { return false }

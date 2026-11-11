@@ -6,6 +6,7 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dataServices) private var services
+    @Environment(Router.self) private var router: Router?
 
     @State private var page = 0
     @State private var profile = AccountProfile.shared
@@ -17,7 +18,7 @@ struct OnboardingView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 TabView(selection: $page) {
-                    OnboardingBeat()
+                    OnboardingBeat(onInvite: join)
                         .tag(0)
                     SetupBeat(profile: profile, preferences: preferences)
                         .tag(1)
@@ -53,6 +54,12 @@ struct OnboardingView: View {
         }
     }
 
+    /// A pasted invite skips the rest of the tour: joining is what this person came for.
+    private func join(_ invite: JoinInvite) {
+        finish()
+        router?.open(.join(invite))
+    }
+
     private func finish() {
         profile.save()
         if let services { try? profile.applyName(to: services.people) }
@@ -67,6 +74,9 @@ private enum OnboardingLayout {
 }
 
 private struct OnboardingBeat: View {
+    var onInvite: (JoinInvite) -> Void = { _ in }
+    @State private var notAnInvite = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -78,12 +88,50 @@ private struct OnboardingBeat: View {
                 Text("Add what you paid and see who owes whom.")
                     .font(.title3)
                     .foregroundStyle(Ink.secondary)
+                inviteCard
+                    .padding(.top, 8)
             }
             .padding(.horizontal, OnboardingLayout.margin)
             .padding(.top, 48)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollBounceBehavior(.basedOnSize)
+    }
+}
+
+extension OnboardingBeat {
+    /// Someone who installed Splt from an invite copied it on the way. Apple's Paste button reads
+    /// the clipboard only when tapped, so there is no "Allow Paste" prompt.
+    private var inviteCard: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Got an invite?")
+                    .foregroundStyle(Ink.text)
+                Text(notAnInvite ? "That isn't a Splt invite. Copy the whole link and try again." : "Paste the link you were sent.")
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
+            }
+            Spacer(minLength: 8)
+            PasteButton(payloadType: String.self) { strings in
+                let invite = strings.lazy.compactMap { JoinInvite(text: $0) }.first
+                Task { @MainActor in
+                    if let invite {
+                        notAnInvite = false
+                        onInvite(invite)
+                    } else {
+                        notAnInvite = true
+                    }
+                }
+            }
+            .buttonBorderShape(.capsule)
+            .labelStyle(.titleAndIcon)
+            // the system draws its own white label, so the fill stays dark enough to read in both appearances
+            .tint(Ink.whiteLabelFill)
+            .accessibilityIdentifier("onboarding.paste")
+        }
+        .padding(Depth.rowPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
     }
 }
 

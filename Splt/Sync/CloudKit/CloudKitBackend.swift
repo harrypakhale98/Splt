@@ -11,6 +11,13 @@ protocol CloudKitBackend: AnyObject {
     var shareService: ShareService { get }
     func groupShare(_ share: CKShare, groupName: String) throws -> GroupShare
     func accept(_ metadata: CKShare.Metadata) async throws
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata
+}
+
+extension CloudKitBackend {
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        throw SyncError.invalidInvitation
+    }
 }
 
 @MainActor
@@ -46,5 +53,10 @@ final class LiveCloudKitBackend: CloudKitBackend {
 
     func accept(_ metadata: CKShare.Metadata) async throws {
         _ = try await container.accept(metadata)
+    }
+
+    func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        guard let result = try await container.shareMetadatas(for: [url])[url] else { throw SyncError.invalidInvitation }
+        return try result.get()
     }
 }

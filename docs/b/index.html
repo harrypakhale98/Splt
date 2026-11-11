@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-f/Hq2ck50UjLKuNSY21wP50zzHLofIqHO3nBZM89jcs='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GUexYumpKZo7uuraJsaOp5rSsnN5yQSZzz1Qo2/nfG4='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
-<title>Splt balances</title>
+<title>Splt</title>
+<meta property="og:title" content="Splt">
+<meta property="og:description" content="Split bills with friends. Free on iPhone, with no ads and no account.">
 <link rel="stylesheet" href="balance.css">
 </head>
 <body>
@@ -168,7 +170,21 @@ function validate(raw) {
 
   const sharedBy = whole(raw.s, -1, members.length - 1);
   const createdAt = new Date(whole(raw.t, 0, 32503680000) * 1000);
-  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt };
+
+  // An invite made for one member: the group's iCloud invite, that member, and their id.
+  let join = null;
+  if (raw.j !== undefined) {
+    if (!isList(raw.j, 3) || raw.j.length !== 3) fail();
+    const url = text(raw.j[0], 300);
+    let parsed;
+    try { parsed = new URL(url); } catch (_) { fail(); }
+    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "https:" || !(host === "icloud.com" || host.endsWith(".icloud.com"))) fail();
+    const id = text(raw.j[2], 36);
+    if (!/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/.test(id)) fail();
+    join = { url: parsed.href, person: person(raw.j[1]), id };
+  }
+  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt, join };
 }
 
 // MARK: Formatting
@@ -220,9 +236,12 @@ function subtitle(snapshot) {
   return snapshot.currencies[0].code + " · " + people;
 }
 
+// Initials as the app draws them: the first letters of the first and last words.
 function initial(name) {
-  const first = Array.from(name)[0] || "?";
-  return first.toLocaleUpperCase(locale);
+  const words = name.split(/\s+/).filter((word) => word.length > 0);
+  const first = Array.from(words[0] || "?")[0];
+  const last = words.length > 1 ? Array.from(words[words.length - 1])[0] : "";
+  return (first + last).toLocaleUpperCase(locale);
 }
 
 // The strip as the app draws it: each slice is what that person paid, largest first, and someone
@@ -471,6 +490,85 @@ function drawPerson(root, snapshot, index, state) {
   root.appendChild(getSplt(snapshot));
 }
 
+// An invite made for one member: who invited them, the group, their own line, and the way in.
+function joinLink(join) {
+  return "splt://join?share=" + encodeURIComponent(join.url) + "&as=" + encodeURIComponent(join.id);
+}
+
+function isAndroid() {
+  return typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent || "");
+}
+
+function inviteLine(snapshot, index) {
+  const { pays, gets, paysTotal, getsTotal } = describePerson(snapshot, index);
+  if (pays.length === 1) {
+    const other = snapshot.members[pays[0].to];
+    return amountCell(money(snapshot, pays[0].amount, pays[0].currency), "you owe " + other.name, "owe");
+  }
+  if (pays.length > 1) return amountCell(paysTotal.map((part) => money(snapshot, part.amount, part.currency)).join(" + "), "you owe", "owe");
+  if (gets.length === 1) {
+    const other = snapshot.members[gets[0].from];
+    return amountCell(money(snapshot, gets[0].amount, gets[0].currency), other.name + " pays you", "owed");
+  }
+  if (gets.length > 1) return amountCell(getsTotal.map((part) => money(snapshot, part.amount, part.currency)).join(" + "), "you get back", "owed");
+  return amountCell(null, "settled up", null);
+}
+
+function drawJoin(root, snapshot, state) {
+  const join = snapshot.join;
+  const me = snapshot.members[join.person];
+  const sharer = snapshot.members[snapshot.sharedBy];
+  root.appendChild(add(el("div", "top"), brand()));
+  const lead = el("p", "sub lead invited");
+  if (sharer) add(lead, disc(sharer, true), document.createTextNode(sharer.name + " invited you to"));
+  else lead.textContent = "You're invited to";
+  root.appendChild(lead);
+  root.appendChild(header(snapshot));
+
+  const discs = el("div", "discrow");
+  discs.setAttribute("aria-hidden", "true");
+  for (const member of snapshot.members) if (!member.left) discs.appendChild(disc(member, false));
+  root.appendChild(discs);
+
+  const card = el("div", "card");
+  const row = el("div", "row");
+  const who = add(el("div", "grow", "You're " + me.name), el("div", "foot", sharer ? "Added by " + sharer.name : "Added to the group"));
+  add(row, disc(me, false), who, inviteLine(snapshot, join.person));
+  root.appendChild(add(card, row));
+
+  if (isAndroid()) {
+    root.appendChild(el("p", "foot center note", "Splt is on iPhone for now. You can still see the balances."));
+    const look = el("a", "primary", "See the Balances");
+    look.href = "#";
+    look.addEventListener("click", (event) => { event.preventDefault(); state.look(); });
+    root.appendChild(look);
+  } else {
+    const open = el("a", "primary", "Join in Splt");
+    open.href = joinLink(join);
+    const get = el("a", "secondary", "Get Splt, free");
+    get.href = APP_STORE_URL;
+    get.rel = "noopener noreferrer";
+    // copy the invite on the way, so Splt can paste it on first open
+    get.addEventListener("click", async (event) => {
+      event.preventDefault();
+      try {
+        if (navigator.clipboard) await navigator.clipboard.writeText(window.location.href);
+      } catch (_) {
+        // no clipboard: the link is still in the message, so it can be copied from there
+      }
+      window.location.href = APP_STORE_URL;
+    });
+    add(root, open, get);
+    const note = el("p", "foot note");
+    note.textContent = "No account, no ads, no limits. Getting Splt copies this invite, so it's waiting when you open the app.";
+    root.appendChild(note);
+    const look = el("button", "link quiet", "Just see the balances");
+    look.type = "button";
+    look.addEventListener("click", () => state.look());
+    root.appendChild(look);
+  }
+}
+
 // Everyone: who pays whom across the group.
 function drawEveryone(root, snapshot, state) {
   add(root, add(el("div", "top"), brand()));
@@ -582,16 +680,18 @@ async function start() {
 
   document.title = snapshot.name + " · Splt";
   const key = storageKey(fragment);
-  const state = { chosen: remembered(key, snapshot.members.length), view: null };
+  const state = { chosen: remembered(key, snapshot.members.length), view: snapshot.join ? "join" : null };
   const draw = () => {
     root.replaceChildren();
-    if (state.view === "everyone") drawEveryone(root, snapshot, state);
+    if (state.view === "join") drawJoin(root, snapshot, state);
+    else if (state.view === "everyone") drawEveryone(root, snapshot, state);
     else if (state.chosen === null) drawPicker(root, snapshot, state);
     else drawPerson(root, snapshot, state.chosen, state);
     window.scrollTo(0, 0);
   };
   state.choose = (index) => { state.chosen = index; state.view = null; remember(key, index); draw(); };
   state.show = (view) => { state.view = view === "back" ? null : view; draw(); };
+  state.look = () => { state.chosen = snapshot.join.person; state.view = null; draw(); };
   draw();
 }
 
@@ -601,7 +701,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
   start();
 } else {
   globalThis.SpltBalanceLink = {
-    decodeFragment, validate, money, describePerson, expenseFor, stripSlices, subtitle, LinkProblem,
+    decodeFragment, validate, money, describePerson, expenseFor, stripSlices, subtitle, initial, joinLink, LinkProblem,
     setLocale: (value) => { locale = value; formatters.clear(); }
   };
 }

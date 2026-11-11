@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Invite flow</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;--serif:"New York",ui-serif,"Iowan Old Style",Georgia,serif}
+body{background:#E7E4DE;color:#1A1917;font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:40px 40px 80px}
+.page-head{max-width:1340px;margin:0 auto 36px}
+.page-head h1{font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:-.2px}
+.page-head p{color:#5f5c55;font-size:15px;line-height:1.45;margin-top:6px;max-width:860px}
+.dirs{display:grid;grid-template-columns:repeat(3,415px);gap:48px;justify-content:center;align-items:start}
+.dir-head{min-height:215px;margin-bottom:10px}
+.dir-head .tag{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#1A1917;color:#F3F0EA;font-weight:600;font-size:15px;margin-right:8px;vertical-align:middle}
+.dir-head h2{display:inline;font-family:var(--serif);font-size:22px;font-weight:600;vertical-align:middle}
+.dir-head p{font-size:13.5px;line-height:1.45;color:#3e3c37;margin-top:8px}
+.dir-head p b{font-weight:600}
+.dir-head p.trade{color:#6c6962}
+.cap{font-size:12px;color:#6c6962;margin:26px 0 4px 11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.note-out{font-size:12.5px;color:#6c6962;line-height:1.4;margin:10px 11px 0;max-width:393px}
+.shared{max-width:1340px;margin:56px auto 0;display:flex;gap:48px;align-items:flex-start;justify-content:center}
+.shared .txt{max-width:420px;padding-top:30px}
+.shared .txt h2{font-family:var(--serif);font-size:22px;font-weight:600}
+.shared .txt p{font-size:13.5px;line-height:1.5;color:#3e3c37;margin-top:8px}
+
+/* ---------- device ---------- */
+.device{--paper:#F3F0EA;--sheet:#FFFEFB;--text:#1A1917;--secondary:#66635B;--tertiary:#9A968C;--hairline:#E2DED5;--owed:#1F6B4A;--owe:#B83A1E;
+  --shadow:0 0 0 .5px rgba(42,33,24,.05),0 1px 2px rgba(42,33,24,.06),0 6px 14px -4px rgba(42,33,24,.12);--toplight:inset 0 1px 0 #fff;
+  --glass:rgba(250,249,246,.72);--glassedge:inset 0 .5px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  --fill:rgba(118,118,128,.12);--segon:#FFFEFB;--lp:rgba(255,255,255,.85);--on:#fff;
+  --p0:#B5432F;--p1:#1F7668;--p2:#2F66A8;--p3:#8A660C;--p4:#96437F;--p5:#62722A;
+  --t1:#1A1917;--t2:#5E5B54;--t3:#9A968C;--t4:#C9C4B9;--t5:#E2DED5;
+  width:393px;height:852px;border-radius:55px;position:relative;overflow:hidden;background:var(--paper);color:var(--text);
+  font-family:var(--sans);font-size:17px;letter-spacing:-.4px;line-height:1.29;margin:11px;
+  box-shadow:0 0 0 10px #161616,0 0 0 11px #4a4a4c,0 30px 50px -16px rgba(0,0,0,.35)}
+.device.dark{--paper:#131210;--sheet:#23211D;--text:#EFEDE6;--secondary:#A3A097;--tertiary:#6E6B63;--hairline:#2E2C28;--owed:#6FBF96;--owe:#EE7B5C;
+  --shadow:0 1px 1px rgba(0,0,0,.5);--toplight:inset 0 1px 0 rgba(255,255,255,.07);
+  --glass:rgba(44,42,38,.72);--glassedge:inset 0 .5px 0 rgba(255,255,255,.14),0 0 0 .5px rgba(255,255,255,.06),0 4px 14px rgba(0,0,0,.4);
+  --fill:rgba(118,118,128,.24);--segon:#4a4844;--lp:rgba(255,255,255,.05);--on:#0E0E12;
+  --p0:#E58E7A;--p1:#6FC7B5;--p2:#8DB3E5;--p3:#D9BC6A;--p4:#DD9CCB;--p5:#B4C676;
+  --t1:#EFEDE6;--t2:#B3AFA5;--t3:#7C786F;--t4:#55524B;--t5:#3A3833}
+.device.short{height:500px;border-radius:55px 55px 18px 18px}
+.device.mid{height:640px;border-radius:55px 55px 18px 18px}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:30}
+.sb{height:54px;display:flex;justify-content:space-between;align-items:center;padding:4px 30px 0 52px;font-weight:600;font-size:17px;letter-spacing:-.3px;position:relative;z-index:20}
+.sb .icons{width:78px;height:13px}
+.sb.light-on-photo{color:#fff}
+.hi{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:139px;height:5px;border-radius:3px;background:var(--text);z-index:40}
+.scroll{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
+
+/* nav */
+.nav{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative;z-index:20}
+.nav .mid{position:absolute;left:0;right:0;text-align:center;font-weight:600;font-size:17px;pointer-events:none}
+.gb{width:44px;height:44px;border-radius:22px;background:var(--glass);box-shadow:var(--glassedge);display:grid;place-items:center;color:var(--text);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gpill{height:44px;border-radius:22px;background:var(--glass);box-shadow:var(--glassedge);display:flex;align-items:center;padding:0 6px;color:var(--text);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gpill span{width:38px;display:grid;place-items:center}
+.gpill.txt{padding:0 16px;font-size:17px;font-weight:500}
+.lt{font-family:var(--serif);font-weight:700;font-size:34px;letter-spacing:.1px;padding:2px 20px 6px;line-height:1.2}
+.navgap{display:flex;gap:10px}
+
+/* tab bar */
+.tabs{position:absolute;bottom:22px;left:20px;right:20px;display:flex;gap:10px;z-index:25}
+.tabcap{flex:1;height:62px;border-radius:31px;background:var(--glass);box-shadow:var(--glassedge);display:flex;padding:4px;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;gap:1px;color:var(--text);letter-spacing:0}
+.tab.on{background:var(--fill);border-radius:27px}
+.tab .i{width:24px;height:24px}
+.tabsearch{width:62px;height:62px;border-radius:31px;background:var(--glass);box-shadow:var(--glassedge);display:grid;place-items:center;color:var(--text);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+
+/* surfaces */
+.card{background:var(--sheet);border-radius:24px;box-shadow:var(--toplight),var(--shadow);margin:4px 16px 12px;position:relative}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:50px;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--hairline)}
+.row.inset+.row.inset::before,.row.inset-l::before{left:58px}
+.grow{flex:1;min-width:0}
+.sub{font-size:15px;color:var(--secondary);letter-spacing:-.24px}
+.foot{font-size:13px;color:var(--secondary);letter-spacing:-.08px;line-height:1.38}
+.sh{font-size:13px;color:var(--secondary);padding:12px 30px 4px;letter-spacing:-.08px}
+.hl{font-weight:600}
+.fig{font-family:var(--serif);font-variant-numeric:tabular-nums;letter-spacing:0}
+.hero{font-family:var(--serif);font-size:52px;font-weight:400;letter-spacing:-.6px;line-height:1.08;text-shadow:0 1px 0 var(--lp);font-variant-numeric:tabular-nums}
+.title{font-family:var(--serif);font-size:28px;font-weight:400;letter-spacing:.2px;line-height:1.2}
+.heading{font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:.2px}
+.owed{color:var(--owed)} .owe{color:var(--owe)} .sec{color:var(--secondary)} .ter{color:var(--tertiary)}
+.chev{width:14px;height:14px;color:var(--tertiary);stroke-width:2.4}
+.strip{display:flex;gap:2px;height:4px}
+.strip i{display:block;height:4px;box-shadow:inset 0 1px .5px rgba(0,0,0,.35),0 1px 0 var(--lp)}
+.pbtn{height:52px;border-radius:14px;background:var(--text);color:var(--paper);font-weight:500;font-size:17px;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 4px rgba(42,33,24,.2)}
+.device.dark .pbtn{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 4px rgba(0,0,0,.5)}
+.qbtn{height:52px;border-radius:14px;border:1px solid var(--hairline);display:grid;place-items:center;font-size:17px}
+.seg{display:flex;background:var(--fill);border-radius:100px;padding:2px;height:34px}
+.seg span{flex:1;text-align:center;font-size:14px;line-height:30px;font-weight:500;letter-spacing:-.1px}
+.seg .on{background:var(--segon);border-radius:100px;box-shadow:0 2px 6px rgba(0,0,0,.1),0 0 0 .5px rgba(0,0,0,.04)}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--on);flex:none;letter-spacing:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.18)}
+.av.s{width:24px;height:24px;font-size:11px}
+.glyph{width:32px;height:32px;display:grid;place-items:center;color:var(--secondary);flex:none}
+.glyph .i{width:19px;height:19px}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i.s{width:18px;height:18px}
+.i.xs{width:14px;height:14px}
+.amt{font-family:var(--serif);font-variant-numeric:tabular-nums;font-size:17px;letter-spacing:0;text-align:right;white-space:nowrap}
+.dirline{font-size:13px;letter-spacing:-.08px;text-align:right}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--sheet);border-radius:34px 34px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.9) inset,0 -8px 30px rgba(0,0,0,.14);z-index:35}
+.device.dark .sheet{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 -8px 30px rgba(0,0,0,.6)}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--tertiary);opacity:.5;margin:6px auto 0}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.18);z-index:34}
+.device.dark .dim{background:rgba(0,0,0,.45)}
+.menu{position:absolute;z-index:45;background:var(--glass);border-radius:22px;box-shadow:var(--glassedge),0 18px 40px rgba(0,0,0,.18);-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4);padding:6px 0;min-width:240px}
+.menu .mi{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;font-size:17px}
+.menu .mi.red{color:var(--owe)}
+.menu .sep{height:.5px;background:var(--hairline);margin:4px 0}
+.toggle{width:51px;height:31px;border-radius:16px;background:var(--text);position:relative;flex:none}
+.toggle::after{content:"";position:absolute;right:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.toggle.off{background:var(--fill)}
+.toggle.off::after{right:auto;left:2px}
+
+.device.web{width:390px;height:844px;border-radius:40px;letter-spacing:-.2px;box-shadow:0 0 0 9px #202124,0 0 0 10px #5a5a5c,0 30px 50px -16px rgba(0,0,0,.35);--cbar:#FFFFFF;--cfield:#F1F3F4;--ctext:#202124}
+.device.web.dark{--cbar:#202124;--cfield:#303134;--ctext:#E8EAED}
+.punch{position:absolute;top:11px;left:50%;width:13px;height:13px;border-radius:50%;background:#000;transform:translateX(-50%);z-index:30}
+.asb{height:34px;display:flex;justify-content:space-between;align-items:center;padding:4px 24px 0;font:500 14px Roboto,var(--sans);letter-spacing:.1px;background:var(--cbar);color:var(--ctext)}
+.asb .ic{display:flex;gap:6px;align-items:center}
+.chrome{height:58px;display:flex;align-items:center;gap:14px;padding:0 12px 0 14px;background:var(--cbar);color:var(--ctext);box-shadow:0 .5px 0 rgba(0,0,0,.12)}
+.url{flex:1;min-width:0;height:42px;border-radius:21px;background:var(--cfield);display:flex;align-items:center;gap:10px;padding:0 14px;font:15px Roboto,var(--sans);letter-spacing:.1px;white-space:nowrap;overflow:hidden}
+.url span{overflow:hidden;text-overflow:ellipsis}
+.tabsq{width:21px;height:21px;border:2px solid currentColor;border-radius:5px;font:700 11px Roboto,var(--sans);display:grid;place-items:center;flex:none}
+.wc{position:absolute;top:92px;left:0;right:0;bottom:0;overflow:hidden;padding:0 20px;font-size:16px;line-height:1.4}
+.gbar{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:108px;height:4px;border-radius:2px;background:var(--text);opacity:.55;z-index:40}
+.brand{display:flex;align-items:center;gap:8px;padding:18px 0 14px;font-family:var(--serif);font-size:18px}
+.discs{display:flex}
+.discs i{display:block;width:13px;height:13px;border-radius:50%}
+.discs i:first-child{background:#D9694F}
+.discs i:last-child{background:#3D8C86;margin-left:-4px;opacity:.9}
+.snap{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--hairline);border-radius:14px;padding:11px 13px;font-size:14px;color:var(--secondary);line-height:1.38}
+.snap b{color:var(--text);font-weight:600}
+.wh{font-family:var(--serif);font-size:20px;margin:26px 0 4px}
+.wrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:.5px solid var(--hairline)}
+.wrow:last-child{border-bottom:0}
+.wsub{font-size:14px;color:var(--secondary)}
+.wfoot{border-top:.5px solid var(--hairline);margin-top:18px;padding-top:16px;font-size:14px;color:var(--secondary);line-height:1.45}
+.wfoot a{color:var(--text);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.pick{display:flex;align-items:center;gap:12px;padding:0 16px;height:58px;border-radius:14px;background:var(--sheet);box-shadow:var(--toplight),var(--shadow);margin-bottom:10px;font-size:17px}
+.tagline{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;border:1px solid var(--hairline);font-size:13px;color:var(--secondary)}
+.room{border:1.5px dashed #b8b2a6;border-radius:14px;padding:8px 10px;font-size:12px;color:#7a766d;margin:10px 11px 0;max-width:393px}
+
+.rules{max-width:1180px;margin:0 auto 48px;display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.rules div{background:#F3F0EA;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.42;color:#3e3c37;box-shadow:0 1px 2px rgba(42,33,24,.08)}
+.rules b{display:block;font-family:var(--serif);font-weight:600;font-size:15px;color:#1A1917;margin-bottom:3px}
+.srow{display:grid;grid-template-columns:270px 415px 415px;gap:40px;justify-content:center;align-items:start;margin-bottom:60px}
+.slabel{padding-top:34px}
+.slabel h2{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.2}
+.slabel p{font-size:13.5px;line-height:1.48;color:#3e3c37;margin-top:8px}
+.fcap{font-size:12px;color:#6c6962;margin:0 0 4px 11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.ph{display:block;width:100%;height:100%}
+.thumb32{width:32px;height:32px;border-radius:8px;overflow:hidden;flex:none}
+.grow-row{padding:13px 14px}
+.trow{display:flex;align-items:center;gap:10px}
+.sh{padding:12px 20px 4px}
+.cap2{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;letter-spacing:-.24px;gap:8px}
+.cap2 .v{color:var(--secondary);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.cchev{width:11px;height:11px;color:var(--tertiary);stroke-width:2.8}
+.hb{padding:16px 14px 18px}
+.hb-i+.hb-i{margin-top:14px}
+.hbar{height:14px;border-radius:2px;margin-top:6px;min-width:2px}
+.mb{padding:14px 14px 12px}
+.mbars{display:flex;gap:6px;margin-top:12px}
+.mc{flex:1;display:flex;flex-direction:column}
+.mt{height:92px;display:flex;align-items:flex-end}
+.mt i{display:block;width:100%;min-height:2px;border-radius:2px;background:var(--tertiary)}
+.mt i.on{background:var(--text)}
+.ml{font-size:11px;color:var(--secondary);text-align:center;margin-top:5px;letter-spacing:0}
+.ml.on{color:var(--text);font-weight:600}
+.conv{display:flex;gap:5px;align-items:center;font-size:13px;margin-top:2px}
+.shr{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 4px;font-size:13px;color:var(--secondary);letter-spacing:-.08px}
+.rangebtn{display:flex;align-items:center;gap:4px;color:var(--text);font-weight:500;font-size:13px}
+.device.web{--serif:"Source Serif 4",Georgia,serif}
+.udot{width:8px;height:8px;border-radius:50%;flex:none;align-self:flex-start;margin-top:8px}
+.udot.on{background:var(--text)}
+.arow{align-items:flex-start;gap:8px;padding:10px 14px}
+.arow .i{margin-top:4px}
+.atext{font-size:17px;line-height:1.3}
+.seeline{display:flex;align-items:center;gap:3px;margin-top:4px}
+.seeline .i{color:var(--tertiary)}
+.seg span{font-size:13px}
+.rangetop{margin:2px 0 10px}
+.rangebtn{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:15px;background:var(--fill);color:var(--text);font-weight:500;font-size:14px;letter-spacing:-.15px}
+.pillv{background:var(--fill);border-radius:8px;padding:4px 10px;font-size:15px}
+.wc{padding:0 16px}
+.wc .row{padding-left:14px}
+.wtop{display:flex;justify-content:space-between;align-items:center;padding:16px 0 14px}
+.brandmark{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:18px}
+.snapline{display:flex;gap:6px;align-items:flex-start}
+.snapline .i{margin-top:2px}
+.wc u{text-underline-offset:3px;color:var(--text)}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="sbi" viewBox="0 0 78 13"><g fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3.5" width="3" height="8.5" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/><path d="M33 3.2c2.6 0 4.9 1 6.6 2.6l1.2-1.3C38.8 2.6 36 1.4 33 1.4s-5.8 1.2-7.8 3.1l1.2 1.3c1.7-1.6 4-2.6 6.6-2.6zm0 3.4c1.6 0 3 .6 4.1 1.6l1.2-1.3c-1.4-1.3-3.3-2.1-5.3-2.1s-3.9.8-5.3 2.1l1.2 1.3c1.1-1 2.5-1.6 4.1-1.6zm0 3.3c.7 0 1.3.3 1.8.7L33 12.5l-1.8-1.9c.5-.4 1.1-.7 1.8-.7z"/><rect x="50.5" y=".5" width="24" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="52.5" y="2.5" width="20" height="8" rx="2.2"/><path d="M76 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" opacity=".45"/></g></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-chl" viewBox="0 0 24 24"><path d="M15 4.5 7.5 12l7.5 7.5"/></symbol>
+<symbol id="i-chr" viewBox="0 0 24 24"><path d="M9 5.5 15.5 12 9 18.5"/></symbol>
+<symbol id="i-chd" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></g></symbol>
+<symbol id="i-stack" viewBox="0 0 24 24"><rect x="4.5" y="9" width="15" height="11" rx="2.5"/><path d="M6.5 6h11M8.5 3.2h7"/></symbol>
+<symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="16.8" cy="9" r="2.6"/><path d="M16.3 14.4c2.6 0 4.3 1.5 4.8 4"/></symbol>
+<symbol id="i-people-plus" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.2 3-5 6-5 1.6 0 3 .5 4 1.4"/><path d="M18 13v7M14.5 16.5h7"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7v5.2l3.3 2"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.6 15.6 4.6 4.6"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M8.2 7.2 12 3.4l3.8 3.8"/><path d="M8 10.5H6.5a1 1 0 0 0-1 1V19a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-7.5a1 1 0 0 0-1-1H16"/></symbol>
+<symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.4 20.6 12 19.4l1.6 1.2v-1.8l-1-.9v-4.6l7.4 2.4v-1.9l-7.4-4.6V4.6a.85.85 0 0 0-1.7 0v4.6L3.5 13.8v1.9l7.4-2.4v4.6l-1 .9z"/></symbol>
+<symbol id="i-house" viewBox="0 0 24 24"><path d="M3.8 11.2 12 4l8.2 7.2"/><path d="M6.2 9.4V20h11.6V9.4"/><path d="M10 20v-5.2h4V20"/></symbol>
+<symbol id="i-fork" viewBox="0 0 24 24"><path d="M7.5 3.5v6a2 2 0 0 0 2 2v9M9.5 3.5v5.5M11.5 3.5v6a2 2 0 0 1-2 2"/><path d="M17 20.5v-17c-2 1.4-3 4-3 7v3.5h3"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M3.8 5.6C6 4.6 9 4.6 12 6.2c3-1.6 6-1.6 8.2-.6v13.3c-2.2-1-5.2-1-8.2.6-3-1.6-6-1.6-8.2-.6z"/><path d="M12 6.2v13.3"/></symbol>
+<symbol id="i-mount" viewBox="0 0 24 24"><path d="M2.5 19.5 9 8.5l4 6.5 2.5-3.5 6 8z"/></symbol>
+<symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="m20.5 16-4.5-4.5-8.5 7.5"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.3h6.8L17 8h3a1 1 0 0 1 1 1v9.3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 13h9l1-13M10.5 10.5v6M13.5 10.5v6"/></symbol>
+<symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 20v-7M10 20V5.5M15 20v-9.5M20 20V8"/></symbol>
+<symbol id="i-pie" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 0 8 8h-8z"/><path d="M14.5 2.8v6.7h6.7a6.7 6.7 0 0 0-6.7-6.7z"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.2 4.2 0 0 0 6 0l3.2-3.2a4.2 4.2 0 0 0-6-6L12 6"/><path d="M14 10a4.2 4.2 0 0 0-6 0l-3.2 3.2a4.2 4.2 0 0 0 6 6L12 18"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2.2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.3M12 7.8v.1"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2M12 3.4c2.6 3 2.6 14.2 0 17.2M12 3.4c-2.6 3-2.6 14.2 0 17.2"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M5.5 18.5l1.9-1.9M16.6 7.4l1.9-1.9"/></symbol>
+<symbol id="i-xmark" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h1M20 14v1"/></symbol>
+<symbol id="i-reload" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.1-5"/><path d="M17.5 3.5v4h-4"/></symbol>
+<symbol id="i-tabs" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="3"/></symbol>
+</svg>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="ph-lisbon" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="260" fill="#CAD7DD"/>
+  <path d="M0 118 Q90 100 190 112 T400 104 V160 H0Z" fill="#A3B3AC"/>
+  <rect y="146" width="400" height="34" fill="#82A0A9"/>
+  <rect x="150" y="112" width="20" height="62" fill="#EEE6D8"/><path d="M150 112 L160 98 L170 112Z" fill="#B0603F"/>
+  <rect x="0" y="176" width="72" height="84" fill="#E6D8C2"/><path d="M-4 178 L34 154 L74 178Z" fill="#B5603F"/>
+  <rect x="64" y="190" width="80" height="70" fill="#D7C2A4"/><path d="M60 192 L104 170 L148 192Z" fill="#C4744F"/>
+  <rect x="136" y="172" width="58" height="88" fill="#EFE4D2"/><path d="M132 174 L165 154 L198 174Z" fill="#A9553A"/>
+  <rect x="188" y="186" width="92" height="74" fill="#E1CCAF"/><path d="M184 188 L234 164 L284 188Z" fill="#BF6A47"/>
+  <rect x="272" y="174" width="70" height="86" fill="#EADBC4"/><path d="M268 176 L307 154 L346 176Z" fill="#B35E3E"/>
+  <rect x="336" y="184" width="70" height="76" fill="#D4BD9E"/><path d="M332 186 L370 166 L408 186Z" fill="#C77A55"/>
+  <g fill="#6B5B4E" opacity=".55"><rect x="14" y="196" width="10" height="14"/><rect x="40" y="196" width="10" height="14"/><rect x="82" y="206" width="10" height="13"/><rect x="112" y="206" width="10" height="13"/><rect x="150" y="190" width="9" height="14"/><rect x="172" y="190" width="9" height="14"/><rect x="204" y="204" width="10" height="13"/><rect x="232" y="204" width="10" height="13"/><rect x="258" y="204" width="10" height="13"/><rect x="286" y="194" width="10" height="14"/><rect x="316" y="194" width="10" height="14"/><rect x="352" y="202" width="10" height="13"/><rect x="380" y="202" width="10" height="13"/><rect x="14" y="228" width="10" height="14"/><rect x="40" y="228" width="10" height="14"/><rect x="150" y="222" width="9" height="14"/><rect x="172" y="222" width="9" height="14"/><rect x="286" y="226" width="10" height="14"/><rect x="316" y="226" width="10" height="14"/></g>
+</symbol>
+<symbol id="ph-ski" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="260" fill="#BDCEDB"/>
+  <path d="M0 172 L82 92 L150 148 L232 66 L318 138 L400 98 V260 H0Z" fill="#7B8C9B"/>
+  <path d="M82 92 L62 112 L74 108 L86 118 L101 104Z M232 66 L206 94 L222 89 L234 100 L252 86Z M400 98 L370 113 L382 114 L400 121Z" fill="#F3F4F1"/>
+  <path d="M0 204 Q190 160 400 214 V260 H0Z" fill="#EDF0F0"/>
+  <g fill="#3E5148"><path d="M36 214 L48 176 L60 214Z"/><path d="M56 210 L66 182 L76 210Z"/><path d="M322 222 L334 186 L346 222Z"/><path d="M344 226 L357 182 L370 226Z"/><path d="M368 228 L378 198 L388 228Z"/></g>
+</symbol>
+<symbol id="ph-dinner" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="260" fill="#A67C57"/>
+  <g stroke="#94704F" stroke-width="2"><path d="M0 64H400M0 132H400M0 200H400"/></g>
+  <rect x="170" y="150" width="70" height="90" rx="4" fill="#E8E1D3" transform="rotate(-12 205 195)"/>
+  <circle cx="118" cy="122" r="62" fill="#F2EEE6"/><circle cx="118" cy="122" r="44" fill="#E6E0D4"/>
+  <circle cx="108" cy="116" r="17" fill="#C9774E"/><circle cx="132" cy="132" r="11" fill="#7E8F4F"/><circle cx="124" cy="104" r="7" fill="#E2B85A"/>
+  <circle cx="306" cy="86" r="50" fill="#F2EEE6"/><circle cx="306" cy="86" r="35" fill="#E6E0D4"/><circle cx="300" cy="84" r="14" fill="#B4553E"/><circle cx="318" cy="94" r="9" fill="#7E8F4F"/>
+  <circle cx="300" cy="200" r="24" fill="#D7E2E4" opacity=".85"/><circle cx="300" cy="200" r="17" fill="#B6463C" opacity=".55"/>
+</symbol>
+</svg>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/></symbol><symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="m8.2 12.3 2.7 2.7 5-5.4"/></symbol><symbol id="i-bubble" viewBox="0 0 24 24"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17h-9l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5z"/></symbol><symbol id="i-envopen" viewBox="0 0 24 24"><path d="M3.5 10 12 4l8.5 6v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="m3.8 10.3 8.2 5.5 8.2-5.5"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M7.5 9.5h9M9.5 12.5h5M11 15.5h2"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3.5 7.5a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v2.3a2.3 2.3 0 0 0 0 4.4v2.3a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-2.3a2.3 2.3 0 0 0 0-4.4z"/><path d="M14.5 7v1.6M14.5 11.2v1.6M14.5 15.4V17"/></symbol>
+<symbol id="i-cup" viewBox="0 0 24 24"><path d="M5 8.5h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10h1.3a2.2 2.2 0 0 1 0 4.4H16"/><path d="M3.5 20.5h15"/></symbol>
+<symbol id="i-plane2" viewBox="0 0 24 24"><path d="M20.5 3.5 3.5 10.6l6.6 2.8 2.8 6.6z"/><path d="m10.1 13.4 4.1-4.1"/></symbol>
+<symbol id="i-contact" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="10" r="2.8"/><path d="M6.6 18.4c1-2.3 3-3.5 5.4-3.5s4.4 1.2 5.4 3.5"/></symbol>
+<symbol id="i-clip" viewBox="0 0 24 24"><rect x="5.5" y="5" width="13" height="15.5" rx="2.2"/><path d="M9 5V3.8h6V5"/></symbol>
+</svg>
+<style>
+/* matched to the running app on 10 Nov 2026: Group Settings, the group screen, the welcome screen, and the Remind and Merge sheets, light and dark */
+.device{--jr:#1F7668;--mc:#96437F;--jw:#62722A;--pn:#4B55A0;--da:#A85510;--hs:#1F7488;--sheetbg:#F6F3EE;--chatbg:#FFFFFF;--bub:#E9E9EB;--bubtext:#000;--chathead:rgba(249,249,249,.94)}
+.device.dark{--jr:#6FC7B5;--mc:#DD9CCB;--jw:#B4C676;--pn:#A3A9E8;--da:#E3A26A;--hs:#74C1D3;--sheetbg:#1E1D1A;--chatbg:#000;--bub:#262628;--bubtext:#fff;--chathead:rgba(22,22,22,.94)}
+.device.webpage{--serif:"Source Serif 4",Georgia,serif}
+.av{font-size:11px;letter-spacing:-.2px;width:28px;height:28px}
+.gpill.four span{width:40px}
+.navtitle{position:absolute;left:0;right:0;text-align:center;font-weight:600;font-size:17px;pointer-events:none}
+.pillbtn{height:44px;padding:0 16px;border-radius:22px;background:var(--glass);box-shadow:var(--glassedge);display:grid;place-items:center;font-size:17px;font-weight:500;position:relative;z-index:2}
+.ssheet{position:absolute;left:0;right:0;bottom:0;background:var(--sheetbg);border-radius:34px 34px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.6) inset,0 -6px 24px rgba(0,0,0,.12);z-index:35;overflow:hidden}
+.device.dark .ssheet{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 -8px 30px rgba(0,0,0,.6)}
+.ssheet.full{top:46px}
+.behind{position:absolute;inset:0;background:#d8d4cc;z-index:1}
+.device.dark .behind{background:#060605}
+.shd{font-size:13px;color:var(--secondary);padding:14px 30px 6px;letter-spacing:-.08px}
+.fn{font-size:13px;color:var(--secondary);padding:7px 30px 0;letter-spacing:-.08px;line-height:1.38}
+.acc{display:flex;align-items:center;gap:6px;color:var(--secondary);font-size:17px}
+.lab{display:flex;align-items:center;gap:12px}
+.lab>.i{width:22px;height:22px;color:var(--text)}
+.card{border-radius:22px}
+.row{min-height:46px}
+.tabbar{position:absolute;bottom:22px;left:16px;right:16px;height:62px;border-radius:31px;background:var(--glass);box-shadow:var(--glassedge);display:flex;padding:4px;z-index:25;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.tabbar .tab .i{width:23px;height:23px}
+.dayh{display:flex;justify-content:space-between;font-size:13px;color:var(--secondary);padding:16px 30px 6px;letter-spacing:-.08px}
+.erow{display:flex;align-items:center;gap:12px;padding:11px 12px 11px 14px;position:relative}
+.erow+.erow::before{content:"";position:absolute;top:0;left:52px;right:0;border-top:.5px solid var(--hairline)}
+.erow .glyph{width:26px;color:var(--secondary)}
+.payer{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--secondary);letter-spacing:-.24px;margin-top:1px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.eamt{font-weight:600;font-size:17px;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
+.esub{font-size:13px;text-align:right;letter-spacing:-.08px;white-space:nowrap}
+.segstrip{display:flex;gap:3px;height:4px}
+.segstrip i{display:block;height:4px;box-shadow:inset 0 1px .5px rgba(0,0,0,.35),0 1px 0 var(--lp)}
+.dispt{font-family:var(--serif);font-size:33px;font-weight:400;letter-spacing:.1px;line-height:1.15}
+.t3{font-size:20px;color:var(--secondary);letter-spacing:-.45px;line-height:1.3}
+.bordered{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 13px;border-radius:17px;background:var(--fill);color:var(--text);font-weight:500;font-size:15px;flex:none}
+.bordered .i{width:16px;height:16px}
+.msg{padding:12px 14px;font-size:17px;line-height:1.3;letter-spacing:-.4px}
+.chat{position:absolute;top:54px;left:0;right:0;bottom:0;background:var(--chatbg)}
+.chead{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 10px;background:var(--chathead);border-bottom:.5px solid rgba(128,128,128,.25);font-size:12px;color:var(--bubtext)}
+.chead .av{width:46px;height:46px;font-size:17px}
+.bub{max-width:280px;margin:0 0 0 14px;background:var(--bub);color:var(--bubtext);border-radius:18px;font-size:17px;line-height:1.3;letter-spacing:-.4px;overflow:hidden}
+.bub .t{padding:8px 13px}
+.lpimg{height:132px;background:#F3F0EA;display:flex;flex-direction:column;justify-content:center;padding:0 20px;gap:10px;font-family:"Source Serif 4",Georgia,serif;color:#1A1917}
+.lpimg .discs i{width:22px;height:22px}
+.lpimg .discs i:last-child{margin-left:-7px}
+.lpimg .big{font-size:22px;line-height:1.15}
+.lpcap{padding:8px 13px 10px;font-size:13px;line-height:1.3}
+.lpcap b{display:block;font-weight:600;font-size:14px}
+.lpcap span{opacity:.6}
+.ts{font-size:11px;color:#8E8E93;text-align:center;margin:14px 0 8px}
+.discrow{display:flex;margin-top:12px}
+.discrow .av{margin-right:-6px;box-shadow:0 0 0 2px var(--paper),inset 0 1px 0 rgba(255,255,255,.25)}
+.quietnote{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--secondary);line-height:1.38;letter-spacing:-.08px}
+.quietnote .i{margin-top:1px;flex:none}
+.safari{position:absolute;left:12px;right:12px;bottom:28px;height:50px;border-radius:25px;background:var(--glass);box-shadow:var(--glassedge);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:15px;z-index:30;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.safari .u{display:flex;align-items:center;gap:6px}
+.new{outline:2px dashed #C9873A;outline-offset:2px;border-radius:10px}
+.legend{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#6c6962;margin-top:10px}
+.legend i{display:inline-block;width:22px;height:14px;outline:2px dashed #C9873A;border-radius:4px}
+.addc{width:22px;height:22px;border-radius:50%;background:var(--tertiary);color:var(--sheet);display:grid;place-items:center;opacity:.8}
+.addc .i{width:14px;height:14px;stroke-width:2.6}
+.src{font-size:12px;color:#6c6962;margin-top:10px;line-height:1.4}
+.src b{color:#3e3c37;font-weight:600}
+</style>
+
+<div class="page-head"><h1>The invite, matched to the real app</h1><p>Checked against full-size screenshots of the running app (1.1, sample data) in light and dark: Group Settings, the group screen, the Balances list, the welcome screen, and the Remind and Merge sheets. Icons, person colors and money come from the code and the app's sample trip. Jamie invites Hana Sato, whom the app already marks "Not on Splt yet". Hana owes Maya $156.23, as the Balances list shows.</p>
+<div class="legend"><i></i>Dashed outline: new. Everything else is the screen as it is today.</div></div>
+
+<div class="rules">
+<div><b>1 · No new kinds of screen</b>Invite Hana is the Remind sheet. "Join as…" is the Merge sheet. The welcome screen gains one card made of existing rows.</div>
+<div><b>2 · Start where it's already shown</b>Group Settings › Members already says "Not on Splt yet". Hana's friend page gets Invite Hana in the ••• menu, beside Merge With…</div>
+<div><b>3 · One link per person</b>The link carries the iCloud invite and who it's for after the #, so the web host never sees either.</div>
+<div><b>4 · Installing keeps the invite</b>"Get Splt" also copies the invite. The welcome screen offers Apple's Paste button, which needs no permission prompt.</div>
+<div><b>5 · Join as yourself</b>Hana takes over the Hana Jamie added, with everything in it. Nothing to merge by hand.</div>
+</div>
+
+<div id="rows"><div class="srow"><div class="slabel"><h2>Jamie · Group Settings</h2><p>Today's sheet with iCloud on, scrolled to Members. The only change is "Invite ›" on Hana's row, set like "Equally ›" on Default Split. The same Invite Hana sits in the ••• menu on Hana's friend page, beside Merge With…</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">Not on Splt yet</div></span></span><span class="acc new" style="padding:2px 4px">Invite<svg class="i chev"><use href="#i-chr"/></svg></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">Not on Splt yet</div></span></span><span class="acc new" style="padding:2px 4px">Invite<svg class="i chev"><use href="#i-chr"/></svg></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Jamie · Invite Hana</h2><p>The Remind sheet, part for part: a Close pill, the title, a "Message" card holding the editable text, and an action row with a paper-plane icon. Copy Link is the row Link or QR Code already has.</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">Not on Splt yet</div></span></span><span class="acc" style="padding:2px 4px">Invite<svg class="i chev"><use href="#i-chr"/></svg></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="dim" style="z-index:36"></div>
+<div class="ssheet new" style="height:440px;z-index:37;outline-offset:-3px;border-radius:34px 34px 0 0"><div class="grab" style="margin-top:7px"></div>
+<div class="nav" style="margin-top:10px"><div class="pillbtn">Close</div><div class="navtitle">Invite Hana</div><div style="width:60px"></div></div>
+<div class="shd">Message</div>
+<div class="card"><div class="msg">Hi Hana, I've added you to Lisbon Trip on Splt. Join to see what you owe and add expenses too.</div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-plane2"/></svg>Send Invite</span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-copy"/></svg>Copy Link</span></div></div>
+<div class="fn">The link is made for Hana, so joining keeps everything already added for Hana Sato.</div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">Not on Splt yet</div></span></span><span class="acc" style="padding:2px 4px">Invite<svg class="i chev"><use href="#i-chr"/></svg></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="dim" style="z-index:36"></div>
+<div class="ssheet new" style="height:440px;z-index:37;outline-offset:-3px;border-radius:34px 34px 0 0"><div class="grab" style="margin-top:7px"></div>
+<div class="nav" style="margin-top:10px"><div class="pillbtn">Close</div><div class="navtitle">Invite Hana</div><div style="width:60px"></div></div>
+<div class="shd">Message</div>
+<div class="card"><div class="msg">Hi Hana, I've added you to Lisbon Trip on Splt. Join to see what you owe and add expenses too.</div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-plane2"/></svg>Send Invite</span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-copy"/></svg>Copy Link</span></div></div>
+<div class="fn">The link is made for Hana, so joining keeps everything already added for Hana Sato.</div></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Hana · the message</h2><p>Apple's Messages, drawn by hand, not captured. The text is the Message from the sheet. The preview card is the same for every invite, because the static page can't know who a link is for until it opens.</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="chat"><div class="chead"><span class="av" style="background:var(--jr);width:46px;height:46px;font-size:17px">JR</span><span>Jamie ›</span></div>
+<div class="ts">Today 18:40</div>
+<div class="bub"><div class="t">Hi Hana, I've added you to Lisbon Trip on Splt. Join to see what you owe and add expenses too.</div></div>
+<div style="height:6px"></div>
+<div class="bub"><div class="lpimg"><span class="discs"><i></i><i></i></span><span class="big">You're invited to a group on Splt</span></div>
+<div class="lpcap"><b>Join a group on Splt</b><span>harrypakhale98.github.io</span></div></div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="chat"><div class="chead"><span class="av" style="background:var(--jr);width:46px;height:46px;font-size:17px">JR</span><span>Jamie ›</span></div>
+<div class="ts">Today 18:40</div>
+<div class="bub"><div class="t">Hi Hana, I've added you to Lisbon Trip on Splt. Join to see what you owe and add expenses too.</div></div>
+<div style="height:6px"></div>
+<div class="bub"><div class="lpimg"><span class="discs"><i></i><i></i></span><span class="big">You're invited to a group on Splt</span></div>
+<div class="lpcap"><b>Join a group on Splt</b><span>harrypakhale98.github.io</span></div></div></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Hana · before installing</h2><p>The balance link page in its join mode, using the page's own stylesheet. $156.23 is Hana's real balance in the sample. On Android, "Get Splt" is hidden and the page shows the balances.</p></div><div><div class="fcap">Light</div><div class="device webpage"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div style="padding:4px 16px 0"><div class="wtop"><span class="brandmark"><span class="discs"><i></i><i></i></span>Splt</span></div>
+<div class="sub" style="display:flex;align-items:center;gap:6px"><span class="av" style="background:var(--jr);width:24px;height:24px;font-size:10px">JR</span>Jamie Rivera invited you to</div>
+<div class="title">Lisbon Trip</div><div class="sub">May 8–14 · 6 people</div>
+<div class="discrow"><span class="av" style="background:var(--jr);">JR</span><span class="av" style="background:var(--mc);">MC</span><span class="av" style="background:var(--jw);">JW</span><span class="av" style="background:var(--pn);">PN</span><span class="av" style="background:var(--da);">DA</span><span class="av" style="background:var(--hs);">HS</span></div>
+<div class="card" style="margin:18px 0 12px"><div class="row"><span class="av" style="background:var(--hs);">HS</span><div class="grow">You're Hana Sato<div class="foot">Added by Jamie Rivera</div></div><div><div class="amt owe">$156.23</div><div class="dirline sec">you owe Maya</div></div></div></div>
+<div class="pbtn" style="margin-top:16px">Join in Splt</div>
+<div class="qbtn" style="margin-top:10px">Get Splt, free</div>
+<div class="quietnote" style="margin-top:16px"><svg class="i xs"><use href="#i-info"/></svg><span>No account, no ads, no limits. Getting Splt copies this invite, so it's waiting when you open the app.</span></div></div>
+<div class="safari"><span><svg class="i s"><use href="#i-chl"/></svg></span><span class="u"><svg class="i xs"><use href="#i-lock"/></svg>harrypakhale98.github.io</span><span><svg class="i s"><use href="#i-dots"/></svg></span></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device webpage dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div style="padding:4px 16px 0"><div class="wtop"><span class="brandmark"><span class="discs"><i></i><i></i></span>Splt</span></div>
+<div class="sub" style="display:flex;align-items:center;gap:6px"><span class="av" style="background:var(--jr);width:24px;height:24px;font-size:10px">JR</span>Jamie Rivera invited you to</div>
+<div class="title">Lisbon Trip</div><div class="sub">May 8–14 · 6 people</div>
+<div class="discrow"><span class="av" style="background:var(--jr);">JR</span><span class="av" style="background:var(--mc);">MC</span><span class="av" style="background:var(--jw);">JW</span><span class="av" style="background:var(--pn);">PN</span><span class="av" style="background:var(--da);">DA</span><span class="av" style="background:var(--hs);">HS</span></div>
+<div class="card" style="margin:18px 0 12px"><div class="row"><span class="av" style="background:var(--hs);">HS</span><div class="grow">You're Hana Sato<div class="foot">Added by Jamie Rivera</div></div><div><div class="amt owe">$156.23</div><div class="dirline sec">you owe Maya</div></div></div></div>
+<div class="pbtn" style="margin-top:16px">Join in Splt</div>
+<div class="qbtn" style="margin-top:10px">Get Splt, free</div>
+<div class="quietnote" style="margin-top:16px"><svg class="i xs"><use href="#i-info"/></svg><span>No account, no ads, no limits. Getting Splt copies this invite, so it's waiting when you open the app.</span></div></div>
+<div class="safari"><span><svg class="i s"><use href="#i-chl"/></svg></span><span class="u"><svg class="i xs"><use href="#i-lock"/></svg>harrypakhale98.github.io</span><span><svg class="i s"><use href="#i-dots"/></svg></span></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Hana · first open</h2><p>Today's welcome screen at its real positions. The one addition is a card of rows like the "Make it yours" card on the next page. Paste is Apple's system button in the bordered style the Spending range button uses. Its exact look comes from iOS.</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div style="position:absolute;top:63px;right:16px"><div class="pillbtn" style="height:42px;font-size:16px">Skip</div></div>
+<div style="position:absolute;top:163px;left:16px;right:16px"><div class="segstrip"><i style="flex:1;background:var(--o0)"></i><i style="flex:1;background:var(--o2)"></i><i style="flex:1;background:var(--o4)"></i><i style="flex:1;background:var(--o6)"></i><i style="flex:1;background:var(--o8)"></i></div>
+<div class="dispt" style="margin-top:22px">Split bills with friends</div>
+<div class="t3" style="margin-top:20px;max-width:320px">Add what you paid and see who owes whom.</div>
+<div class="new" style="margin-top:32px"><div class="card" style="margin:0"><div class="row" style="padding:12px 12px 12px 14px"><div class="grow">Got an invite?<div class="sub">Paste the link you were sent.</div></div><span class="bordered"><svg class="i"><use href="#i-clip"/></svg>Paste</span></div></div></div></div>
+<div style="position:absolute;left:16px;right:16px;bottom:50px"><div class="pbtn">Continue</div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div style="position:absolute;top:63px;right:16px"><div class="pillbtn" style="height:42px;font-size:16px">Skip</div></div>
+<div style="position:absolute;top:163px;left:16px;right:16px"><div class="segstrip"><i style="flex:1;background:var(--o0)"></i><i style="flex:1;background:var(--o2)"></i><i style="flex:1;background:var(--o4)"></i><i style="flex:1;background:var(--o6)"></i><i style="flex:1;background:var(--o8)"></i></div>
+<div class="dispt" style="margin-top:22px">Split bills with friends</div>
+<div class="t3" style="margin-top:20px;max-width:320px">Add what you paid and see who owes whom.</div>
+<div class="new" style="margin-top:32px"><div class="card" style="margin:0"><div class="row" style="padding:12px 12px 12px 14px"><div class="grow">Got an invite?<div class="sub">Paste the link you were sent.</div></div><span class="bordered"><svg class="i"><use href="#i-clip"/></svg>Paste</span></div></div></div></div>
+<div style="position:absolute;left:16px;right:16px;bottom:50px"><div class="pbtn">Continue</div></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Hana · join as</h2><p>The Merge sheet, part for part: a Cancel pill, a short title, small section headers, and person rows with the 28-point disc and no chevron. Tapping Hana asks to confirm, as Merge does.</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="nav"><div class="gb"><svg class="i"><use href="#i-chl"/></svg></div><div class="gpill four"><span><svg class="i"><use href="#i-filter"/></svg></span><span><svg class="i"><use href="#i-plus"/></svg></span><span><svg class="i"><use href="#i-share"/></svg></span><span><svg class="i"><use href="#i-dots"/></svg></span></div></div>
+<div style="padding:12px 20px 0"><div class="title">Lisbon Trip</div><div class="sub">May 8–14 · 6 people</div><div class="sub" style="margin-top:14px;color:var(--text)">You owe</div><div class="hero">$156.23</div><div class="segstrip" style="margin:12px 0 16px"><i style="flex:30;background:var(--mc)"></i><i style="flex:14;background:var(--hs)"></i><i style="flex:12;background:var(--jw)"></i><i style="flex:10;background:var(--da)"></i><i style="flex:3;background:var(--pn)"></i><i style="flex:2;background:var(--jr)"></i></div><div class="pbtn">Settle Up</div></div>
+<div style="padding:18px 16px 2px"><div class="seg"><span class="on">Expenses</span><span>Balances</span><span>Spending</span></div></div>
+<div class="dayh"><span>Day 6, Wed, May 13</span><span>$108.00</span></div>
+<div class="card"><div class="erow"><span class="glyph"><svg class="i"><use href="#i-ticket"/></svg></span><div class="grow"><div>Museum tickets refund</div><div class="payer"><span class="dot" style="background:var(--pn)"></span>Priya Nair paid</div></div><div><div class="eamt">-$24.00</div><div class="esub sec">not involved</div></div><svg class="i chev"><use href="#i-chr"/></svg></div><div class="erow"><span class="glyph"><svg class="i"><use href="#i-cup"/></svg></span><div class="grow"><div>Beach bar in Cascais</div><div class="payer"><span class="dot" style="background:var(--jr)"></span><span class="dot" style="background:var(--jw)"></span>Jamie and Jonas paid</div></div><div><div class="eamt">$60.00</div><div class="esub sec"></div></div><svg class="i chev"><use href="#i-chr"/></svg></div></div>
+<div class="tabbar"><div class="tab on"><svg class="i"><use href="#i-stack"/></svg>Groups</div><div class="tab"><svg class="i"><use href="#i-people"/></svg>Friends</div><div class="tab"><svg class="i"><use href="#i-clock"/></svg>Activity</div><div class="tab"><svg class="i"><use href="#i-search"/></svg>Search</div></div><div class="dim" style="z-index:36"></div>
+<div class="ssheet new" style="height:440px;z-index:37;outline-offset:-3px;border-radius:34px 34px 0 0"><div class="grab" style="margin-top:7px"></div>
+<div class="nav" style="margin-top:10px"><div class="pillbtn">Cancel</div><div class="navtitle">Join Lisbon Trip</div><div style="width:60px"></div></div>
+<div class="shd">Invited as</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">You owe Maya $156.23</div></span></span></div></div>
+<div class="shd" style="padding-top:16px">Someone else</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Someone New</span></div></div>
+<div class="fn">Tapping your name asks once more, as Merge does, then everything added for Hana Sato becomes yours.</div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="nav"><div class="gb"><svg class="i"><use href="#i-chl"/></svg></div><div class="gpill four"><span><svg class="i"><use href="#i-filter"/></svg></span><span><svg class="i"><use href="#i-plus"/></svg></span><span><svg class="i"><use href="#i-share"/></svg></span><span><svg class="i"><use href="#i-dots"/></svg></span></div></div>
+<div style="padding:12px 20px 0"><div class="title">Lisbon Trip</div><div class="sub">May 8–14 · 6 people</div><div class="sub" style="margin-top:14px;color:var(--text)">You owe</div><div class="hero">$156.23</div><div class="segstrip" style="margin:12px 0 16px"><i style="flex:30;background:var(--mc)"></i><i style="flex:14;background:var(--hs)"></i><i style="flex:12;background:var(--jw)"></i><i style="flex:10;background:var(--da)"></i><i style="flex:3;background:var(--pn)"></i><i style="flex:2;background:var(--jr)"></i></div><div class="pbtn">Settle Up</div></div>
+<div style="padding:18px 16px 2px"><div class="seg"><span class="on">Expenses</span><span>Balances</span><span>Spending</span></div></div>
+<div class="dayh"><span>Day 6, Wed, May 13</span><span>$108.00</span></div>
+<div class="card"><div class="erow"><span class="glyph"><svg class="i"><use href="#i-ticket"/></svg></span><div class="grow"><div>Museum tickets refund</div><div class="payer"><span class="dot" style="background:var(--pn)"></span>Priya Nair paid</div></div><div><div class="eamt">-$24.00</div><div class="esub sec">not involved</div></div><svg class="i chev"><use href="#i-chr"/></svg></div><div class="erow"><span class="glyph"><svg class="i"><use href="#i-cup"/></svg></span><div class="grow"><div>Beach bar in Cascais</div><div class="payer"><span class="dot" style="background:var(--jr)"></span><span class="dot" style="background:var(--jw)"></span>Jamie and Jonas paid</div></div><div><div class="eamt">$60.00</div><div class="esub sec"></div></div><svg class="i chev"><use href="#i-chr"/></svg></div></div>
+<div class="tabbar"><div class="tab on"><svg class="i"><use href="#i-stack"/></svg>Groups</div><div class="tab"><svg class="i"><use href="#i-people"/></svg>Friends</div><div class="tab"><svg class="i"><use href="#i-clock"/></svg>Activity</div><div class="tab"><svg class="i"><use href="#i-search"/></svg>Search</div></div><div class="dim" style="z-index:36"></div>
+<div class="ssheet new" style="height:440px;z-index:37;outline-offset:-3px;border-radius:34px 34px 0 0"><div class="grab" style="margin-top:7px"></div>
+<div class="nav" style="margin-top:10px"><div class="pillbtn">Cancel</div><div class="navtitle">Join Lisbon Trip</div><div style="width:60px"></div></div>
+<div class="shd">Invited as</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato<div class="sub">You owe Maya $156.23</div></span></span></div></div>
+<div class="shd" style="padding-top:16px">Someone else</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Someone New</span></div></div>
+<div class="fn">Tapping your name asks once more, as Merge does, then everything added for Hana Sato becomes yours.</div></div><div class="hi"></div></div></div></div><div class="srow"><div class="slabel"><h2>Jamie · after</h2><p>Group Settings as today. Hana is an ordinary member now, so "Not on Splt yet" and Invite are gone, like for everyone else.</p></div><div><div class="fcap">Light</div><div class="device"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato</span></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="hi"></div></div></div><div><div class="fcap">Dark</div><div class="device dark"><div class="island"></div><div class="sb"><span>9:41</span><svg class="icons"><use href="#sbi"/></svg></div><div class="behind"></div><div class="ssheet full"><div class="nav" style="margin-top:8px"><div style="width:44px"></div><div class="navtitle">Group Settings</div><div class="pillbtn">Done</div></div>
+<div style="margin-top:-96px;position:relative;z-index:1;-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px);mask-image:linear-gradient(to bottom,transparent 0,transparent 70px,#000 120px)"><div class="shd">Members</div>
+<div class="card"><div class="row"><span class="lab grow"><span class="av" style="background:var(--jr);">JR</span><span>You</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--mc);">MC</span><span>Maya Chen</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--jw);">JW</span><span>Jonas Weber</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--pn);">PN</span><span>Priya Nair</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--da);">DA</span><span>Diego Alvarez</span></span></div><div class="row"><span class="lab grow"><span class="av" style="background:var(--hs);">HS</span><span>Hana Sato</span></span></div>
+<div class="row"><span class="grow ter">Add by Name</span><span class="addc"><svg class="i"><use href="#i-plus"/></svg></span></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-people"/></svg>Add from Friends</span><svg class="i chev"><use href="#i-chr"/></svg></div>
+<div class="row"><span class="lab grow"><svg class="i"><use href="#i-contact"/></svg>Add from Contacts</span></div></div>
+<div class="fn">Someone can be removed once they are settled up.</div>
+<div class="card" style="margin-top:14px"><div class="row"><span class="grow">Default Split</span><span class="acc">Equally<svg class="i chev"><use href="#i-chr"/></svg></span></div></div>
+<div class="fn">New expenses in this group start with this split.</div>
+<div class="shd" style="padding-top:12px">Invite</div>
+<div class="card"><div class="row"><span class="lab grow"><svg class="i"><use href="#i-people-plus"/></svg>Invite with iCloud</span></div><div class="row"><span class="lab grow"><svg class="i"><use href="#i-qr"/></svg>Link or QR Code</span><svg class="i chev"><use href="#i-chr"/></svg></div></div></div></div><div class="hi"></div></div></div></div></div>
+
+
+<style>
+.device{--o0:#B5432F;--o2:#8A660C;--o4:#3B7A4B;--o6:#1F7488;--o8:#4B55A0}
+.device.dark{--o0:#E58E7A;--o2:#D9BC6A;--o4:#8CC99A;--o6:#74C1D3;--o8:#A3A9E8}
+</style>
+</body></html>

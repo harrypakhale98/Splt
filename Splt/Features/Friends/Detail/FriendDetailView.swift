@@ -35,6 +35,8 @@ private struct FriendDetailContent: View {
     @State private var showsRemind = false
     @State private var showsRename = false
     @State private var showsMerge = false
+    /// The group an invite made for this person is being sent for.
+    @State private var inviteGroup: SplitGroup?
     @State private var showsBlockConfirmation = false
     @State private var newName = ""
     private let visibility = FriendVisibilityStore()
@@ -83,10 +85,16 @@ private struct FriendDetailContent: View {
                 }
             }
         }
+        .sheet(item: $inviteGroup) { group in
+            if let friend = model.friend, let services {
+                InvitePersonSheet(groupID: group.id, person: friend, services: services)
+            }
+        }
         .closingSheetsOnLink {
             expenseTarget = nil
             showsRemind = false
             showsMerge = false
+            inviteGroup = nil
         }
         .alert("Rename", isPresented: $showsRename) {
             TextField("Name", text: $newName)
@@ -214,6 +222,20 @@ private struct FriendDetailContent: View {
             }
         }
         if friend.isPlaceholder {
+            let groups = invitableGroups(for: friend)
+            if groups.count == 1, let group = groups.first {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button("Invite \(firstName)", systemImage: "person.badge.plus") { inviteGroup = group }
+                }
+            } else if groups.count > 1 {
+                ToolbarItem(placement: .secondaryAction) {
+                    Menu("Invite \(firstName)", systemImage: "person.badge.plus") {
+                        ForEach(groups) { group in
+                            Button(group.name) { inviteGroup = group }
+                        }
+                    }
+                }
+            }
             ToolbarItem(placement: .secondaryAction) {
                 Button("Merge With\u{2026}", systemImage: "person.2.badge.gearshape") { showsMerge = true }
             }
@@ -227,6 +249,17 @@ private struct FriendDetailContent: View {
     }
 
     // MARK: Helpers
+
+    /// The groups an invite can be sent for: ones this person is in, while iCloud is on.
+    private func invitableGroups(for friend: Person) -> [SplitGroup] {
+        var canInvite = SyncRuntime.shared.status.isConnected
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-sampledata") { canInvite = true }
+        #endif
+        guard canInvite, let services else { return [] }
+        return ((try? services.groups.groups(includeArchived: false)) ?? [])
+            .filter { $0.memberIDs.contains(friend.id) }
+    }
 
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })

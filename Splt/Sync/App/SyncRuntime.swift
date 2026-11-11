@@ -30,6 +30,8 @@ final class SyncRuntime {
     @ObservationIgnored private var awaitingArrival: [GroupID: ContinuousClock.Instant] = [:]
     @ObservationIgnored private let arrivalWindow: Duration
     @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
+    /// Who each joined group's invite was made for, until the group's screen asks.
+    @ObservationIgnored private var claims: [GroupID: PersonID] = [:]
 
     /// `makeEngine` replaces the engine that `start` builds, for tests.
     init(
@@ -125,15 +127,33 @@ final class SyncRuntime {
 
     private func accept(_ invitation: ShareInvitation) async {
         do {
-            try await engine.accept(invitation)
-            if let zone = invitation.metadata?.share.recordID.zoneID.zoneName, let id = UUID(uuidString: zone) {
-                groupJoined(GroupID(rawValue: id))
+            var answered = invitation
+            if invitation.metadata == nil, let url = invitation.shareURL {
+                // a link from Splt's invite page: read it the way the system reads a tapped one
+                answered = ShareInvitation(metadata: try await engine.shareMetadata(for: url), claim: invitation.claim)
+            }
+            try await engine.accept(answered)
+            if let metadata = answered.metadata, let id = UUID(uuidString: metadata.share.recordID.zoneID.zoneName) {
+                let group = GroupID(rawValue: id)
+                // the person who shared the group opened their own link: there is nobody to become
+                if let claim = answered.claim, metadata.participantRole != .owner { claims[group] = claim }
+                groupJoined(group)
             }
         } catch SyncError.notReady {
             waiting.append(invitation)
         } catch {
             onInvitationFailed?(SyncFailure.message(for: error))
         }
+    }
+
+    /// The person a group's invite was made for, once. The group's screen asks right after joining.
+    func takeClaim(for group: GroupID) -> PersonID? {
+        claims.removeValue(forKey: group)
+    }
+
+    /// Notes who an invite was made for, as if it had just been accepted. For tests and sample data.
+    func noteClaim(_ person: PersonID, in group: GroupID) {
+        claims[group] = person
     }
 
     /// A group you left and were invited back to belongs in your list again. It is opened once it is

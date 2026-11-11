@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SpltCore
 
 /// Owns tab selection, one navigation path per tab and the presented sheet.
 /// Features push routes through it so deep links and in-app taps share one path.
@@ -33,6 +34,11 @@ final class Router {
     var pendingInvite: FriendInvite?
     /// A friend whose settle up sheet should open as soon as their screen appears.
     var pendingSettleFriend: UUID?
+    /// A group invite made for one person, waiting for sync to accept it.
+    var pendingJoin: JoinInvite?
+    /// A group just joined from an invite made for someone added by name, waiting for its
+    /// "which one are you" sheet.
+    var joinClaim: JoinClaim?
 
     var friendsPath: [Route] = []
     var groupsPath: [Route] = []
@@ -137,8 +143,18 @@ final class Router {
         case .invite(let invite):
             pendingInvite = invite
             sheet = .newFriend
+        case .join(let invite):
+            sheet = nil
+            pendingJoin = invite
         }
     }
+}
+
+/// A group joined from an invite made for one person, and who that person is.
+struct JoinClaim: Identifiable, Hashable, Sendable {
+    let group: GroupID
+    let person: PersonID
+    var id: GroupID { group }
 }
 
 /// A backup file handed to the app, shown in its own restore sheet.

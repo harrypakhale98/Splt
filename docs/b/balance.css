@@ -173,3 +173,17 @@ button.row:active { background: var(--press); }
 .problem .mark { justify-content: center; }
 .problem .mark i { width: 22px; height: 22px; }
 .problem .mark i:last-child { margin-left: -7px; }
+
+/* An invite made for one member */
+
+.invited { margin-top: 0; margin-bottom: 2px; }
+.discrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 18px; }
+
+.primary, .secondary {
+  display: grid; place-items: center; height: 52px; border-radius: 14px;
+  font-size: 17px; font-weight: 500; text-decoration: none; margin-top: 10px;
+}
+.primary { background: var(--text); color: var(--paper); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 3px 4px rgba(42, 33, 24, .2); margin-top: 16px; }
+.secondary { color: var(--text); border: 1px solid var(--hairline); }
+.primary:focus-visible, .secondary:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.note { margin-top: 16px; }

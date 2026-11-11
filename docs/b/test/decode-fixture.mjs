@@ -65,7 +65,7 @@ await check("the stylesheet loads nothing from other hosts", () => {
 
 // MARK: Decoding
 
-const sandbox = { atob, Blob, DecompressionStream, TextDecoder, console };
+const sandbox = { atob, Blob, DecompressionStream, TextDecoder, URL, console };
 vm.createContext(sandbox);
 vm.runInContext(script, sandbox);
 const page$ = sandbox.SpltBalanceLink;
@@ -133,6 +133,40 @@ async function problem(fragment) {
 await check("accepts a minimal hand-made link", async () => {
   const snapshot = await page$.decodeFragment(pack(valid));
   assert.equal(snapshot.expenses, null);
+});
+
+const joinID = "0E1F2A3B-4C5D-4E6F-8A9B-0C1D2E3F4A5B";
+const joined = { ...valid, j: ["https://www.icloud.com/share/0AbCdEfGh", 1, joinID] };
+
+await check("reads an invite made for one member", async () => {
+  const snapshot = await page$.decodeFragment(pack(joined));
+  assert.equal(snapshot.join.person, 1);
+  assert.equal(snapshot.join.id, joinID);
+  assert.equal(page$.joinLink(snapshot.join),
+    "splt://join?share=" + encodeURIComponent("https://www.icloud.com/share/0AbCdEfGh") + "&as=" + joinID);
+  assert.equal((await page$.decodeFragment(pack(valid))).join, null);
+});
+
+await check("refuses invites that aren't iCloud's", async () => {
+  const cases = {
+    "another host": ["https://evil.example/share/x", 1, joinID],
+    "lookalike host": ["https://icloud.com.evil.example/x", 1, joinID],
+    "plain http": ["http://www.icloud.com/share/x", 1, joinID],
+    "script url": ["javascript:alert(1)", 1, joinID],
+    "nobody": ["https://www.icloud.com/share/x", 9, joinID],
+    "bad id": ["https://www.icloud.com/share/x", 1, "not-an-id"],
+    "short": ["https://www.icloud.com/share/x", 1]
+  };
+  for (const [name, j] of Object.entries(cases)) {
+    const kind = await problem(pack({ ...valid, j }));
+    assert.ok(kind === "broken", `${name}: ${kind}`);
+  }
+});
+
+await check("initials match the app", () => {
+  assert.equal(page$.initial("Hana Sato"), "HS");
+  assert.equal(page$.initial("Priya"), "P");
+  assert.equal(page$.initial("  maya   de la Cruz "), "MC");
 });
 
 await check("refuses broken and hostile links calmly", async () => {

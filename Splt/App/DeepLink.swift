@@ -3,7 +3,8 @@ import Foundation
 /// A parsed `splt://` address.
 ///
 /// Supported forms: `splt://group/<uuid>`, `splt://friend/<uuid>`, `splt://settle/<friend uuid>`,
-/// `splt://add-expense` and `splt://invite?name=<name>&id=<uuid>`.
+/// `splt://add-expense`, `splt://invite?name=<name>&id=<uuid>` and
+/// `splt://join?share=<iCloud invite link>&as=<person uuid>`.
 enum DeepLink: Hashable, Sendable {
     static let scheme = "splt"
 
@@ -15,6 +16,8 @@ enum DeepLink: Hashable, Sendable {
     /// Opens the Activity tab.
     case activity
     case invite(FriendInvite)
+    /// Joins a group as the person the invite was made for.
+    case join(JoinInvite)
 
     init?(url: URL) {
         guard url.scheme?.lowercased() == Self.scheme else { return nil }
@@ -38,6 +41,9 @@ enum DeepLink: Hashable, Sendable {
         case ("invite", 1):
             guard let invite = FriendInvite(url: url) else { return nil }
             self = .invite(invite)
+        case ("join", 1):
+            guard let invite = JoinInvite(url: url) else { return nil }
+            self = .join(invite)
         default:
             return nil
         }
@@ -51,6 +57,7 @@ enum DeepLink: Hashable, Sendable {
         case .addExpense: URL(string: "\(Self.scheme)://add-expense")!
         case .activity: URL(string: "\(Self.scheme)://activity")!
         case .invite(let invite): invite.url
+        case .join(let invite): invite.url
         }
     }
 }
