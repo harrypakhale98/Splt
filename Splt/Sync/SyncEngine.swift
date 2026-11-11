@@ -60,4 +60,11 @@ protocol SyncEngine: AnyObject {
     func isSharedByMe(group: GroupID) async -> Bool
     /// The groups other people shared with you, as last known. You leave those; your own you delete.
     var groupsSharedWithMe: Set<GroupID> { get }
+    /// True once this device has fetched everything iCloud holds, on this launch or an earlier one.
+    /// Until then groups from iCloud may still be on their way. True for an engine that does not sync.
+    var hasFetchedOnce: Bool { get }
+}
+
+extension SyncEngine {
+    var hasFetchedOnce: Bool { true }
 }

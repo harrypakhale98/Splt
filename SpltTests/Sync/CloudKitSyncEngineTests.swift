@@ -67,6 +67,21 @@ struct CloudKitSyncEngineTests {
         await rig.engine.stop()
     }
 
+    @Test func aFreshDeviceHasFetchedOnceOnlyWhenBothDatabasesFinish() async throws {
+        let rig = try Rig()
+        #expect(!rig.engine.hasFetchedOnce)
+        await rig.engine.start()
+        #expect(await eventually { rig.engine.hasFetchedOnce })
+        await rig.engine.stop()
+
+        let failing = try Rig()
+        failing.backend.privateHandle.fetchError = CKError(.networkUnavailable)
+        await failing.engine.start()
+        #expect(await eventually { failing.engine.status == .offline })
+        #expect(!failing.engine.hasFetchedOnce)
+        await failing.engine.stop()
+    }
+
     @Test func laterEditsAreQueuedAfterAShortDelay() async throws {
         let rig = try Rig()
         await rig.engine.start()

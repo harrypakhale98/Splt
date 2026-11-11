@@ -11,6 +11,10 @@ import SwiftData
 @Observable
 final class CloudKitSyncEngine: SyncEngine {
     private(set) var status: SyncStatus = .idle
+    /// True once both databases fetched in full. Saved engine state counts too: as in `firstSync`, it
+    /// means an earlier launch fetched.
+    private(set) var hasFetchedOnce = false
+    @ObservationIgnored private var fetchedScopes: Set<DatabaseScope> = []
 
     @ObservationIgnored private let backend: any CloudKitBackend
     @ObservationIgnored private let connectivity: @Sendable () -> AsyncStream<Bool>
@@ -58,6 +62,7 @@ final class CloudKitSyncEngine: SyncEngine {
         coordinator.onStatusChange = { [weak self] in self?.publish($0) }
         coordinator.onRemoteChanges = { [weak self] report in self?.notifier?.notify(for: report, services: self?.services) }
         coordinator.onMembership = { [weak self] in self?.onMembership?($0) }
+        coordinator.onFetchSucceeded = { [weak self] in self?.fetchSucceeded(scope: $0) }
     }
 
     var statusUpdates: AsyncStream<SyncStatus> { broadcaster.updates() }
@@ -83,6 +88,7 @@ final class CloudKitSyncEngine: SyncEngine {
         coordinator.attach(privateSyncer, for: .privateDatabase)
         coordinator.attach(sharedSyncer, for: .sharedDatabase)
         let hadState = privateSyncer.hasSavedState
+        if hadState { hasFetchedOnce = true }
         for syncer in syncers {
             syncer.start(makeEngine: backend.engineFactory(for: syncer.scope))
         }
@@ -117,6 +123,13 @@ final class CloudKitSyncEngine: SyncEngine {
             // the retry scheduler picks this up; local changes stay queued on disk
         }
         markReadyAndReconcile()
+    }
+
+    private func fetchSucceeded(scope: DatabaseScope) {
+        fetchedScopes.insert(scope)
+        if !hasFetchedOnce, syncers.allSatisfy({ fetchedScopes.contains($0.scope) }) {
+            hasFetchedOnce = true
+        }
     }
 
     private func markReadyAndReconcile() {

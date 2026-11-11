@@ -50,6 +50,16 @@ final class SyncRuntime {
 
     var status: SyncStatus { engine.status }
 
+    /// True while sync is on and has not yet fetched what iCloud holds. A backup restored now can add
+    /// copies of groups that are still on their way.
+    var isFetchingForTheFirstTime: Bool {
+        switch engine.status {
+        case .unavailable(.starting): true
+        case .idle, .syncing, .offline, .error: !engine.hasFetchedOnce
+        case .noAccount, .restricted, .unavailable: false
+        }
+    }
+
     /// Builds the engine for these services and starts it. Safe to call once per launch.
     func start(services: DataServices) async {
         guard !isRunning else { return }

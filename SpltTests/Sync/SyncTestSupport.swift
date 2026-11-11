@@ -15,6 +15,7 @@ final class FakeSyncEngine: SyncEngine {
     private(set) var fetchCount = 0
     private(set) var accepted: [ShareInvitation] = []
     private(set) var left: [GroupID] = []
+    var hasFetchedOnce = true
 
     init(identifier: String = "fake") {
         self.identifier = identifier

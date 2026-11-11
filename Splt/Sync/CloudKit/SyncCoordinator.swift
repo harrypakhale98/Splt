@@ -38,6 +38,8 @@ final class SyncCoordinator {
     var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     /// Called when changes arrive for a group someone else shared and this person is a member of it.
     var onMembership: (@MainActor (GroupID) -> Void)?
+    /// Called when a fetch of one database finished with every zone in it.
+    var onFetchSucceeded: (@MainActor (DatabaseScope) -> Void)?
 
     init(services: DataServices, adapter: SyncStoreAdapter, retry: RetryScheduler? = nil) {
         self.services = services
@@ -343,6 +345,7 @@ final class SyncCoordinator {
 
     func fetchSucceeded(scope: DatabaseScope) {
         updateStatus { $0.succeeded(source: .init(scope: scope, isSending: false)) }
+        onFetchSucceeded?(scope)
     }
 
     func fetchFailed(_ error: any Error, scope: DatabaseScope) {

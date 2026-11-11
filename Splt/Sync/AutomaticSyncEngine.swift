@@ -78,6 +78,8 @@ final class AutomaticSyncEngine: SyncEngine {
         try await current.sendChanges()
     }
 
+    var hasFetchedOnce: Bool { current.hasFetchedOnce }
+
     func fetchChanges() async throws {
         try await current.fetchChanges()
     }

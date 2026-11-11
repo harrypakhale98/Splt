@@ -87,6 +87,8 @@ private struct RestoreBackupContent: View {
     @Environment(Router.self) private var router
     @State private var model: RestoreBackupModel
     @State private var restoreCount = 0
+    @State private var confirmsEarlyRestore = false
+    private let sync = SyncRuntime.shared
 
     init(file: OpenedBackup, services: DataServices) {
         self.file = file
@@ -133,6 +135,22 @@ private struct RestoreBackupContent: View {
 
     private func planList(_ plan: BackupRestorer.Plan) -> some View {
         List {
+            if sync.isFetchingForTheFirstTime {
+                Section {
+                    RaisedRows {
+                        Label {
+                            Text("iCloud is still bringing your groups to this iPhone. Restoring before it's done can add a second copy of a group that is on its way, so wait here until this goes away.")
+                        } icon: {
+                            ProgressView()
+                        }
+                    }
+                    .font(.subheadline)
+                } header: {
+                    SectionHeader("Waiting for iCloud")
+                }
+                .paperSection()
+            }
+
             Section {
                 RaisedRows {
                     LabeledContent("Made", value: plan.createdAt.formatted(date: .long, time: .shortened))
@@ -167,12 +185,26 @@ private struct RestoreBackupContent: View {
             cancel
             ToolbarItem(placement: .confirmationAction) {
                 Button("Restore") {
-                    model.restore()
-                    if case .done = model.step { restoreCount += 1 }
+                    if sync.isFetchingForTheFirstTime {
+                        confirmsEarlyRestore = true
+                    } else {
+                        restore()
+                    }
                 }
                 .disabled(!plan.canRestore)
             }
         }
+        .confirmationDialog("Restore Before iCloud Is Done?", isPresented: $confirmsEarlyRestore, titleVisibility: .visible) {
+            Button("Restore Anyway") { restore() }
+            Button("Wait", role: .cancel) {}
+        } message: {
+            Text("Groups still on their way from iCloud may end up here twice.")
+        }
+    }
+
+    private func restore() {
+        model.restore()
+        if case .done = model.step { restoreCount += 1 }
     }
 
     private func doneList(_ summary: BackupRestorer.Summary) -> some View {

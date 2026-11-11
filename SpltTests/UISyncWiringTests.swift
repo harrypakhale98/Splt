@@ -67,6 +67,21 @@ struct UISyncGroupSharingTests {
         #expect(url == DeepLink.group(group.rawValue).url)
     }
 
+    @Test func aRestoreWaitsOnlyWhileSyncIsOnAndHasNotFetched() {
+        let engine = FakeSyncEngine()
+        let runtime = SyncRuntime()
+        runtime.use(engine)
+        #expect(!runtime.isFetchingForTheFirstTime)
+        engine.hasFetchedOnce = false
+        #expect(runtime.isFetchingForTheFirstTime)
+        engine.report(.offline)
+        #expect(runtime.isFetchingForTheFirstTime)
+        engine.report(.noAccount)
+        #expect(!runtime.isFetchingForTheFirstTime)
+        runtime.use(NoOpSyncEngine())
+        #expect(!runtime.isFetchingForTheFirstTime)
+    }
+
     @Test func fallsBackWhenTheEngineCannotShare() async throws {
         let runtime = SyncRuntime()
         runtime.use(FakeSyncEngine())
