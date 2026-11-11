@@ -38,6 +38,7 @@ private struct RootTabs: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .generatesRecurringExpenses()
+        .foldsItemClaims()
         .settleUndoBanner()
         .sheet(item: $router.sheet, onDismiss: router.sheetDidDismiss) { sheet in
             switch sheet {

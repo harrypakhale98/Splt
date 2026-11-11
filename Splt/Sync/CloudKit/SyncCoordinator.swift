@@ -212,8 +212,18 @@ final class SyncCoordinator {
         for id in report.requeue {
             queues[id.zoneID.scope]?.queue(saves: [id])
         }
+        foldItemClaims(inZones: report.touchedZones)
         try afterRemoteChanges(report)
         onRemoteChanges?(report)
+    }
+
+    /// Picks that arrived are folded into the expenses this person added. The edit is sent with
+    /// the reconcile that follows. A fold that fails is tried again with the next change or launch,
+    /// so it never stops the sync.
+    private func foldItemClaims(inZones zones: Set<String>) {
+        let groups = Set(zones.compactMap(GroupID.init(uuidString:)))
+        guard !groups.isEmpty else { return }
+        _ = try? services.claims.foldClaims(inGroups: groups)
     }
 
     private func afterRemoteChanges(_ report: ApplyReport) throws {
