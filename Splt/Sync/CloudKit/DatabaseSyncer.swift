@@ -188,19 +188,24 @@ final class DatabaseSyncer: CKSyncEngineDelegate, EngineQueue {
         // the old engine may still report its state while it winds down: that state is the expired one
         isReplacingEngine = true
         store.saveEngineState(nil, scope: scope)
-        startingOver = Task { [weak self] in
-            guard let self else { return }
-            await engine?.cancelOperations()
-            guard !Task.isCancelled, !isStopped else { return }
-            let made = makeEngine(nil, self)
-            engine = made
-            isReplacingEngine = false
-            coordinator.fetchFromNothingBegan(scope: scope)
-            startedFromNothing = made
-            // what was waiting to be sent went with the old engine, so it is queued again
-            try? coordinator.reconcile()
-            try? await fetchChanges()
+        // Detached: this can start inside CKSyncEngine's delegate callback, and a plain Task would carry
+        // that context into the fetch below, which CKSyncEngine traps on.
+        startingOver = Task.detached { [weak self] in
+            await self?.replaceEngine()
         }
+    }
+
+    private func replaceEngine() async {
+        await engine?.cancelOperations()
+        guard !Task.isCancelled, !isStopped, let makeEngine else { return }
+        let made = makeEngine(nil, self)
+        engine = made
+        isReplacingEngine = false
+        coordinator.fetchFromNothingBegan(scope: scope)
+        startedFromNothing = made
+        // what was waiting to be sent went with the old engine, so it is queued again
+        try? coordinator.reconcile()
+        try? await fetchChanges()
     }
 
     private static func isExpiredToken(_ error: any Error) -> Bool {
