@@ -1,7 +1,7 @@
 import SwiftUI
 import UserNotifications
 
-/// The preference, sync, import and about sections of the Account screen.
+/// The preference, sync, import, backup and about sections of the Account screen.
 struct SettingsSections: View {
     @Environment(Router.self) private var router
     @Environment(\.scenePhase) private var scenePhase
@@ -63,6 +63,8 @@ struct SettingsSections: View {
         } header: {
             SectionHeader("Import")
         }
+
+        BackupSection()
 
         Section {
             RaisedRows {
