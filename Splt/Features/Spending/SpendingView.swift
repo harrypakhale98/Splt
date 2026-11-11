@@ -15,6 +15,7 @@ struct SpendingView: View {
             }
         }
         .navigationTitle("Spending")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -125,13 +126,13 @@ private struct SpendingContent: View {
         let groups = model.groupCount, friends = model.friendCount
         switch (groups > 0, friends > 0) {
         case (true, true):
-            return String(localized: "^[\(expenses) expense](inflect: true) across ^[\(groups) group](inflect: true) and ^[\(friends) friend](inflect: true)")
+            return String(AttributedString(localized: "^[\(expenses) expense](inflect: true) across ^[\(groups) group](inflect: true) and ^[\(friends) friend](inflect: true)").characters)
         case (true, false):
-            return String(localized: "^[\(expenses) expense](inflect: true) across ^[\(groups) group](inflect: true)")
+            return String(AttributedString(localized: "^[\(expenses) expense](inflect: true) across ^[\(groups) group](inflect: true)").characters)
         case (false, true):
-            return String(localized: "^[\(expenses) expense](inflect: true) with ^[\(friends) friend](inflect: true)")
+            return String(AttributedString(localized: "^[\(expenses) expense](inflect: true) with ^[\(friends) friend](inflect: true)").characters)
         case (false, false):
-            return String(localized: "^[\(expenses) expense](inflect: true)")
+            return String(AttributedString(localized: "^[\(expenses) expense](inflect: true)").characters)
         }
     }
 

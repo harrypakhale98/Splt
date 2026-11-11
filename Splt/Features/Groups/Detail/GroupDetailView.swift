@@ -281,9 +281,7 @@ private struct GroupDetailContent: View {
         }
         if let group = model.group, group.memberIDs.contains(where: { $0 != model.me?.id }) {
             ToolbarItem(placement: .primaryAction) {
-                Menu("Share", systemImage: "square.and.arrow.up") {
-                    Button("Share as a Link", systemImage: "link") { showsBalanceLink = true }
-                }
+                Button("Share as a Link", systemImage: "square.and.arrow.up") { showsBalanceLink = true }
             }
         }
         ToolbarItemGroup(placement: .secondaryAction) {

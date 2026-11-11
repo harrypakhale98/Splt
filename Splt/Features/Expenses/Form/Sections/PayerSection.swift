@@ -18,7 +18,7 @@ struct PayerSection: View {
                     }
                 }
 
-                Toggle("Several people paid", isOn: Binding(
+                Toggle("Several People Paid", isOn: Binding(
                     get: { model.payer.isMultiple },
                     set: { model.setMultiplePayers($0) }
                 ))

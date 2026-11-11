@@ -115,7 +115,7 @@ private struct RestoreBackupContent: View {
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("OK") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
         case .ready(let plan):

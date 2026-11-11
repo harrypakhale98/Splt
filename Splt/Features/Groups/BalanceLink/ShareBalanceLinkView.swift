@@ -43,7 +43,7 @@ struct ShareBalanceLinkView: View {
                                 .accessibilityLabel("Always included")
                         }
                         .accessibilityElement(children: .combine)
-                        Toggle("Recent expenses", isOn: $includesExpenses)
+                        Toggle("Recent Expenses", isOn: $includesExpenses)
                             .tint(Ink.switchOn)
                     }
                 } footer: {

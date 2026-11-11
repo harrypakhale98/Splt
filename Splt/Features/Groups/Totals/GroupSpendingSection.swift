@@ -56,7 +56,7 @@ struct GroupSpendingSection: View {
                     Text(money(other.shareMoney))
                         .font(Typeface.figure)
                         .foregroundStyle(Ink.text)
-                    Text("your share · group total \(money(other.totalMoney)) · ^[\(other.expenseCount) expense](inflect: true) in \(other.currencyCode)")
+                    Text("Your share · group total \(money(other.totalMoney)) · ^[\(other.expenseCount) expense](inflect: true) in \(other.currencyCode)")
                 }
                 .accessibilityElement(children: .combine)
             }
