@@ -92,7 +92,18 @@ struct PhotoStore: Sendable {
         if exists(fileName) { return true }
         guard let size = try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize,
               size <= Self.maximumIncomingBytes,
-              let data = try? Data(contentsOf: source),
+              let data = try? Data(contentsOf: source) else { return false }
+        return keep(data, named: fileName)
+    }
+
+    /// Keeps a photo from a file that cannot be trusted, such as a backup, under a name the app chose.
+    /// Returns false, keeping nothing, when it is too large or not a readable image. A photo already
+    /// here under that name is left as it is.
+    @discardableResult
+    func keep(_ data: Data, named fileName: String) -> Bool {
+        guard Self.safeName(fileName) == (fileName as NSString).lastPathComponent else { return false }
+        if exists(fileName) { return true }
+        guard data.count <= Self.maximumIncomingBytes,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               CGImageSourceGetCount(source) > 0,
               CGImageSourceCreateImageAtIndex(source, 0, nil) != nil else { return false }
