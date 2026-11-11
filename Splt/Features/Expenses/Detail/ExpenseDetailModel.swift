@@ -197,7 +197,10 @@ final class ExpenseDetailModel {
 
     var shareText: String {
         guard let expense else { return "" }
-        return ExpenseShareText.make(expense: expense, groupName: group?.name, names: names, locale: currentLocale)
+        // the text is read by someone else, for whom "You" would mean them
+        var shared = names
+        if let me, !me.name.isEmpty { shared[me.id] = me.name }
+        return ExpenseShareText.make(expense: expense, groupName: group?.name, names: shared, locale: currentLocale)
     }
 
     var receiptFileName: String? { details?.extras.receiptFileName }

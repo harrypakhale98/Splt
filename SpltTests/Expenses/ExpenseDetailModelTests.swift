@@ -114,7 +114,7 @@ struct ExpenseDetailModelTests {
         let model = ExpenseDetailModel(expenseID: expense.id, services: fixture.services, locale: us)
         let text = model.shareText
         #expect(text.hasPrefix("Dinner\n$30.00,"))
-        #expect(text.contains("Paid by You"))
+        #expect(text.contains("Paid by Me"))
         #expect(text.contains("  Sam: $10.00"))
         #expect(text.contains("Flat"))
     }
