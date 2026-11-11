@@ -22,10 +22,12 @@ final class SwiftDataActivityRepository: ActivityRepository {
         return try env.context.fetch(descriptor).compactMap(ActivityEntry.init)
     }
 
+    /// Counts only what the Activity screen can show. A later version may sync kinds of activity
+    /// this one cannot read, and a badge for a row nobody can see or mark read would never clear.
     func unreadCount() throws -> Int {
-        try env.context.fetchCount(FetchDescriptor<ActivityRecord>(
+        try env.context.fetch(FetchDescriptor<ActivityRecord>(
             predicate: #Predicate { $0.isRead == false && $0.deletedAt == nil }
-        ))
+        )).compactMap(ActivityEntry.init).count
     }
 
     func markRead(ids: [UUID]) throws {

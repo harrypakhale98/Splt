@@ -86,6 +86,21 @@ struct ActivityRepositoryTests {
         #expect(!entry.isRead)
     }
 
+    @Test func activityThisVersionCannotReadIsNotCounted() throws {
+        let fixture = try Fixture()
+        let shown = try fixture.services.activity.entries(limit: 10).count
+        let record = ActivityRecord(ActivityEntry(
+            groupID: fixture.group.id, actorID: fixture.sam.id, event: .groupRenamed(from: "Flat", to: "Home"),
+            createdAt: fixture.clock.now()
+        ))
+        var payload = record.syncPayload
+        payload.fields.set("kind", "somethingFromALaterVersion")
+        payload.fields.set("event", Data(#"{"somethingFromALaterVersion":{}}"#.utf8))
+        try fixture.services.makeChangeTracker().applyRemote(payload)
+        #expect(try fixture.services.activity.entries(limit: 10).count == shown)
+        #expect(try fixture.services.activity.unreadCount() == 0)
+    }
+
     @Test func whatYouDidOnAnotherDeviceArrivesRead() throws {
         let fixture = try Fixture()
         try receive(.groupRenamed(from: "Flat", to: "Home"), in: fixture, from: fixture.me.id)
