@@ -40,7 +40,13 @@ Sync is built on `CKSyncEngine`.
 - Conflicts resolve per record, last writer wins, so concurrent edits to one record can lose a change. Expenses are soft deleted so history is kept.
 - Change notifications use CloudKit subscriptions, which cost nothing.
 
+`Splt/Data/Sync` holds the data side of sync: change tracking, the merge policy and the payloads. `Splt/Sync` holds the transport: the engine, CloudKit and sharing.
+
 Sync sits behind a protocol. Builds without the iCloud entitlement use a no-op engine, so the app runs fully offline in the simulator and in CI.
+
+### Backup and spending
+
+Backup lives in `Splt/Data/Backup` and `Splt/Features/Settings`. It writes everything to one file and restores it later. Spending lives in `Splt/Features/Spending`. It charts your share over the last 12 months, and a group has its own Spending tab.
 
 ### Intelligence
 

@@ -27,10 +27,13 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Groups
 - Six ways to split: equally, exact amounts, percentages, shares, adjustments and by item.
 - A balance orbit that draws who owes whom, and a split bar you drag to set the shares.
 - Any currency per expense, and recurring expenses.
-- Quick add from a sentence, by typing or by voice, and receipt scanning.
+- Quick add from a sentence, by typing or by voice, and receipt scanning. Receipt photos sync through iCloud, and each person can pick their own items.
 - Settle up in full or in part. Splt never moves money.
+- Reminders you share as a message, and a balance link that opens in any browser for friends without an iPhone.
+- Spending charts for your share over the last 12 months, and a default split and a cover photo for each group.
 - Invites by link or QR code, and export as a spreadsheet (CSV), PDF or JSON.
-- Import from a Splitwise export.
+- Import from a Splitwise export, and back up everything to a file you can restore.
+- A light, dark or system appearance switch, and a full edit history on each expense.
 
 ## Build
 
