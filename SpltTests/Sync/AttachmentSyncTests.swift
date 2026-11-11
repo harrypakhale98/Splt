@@ -30,7 +30,7 @@ struct AttachmentSyncTests {
         try #require(records.first { $0.recordID.recordName == expense.id.description })
     }
 
-    @Test func aReceiptReachesTheOtherPhone() throws {
+    @Test func aReceiptReachesTheOtherPhone() async throws {
         let phone = try PopulatedDevice()
         let (_, name) = try expenseWithReceipt(on: phone)
         let cloud = FakeCloud()
@@ -40,6 +40,9 @@ struct AttachmentSyncTests {
         try cloud.download(to: other)
         #expect(other.photos.store(.receipts).exists(name))
         #expect(other.photos.store(.receipts).thumbnail(named: name) != nil)
+        // the thumbnail is made after the fetch, away from the main actor
+        let thumbnail = other.photos.store(.receipts).thumbnailURL(for: name).path
+        #expect(await eventually { FileManager.default.fileExists(atPath: thumbnail) })
     }
 
     @Test func anUnchangedReceiptIsNotSentAgain() throws {

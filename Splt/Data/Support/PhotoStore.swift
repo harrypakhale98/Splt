@@ -83,40 +83,65 @@ struct PhotoStore: Sendable {
         return name
     }
 
-    /// Keeps a photo that arrived with a synced record under the name the record gives it, with a fresh
-    /// thumbnail. Returns false, keeping nothing, when the file is too large or not a readable image.
-    /// A photo already here is left as it is: names are unique, so it is the same photo.
+    /// Keeps a photo that arrived with a synced record under the name the record gives it. Returns false,
+    /// keeping nothing, when the file is too large or not a readable image. A photo already here is left
+    /// as it is: names are unique, so it is the same photo.
+    ///
+    /// Only the file is copied, which is quick enough for a sync callback that has to take it at once.
+    /// Make its thumbnail with `makeThumbnail(for:)` away from the main actor.
     @discardableResult
     func adopt(fileAt source: URL, named fileName: String) -> Bool {
         guard Self.safeName(fileName) == (fileName as NSString).lastPathComponent else { return false }
         if exists(fileName) { return true }
         guard let size = try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize,
               size <= Self.maximumIncomingBytes,
-              let data = try? Data(contentsOf: source) else { return false }
-        return keep(data, named: fileName)
+              let image = CGImageSourceCreateWithURL(source as CFURL, nil),
+              Self.isReadable(image) else { return false }
+        do {
+            try FileManager.default.createDirectory(at: thumbnails, withIntermediateDirectories: true)
+            let staged = directory.appending(path: UUID().uuidString + ".part", directoryHint: .notDirectory)
+            try FileManager.default.copyItem(at: source, to: staged)
+            do {
+                try FileManager.default.moveItem(at: staged, to: url(for: fileName))
+            } catch {
+                try? FileManager.default.removeItem(at: staged)
+                throw error
+            }
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// Keeps a photo from a file that cannot be trusted, such as a backup, under a name the app chose.
     /// Returns false, keeping nothing, when it is too large or not a readable image. A photo already
-    /// here under that name is left as it is.
+    /// here under that name is left as it is. Make its thumbnail with `makeThumbnail(for:)`.
     @discardableResult
     func keep(_ data: Data, named fileName: String) -> Bool {
         guard Self.safeName(fileName) == (fileName as NSString).lastPathComponent else { return false }
         if exists(fileName) { return true }
         guard data.count <= Self.maximumIncomingBytes,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
-              CGImageSourceGetCount(source) > 0,
-              CGImageSourceCreateImageAtIndex(source, 0, nil) != nil else { return false }
+              Self.isReadable(source) else { return false }
         do {
             try FileManager.default.createDirectory(at: thumbnails, withIntermediateDirectories: true)
             try data.write(to: url(for: fileName), options: .atomic)
-            if let thumbnail = Self.jpeg(from: data, maximumPixels: Self.thumbnailPixels, quality: 0.7) {
-                try thumbnail.write(to: thumbnailURL(for: fileName), options: .atomic)
-            }
             return true
         } catch {
             return false
         }
+    }
+
+    /// Makes the thumbnail of a photo that has none. Decoding a photo is slow, so call it off the main actor.
+    func makeThumbnail(for fileName: String) {
+        guard !FileManager.default.fileExists(atPath: thumbnailURL(for: fileName).path),
+              let data = image(named: fileName),
+              let thumbnail = Self.jpeg(from: data, maximumPixels: Self.thumbnailPixels, quality: 0.7) else { return }
+        try? thumbnail.write(to: thumbnailURL(for: fileName), options: .atomic)
+    }
+
+    private static func isReadable(_ source: CGImageSource) -> Bool {
+        CGImageSourceGetCount(source) > 0 && CGImageSourceCreateImageAtIndex(source, 0, nil) != nil
     }
 
     func url(for fileName: String) -> URL {

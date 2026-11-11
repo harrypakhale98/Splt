@@ -68,6 +68,11 @@ struct BackupRestorer {
         do {
             let summary = try insert(document, written: &written)
             try environment.save()
+            let photos = written
+            // decoding every photo for its thumbnail would hold up the screen
+            Task.detached(priority: .utility) {
+                for photo in photos { photo.store.makeThumbnail(for: photo.name) }
+            }
             return summary
         } catch {
             environment.tracker.rollback()

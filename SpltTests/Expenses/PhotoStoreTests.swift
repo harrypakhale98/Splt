@@ -30,6 +30,24 @@ struct PhotoStoreTests {
         #expect(store.thumbnail(named: name) == nil)
     }
 
+    @Test func anArrivingPhotoIsTakenAtOnceAndItsThumbnailMadeLater() throws {
+        let store = store()
+        let source = FileManager.default.temporaryDirectory.appending(path: "arriving-\(UUID().uuidString).jpg")
+        try photo(side: 400).write(to: source)
+        let name = UUID().uuidString + ".jpg"
+
+        #expect(store.adopt(fileAt: source, named: name))
+        #expect(store.exists(name))
+        #expect(FileManager.default.fileExists(atPath: source.path))
+        #expect(!FileManager.default.fileExists(atPath: store.thumbnailURL(for: name).path))
+        #expect(store.thumbnail(named: name) == store.image(named: name))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: store.directory.path).allSatisfy { !$0.hasSuffix(".part") })
+
+        store.makeThumbnail(for: name)
+        let thumbnail = try #require(store.thumbnail(named: name))
+        #expect(thumbnail.count < (store.image(named: name)?.count ?? 0))
+    }
+
     @Test func compressionShrinksLargeImages() throws {
         let big = photo(side: 3_000)
         let small = try #require(PhotoStore.compressed(big))

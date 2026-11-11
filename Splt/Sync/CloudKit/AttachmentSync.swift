@@ -49,8 +49,12 @@ struct AttachmentSync: Sendable {
 
     /// What the server holds in each asset field of a record it confirmed or sent: the photo name per
     /// slot, or nil for an empty field. Photos that came with a fetched record are kept on the device.
+    ///
+    /// The file is only there while the engine's callback runs, so it is taken now. Its thumbnail is made
+    /// afterwards in a detached task, which keeps the decoding off the main actor and out of the callback.
     func received(_ record: CKRecord, type: SyncRecordType, keepFiles: Bool) -> [String: String?] {
         var slots: [String: String?] = [:]
+        var kept: [(PhotoStore, String)] = []
         for attachment in RecordSchema.attachments(for: type) {
             let slot = Self.slot(recordName: record.recordID.recordName, assetKey: attachment.assetKey)
             guard let asset = record[attachment.assetKey] as? CKAsset,
@@ -58,10 +62,17 @@ struct AttachmentSync: Sendable {
                 slots[slot] = .some(nil)
                 continue
             }
-            if keepFiles, let url = asset.fileURL {
-                store(attachment.folder).adopt(fileAt: url, named: name)
+            let photos = store(attachment.folder)
+            if keepFiles, let url = asset.fileURL, photos.adopt(fileAt: url, named: name) {
+                kept.append((photos, name))
             }
             slots[slot] = .some(name)
+        }
+        if !kept.isEmpty {
+            let thumbnails = kept
+            Task.detached(priority: .utility) {
+                for (photos, name) in thumbnails { photos.makeThumbnail(for: name) }
+            }
         }
         return slots
     }
