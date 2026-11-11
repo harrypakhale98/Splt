@@ -24,6 +24,7 @@ Use `Ink`, never raw colors or `systemGroupedBackground`.
 | `Ink.secondary` | Supporting text, at least 4.5:1 on paper |
 | `Ink.tertiary` | Decorative marks only, never text |
 | `Ink.hairline` | Dividers and control borders |
+| `Ink.switchOn` | The track of a switch that is on. Put `.tint(Ink.switchOn)` on every `Toggle`: the app tint is nearly white in dark mode, and a style set at the root does not reach sheets |
 | `Ink.owed` | Money coming to you |
 | `Ink.owe` | Money you owe, and destructive actions |
 

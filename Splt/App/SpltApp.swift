@@ -28,7 +28,6 @@ struct SpltApp: App {
                         .notificationRouting(router: router)
                         .onboardingTour(router: router)
                         .tint(Ink.text)
-                        .toggleStyle(InkSwitchStyle())
                 } else {
                     Ink.paper.ignoresSafeArea()
                 }

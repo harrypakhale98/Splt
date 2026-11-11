@@ -87,6 +87,7 @@ private struct BackupContent: View {
             Section {
                 RaisedRows {
                     Toggle("Include Photos", isOn: $model.includesPhotos)
+                        .tint(Ink.switchOn)
                         .disabled(model.state == .preparing)
                     LabeledContent("Estimated Size") {
                         if let bytes = model.estimatedBytes {

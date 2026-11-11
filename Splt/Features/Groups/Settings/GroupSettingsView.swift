@@ -299,6 +299,7 @@ private struct GroupSettingsForm: View {
                 DatePicker("Starts", selection: $model.tripStart, displayedComponents: .date)
                 DatePicker("Ends", selection: $model.tripEnd, in: model.tripStart..., displayedComponents: .date)
                 Toggle("Pin Exchange Rate", isOn: $model.pinsRate)
+                    .tint(Ink.switchOn)
                 if model.pinsRate {
                     NavigationLink {
                         GroupCurrencyPickerView(selection: $model.rateCurrencyCode)

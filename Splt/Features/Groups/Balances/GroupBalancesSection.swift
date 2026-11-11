@@ -27,6 +27,7 @@ struct GroupBalancesSection: View {
             get: { model.simplifiesDebts },
             set: { model.setSimplifiesDebts($0) }
         ))
+            .tint(Ink.switchOn)
     }
 
     /// One quiet text button that swaps the ring for the list, so no second segmented control

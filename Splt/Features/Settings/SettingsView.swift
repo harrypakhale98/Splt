@@ -25,7 +25,9 @@ struct SettingsSections: View {
                 .pickerStyle(.menu)
                 .tint(Ink.secondary)
                 Toggle("Haptics", isOn: preferences.$hapticsEnabled)
+                    .tint(Ink.switchOn)
                 Toggle("Notifications", isOn: preferences.$notificationsEnabled)
+                    .tint(Ink.switchOn)
                     .task(id: preferences.notificationsEnabled) { await checkNotifications() }
                     .onChange(of: scenePhase) { _, phase in
                         if phase == .active { Task { await checkNotifications() } }

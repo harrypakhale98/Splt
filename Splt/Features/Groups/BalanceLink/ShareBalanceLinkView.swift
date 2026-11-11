@@ -44,6 +44,7 @@ struct ShareBalanceLinkView: View {
                         }
                         .accessibilityElement(children: .combine)
                         Toggle("Recent expenses", isOn: $includesExpenses)
+                            .tint(Ink.switchOn)
                     }
                 } footer: {
                     Text(footer(fits: link != nil))
