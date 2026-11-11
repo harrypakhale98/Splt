@@ -41,7 +41,7 @@ final class ScreenshotWalkUITests: XCTestCase {
         selectSegment("Balances", in: app)
         shot("04-group-balances")
         selectSegment("Spending", in: app)
-        shot("05-group-totals")
+        shot("05-group-spending")
         selectSegment("Expenses", in: app)
 
         let expense = element(labelStartingWith: "Beach bar", in: app)
@@ -49,7 +49,16 @@ final class ScreenshotWalkUITests: XCTestCase {
         expense.tap()
         XCTAssertTrue(app.navigationBars["Beach bar in Cascais"].waitForExistence(timeout: 5), "expense detail did not open")
         shot("06-expense-detail")
+        for _ in 0..<3 { app.swipeUp() }
+        shot("06b-expense-history")
         app.navigationBars.buttons.firstMatch.tap()
+
+        let link = app.buttons["Share as a Link"].firstMatch
+        if link.waitForExistence(timeout: 5) {
+            link.tap()
+            shot("06c-balance-link")
+            dismissSheet(in: app)
+        }
 
         app.buttons["More"].firstMatch.tap()
         if app.buttons["Group Settings"].waitForExistence(timeout: 5) {
@@ -101,6 +110,12 @@ final class ScreenshotWalkUITests: XCTestCase {
 
         if visit("Activity", in: app) {
             shot("13-activity")
+            let spending = app.buttons["See spending"].firstMatch
+            if spending.waitForExistence(timeout: 5) {
+                spending.tap()
+                shot("13b-spending")
+                app.navigationBars.buttons.firstMatch.tap()
+            }
         }
 
         if visit("Search", in: app) {
@@ -119,6 +134,12 @@ final class ScreenshotWalkUITests: XCTestCase {
             shot("15-account")
             app.swipeUp()
             shot("16-account-more")
+            let backup = app.buttons["Back Up Everything…"].firstMatch
+            for _ in 0..<2 where !backup.isHittable { app.swipeUp() }
+            if backup.waitForExistence(timeout: 5) {
+                backup.tap()
+                shot("17-backup")
+            }
         }
     }
 
