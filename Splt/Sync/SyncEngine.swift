@@ -15,16 +15,23 @@ struct GroupShare {
 }
 
 /// An invitation a person opened, as the system hands it to the app.
+/// After joining from an invite page, who the person joining takes over: someone added by name the
+/// invite was made for, or whoever they pick from those still waiting.
+enum JoinAs: Hashable, Sendable {
+    case person(PersonID)
+    case askWho
+}
+
 struct ShareInvitation: @unchecked Sendable {
     let metadata: CKShare.Metadata?
     let groupName: String?
     /// An iCloud invite link whose metadata is fetched before accepting, for a link that came from
     /// Splt's own invite page instead of the system.
     let shareURL: URL?
-    /// The person this invite was made for, someone added by name who now joins as themselves.
-    let claim: PersonID?
+    /// Who the person joining becomes: the one the invite was made for, or whoever they pick.
+    let claim: JoinAs?
 
-    init(metadata: CKShare.Metadata, claim: PersonID? = nil) {
+    init(metadata: CKShare.Metadata, claim: JoinAs? = nil) {
         self.metadata = metadata
         self.groupName = nil
         self.shareURL = nil
@@ -32,7 +39,7 @@ struct ShareInvitation: @unchecked Sendable {
     }
 
     /// An invite link from Splt's invite page, made for one person.
-    init(shareURL: URL, claim: PersonID?) {
+    init(shareURL: URL, claim: JoinAs?) {
         self.metadata = nil
         self.groupName = nil
         self.shareURL = shareURL

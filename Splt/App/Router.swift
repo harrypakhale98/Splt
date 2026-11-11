@@ -150,10 +150,11 @@ final class Router {
     }
 }
 
-/// A group joined from an invite made for one person, and who that person is.
+/// A group just joined from an invite page, and who the invite was made for: nil when it was for the
+/// whole group chat and the person joining picks themselves.
 struct JoinClaim: Identifiable, Hashable, Sendable {
     let group: GroupID
-    let person: PersonID
+    let person: PersonID?
     var id: GroupID { group }
 }
 

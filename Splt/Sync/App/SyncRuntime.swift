@@ -31,7 +31,7 @@ final class SyncRuntime {
     @ObservationIgnored private let arrivalWindow: Duration
     @ObservationIgnored private let makeEngine: (@MainActor (DataServices) -> any SyncEngine)?
     /// Who each joined group's invite was made for, until the group's screen asks.
-    @ObservationIgnored private var claims: [GroupID: PersonID] = [:]
+    @ObservationIgnored private var claims: [GroupID: JoinAs] = [:]
 
     /// `makeEngine` replaces the engine that `start` builds, for tests.
     init(
@@ -146,14 +146,14 @@ final class SyncRuntime {
         }
     }
 
-    /// The person a group's invite was made for, once. The group's screen asks right after joining.
-    func takeClaim(for group: GroupID) -> PersonID? {
+    /// Who a group's invite was for, once. The group's screen asks right after joining.
+    func takeClaim(for group: GroupID) -> JoinAs? {
         claims.removeValue(forKey: group)
     }
 
-    /// Notes who an invite was made for, as if it had just been accepted. For tests and sample data.
-    func noteClaim(_ person: PersonID, in group: GroupID) {
-        claims[group] = person
+    /// Notes who an invite was for, as if it had just been accepted. For tests and sample data.
+    func noteClaim(_ claim: JoinAs, in group: GroupID) {
+        claims[group] = claim
     }
 
     /// A group you left and were invited back to belongs in your list again. It is opened once it is

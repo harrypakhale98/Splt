@@ -142,8 +142,8 @@ await check("reads an invite made for one member", async () => {
   const snapshot = await page$.decodeFragment(pack(joined));
   assert.equal(snapshot.join.person, 1);
   assert.equal(snapshot.join.id, joinID);
-  assert.equal(page$.joinLink(snapshot.join),
-    "splt://join?share=" + encodeURIComponent("https://www.icloud.com/share/0AbCdEfGh") + "&as=" + joinID);
+  assert.equal(page$.joinLink(snapshot.join, "B"),
+    "splt://join?share=" + encodeURIComponent("https://www.icloud.com/share/0AbCdEfGh") + "&as=" + joinID + "&name=B");
   assert.equal((await page$.decodeFragment(pack(valid))).join, null);
 });
 
@@ -159,6 +159,28 @@ await check("refuses invites that aren't iCloud's", async () => {
   };
   for (const [name, j] of Object.entries(cases)) {
     const kind = await problem(pack({ ...valid, j }));
+    assert.ok(kind === "broken", `${name}: ${kind}`);
+  }
+});
+
+await check("reads one invite for the whole group chat", async () => {
+  const group = { ...valid, k: ["https://www.icloud.com/share/0AbCdEfGh", [[1, joinID]]] };
+  const snapshot = await page$.decodeFragment(pack(group));
+  assert.equal(snapshot.join, null);
+  assert.equal(snapshot.groupJoin.seats.length, 1);
+  assert.equal(snapshot.groupJoin.seats[0].person, 1);
+  assert.equal(page$.joinLink({ url: snapshot.groupJoin.url, id: null }, "B"),
+    "splt://join?share=" + encodeURIComponent("https://www.icloud.com/share/0AbCdEfGh"));
+  assert.equal(page$.joinLink({ url: snapshot.groupJoin.url, id: joinID }, "Hana Sato"),
+    "splt://join?share=" + encodeURIComponent("https://www.icloud.com/share/0AbCdEfGh") + "&as=" + joinID + "&name=Hana%20Sato");
+  const cases = {
+    "nobody waiting": ["https://www.icloud.com/share/x", []],
+    "seat for nobody": ["https://www.icloud.com/share/x", [[9, joinID]]],
+    "seat without id": ["https://www.icloud.com/share/x", [[1]]],
+    "another host": ["https://evil.example/x", [[1, joinID]]]
+  };
+  for (const [name, k] of Object.entries(cases)) {
+    const kind = await problem(pack({ ...valid, k }));
     assert.ok(kind === "broken", `${name}: ${kind}`);
   }
 });

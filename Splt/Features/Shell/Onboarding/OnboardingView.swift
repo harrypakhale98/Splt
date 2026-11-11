@@ -56,6 +56,8 @@ struct OnboardingView: View {
 
     /// A pasted invite skips the rest of the tour: joining is what this person came for.
     private func join(_ invite: JoinInvite) {
+        // the name page was skipped, so take the name the invite was made for over a guess from the device
+        if let name = invite.name, !profile.hasChosenName { profile.displayName = name }
         finish()
         router?.open(.join(invite))
     }

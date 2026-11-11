@@ -23,9 +23,12 @@ private struct SyncLifecycle: ViewModifier {
                 let runtime = SyncRuntime.shared
                 runtime.onGroupJoined = { group in
                     router.open(.group(group.rawValue))
-                    if let person = runtime.takeClaim(for: group) {
-                        // the invite was made for someone added by name: ask first, notifications after
-                        router.joinClaim = JoinClaim(group: group, person: person)
+                    if let claim = runtime.takeClaim(for: group) {
+                        // the invite was for someone added by name: ask first, notifications after
+                        switch claim {
+                        case .person(let person): router.joinClaim = JoinClaim(group: group, person: person)
+                        case .askWho: router.joinClaim = JoinClaim(group: group, person: nil)
+                        }
                     } else if NotificationAsk.shouldAsk() {
                         // joining is when changes from other people start to arrive
                         asksForNotifications = true
@@ -43,7 +46,12 @@ private struct SyncLifecycle: ViewModifier {
             .onChange(of: router.pendingJoin, initial: true) { _, invite in
                 guard let invite else { return }
                 router.pendingJoin = nil
-                SyncRuntime.shared.receive(ShareInvitation(shareURL: invite.shareURL, claim: invite.personID))
+                // someone who never chose a name joins with the one the group already knows them by, so
+                // "Hana joined Lisbon Trip" says Hana from the first moment, on every device
+                if let name = invite.name, let services {
+                    try? AccountProfile.shared.takeInvitedName(name, people: services.people)
+                }
+                SyncRuntime.shared.receive(ShareInvitation(shareURL: invite.shareURL, claim: invite.joinAs))
             }
             .sheet(item: $router.joinClaim, onDismiss: {
                 if NotificationAsk.shouldAsk() { asksForNotifications = true }
@@ -69,7 +77,8 @@ private struct SyncLifecycle: ViewModifier {
               let hana = (try? services.people.people(ids: trip.memberIDs))?.first(where: { $0.isPlaceholder })
         else { return }
         router.open(.group(trip.id.rawValue))
-        router.joinClaim = JoinClaim(group: trip.id, person: hana.id)
+        let everyone = ProcessInfo.processInfo.arguments.contains("-samplejoineveryone")
+        router.joinClaim = JoinClaim(group: trip.id, person: everyone ? nil : hana.id)
     }
     #endif
 

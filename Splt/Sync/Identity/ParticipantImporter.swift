@@ -74,8 +74,9 @@ struct ParticipantImporter {
         if try services.people.me() == nil {
             // joined before choosing a name: the others know them from the share until they pick one
             try services.people.ensureMe(name: String(localized: "You"))
-            try IdentityAdopter(tracker: services.makeChangeTracker()).adopt(userRecordName: userRecordName)
         }
+        // a profile made just now, such as the name taken from an invite, uses the iCloud id from the start
+        try IdentityAdopter(tracker: services.makeChangeTracker()).adopt(userRecordName: userRecordName)
         guard try services.people.person(id: me) != nil else { return false }
         try services.groups.addMember(me, to: groupID)
         return true

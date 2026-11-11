@@ -87,7 +87,7 @@ private struct FriendDetailContent: View {
         }
         .sheet(item: $inviteGroup) { group in
             if let friend = model.friend, let services {
-                InvitePersonSheet(groupID: group.id, person: friend, services: services)
+                InvitePersonSheet(groupID: group.id, invitee: .person(friend), services: services)
             }
         }
         .closingSheetsOnLink {

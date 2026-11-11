@@ -19,6 +19,7 @@ import SpltCore
 ///   [[payer, paid]], [[person, share]]]`
 /// - `s` the member who shared it, or -1, and `t` the snapshot time in seconds since 1970
 /// - `j` an invite (optional): `[iCloud invite link, the invited member, that member's id]`
+/// - `k` an invite for everyone not on Splt yet (optional): `[iCloud invite link, [[member, id]]]`
 struct BalanceSnapshot: Equatable, Sendable {
     static let version = 1
     /// The most recent expenses a link carries.
@@ -69,6 +70,18 @@ struct BalanceSnapshot: Equatable, Sendable {
         }
     }
 
+    /// One invite for the whole group chat: each person picks themselves from those still waiting.
+    struct GroupJoin: Equatable, Sendable {
+        var shareURL: URL
+        var seats: [Seat]
+    }
+
+    /// Someone added by name, waiting to be claimed.
+    struct Seat: Equatable, Sendable {
+        var person: Int
+        var personID: UUID
+    }
+
     struct ExpenseLine: Equatable, Sendable {
         var title: String
         var day: String
@@ -88,8 +101,10 @@ struct BalanceSnapshot: Equatable, Sendable {
     var sharedBy: Int
     /// Whole seconds, so a decoded snapshot equals the one encoded.
     var createdAt: Date
-    /// Set only on an invite link.
+    /// Set only on an invite link made for one person.
     var join: Join? = nil
+    /// Set only on an invite link for everyone not on Splt yet.
+    var groupJoin: GroupJoin? = nil
 }
 
 // MARK: Building
@@ -105,7 +120,8 @@ extension BalanceSnapshot {
         includesExpenses: Bool,
         now: Date,
         calendar: Calendar = .current,
-        invite: (shareURL: URL, person: PersonID)? = nil
+        invite: (shareURL: URL, person: PersonID)? = nil,
+        inviteEveryone: (shareURL: URL, people: [PersonID])? = nil
     ) {
         let live = expenses.filter { !$0.isDeleted }
         let recent = includesExpenses
@@ -191,6 +207,10 @@ extension BalanceSnapshot {
             createdAt: Date(timeIntervalSince1970: now.timeIntervalSince1970.rounded(.down)),
             join: invite.flatMap { invite in
                 index[invite.person].map { Join(shareURL: invite.shareURL, person: $0, personID: invite.person.rawValue) }
+            },
+            groupJoin: inviteEveryone.flatMap { invite in
+                let seats = invite.people.compactMap { id in index[id].map { Seat(person: $0, personID: id.rawValue) } }
+                return seats.isEmpty ? nil : GroupJoin(shareURL: invite.shareURL, seats: seats)
             }
         )
     }
@@ -215,7 +235,7 @@ extension BalanceSnapshot {
 
 extension BalanceSnapshot: Codable {
     private enum Key: String, CodingKey {
-        case v, n, d, c, m, x, e, s, t, j
+        case v, n, d, c, m, x, e, s, t, j, k
     }
 
     enum FormatError: Error, Equatable {
@@ -275,6 +295,16 @@ extension BalanceSnapshot: Codable {
             try item.encode(join.shareURL.absoluteString)
             try item.encode(join.person)
             try item.encode(join.personID.uuidString)
+        }
+        if let groupJoin {
+            var item = root.nestedUnkeyedContainer(forKey: .k)
+            try item.encode(groupJoin.shareURL.absoluteString)
+            var seatList = item.nestedUnkeyedContainer()
+            for seat in groupJoin.seats {
+                var pair = seatList.nestedUnkeyedContainer()
+                try pair.encode(seat.person)
+                try pair.encode(seat.personID.uuidString)
+            }
         }
     }
 
@@ -350,6 +380,21 @@ extension BalanceSnapshot: Codable {
         } else {
             join = nil
         }
+        if root.contains(.k) {
+            var item = try root.nestedUnkeyedContainer(forKey: .k)
+            guard let url = URL(string: try item.decode(String.self)) else { throw FormatError.invalid("join") }
+            var seats: [Seat] = []
+            var seatList = try item.nestedUnkeyedContainer()
+            while !seatList.isAtEnd {
+                var pair = try seatList.nestedUnkeyedContainer()
+                let person = try pair.decode(Int.self)
+                guard let id = UUID(uuidString: try pair.decode(String.self)) else { throw FormatError.invalid("join") }
+                seats.append(Seat(person: person, personID: id))
+            }
+            groupJoin = GroupJoin(shareURL: url, seats: seats)
+        } else {
+            groupJoin = nil
+        }
         try validate()
     }
 
@@ -369,6 +414,11 @@ extension BalanceSnapshot: Codable {
         }
         if let join {
             guard people.contains(join.person), Join.isShareURL(join.shareURL) else { throw FormatError.invalid("join") }
+        }
+        if let groupJoin {
+            guard Join.isShareURL(groupJoin.shareURL), !groupJoin.seats.isEmpty,
+                  groupJoin.seats.allSatisfy({ people.contains($0.person) })
+            else { throw FormatError.invalid("join") }
         }
     }
 }

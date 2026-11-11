@@ -2,8 +2,9 @@ import Foundation
 import Observation
 import SpltCore
 
-/// The state behind "Join <group>", shown right after joining from an invite made for someone added
-/// by name. Choosing that person moves everything added for them over to you, the way Merge does.
+/// The state behind "Join <group>", shown right after joining from an invite page. Choosing someone
+/// added by name moves everything added for them over to you, the way Merge does. An invite made for one
+/// person puts them first; one for the whole group chat lists everyone still waiting.
 @MainActor
 @Observable
 final class JoinGroupModel {
@@ -19,16 +20,21 @@ final class JoinGroupModel {
 
     @ObservationIgnored private let services: DataServices
     @ObservationIgnored private let merger: any PlaceholderMerging
+    @ObservationIgnored private let profile: AccountProfile
 
-    init(claim: JoinClaim, services: DataServices, merger: (any PlaceholderMerging)? = nil) {
+    init(
+        claim: JoinClaim, services: DataServices, merger: (any PlaceholderMerging)? = nil,
+        profile: AccountProfile = .shared
+    ) {
         self.services = services
         self.merger = merger ?? LivePlaceholderMerger(services: services)
+        self.profile = profile
         let group = try? services.groups.group(id: claim.group)
         groupName = group?.name ?? ""
         let members = (try? services.people.people(ids: group?.memberIDs ?? [])) ?? []
         let waiting = members.filter(\.isPlaceholder)
-        invited = waiting.first { $0.id == claim.person }
-        others = waiting.filter { $0.id != claim.person }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        invited = claim.person.flatMap { person in waiting.first { $0.id == person } }
+        others = waiting.filter { $0.id != invited?.id }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         if let invited {
             let names = Dictionary(members.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
             let debts = (try? services.groups.balances(for: claim.group).suggestedSettlements) ?? []
@@ -46,6 +52,10 @@ final class JoinGroupModel {
                 return
             }
             try merger.merge(person.id, into: me.id)
+            // someone who never chose a name keeps the one the group knows them by, not "You"
+            if !profile.hasChosenName || me.name == String(localized: "You") {
+                try? profile.takeInvitedName(person.name, people: services.people)
+            }
             didJoin = true
             errorMessage = nil
         } catch let error as MergeError {

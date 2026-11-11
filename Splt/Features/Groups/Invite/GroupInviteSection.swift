@@ -8,6 +8,8 @@ struct GroupInviteSection: View {
     let groupID: GroupID
     let groupName: String
     var isSharedWithMe = false
+    /// Sends one link for the group chat, where each person still waiting picks themselves. Nil hides it.
+    var inviteEveryone: (() -> Void)?
 
     private let runtime = SyncRuntime.shared
     @State private var sharing: GroupSharingModel?
@@ -17,6 +19,12 @@ struct GroupInviteSection: View {
     var body: some View {
         Section {
             RaisedRows {
+                if let inviteEveryone {
+                    Button(action: inviteEveryone) {
+                        Label("Invite Everyone", systemImage: "person.3")
+                    }
+                    .accessibilityIdentifier("invite.everyone")
+                }
                 if runtime.status.isConnected, !isSharedWithMe {
                     Button(action: prepare) {
                         HStack {

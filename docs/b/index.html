@@ -3,13 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GUexYumpKZo7uuraJsaOp5rSsnN5yQSZzz1Qo2/nfG4='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hBjCAX20hsQz8zYeT3AW62OONhxaZ91nYFbsAd/LeAk='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
 <title>Splt</title>
 <meta property="og:title" content="Splt">
 <meta property="og:description" content="Split bills with friends. Free on iPhone, with no ads and no account.">
+<meta property="og:image" content="https://harrypakhale98.github.io/Splt/b/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Splt: split bills with friends">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="balance.css">
 </head>
 <body>
@@ -171,20 +176,38 @@ function validate(raw) {
   const sharedBy = whole(raw.s, -1, members.length - 1);
   const createdAt = new Date(whole(raw.t, 0, 32503680000) * 1000);
 
+  // iCloud invite links, and the ids of people added by name, are all an invite carries.
+  const shareURL = (value) => {
+    let parsed;
+    try { parsed = new URL(text(value, 300)); } catch (_) { fail(); }
+    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "https:" || !(host === "icloud.com" || host.endsWith(".icloud.com"))) fail();
+    return parsed.href;
+  };
+  const personID = (value) => {
+    const id = text(value, 36);
+    if (!/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/.test(id)) fail();
+    return id;
+  };
+
   // An invite made for one member: the group's iCloud invite, that member, and their id.
   let join = null;
   if (raw.j !== undefined) {
     if (!isList(raw.j, 3) || raw.j.length !== 3) fail();
-    const url = text(raw.j[0], 300);
-    let parsed;
-    try { parsed = new URL(url); } catch (_) { fail(); }
-    const host = parsed.hostname.toLowerCase();
-    if (parsed.protocol !== "https:" || !(host === "icloud.com" || host.endsWith(".icloud.com"))) fail();
-    const id = text(raw.j[2], 36);
-    if (!/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/.test(id)) fail();
-    join = { url: parsed.href, person: person(raw.j[1]), id };
+    join = { url: shareURL(raw.j[0]), person: person(raw.j[1]), id: personID(raw.j[2]) };
   }
-  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt, join };
+
+  // One invite for the group chat: everyone still waiting picks themselves.
+  let groupJoin = null;
+  if (raw.k !== undefined) {
+    if (!isList(raw.k, 2) || raw.k.length !== 2 || !isList(raw.k[1], 1000) || raw.k[1].length === 0) fail();
+    const seats = raw.k[1].map((pair) => {
+      if (!isList(pair, 2) || pair.length !== 2) fail();
+      return { person: person(pair[0]), id: personID(pair[1]) };
+    });
+    groupJoin = { url: shareURL(raw.k[0]), seats };
+  }
+  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt, join, groupJoin };
 }
 
 // MARK: Formatting
@@ -491,8 +514,11 @@ function drawPerson(root, snapshot, index, state) {
 }
 
 // An invite made for one member: who invited them, the group, their own line, and the way in.
-function joinLink(join) {
-  return "splt://join?share=" + encodeURIComponent(join.url) + "&as=" + encodeURIComponent(join.id);
+function joinLink(join, name) {
+  let link = "splt://join?share=" + encodeURIComponent(join.url);
+  if (join.id) link += "&as=" + encodeURIComponent(join.id);
+  if (join.id && name) link += "&name=" + encodeURIComponent(name);
+  return link;
 }
 
 function isAndroid() {
@@ -518,7 +544,15 @@ function drawJoin(root, snapshot, state) {
   const join = snapshot.join;
   const me = snapshot.members[join.person];
   const sharer = snapshot.members[snapshot.sharedBy];
-  root.appendChild(add(el("div", "top"), brand()));
+  const top = add(el("div", "top"), brand());
+  if (snapshot.groupJoin) {
+    // picked from the group's list, so the list is one tap back
+    const notMe = el("button", "link sub", "Not you?");
+    notMe.type = "button";
+    notMe.addEventListener("click", () => state.show("joinPicker"));
+    top.appendChild(notMe);
+  }
+  root.appendChild(top);
   const lead = el("p", "sub lead invited");
   if (sharer) add(lead, disc(sharer, true), document.createTextNode(sharer.name + " invited you to"));
   else lead.textContent = "You're invited to";
@@ -544,7 +578,7 @@ function drawJoin(root, snapshot, state) {
     root.appendChild(look);
   } else {
     const open = el("a", "primary", "Join in Splt");
-    open.href = joinLink(join);
+    open.href = joinLink(join, me.name);
     const get = el("a", "secondary", "Get Splt, free");
     get.href = APP_STORE_URL;
     get.rel = "noopener noreferrer";
@@ -567,6 +601,42 @@ function drawJoin(root, snapshot, state) {
     look.addEventListener("click", () => state.look());
     root.appendChild(look);
   }
+}
+
+// One invite for the group chat: pick yourself from those still waiting, then the same join view.
+function drawJoinPicker(root, snapshot, state) {
+  const group = snapshot.groupJoin;
+  const sharer = snapshot.members[snapshot.sharedBy];
+  root.appendChild(add(el("div", "top"), brand()));
+  const lead = el("p", "sub lead invited");
+  if (sharer) add(lead, disc(sharer, true), document.createTextNode(sharer.name + " invited you to"));
+  else lead.textContent = "You're invited to";
+  root.appendChild(lead);
+  root.appendChild(header(snapshot));
+  root.appendChild(strip(snapshot));
+  root.appendChild(el("h2", "sh", "Which one are you?"));
+
+  const card = el("div", "card");
+  for (const seat of group.seats) {
+    const member = snapshot.members[seat.person];
+    const row = rowButton(() => state.joinAs(seat), true);
+    add(row, disc(member, false), el("div", "grow", member.name), inviteLine(snapshot, seat.person), icon("chevron", 14));
+    card.appendChild(row);
+  }
+  root.appendChild(card);
+
+  if (!isAndroid()) {
+    const note = el("p", "foot note");
+    note.textContent = "Not on the list? ";
+    const someoneNew = el("a", "link", "Join as someone new");
+    someoneNew.href = joinLink({ url: group.url, id: null }, null);
+    note.appendChild(someoneNew);
+    root.appendChild(note);
+  }
+  const look = el("button", "link quiet", "Just see the balances");
+  look.type = "button";
+  look.addEventListener("click", () => state.show("picker"));
+  root.appendChild(look);
 }
 
 // Everyone: who pays whom across the group.
@@ -680,18 +750,28 @@ async function start() {
 
   document.title = snapshot.name + " · Splt";
   const key = storageKey(fragment);
-  const state = { chosen: remembered(key, snapshot.members.length), view: snapshot.join ? "join" : null };
+  const state = {
+    chosen: remembered(key, snapshot.members.length),
+    view: snapshot.join ? "join" : snapshot.groupJoin ? "joinPicker" : null
+  };
   const draw = () => {
     root.replaceChildren();
     if (state.view === "join") drawJoin(root, snapshot, state);
+    else if (state.view === "joinPicker") drawJoinPicker(root, snapshot, state);
     else if (state.view === "everyone") drawEveryone(root, snapshot, state);
     else if (state.chosen === null) drawPicker(root, snapshot, state);
     else drawPerson(root, snapshot, state.chosen, state);
     window.scrollTo(0, 0);
   };
   state.choose = (index) => { state.chosen = index; state.view = null; remember(key, index); draw(); };
-  state.show = (view) => { state.view = view === "back" ? null : view; draw(); };
+  state.show = (view) => {
+    if (view === "picker") { state.chosen = null; state.view = null; }
+    else state.view = view === "back" ? null : view;
+    draw();
+  };
   state.look = () => { state.chosen = snapshot.join.person; state.view = null; draw(); };
+  // picking yourself from a group invite gives the same view an invite made for you does
+  state.joinAs = (seat) => { snapshot.join = { url: snapshot.groupJoin.url, person: seat.person, id: seat.id }; state.show("join"); };
   draw();
 }
 

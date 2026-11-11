@@ -59,6 +59,22 @@ final class AccountProfile {
         !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// True once a name was saved on this device, typed or accepted in the welcome tour. A name only
+    /// suggested from the device's name doesn't count.
+    var hasChosenName: Bool {
+        !(defaults.string(forKey: Self.nameKey) ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Someone joining from an invite made for them, who never chose a name, takes the one the group
+    /// already knows them by. A name they chose stays.
+    func takeInvitedName(_ name: String, people: any PersonRepository) throws {
+        let tidy = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !tidy.isEmpty, !hasChosenName else { return }
+        displayName = tidy
+        save()
+        try applyName(to: people)
+    }
+
     func handle(for method: SettleMethod) -> String {
         handles[method] ?? ""
     }

@@ -57,7 +57,7 @@ private struct GroupSettingsForm: View {
         }
         if row.person.isPlaceholder, canInvite {
             Button {
-                invitee = row.person
+                invitee = .person(row.person)
             } label: {
                 HStack {
                     label
@@ -90,8 +90,8 @@ private struct GroupSettingsForm: View {
     @State private var showsPhotoPicker = false
     @State private var pickedPhoto: PhotosPickerItem?
     @State private var showsCamera = false
-    /// Someone added by name who is being sent an invite made for them.
-    @State private var invitee: Person?
+    /// Who is being sent an invite: one person added by name, or everyone still waiting.
+    @State private var invitee: Invitee?
     private let services: DataServices
 
     init(groupID: GroupID, services: DataServices, onGroupRemoved: @escaping () -> Void) {
@@ -131,8 +131,8 @@ private struct GroupSettingsForm: View {
         }
         .onAppear { model.locale = locale }
         .task { await model.loadSharing(using: sharing) }
-        .sheet(item: $invitee) { person in
-            InvitePersonSheet(groupID: model.groupID, person: person, services: services)
+        .sheet(item: $invitee) { invitee in
+            InvitePersonSheet(groupID: model.groupID, invitee: invitee, services: services)
         }
         .sheet(isPresented: $showsContacts) {
             ContactPicker { drafts in
@@ -226,7 +226,12 @@ private struct GroupSettingsForm: View {
             defaultSplitSection
 
             if let group = model.group {
-                GroupInviteSection(groupID: group.id, groupName: group.name, isSharedWithMe: model.isSharedWithMe == true)
+                GroupInviteSection(
+                    groupID: group.id, groupName: group.name, isSharedWithMe: model.isSharedWithMe == true,
+                    // one link for the group chat is worth it once two or more people are still waiting
+                    inviteEveryone: canInvite && model.memberRows.filter(\.person.isPlaceholder).count >= 2
+                        ? { invitee = .everyone } : nil
+                )
             }
 
             exportSection

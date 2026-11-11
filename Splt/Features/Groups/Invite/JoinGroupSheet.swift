@@ -1,8 +1,9 @@
 import SpltCore
 import SwiftUI
 
-/// "Which one are you", right after joining from an invite made for someone added by name. Built like
-/// Merge: the person the invite was for first, then anyone else still waiting, then someone new.
+/// "Which one are you", right after joining from an invite page. Built like Merge: the person the invite
+/// was for first, then anyone else still waiting, then someone new. An invite for the whole group chat
+/// has nobody first, so it lists everyone still waiting under one question.
 struct JoinGroupSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var model: JoinGroupModel
@@ -34,7 +35,11 @@ struct JoinGroupSheet: View {
                         .accessibilityIdentifier("join.someoneNew")
                     }
                 } header: {
-                    SectionHeader("Someone else")
+                    if model.invited == nil {
+                        SectionHeader("Which one are you?")
+                    } else {
+                        SectionHeader("Someone else")
+                    }
                 }
             }
             .listStyle(.plain)
