@@ -246,11 +246,11 @@ final class ExpenseDetailModel {
             .sorted { memberOrder($0) < memberOrder($1) }
     }
 
-    /// The person who added the expense, while picks are not yet part of its split. Nil on that
-    /// person's own devices, which fold picks as they arrive.
+    /// The person who added the expense, while picks newer than its last edit would still change
+    /// its split. Nil on that person's own devices, which fold picks as they arrive.
     var waitingForName: String? {
-        guard let expense, let creator = details?.createdBy, !isCreatedByMe,
-              ItemClaimFold.folding(claims, into: expense) != nil else { return nil }
+        guard let expense, let details, let creator = details.createdBy, !isCreatedByMe,
+              ItemClaimFold.folding(claims, into: expense, modifiedAt: details.modifiedAt) != nil else { return nil }
         return name(for: creator)
     }
 

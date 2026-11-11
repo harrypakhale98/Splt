@@ -45,7 +45,7 @@ struct ItemClaimFoldTests {
         return expense
     }
 
-    /// Stores a claim the way sync does when it arrives from someone else's device.
+    /// Stores a claim the way sync does when it arrives from someone else's device, made just now.
     private func receiveClaim(
         _ fixture: Fixture, _ person: PersonID, _ items: Set<UUID>, on expense: Expense, deleted: Bool = false
     ) throws {
@@ -54,6 +54,7 @@ struct ItemClaimFoldTests {
             groupID: fixture.group.id.rawValue, expenseID: expense.id.rawValue, personID: person.rawValue,
             itemIDs: Array(items), createdAt: fixture.clock.start
         )
+        record.modifiedAt = fixture.clock.now()
         tracker.context.insert(record)
         if deleted { tracker.softDelete(record) }
         try tracker.save()
@@ -143,6 +144,48 @@ struct ItemClaimFoldTests {
         #expect(try fixture.services.expenses.details(id: expense.id)?.history.count == 1)
     }
 
+    @Test func aCreatorsLaterEditWinsUntilANewerClaim() throws {
+        let fixture = try Fixture()
+        let expense = try addItemized(fixture)
+        try receiveClaim(fixture, fixture.sam.id, [beer], on: expense)
+        try receiveClaim(fixture, fixture.priya.id, [pizza], on: expense)
+        try fixture.services.claims.foldClaims(inGroups: nil)
+        #expect(try items(of: expense.id, in: fixture)[pizza] == [fixture.me.id, fixture.priya.id])
+
+        // the creator puts Sam back on the pizza by hand, after his claim
+        var edited = try #require(try fixture.services.expenses.expense(id: expense.id))
+        guard case .itemized(var split) = edited.split else { Issue.record("not itemized"); return }
+        split.items[0].assignees.insert(fixture.sam.id)
+        edited.split = .itemized(split)
+        try fixture.services.expenses.update(edited)
+        let history = try fixture.services.expenses.details(id: expense.id)?.history.count
+
+        // a later fold, as when the app comes to the front, leaves that edit alone
+        #expect(try fixture.services.claims.foldClaims(inGroups: nil) == 0)
+        #expect(try items(of: expense.id, in: fixture)[pizza] == fixture.everyone)
+        #expect(try fixture.services.expenses.details(id: expense.id)?.history.count == history)
+
+        // Sam picks again after that edit, so his new picks win
+        try receiveClaim(fixture, fixture.sam.id, [beer, salad], on: expense)
+        #expect(try fixture.services.claims.foldClaims(inGroups: nil) == 1)
+        let items = try items(of: expense.id, in: fixture)
+        #expect(items[pizza] == [fixture.me.id, fixture.priya.id])
+        #expect(items[salad] == [fixture.me.id, fixture.sam.id])
+    }
+
+    @Test func nobodyIsTakenOffAnItemTheyAreLastOn() throws {
+        let fixture = try Fixture()
+        let id = ExpenseID()
+        let old = claim(fixture.sam.id, [salad], on: id)
+        var new = claim(fixture.me.id, [pizza], on: id)
+        new.modifiedAt = old.modifiedAt.addingTimeInterval(60)
+        let result = ItemClaimFold.folded(
+            split(fixture), people: fixture.everyone, claims: [old, new], since: old.modifiedAt.addingTimeInterval(1)
+        )
+        let byID = Dictionary(uniqueKeysWithValues: result.items.map { ($0.id, $0.assignees) })
+        #expect(byID[salad] == [fixture.me.id])
+    }
+
     @Test func deletedClaimsDoNotCount() throws {
         let fixture = try Fixture()
         let expense = try addItemized(fixture)
@@ -216,5 +259,12 @@ struct ItemClaimFoldTests {
         model.reload()
         #expect(model.waitingForName == "Sam")
         #expect(model.myPicks == [pizza, beer, salad])
+
+        // an edit of the expense after the claim settles it
+        var edited = expense
+        edited.title = "Late night"
+        try fixture.services.expenses.update(edited)
+        model.reload()
+        #expect(model.waitingForName == nil)
     }
 }
