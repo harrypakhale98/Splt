@@ -5,6 +5,10 @@ struct ExpenseReference: Hashable, Sendable, Codable {
     var id: ExpenseID
     var title: String
     var amount: Money
+    /// What an edit changed, field by field. Only `expenseEdited` sets it, from version 1.1 on.
+    /// Left out of the JSON when nil, so every other event is stored exactly as before, and
+    /// version 1.0 ignores the key when it reads an edit.
+    var changes: ExpenseChanges? = nil
 }
 
 struct PaymentReference: Hashable, Sendable, Codable {

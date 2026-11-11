@@ -9,15 +9,12 @@ struct ExpenseHistorySection: View {
         if let details = model.details {
             Section {
                 RaisedRows {
-                    ForEach(details.history.reversed()) { entry in
+                    ForEach(model.historyLines(locale: locale)) { line in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(summary(of: entry))
-                            if let detail = Self.previousValues(of: entry, locale: locale) {
+                            Text(line.text)
+                            if let detail = line.detail {
                                 Text(detail).font(.footnote).foregroundStyle(Ink.secondary)
                             }
-                            Text(entry.date.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption)
-                                .foregroundStyle(Ink.secondary)
                         }
                         .accessibilityElement(children: .combine)
                     }
@@ -31,22 +28,6 @@ struct ExpenseHistorySection: View {
                 SectionHeader("History")
             }
         }
-    }
-
-    private func summary(of entry: ExpenseEditEntry) -> String {
-        let who = entry.editor.map { model.name(for: $0) } ?? String(localized: "Someone")
-        let fields = entry.changedFields.map(\.displayName).formatted(.list(type: .and))
-        return String(localized: "\(who) changed the \(fields)")
-    }
-
-    static func previousValues(of entry: ExpenseEditEntry, locale: Locale) -> String? {
-        var parts: [String] = []
-        if let title = entry.previousTitle { parts.append(String(localized: "Title was \(title)")) }
-        if let total = entry.previousTotal {
-            // a refund's old total keeps its minus sign, or it would read as a purchase
-            parts.append(String(localized: "Amount was \(MoneyFormatting.string(total, locale: locale, showsSign: total.isNegative))"))
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: ". ")
     }
 }
 

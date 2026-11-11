@@ -91,14 +91,20 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         let old = try Expense(record)
         let oldExtras = record.extras
         let newExtras = extras ?? oldExtras
-        let changed = ExpenseDiff.changedFields(from: old, to: expense, oldExtras: oldExtras, newExtras: newExtras)
+        let changes = ExpenseDiff.changes(from: old, to: expense, oldExtras: oldExtras, newExtras: newExtras)
+        let changed = changes.map(\.field)
         guard !changed.isEmpty else { return }
 
         env.tracker.noteBalanceChange(type: .expense, zone: record.zoneName)
+        let me = try env.currentUser()?.personID
+        // The history inside the expense is what version 1.0 shows. The activity entry carries the
+        // full change and shares the entry's id, so the detail screen shows each edit once.
+        let editID = UUID()
         var history = record.history
         history.append(ExpenseEditEntry(
+            id: editID,
             date: env.now(),
-            editor: try env.currentUser()?.personID,
+            editor: me,
             changedFields: changed,
             previousTitle: changed.contains(.title) ? old.title : nil,
             previousTotal: changed.contains(.total) ? old.total : nil
@@ -107,8 +113,27 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         record.apply(newExtras)
         record.history = history
         env.tracker.recordEdit(record)
-        try env.log(.expenseEdited(Self.reference(expense)), groupID: groupID)
+        var reference = Self.reference(expense)
+        reference.changes = ExpenseChanges(changes)
+        try env.log(.expenseEdited(reference), groupID: groupID, actor: me, id: editID)
         try env.save()
+    }
+
+    func edits(of id: ExpenseID) throws -> [ActivityEntry] {
+        let kind = ActivityKind.expenseEdited.rawValue
+        let descriptor = FetchDescriptor<ActivityRecord>(
+            predicate: #Predicate { $0.kindRaw == kind && $0.deletedAt == nil },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        // only events that mention the expense are decoded
+        let marker = Data(id.rawValue.uuidString.utf8)
+        return try env.context.fetch(descriptor)
+            .filter { $0.eventData.range(of: marker) != nil }
+            .compactMap(ActivityEntry.init)
+            .filter { entry in
+                if case .expenseEdited(let reference) = entry.event { return reference.id == id }
+                return false
+            }
     }
 
     func delete(id: ExpenseID) throws {

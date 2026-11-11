@@ -49,6 +49,9 @@ final class ExpenseDetailModel {
     private(set) var me: Person?
     private(set) var people: [PersonID: Person] = [:]
     private(set) var comments: [ExpenseComment] = []
+    /// The activity entries of the expense's edits, oldest first.
+    private(set) var edits: [ActivityEntry] = []
+    private(set) var groupNames: [GroupID: String] = [:]
     private(set) var shareLines: [ShareLine] = []
     private(set) var payerLines: [(person: Person, name: String, amount: Money)] = []
     private(set) var failed = false
@@ -90,9 +93,14 @@ final class ExpenseDetailModel {
             details = try services.expenses.details(id: expenseID)
             group = try expense.groupID.flatMap { try services.groups.group(id: $0) }
             me = try services.people.me()
+            edits = try services.expenses.edits(of: expenseID)
+            let changes = edits.flatMap(\.editChanges)
+            groupNames = try loadGroupNames(changes)
             let ids = Set(expense.participants).union(group?.memberIDs ?? [])
                 .union(details?.history.compactMap(\.editor) ?? [])
                 .union([details?.createdBy].compactMap { $0 })
+                .union(edits.compactMap(\.actorID))
+                .union(changes.flatMap { ($0.before?.personIDs ?? []) + ($0.after?.personIDs ?? []) })
             let loaded = try services.people.people(ids: ids.sorted())
             people = Dictionary(loaded.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             comments = try services.comments.comments(on: expenseID)
@@ -101,6 +109,15 @@ final class ExpenseDetailModel {
         } catch {
             failed = true
         }
+    }
+
+    private func loadGroupNames(_ changes: [ExpenseChange]) throws -> [GroupID: String] {
+        let ids = Set(changes.filter { $0.field == .group }.flatMap { [$0.before?.id, $0.after?.id] }.compactMap { $0 })
+        var names: [GroupID: String] = [:]
+        for id in ids {
+            names[GroupID(rawValue: id)] = try services.groups.group(id: GroupID(rawValue: id))?.name
+        }
+        return names
     }
 
     /// Position in the group's member list, so the share rows follow the same order as the bar.
@@ -175,4 +192,12 @@ final class ExpenseDetailModel {
     }
 
     var receiptFileName: String? { details?.extras.receiptFileName }
+
+    // MARK: History
+
+    func historyLines(locale: Locale, now: Date = Date()) -> [ExpenseHistoryLine] {
+        ExpenseHistoryBuilder(
+            locale: locale, now: now, name: name(for:), groupName: { self.groupNames[$0] }
+        ).lines(edits: edits, embedded: details?.history ?? [])
+    }
 }
