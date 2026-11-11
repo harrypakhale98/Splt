@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Adibk8FXMjsaPVKAwHfxx6dbD6RMDKYnRqj85iKrF68='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-f/Hq2ck50UjLKuNSY21wP50zzHLofIqHO3nBZM89jcs='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
@@ -177,21 +177,24 @@ const formatters = new Map();
 
 function money(snapshot, minorUnits, currencyIndex) {
   const { code, digits } = snapshot.currencies[currencyIndex];
-  const key = code + digits;
+  const scale = Math.pow(10, digits);
+  // Like the app: a whole amount takes the locale's usual style for the currency (IQD 1,500),
+  // and a real fraction always shows every decimal, even where the currency normally hides them.
+  const whole = minorUnits % scale === 0;
+  const key = code + digits + whole;
   if (!formatters.has(key)) {
+    const fraction = whole ? {} : { minimumFractionDigits: digits, maximumFractionDigits: digits };
     let format;
     try {
-      const formatter = new Intl.NumberFormat(locale, {
-        style: "currency", currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits
-      });
+      const formatter = new Intl.NumberFormat(locale, { style: "currency", currency: code, ...fraction });
       format = (value) => formatter.format(value);
     } catch (_) {
-      const plain = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      const plain = new Intl.NumberFormat(locale, whole ? { maximumFractionDigits: 0 } : fraction);
       format = (value) => plain.format(value) + " " + code;
     }
     formatters.set(key, format);
   }
-  return formatters.get(key)(minorUnits / Math.pow(10, digits));
+  return formatters.get(key)(minorUnits / scale);
 }
 
 function snapshotTime(date) {
