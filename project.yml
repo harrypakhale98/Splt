@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
+  xcodeVersion: "27.2"
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -13,6 +14,11 @@ settings:
     CURRENT_PROJECT_VERSION: "5"
     DEVELOPMENT_TEAM: DUHVN68KBA
     ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    GCC_C_LANGUAGE_STANDARD: gnu17
+    CLANG_CXX_LANGUAGE_STANDARD: gnu++20
 packages:
   SpltKit:
     path: Packages/SpltKit
@@ -71,7 +77,10 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Dictate expenses by voice.
         INFOPLIST_KEY_NSCameraUsageDescription: Scan receipts and invite codes, and take group photos.
+        INFOPLIST_KEY_NSFaceIDUsageDescription: Splt uses Face ID to keep your groups and expenses private.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
         CODE_SIGN_STYLE: Automatic
         SWIFT_EMIT_LOC_STRINGS: YES
         CODE_SIGN_ENTITLEMENTS: Splt/Sync/Splt.entitlements
