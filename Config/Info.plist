@@ -53,6 +53,8 @@
 	</array>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<false/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Splt uses Face ID to keep your groups and expenses private.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

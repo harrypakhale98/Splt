@@ -9,6 +9,7 @@ struct Preferences: DynamicProperty {
         static let notificationsEnabled = "preferences.notificationsEnabled"
         static let onboardingCompleted = "preferences.onboardingCompleted"
         static let appearance = "preferences.appearance"
+        static let biometricLockEnabled = "preferences.biometricLockEnabled"
     }
 
     @AppStorage var defaultCurrencyCode: String
@@ -16,6 +17,8 @@ struct Preferences: DynamicProperty {
     @AppStorage var notificationsEnabled: Bool
     @AppStorage var onboardingCompleted: Bool
     @AppStorage var appearance: AppAppearance
+    /// Off until the user turns it on in Account. Splt then asks for Face ID before showing anything.
+    @AppStorage var biometricLockEnabled: Bool
 
     init(store: UserDefaults = .standard) {
         _defaultCurrencyCode = AppStorage(wrappedValue: Self.systemCurrencyCode, Key.defaultCurrency, store: store)
@@ -23,6 +26,7 @@ struct Preferences: DynamicProperty {
         _notificationsEnabled = AppStorage(wrappedValue: false, Key.notificationsEnabled, store: store)
         _onboardingCompleted = AppStorage(wrappedValue: false, Key.onboardingCompleted, store: store)
         _appearance = AppStorage(wrappedValue: .system, Key.appearance, store: store)
+        _biometricLockEnabled = AppStorage(wrappedValue: false, Key.biometricLockEnabled, store: store)
     }
 
     /// The currency of the phone's region, so a phone set to India starts in rupees and one set to

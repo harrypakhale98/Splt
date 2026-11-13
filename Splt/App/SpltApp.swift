@@ -5,6 +5,7 @@ struct SpltApp: App {
     @State private var router = Router()
     @State private var services: DataServices?
     @State private var isReady = false
+    @State private var lock = AppLock()
     @UIApplicationDelegateAdaptor(SyncAppDelegate.self) private var appDelegate
 
     init() {
@@ -20,6 +21,7 @@ struct SpltApp: App {
                 } else if isReady {
                     RootView()
                         .environment(router)
+                        .environment(lock)
                         .environment(\.dataServices, services)
                         .personColors(services: services)
                         .syncLifecycle(services: services, router: router)
@@ -35,6 +37,7 @@ struct SpltApp: App {
             .onOpenURL { router.open($0) }
             .preferredColorScheme(LaunchAppearance.scheme())
             .appAppearance()
+            .appLock(lock)
             .task { await prepare() }
         }
     }

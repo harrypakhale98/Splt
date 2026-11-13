@@ -96,4 +96,5 @@ struct AccountAvatar: View {
 #Preview {
     AccountView()
         .environment(Router())
+        .environment(AppLock())
 }
