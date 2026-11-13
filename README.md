@@ -34,6 +34,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Groups
 - Invites by link or QR code, and export as a spreadsheet (CSV), PDF or JSON.
 - Import from a Splitwise export, and back up everything to a file you can restore.
 - A light, dark or system appearance switch, and a full edit history on each expense.
+- An optional Face ID lock, which also keeps names and amounts out of notifications and Spotlight.
 
 ## Build
 

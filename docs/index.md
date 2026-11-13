@@ -17,12 +17,13 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 - Any currency, with reference rates or a rate you set for the trip
 - Quick add from a sentence or your voice, and receipt scanning. Receipt photos sync, and each person can pick their own items
 - Group invites through iCloud, by link or by QR code
-- Reminders you share as a message, and a balance link for friends without an iPhone
+- Reminders you share as a message, and a balance link for friends without an iPhone, who can send an expense or a payment back for you to check
 - A default split and a cover photo for each group
 - Import from Splitwise, and export to a spreadsheet (CSV), PDF or JSON
 - A trip recap for each group, and Spending charts for your share over the last 12 months
 - Backup and restore of everything to a file
 - A full edit history on each expense
+- An optional Face ID lock, which also keeps names and amounts out of notifications and Spotlight
 - A light, dark or system appearance switch, large text, VoiceOver and Reduce Motion
 
 ## Links
