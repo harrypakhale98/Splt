@@ -151,7 +151,7 @@ final class ScreenshotWalkUITests: XCTestCase {
     @MainActor
     @discardableResult
     private func visit(_ name: String, in app: XCUIApplication) -> Bool {
-        let button = app.tabBars.firstMatch.buttons[name]
+        let button = tabButton(name, in: app)
         var attempts = 0
         while !button.exists && attempts < 6 {
             scroll(attempts.isMultiple(of: 2) ? .down : .up, in: app)

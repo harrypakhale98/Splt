@@ -130,7 +130,7 @@ final class JourneyUITests: XCTestCase {
         openGroup("Lisbon Trip", in: app)
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.navigationBars["Lisbon Trip"].waitForExistence(timeout: 5), "title missing in landscape")
-        XCTAssertTrue(app.tabBars.firstMatch.exists, "tab bar missing in landscape")
+        XCTAssertTrue(tabButton("Groups", in: app).exists, "tabs missing in landscape")
         snapshot(app, "landscape-group")
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "landscape group"

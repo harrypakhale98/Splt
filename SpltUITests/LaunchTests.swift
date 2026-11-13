@@ -8,14 +8,15 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testSwitchesThroughTabsAndOpensSettings() {
         let app = launchApp()
-        let tabBar = app.tabBars.firstMatch
 
         for name in ["Friends", "Groups", "Activity"] {
-            tabBar.buttons[name].tap()
+            tabButton(name, in: app).tap()
             XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5), "\(name) title missing")
         }
 
-        XCTAssertFalse(tabBar.buttons["Account"].exists)
+        // Account is the button in the navigation bar, never a tab
+        let accountTab = app.buttons.matching(NSPredicate(format: "label == 'Account' AND identifier != 'account.button'"))
+        XCTAssertEqual(accountTab.count, 0)
         openAccount(in: app)
 
         XCTAssertTrue(app.buttons["Edit Profile"].waitForExistence(timeout: 5))
@@ -77,7 +78,7 @@ final class LaunchTests: XCTestCase {
     @MainActor
     func testPlaceholderActionOpensSheet() {
         let app = launchApp()
-        app.tabBars.firstMatch.buttons["Activity"].tap()
+        tabButton("Activity", in: app).tap()
         app.buttons["Add Expense"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Expense"].waitForExistence(timeout: 5))
         app.buttons["Close"].tap()

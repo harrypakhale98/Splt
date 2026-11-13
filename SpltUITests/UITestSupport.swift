@@ -29,8 +29,22 @@ extension XCTestCase {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize]
         }
         app.launch()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30), "the tab bar never appeared")
+        XCTAssertTrue(anyTabButton("Groups", in: app).waitForExistence(timeout: 30), "the tabs never appeared")
         return app
+    }
+
+    /// The button for a tab, in the tab bar on most iPhones or in the side rail iPhone Duo shows instead.
+    @MainActor
+    func tabButton(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        let tabBar = app.tabBars.firstMatch
+        return tabBar.exists ? tabBar.buttons[name] : anyTabButton(name, in: app)
+    }
+
+    /// A button with the tab's name that is not a back button, which finds the tab in either layout. The side
+    /// rail's buttons sit in no tab bar, so they can only be told apart from a back button to that tab.
+    @MainActor
+    func anyTabButton(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != 'BackButton'", name)).firstMatch
     }
 
     /// The first element with this accessibility identifier, whatever its type.
@@ -68,8 +82,7 @@ extension XCTestCase {
 
     @MainActor
     func openTab(_ name: String, in app: XCUIApplication) {
-        // iPhone Duo shows the tabs in a side rail, outside any tab bar
-        let button = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.buttons[name] : app.buttons[name].firstMatch
+        let button = tabButton(name, in: app)
         // On iOS 26 the Search tab shrinks the bar to a single button for the last tab, and tapping it
         // brings the full bar back.
         let collapsed = app.tabBars.firstMatch.buttons.matching(NSPredicate(format: "value == 'Collapsed'")).firstMatch
