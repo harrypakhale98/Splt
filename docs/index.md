@@ -33,4 +33,4 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 - [Architecture](architecture)
 - [Source code and issues on GitHub](https://github.com/harrypakhale98/Splt)
 
-Splt is open source under the MIT license.
+The source code is public so you can read it. Copyright 2026 Hardik Pakhale, all rights reserved.

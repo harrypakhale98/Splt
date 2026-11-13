@@ -8,7 +8,7 @@ To report a security problem, please do not use an issue. Follow [SECURITY.md](h
 
 ### Is Splt really free?
 
-Yes. There are no ads, no limits and no subscription, and that will not change. The code is open source, so you can check.
+Yes. There are no ads, no limits and no subscription, and that will not change. The source code is public, so you can read how it works.
 
 ### Do I need an account?
 

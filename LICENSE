@@ -1,21 +1,52 @@
-MIT License
+Splt Source-Available License
 
-Copyright (c) 2026 Hardik Pakhale
+Copyright (c) 2026 Hardik Pakhale. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The source code, design, text, images and other materials in this repository
+(the "Software") are published so that people can read them. They are not
+open source. No license is granted except as stated below.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. What you may do
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   a. Read and study the Software.
+   b. Build and run it on your own devices to look at how it works, for
+      personal, non-commercial evaluation only.
+   c. Report problems and suggest changes through the issue tracker or by
+      the process in SECURITY.md. By doing so you give the copyright holder
+      the right to use your report and suggestion without restriction.
+
+2. What you may not do without written permission from the copyright holder
+
+   a. Copy, reproduce, republish or redistribute the Software or any part
+      of it, in source or binary form.
+   b. Modify the Software or create derivative works from it.
+   c. Use the Software or any part of it to build, publish or offer an app
+      or service, whether free or paid, including on any app store.
+   d. Sell, rent, lease, sublicense or otherwise commercialize the Software.
+   e. Remove or change this notice or any copyright notice.
+   f. Use the names "Splt" or "Hardik Pakhale", or the app icon, logos and
+      screenshots, to identify any other product or service.
+   g. Use the Software or its contents to train a machine learning model.
+
+3. Third-party components
+
+   Some files, such as the Source Serif font in docs/b/fonts, belong to other
+   people and are licensed under their own terms. This license does not
+   change those terms.
+
+4. No warranty
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+   OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+5. Termination
+
+   These permissions end automatically if you break any of these terms.
+
+To ask for permission to do anything not listed above, contact the copyright
+holder through the support page at https://harrypakhale98.github.io/Splt/support.

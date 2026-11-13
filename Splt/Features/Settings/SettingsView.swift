@@ -72,7 +72,7 @@ struct SettingsSections: View {
             RaisedRows {
                 LabeledContent("Version", value: AppInfo.versionDescription)
                 LabeledContent("License") {
-                    Text("MIT")
+                    Text("All rights reserved")
                 }
                 Link("Source Code", destination: AppInfo.sourceCodeURL)
                     .foregroundStyle(Ink.text)

@@ -1916,14 +1916,14 @@
     "List" : {
 
     },
-    "MIT" : {
+    "All rights reserved" : {
       "comment" : "Name of the software license",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MIT"
+            "value" : "All rights reserved"
           }
         }
       }

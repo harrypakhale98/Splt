@@ -65,4 +65,4 @@ The app tests run from the Splt scheme on a simulator.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+Copyright (c) 2026 Hardik Pakhale. All rights reserved. The source is public so you can read it, but it is not open source: you may not copy, modify, redistribute or build another app from it. See [LICENSE](LICENSE).
