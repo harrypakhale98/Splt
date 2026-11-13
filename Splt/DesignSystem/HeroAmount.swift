@@ -29,7 +29,7 @@ struct HeroAmount: View {
             .lineLimit(1)
             .minimumScaleFactor(0.4)
             .contentTransition(.numericText(value: Double(money.minorUnits)))
-            .motion(.smooth, value: money)
+            .motion(Motion.smooth, value: money)
             .letterpress()
             .accessibilityLabel(spokenText)
     }

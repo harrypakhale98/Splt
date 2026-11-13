@@ -109,9 +109,11 @@ private struct GroupDetailContent: View {
         }
         .sheet(isPresented: $showsCustomRange) {
             DateRangeSheet(start: model.filter.customStart, end: model.filter.customEnd) { start, end in
-                model.filter.customStart = start
-                model.filter.customEnd = end
-                model.filter.period = .custom
+                Motion.perform(Motion.smooth) {
+                    model.filter.customStart = start
+                    model.filter.customEnd = end
+                    model.filter.period = .custom
+                }
             }
         }
         .sheet(item: $settleRoute) { route in
@@ -145,6 +147,8 @@ private struct GroupDetailContent: View {
 
     // MARK: Content
 
+    /// Switches at once rather than animating: the hero only shows on Expenses, so an animated
+    /// switch would slide the whole list under your finger and cross-fade the two screens.
     @ViewBuilder
     private var segmentPicker: some View {
         @Bindable var model = model
@@ -270,7 +274,7 @@ private struct GroupDetailContent: View {
                 .font(.headline)
                 .lineLimit(1)
             .opacity(condensed || model.segment != .expenses ? 1 : 0)
-            .motion(.smooth, value: condensed)
+            .motion(Motion.smooth, value: condensed)
             .accessibilityHidden(!(condensed || model.segment != .expenses))
         }
         ToolbarItemGroup(placement: .primaryAction) {
@@ -301,19 +305,19 @@ private struct GroupDetailContent: View {
         @Bindable var model = model
 
         return Menu {
-            Picker("Paid By", selection: $model.filter.payer) {
+            Picker("Paid By", selection: $model.filter.payer.motion()) {
                 Text("Anyone").tag(PersonID?.none)
                 ForEach(model.payers) { person in
                     Text(model.name(of: person.id)).tag(Optional(person.id))
                 }
             }
-            Picker("Category", selection: $model.filter.category) {
+            Picker("Category", selection: $model.filter.category.motion()) {
                 Text("All Categories").tag(ExpenseCategory?.none)
                 ForEach(model.categories, id: \.self) { category in
                     Label(category.title, systemImage: category.symbolName).tag(Optional(category))
                 }
             }
-            Picker("Date", selection: presetPeriod) {
+            Picker("Date", selection: presetPeriod.motion()) {
                 ForEach(ExpenseFilter.Period.allCases.filter { $0 != .custom }) { Text($0.title).tag(Optional($0)) }
             }
             // a button rather than a picker choice, so the range can be opened again and Cancel changes nothing
@@ -328,7 +332,7 @@ private struct GroupDetailContent: View {
             }
             if model.filter.isFiltering {
                 Button("Clear Filters", systemImage: "xmark.circle", role: .destructive) {
-                    model.filter.clearFilters()
+                    Motion.perform(Motion.smooth) { model.filter.clearFilters() }
                 }
             }
         } label: {

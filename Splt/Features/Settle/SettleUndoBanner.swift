@@ -36,7 +36,7 @@ private struct SettleUndoBannerModifier: ViewModifier {
                             .motionTransition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-                .motion(Motion.snappy, value: center.banner)
+                .motion(Motion.settle, value: center.banner)
         }
     }
 }
@@ -73,7 +73,7 @@ struct SettleUndoBanner: View {
         .frame(minHeight: 44)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .modifier(BannerSurface(isOn: !isAccessory))
-        .motion(Motion.snappy, value: banner)
+        .motion(Motion.smooth, value: banner)
         .accessibilityElement(children: .contain)
     }
 }

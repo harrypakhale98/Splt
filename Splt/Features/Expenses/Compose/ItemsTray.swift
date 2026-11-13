@@ -35,7 +35,7 @@ struct ItemsTray: View {
                         pill(for: item)
                     }
                 }
-                .motion(Motion.snappy, value: model.split.items)
+                .motion(Motion.smooth, value: model.split.items)
             }
         }
     }
@@ -61,6 +61,7 @@ struct ItemsTray: View {
                     Image(systemName: "person.badge.plus")
                         .foregroundStyle(Ink.secondary)
                         .accessibilityHidden(true)
+                        .motionTransition(.scale)
                 } else {
                     AvatarStack(people, members: model.members.map(\.id), size: 22, limit: 3, ring: Ink.paper)
                         .motionTransition(.scale)

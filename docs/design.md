@@ -68,7 +68,15 @@ Dark mode relies on a lighter sheet and a lit top edge, because shadows barely s
 
 ## Motion
 
-Use `Motion`: `quick` for presses and toggles, `smooth` for layout, `settle` for things arriving. Numbers roll with `.numericText`. Every animation must respect Reduce Motion, which the `Motion` helpers handle.
+Use the `Motion` tokens, never SwiftUI's own `.smooth` or `.snappy`, so retuning a token changes every place it's used:
+
+- `quick` for presses, selections and toggles of a single control.
+- `smooth` for layout: applying or clearing a filter, showing or hiding a section. The group screen's Expenses, Balances and Spending switch at once, because the hero only belongs to Expenses and animating it would slide the whole screen.
+- `snappy` for things under your finger: the split bar, the orbit's focus, snapping back after a pinch.
+- `settle` for things arriving, such as a banner or the number pad rising from the bottom.
+- `reveal` for a slow moment worth watching: the recap and the orbit morph.
+
+The same change moves the same way however it's triggered. A picker or menu that reshapes the screen animates through `$binding.motion()`, just like a button that does the same thing with `Motion.perform`. Numbers roll with `.numericText(value:)`, given the value so digits roll up when it grows and down when it shrinks. Every animation must respect Reduce Motion, which the `Motion` helpers handle. The settle ceremony is the one exception to the tokens: its timings are hand-tuned.
 
 ## What users ask of this category
 

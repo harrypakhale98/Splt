@@ -121,7 +121,7 @@ private struct ExpenseFormScreen: View {
                 }
                 VStack(spacing: 8) {
                     AmountHero(model: model, keypadOpen: keypadOpen && !keypadUsesSheet) {
-                        Motion.perform(Motion.snappy) { keypadOpen.toggle() }
+                        Motion.perform(Motion.settle) { keypadOpen.toggle() }
                         focus = nil
                     }
                     TitleField(model: model, focus: $focus)
@@ -245,7 +245,7 @@ private struct ExpenseFormScreen: View {
     /// Lowers the number pad with the same motion that raised it, so the save bar slides rather than jumps.
     private func closeKeypad() {
         guard keypadOpen else { return }
-        Motion.perform(Motion.snappy) { keypadOpen = false }
+        Motion.perform(Motion.settle) { keypadOpen = false }
     }
 
     private func save() {

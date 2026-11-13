@@ -50,7 +50,7 @@ struct OnboardingView: View {
         if page == lastPage {
             finish()
         } else {
-            Motion.perform(.smooth) { page += 1 }
+            Motion.perform(Motion.smooth) { page += 1 }
         }
     }
 

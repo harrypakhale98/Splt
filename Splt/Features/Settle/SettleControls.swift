@@ -71,7 +71,7 @@ struct SettleControls: View {
         }
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .motion(.smooth, value: model.amountMode)
+        .motion(Motion.smooth, value: model.amountMode)
     }
 
     private var amountModeBinding: Binding<SettleModel.AmountMode> {

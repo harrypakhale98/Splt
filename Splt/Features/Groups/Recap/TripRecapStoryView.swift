@@ -59,7 +59,7 @@ struct TripRecapStoryView: View {
         .overlay(alignment: .top) {
             VStack(spacing: 0) {
                 RecapBackdrop.strip(for: pages[min(page, pages.count - 1)], members: members, stats: stats)
-                    .motion(.smooth, value: page)
+                    .motion(Motion.smooth, value: page)
                 header(count: pages.count)
             }
         }
@@ -78,7 +78,7 @@ struct TripRecapStoryView: View {
                         .frame(height: 2)
                 }
             }
-            .motion(.smooth, value: page)
+            .motion(Motion.smooth, value: page)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Page \(page + 1) of \(count)")
             HStack {

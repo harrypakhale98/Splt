@@ -248,7 +248,8 @@ private struct SegmentView: View {
                             .font(.caption2.monospacedDigit())
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
-                            .contentTransition(.numericText())
+                            // every label grows and shrinks with the weight, so it gives the roll its direction
+                            .contentTransition(.numericText(value: Double(segment.amount?.minorUnits ?? segment.weight)))
                     }
                 }
                 .foregroundStyle(ink)

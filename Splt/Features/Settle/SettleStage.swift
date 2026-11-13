@@ -191,7 +191,7 @@ struct SettleStage: View {
     private func avatar(_ person: SettleParticipant, at point: CGPoint) -> some View {
         AvatarView(name: person.avatarName ?? person.name, id: person.id, members: colorScope, size: baseDiameter)
             .position(point)
-            .motion(.smooth, value: point)
+            .motion(Motion.smooth, value: point)
     }
 }
 

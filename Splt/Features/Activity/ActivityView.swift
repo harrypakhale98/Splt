@@ -117,7 +117,7 @@ private struct ActivityContent: View {
                 systemImage: "line.3.horizontal.decrease.circle",
                 description: "Try a different filter.",
                 actionTitle: "Clear Filters",
-                action: { model.clearFilters() }
+                action: { Motion.perform(Motion.smooth) { model.clearFilters() } }
             )
         }
     }
@@ -174,14 +174,14 @@ private struct ActivityContent: View {
         Section {
             Group {
                 if typeSize.isAccessibilitySize {
-                    Picker("Show", selection: $model.typeFilter) {
+                    Picker("Show", selection: $model.typeFilter.motion()) {
                         ForEach(ActivityTypeFilter.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
                     .accessibilityLabel("Show")
                 } else {
-                    Picker("Show", selection: $model.typeFilter) {
+                    Picker("Show", selection: $model.typeFilter.motion()) {
                         ForEach(ActivityTypeFilter.allCases) { Text($0.shortTitle).tag($0) }
                     }
                     .pickerStyle(.segmented)
@@ -198,7 +198,7 @@ private struct ActivityContent: View {
         @Bindable var model = model
 
         return Menu {
-            Picker("Group", selection: $model.groupFilter) {
+            Picker("Group", selection: $model.groupFilter.motion()) {
                 Text("All Groups").tag(GroupID?.none)
                 ForEach(model.filterGroups) { group in
                     Label(group.name, systemImage: group.symbol).tag(Optional(group.id))

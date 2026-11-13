@@ -37,7 +37,7 @@ struct SpendingRangeMenu: View {
 
     var body: some View {
         Menu {
-            Picker("Period", selection: $range) {
+            Picker("Period", selection: $range.motion()) {
                 ForEach(SpendingRange.menu) { Text($0.title).tag($0) }
             }
         } label: {

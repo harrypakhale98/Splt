@@ -29,7 +29,7 @@ struct MonthBars: View {
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(Ink.secondary)
-                    .contentTransition(.numericText())
+                    .contentTransition(.numericText(value: Double(amounts[safe: index]?.minorUnits ?? 0)))
             }
             .accessibilityElement(children: .combine)
             chart(chosen: index)

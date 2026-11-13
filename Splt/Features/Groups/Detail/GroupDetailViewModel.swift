@@ -216,10 +216,10 @@ final class GroupDetailViewModel {
             next.customEnd = calendar.date(byAdding: .day, value: -1, to: dates.upperBound) ?? dates.upperBound
         }
         change(&next)
-        Motion.perform(Motion.smooth) {
-            filter = next
-            segment = .expenses
-        }
+        // switches at once, like tapping the segment: the hero comes and goes with Expenses, so
+        // animating it slides the whole list and cross-fades two screens
+        filter = next
+        segment = .expenses
         drillRevision += 1
     }
 

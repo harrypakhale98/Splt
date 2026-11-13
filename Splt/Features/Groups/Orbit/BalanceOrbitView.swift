@@ -54,7 +54,7 @@ struct BalanceOrbitView: View {
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: 460)
         .frame(maxWidth: .infinity)
-        .motion(.snappy, value: focus)
+        .motion(Motion.snappy, value: focus)
         .onChange(of: board.transfers) { old, new in startMorph(from: old, to: new) }
         .onChange(of: board.nodes) { focus = .none }
         .accessibilityElement(children: .ignore)
@@ -318,7 +318,7 @@ struct OrbitCenterView: View {
         .frame(width: diameter * 0.84)
         .frame(width: diameter, height: diameter)
         .overlay(Circle().strokeBorder(Ink.hairline))
-        .motion(.smooth, value: center)
+        .motion(Motion.smooth, value: center)
         .accessibilityHidden(true)
     }
 

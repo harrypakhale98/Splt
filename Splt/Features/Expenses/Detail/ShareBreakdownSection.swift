@@ -58,7 +58,7 @@ private struct ExpandableShareRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button {
-                Motion.perform(Motion.quick) { isExpanded.toggle() }
+                Motion.perform(Motion.smooth) { isExpanded.toggle() }
             } label: {
                 HStack {
                     ShareLineRow(model: model, line: line)
