@@ -97,10 +97,11 @@ struct InvitePersonSheet: View {
                     }
                     .accessibilityIdentifier("invite.send")
                 }
-                Button("Copy Link", systemImage: "doc.on.doc") {
+                // the words and the link together, so a paste into any chat reads like the shared one
+                Button("Copy Message", systemImage: "doc.on.doc") {
                     UIPasteboard.general.string = model.text(with: links.send)
                     copyCount += 1
-                    AccessibilityNotification.Announcement(String(localized: "Link copied")).post()
+                    AccessibilityNotification.Announcement(String(localized: "Message copied")).post()
                 }
                 NavigationLink {
                     InviteQRView(link: links.scan, caption: qrCaption)

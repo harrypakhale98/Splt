@@ -7,6 +7,8 @@ import UIKit
 /// because its Remove Me option leaves the share without leaving the member list.
 struct CloudSharingView: UIViewControllerRepresentable {
     let groupShare: GroupShare
+    /// The group's picture, shown beside its name. See `GroupShareThumbnail`.
+    var thumbnail: Data?
     var onSaved: () -> Void = {}
     var onStopped: () -> Void = {}
     var onFailure: (any Error) -> Void = { _ in }
@@ -40,6 +42,10 @@ struct CloudSharingView: UIViewControllerRepresentable {
 
         func itemTitle(for csc: UICloudSharingController) -> String? {
             parent.groupShare.groupName
+        }
+
+        func itemThumbnailData(for csc: UICloudSharingController) -> Data? {
+            parent.thumbnail
         }
 
         func cloudSharingControllerDidSaveShare(_ csc: UICloudSharingController) {

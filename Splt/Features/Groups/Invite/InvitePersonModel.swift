@@ -100,7 +100,7 @@ final class InvitePersonModel {
         return String(localized: "Hi \(firstName), I've added you to \(groupName) on Splt. Join to see what you owe and add expenses too.")
     }
 
-    /// The message and the link, as Copy Link and Messages send them.
+    /// The message and the link, as Copy Message and Messages send them.
     func text(with link: URL) -> String {
         message + "\n" + link.absoluteString
     }

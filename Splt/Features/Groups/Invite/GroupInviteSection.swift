@@ -7,12 +7,16 @@ import SwiftUI
 struct GroupInviteSection: View {
     let groupID: GroupID
     let groupName: String
+    /// The group's symbol and cover photo, for the picture on the iCloud invite sheet.
+    let symbol: String
+    var coverFileName: String?
     var isSharedWithMe = false
     /// Sends one link for the group chat, where each person still waiting picks themselves. Nil hides it.
     var inviteEveryone: (() -> Void)?
 
     private let runtime = SyncRuntime.shared
     @State private var sharing: GroupSharingModel?
+    @State private var thumbnail: Data?
     @State private var didShare = false
     @State private var asksForNotifications = false
 
@@ -62,7 +66,7 @@ struct GroupInviteSection: View {
             didShare = false
         }) { prepared in
             CloudSharingView(
-                groupShare: prepared.groupShare, onSaved: { didShare = true }, onStopped: { sharing?.prepared = nil }
+                groupShare: prepared.groupShare, thumbnail: thumbnail, onSaved: { didShare = true }, onStopped: { sharing?.prepared = nil }
             )
             .ignoresSafeArea()
         }
@@ -77,7 +81,11 @@ struct GroupInviteSection: View {
     private func prepare() {
         let model = GroupSharingModel(engine: runtime.engine)
         sharing = model
-        Task { await model.prepare(group: groupID) }
+        Task {
+            // drawn first, so the sheet opens with it rather than gaining it a moment later
+            thumbnail = await GroupShareThumbnail.png(symbol: symbol, coverFileName: coverFileName)
+            await model.prepare(group: groupID)
+        }
     }
 
     private var preparedBinding: Binding<GroupSharingModel.Prepared?> {
@@ -98,6 +106,6 @@ struct GroupInviteSection: View {
 
 #Preview {
     Form {
-        GroupInviteSection(groupID: GroupID(), groupName: "Lisbon Trip")
+        GroupInviteSection(groupID: GroupID(), groupName: "Lisbon Trip", symbol: "airplane")
     }
 }

@@ -151,7 +151,7 @@ private struct BackupContent: View {
             .disabled(true)
         case .ready(let url):
             ShareLink(item: url) {
-                Text("Save or Share Backup…")
+                Text("Save or Share Backup")
             }
             .buttonStyle(PrimaryButtonStyle())
         case .failed(let message):

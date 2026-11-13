@@ -38,7 +38,7 @@ struct RemindSheet: View {
                             Button("Remind in Splt", systemImage: "bell", action: remindInApp)
                                 .disabled(!inApp.isReady)
                         }
-                        ShareLink(item: message) {
+                        ShareLink(item: message, subject: Text("A quick reminder")) {
                             Label("Send Reminder", systemImage: "paperplane")
                         }
                     }

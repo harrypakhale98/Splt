@@ -62,7 +62,7 @@ struct InviteGroupView: View {
                         ShareLink(
                             item: url,
                             subject: Text("Join \(groupName) on Splt"),
-                            message: Text("Join \(groupName) on Splt.")
+                            message: Text("Join \(groupName) on Splt to see who owes what and add expenses too.")
                         ) {
                             Label("Share Link", systemImage: "square.and.arrow.up")
                         }

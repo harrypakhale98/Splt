@@ -227,7 +227,8 @@ private struct GroupSettingsForm: View {
 
             if let group = model.group {
                 GroupInviteSection(
-                    groupID: group.id, groupName: group.name, isSharedWithMe: model.isSharedWithMe == true,
+                    groupID: group.id, groupName: group.name, symbol: model.symbol, coverFileName: model.coverFileName,
+                    isSharedWithMe: model.isSharedWithMe == true,
                     // one link for the group chat is worth it once two or more people are still waiting
                     inviteEveryone: canInvite && model.memberRows.filter(\.person.isPlaceholder).count >= 2
                         ? { invitee = .everyone } : nil

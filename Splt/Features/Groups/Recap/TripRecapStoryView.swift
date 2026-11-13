@@ -18,7 +18,7 @@ struct TripRecapStoryView: View {
     @State private var page = 0
     @State private var hidesAmounts = false
     /// Share pictures drawn ahead of time, one per way of showing amounts, so the share sheet opens at once.
-    @State private var shareImages: [RecapShareImage.Key: Data] = [:]
+    @State private var shareImages: [RecapShareImage.Key: RecapShareImage.Rendered] = [:]
 
     private var shareKey: RecapShareImage.Key {
         RecapShareImage.Key(hidesAmounts: hidesAmounts, summary: summary)
@@ -117,11 +117,13 @@ struct TripRecapStoryView: View {
     /// The card is drawn once, a moment after the button appears, and kept for each way of showing
     /// amounts. If someone shares before that, it is drawn when the share sheet asks for it.
     private var shareButton: some View {
-        ShareLink(
+        let rendered = shareImages[shareKey]
+        return ShareLink(
             item: RecapShareImage(
-                group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts, cached: shareImages[shareKey]
+                group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts, cached: rendered?.png
             ),
-            preview: SharePreview(group.name)
+            // the card itself heads the share sheet once it is drawn
+            preview: SharePreview(group.name, image: rendered?.preview ?? Image(systemName: "photo"))
         ) {
             Label("Share", systemImage: "square.and.arrow.up")
                 .labelStyle(.iconOnly)
@@ -135,7 +137,7 @@ struct TripRecapStoryView: View {
             // let the cover finish opening and the first page settle before drawing
             try? await Task.sleep(for: .milliseconds(800))
             guard !Task.isCancelled, shareImages[key] == nil else { return }
-            shareImages[key] = RecapShareImage.png(
+            shareImages[key] = RecapShareImage.render(
                 group: group, stats: stats, summary: key.summary, hidesAmounts: key.hidesAmounts
             )
         }
@@ -165,6 +167,12 @@ struct RecapShareImage: Transferable, Sendable {
         var summary: String?
     }
 
+    /// A drawn card: the file that is sent, and the same picture for the share sheet's header.
+    struct Rendered {
+        let png: Data
+        let preview: Image
+    }
+
     let group: SplitGroup
     let stats: RecapStats
     let summary: String?
@@ -188,12 +196,18 @@ struct RecapShareImage: Transferable, Sendable {
 
     /// Draws the card at three times its size. ImageRenderer has to run on the main actor.
     @MainActor
-    static func png(group: SplitGroup, stats: RecapStats, summary: String?, hidesAmounts: Bool) -> Data? {
+    static func render(group: SplitGroup, stats: RecapStats, summary: String?, hidesAmounts: Bool) -> Rendered? {
         let card = RecapShareCard(group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts)
             .environment(\.colorScheme, .light)
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3
-        return renderer.uiImage?.pngData()
+        guard let image = renderer.uiImage, let png = image.pngData() else { return nil }
+        return Rendered(png: png, preview: Image(uiImage: image))
+    }
+
+    @MainActor
+    static func png(group: SplitGroup, stats: RecapStats, summary: String?, hidesAmounts: Bool) -> Data? {
+        render(group: group, stats: stats, summary: summary, hidesAmounts: hidesAmounts)?.png
     }
 }
 

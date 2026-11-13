@@ -137,7 +137,7 @@ private struct AddFriendContent: View {
             }
             RaisedRows {
                 if let invite = model.myInvite {
-                    ShareLink(item: invite.shareMessage) {
+                    ShareLink(item: invite.shareMessage, subject: Text("Add me on Splt")) {
                         Label("Share Invite Link", systemImage: "square.and.arrow.up")
                     }
                 }

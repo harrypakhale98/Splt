@@ -68,10 +68,10 @@ struct ShareBalanceLinkView: View {
                             subject: Text("\(group.name) balances"),
                             message: Text("What everyone owes in \(group.name), from Splt.")
                         ) {
-                            Label("Share Link", systemImage: "square.and.arrow.up")
+                            Text("Share Link")
                         }
                     } else {
-                        Button("Share Link", systemImage: "square.and.arrow.up") {}
+                        Button("Share Link") {}
                             .disabled(true)
                     }
                 }
