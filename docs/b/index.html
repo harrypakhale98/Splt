@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hBjCAX20hsQz8zYeT3AW62OONhxaZ91nYFbsAd/LeAk='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-iT5j685K06oNjRY8osRk8bGGIIwk+uMU1ijeIml6yRw='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
@@ -207,7 +207,176 @@ function validate(raw) {
     });
     groupJoin = { url: shareURL(raw.k[0]), seats };
   }
-  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt, join, groupJoin };
+
+  // A reply code: the friend may send an expense or a payment back to the person who shared this.
+  let reply = null;
+  if (raw.r !== undefined) {
+    if (!isReplyToken(raw.r)) fail();
+    reply = raw.r;
+  }
+  return { name, trip, currencies, members, transfers, expenses, sharedBy, createdAt, join, groupJoin, reply };
+}
+
+// MARK: Replies
+// A reply is one expense or one payment for the person who shared the link to check and add. It is
+// packed like a balance link and goes after "#r." on this page, or after "d=" in splt://reply.
+// Splt/Features/Groups/BalanceLink/BalanceReply.swift documents the layout. People are the link's own
+// numbers, which only the phone that shared the link can turn back into people.
+
+const REPLY_VERSION = 1;
+const REPLY_PREFIX = "r.";
+const MAX_REPLY = 4000;
+const TITLE_LIMIT = 60;
+const PAGE_URL = "https://harrypakhale98.github.io/Splt/b/";
+
+function isReplyToken(value) {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{16,43}$/.test(value);
+}
+
+function base64UrlFromBytes(bytes) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function deflateRaw(value) {
+  if (typeof CompressionStream !== "function" || typeof Blob !== "function") throw new LinkProblem("browser");
+  const stream = new Blob([new TextEncoder().encode(value)]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  const reader = stream.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value: chunk } = await reader.read();
+    if (done) break;
+    chunks.push(chunk);
+    total += chunk.length;
+  }
+  const all = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { all.set(chunk, offset); offset += chunk.length; }
+  return all;
+}
+
+// An amount as typed, in minor units, or null. "24.50", "24,50", "1,234.50" and "1.234,50" all
+// work; a lone separator followed by more digits than the currency has groups thousands.
+function parseAmount(value, digits) {
+  if (typeof value !== "string" || /[-\u2212]/.test(value)) return null;
+  let clean = value.replace(/[\s\u00A0\u202F'\u2019]/g, "").replace(/^[^\d.,]+|[^\d.,]+$/g, "").replace(/[.,]$/, "");
+  if (!/^[\d.,]+$/.test(clean)) return null;
+  const lastDot = clean.lastIndexOf(".");
+  const lastComma = clean.lastIndexOf(",");
+  let decimalAt = -1;
+  if (lastDot >= 0 && lastComma >= 0) decimalAt = Math.max(lastDot, lastComma);
+  else if (lastDot >= 0 || lastComma >= 0) {
+    const sep = lastDot >= 0 ? "." : ",";
+    const parts = clean.split(sep);
+    if (parts.length === 2 && parts[1].length >= 1 && parts[1].length <= digits) decimalAt = clean.lastIndexOf(sep);
+  }
+  let whole = decimalAt >= 0 ? clean.slice(0, decimalAt) : clean;
+  const fraction = decimalAt >= 0 ? clean.slice(decimalAt + 1) : "";
+  if (!/^\d*$/.test(fraction) || fraction.length > digits) return null;
+  const groups = whole.split(/[.,]/);
+  if (groups.length > 1 && (groups[0].length === 0 || groups[0].length > 3 || groups.slice(1).some((g) => g.length !== 3))) return null;
+  whole = groups.join("");
+  if (whole === "" && fraction === "") return null;
+  const major = Number(whole || "0");
+  if (major >= 1e12) return null;
+  const minor = major * Math.pow(10, digits) + Number(fraction.padEnd(digits, "0") || "0");
+  return Number.isSafeInteger(minor) && minor > 0 ? minor : null;
+}
+
+// An amount in minor units as a plain number to type over: 8420 with 2 digits is "84.20".
+function plainAmount(minor, digits) {
+  return digits === 0 ? String(minor) : (minor / Math.pow(10, digits)).toFixed(digits);
+}
+
+// The reply as JSON, from what the form holds. `input` is
+// { kind: "e", title, amount, currency, day, payer, participants } or { kind: "p", amount, currency, to }.
+function buildReply(snapshot, me, input, now) {
+  const currency = snapshot.currencies[input.currency];
+  const mentioned = input.kind === "e" ? [me, input.payer, ...input.participants] : [me, input.to];
+  const names = Array.from(new Set(mentioned)).sort((a, b) => a - b).map((index) => [index, snapshot.members[index].name]);
+  const reply = {
+    v: REPLY_VERSION, r: snapshot.reply, g: snapshot.name, a: me, t: Math.floor(now / 1000), u: names,
+    c: [currency.code, currency.digits], m: input.amount
+  };
+  if (input.kind === "e") {
+    Object.assign(reply, { k: "e", n: input.title, d: input.day, p: input.payer, w: input.participants });
+  } else {
+    Object.assign(reply, { k: "p", f: me, o: input.to });
+  }
+  return reply;
+}
+
+async function encodeReply(reply) {
+  return base64UrlFromBytes(await deflateRaw(JSON.stringify(reply)));
+}
+
+function replyLink(payload) {
+  const here = typeof window !== "undefined" && window.location && /^https?:$/.test(window.location.protocol)
+    ? window.location.href.split("#")[0] : PAGE_URL;
+  return here + "#" + REPLY_PREFIX + payload;
+}
+
+function appReplyLink(payload) {
+  return "splt://reply?d=" + payload;
+}
+
+function validateReply(raw) {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) fail();
+  if (raw.v !== REPLY_VERSION) {
+    if (Number.isSafeInteger(raw.v) && raw.v > REPLY_VERSION) throw new LinkProblem("newer");
+    fail();
+  }
+  if (!isReplyToken(raw.r)) fail();
+  const person = (value) => whole(value, 0, 999);
+  const group = text(raw.g, 200);
+  const author = person(raw.a);
+  const createdAt = new Date(whole(raw.t, 0, 32503680000) * 1000);
+  if (!isList(raw.u, 1000)) fail();
+  const names = new Map(raw.u.map((pair) => {
+    if (!isList(pair, 2) || pair.length !== 2) fail();
+    return [person(pair[0]), text(pair[1], 100)];
+  }));
+  if (!isList(raw.c, 2) || raw.c.length !== 2 || typeof raw.c[0] !== "string" || !/^[A-Z]{3}$/.test(raw.c[0])) fail();
+  const currency = { code: raw.c[0], digits: whole(raw.c[1], 0, 4) };
+  const amount = whole(raw.m, 1, Number.MAX_SAFE_INTEGER);
+  let item;
+  if (raw.k === "e") {
+    if (!isList(raw.w, 1000) || raw.w.length === 0) fail();
+    const participants = raw.w.map(person);
+    if (new Set(participants).size !== participants.length) fail();
+    item = { kind: "e", title: text(raw.n, 200), day: day(raw.d), payer: person(raw.p), participants };
+  } else if (raw.k === "p") {
+    item = { kind: "p", from: person(raw.f), to: person(raw.o) };
+    if (item.from === item.to) fail();
+  } else {
+    fail();
+  }
+  return { group, author, createdAt, names, currency, amount, ...item };
+}
+
+async function decodeReply(payload) {
+  if (typeof payload !== "string" || payload.length > MAX_REPLY) throw new LinkProblem("broken");
+  const json = await inflateRaw(bytesFromBase64Url(payload));
+  let raw;
+  try { raw = JSON.parse(json); } catch (_) { throw new LinkProblem("broken"); }
+  return validateReply(raw);
+}
+
+function replyMoney(reply) {
+  return money({ currencies: [reply.currency] }, reply.amount, 0);
+}
+
+function nameList(names) {
+  if (typeof Intl.ListFormat === "function") return new Intl.ListFormat(locale, { type: "conjunction" }).format(names);
+  return names.join(", ");
+}
+
+function todayString(now) {
+  const date = new Date(now);
+  const pad = (value) => String(value).padStart(2, "0");
+  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
 }
 
 // MARK: Formatting
@@ -471,6 +640,17 @@ function drawPerson(root, snapshot, index, state) {
   root.appendChild(strip(snapshot));
   root.appendChild(snapLine(snapshot, "Expenses added later aren't here."));
 
+  if (snapshot.reply && index !== snapshot.sharedBy) {
+    const sharer = sharerName(snapshot);
+    root.appendChild(el("h2", "sh", sharer ? "Send " + sharer + " something to add" : "Send something to add"));
+    const actions = el("div", "card");
+    const expense = rowButton(() => state.compose("e"), false);
+    add(expense, add(el("div", "grow", "Add an expense"), el("div", "foot", "Something paid for the group")), icon("chevron", 14));
+    const payment = rowButton(() => state.compose("p"), false);
+    add(payment, add(el("div", "grow", "Record a payment"), el("div", "foot", "Money you paid someone back")), icon("chevron", 14));
+    root.appendChild(add(actions, expense, payment));
+  }
+
   if (lead.length > 1) {
     root.appendChild(el("h2", "sh", paying ? "Who you pay" : "Who pays you"));
     root.appendChild(counterpartRows(snapshot, lead, paying ? "to" : "from", paying ? "you pay" : "pays you"));
@@ -639,6 +819,268 @@ function drawJoinPicker(root, snapshot, state) {
   root.appendChild(look);
 }
 
+// MARK: Sending something back
+
+function activeMembers(snapshot) {
+  return snapshot.members.map((member, index) => ({ member, index })).filter((entry) => !entry.member.left);
+}
+
+function field(label, ...controls) {
+  const row = el("label", "row field");
+  add(row, el("span", "label", label), ...controls);
+  // a picker gets a mark, so it reads as something to tap
+  if (controls.some((control) => control.tagName === "SELECT")) {
+    const mark = icon("chevron", 12);
+    mark.classList.add("down");
+    row.appendChild(mark);
+  }
+  return row;
+}
+
+function picker(entries, selected) {
+  const select = el("select");
+  for (const entry of entries) {
+    const option = el("option", null, entry.label);
+    option.value = String(entry.value);
+    if (entry.value === selected) option.selected = true;
+    select.appendChild(option);
+  }
+  return select;
+}
+
+function textInput(type, attributes) {
+  const input = el("input");
+  input.type = type;
+  for (const [key, value] of Object.entries(attributes)) input.setAttribute(key, value);
+  return input;
+}
+
+// The amount row: a number to type, and the currency when the group uses more than one.
+function amountField(snapshot, currency) {
+  const digits = snapshot.currencies[currency].digits;
+  const input = textInput("text", {
+    inputmode: digits ? "decimal" : "numeric", autocomplete: "off", enterkeyhint: "done",
+    placeholder: digits ? plainAmount(0, digits) : "0", "aria-label": "Amount"
+  });
+  let choice = null;
+  let tail;
+  if (snapshot.currencies.length > 1) {
+    choice = picker(snapshot.currencies.map((entry, index) => ({ value: index, label: entry.code })), currency);
+    choice.setAttribute("aria-label", "Currency");
+    choice.className = "code";
+    tail = choice;
+  } else {
+    tail = el("span", "code", snapshot.currencies[0].code);
+  }
+  const row = field("Amount", input, tail);
+  row.classList.add("money");
+  return { row, input, currency: () => (choice ? Number(choice.value) : 0), choice };
+}
+
+// Who to send it to, by name when the link says who shared it.
+function sharerName(snapshot) {
+  const sharer = snapshot.members[snapshot.sharedBy];
+  return sharer ? sharer.name : null;
+}
+
+// Step 3: one expense or one payment to send back.
+function drawCompose(root, snapshot, me, kind, state) {
+  const sharer = sharerName(snapshot);
+  root.appendChild(add(el("div", "top"), brand()));
+  root.appendChild(el("h1", "title", kind === "e" ? "Add an expense" : "Record a payment"));
+  root.appendChild(el("p", "sub", "For " + snapshot.name + ". " + (sharer ? sharer + " checks it" : "It's checked") + " in Splt before it's added."));
+
+  const form = el("form", "compose");
+  form.noValidate = true;
+  const others = activeMembers(snapshot).filter((entry) => entry.index !== me);
+  const error = el("p", "foot error");
+  error.setAttribute("role", "alert");
+  let read;
+
+  if (kind === "e") {
+    const card = el("div", "card");
+    const title = textInput("text", { maxlength: String(TITLE_LIMIT), autocomplete: "off", enterkeyhint: "next", placeholder: "Dinner, taxi, tickets", "aria-label": "What for" });
+    const amount = amountField(snapshot, 0);
+    const date = textInput("date", { "aria-label": "Date" });
+    date.value = todayString(Date.now());
+    const everyone = activeMembers(snapshot);
+    if (!everyone.some((entry) => entry.index === me)) everyone.unshift({ member: snapshot.members[me], index: me });
+    const payer = picker(everyone.map((entry) => ({ value: entry.index, label: entry.index === me ? "You" : entry.member.name })), me);
+    payer.setAttribute("aria-label", "Paid by");
+    add(card, field("What for", title), amount.row, field("Date", date), field("Paid by", payer));
+    form.appendChild(card);
+
+    form.appendChild(el("h2", "sh", "Split equally between"));
+    const people = el("div", "card");
+    const boxes = [];
+    for (const entry of everyone) {
+      const row = el("label", "row inset pick");
+      const box = textInput("checkbox", { "aria-label": entry.member.name });
+      box.checked = true;
+      boxes.push({ box, index: entry.index });
+      add(row, disc(entry.member, false), el("span", "grow", entry.index === me ? entry.member.name + " (you)" : entry.member.name), box);
+      people.appendChild(row);
+    }
+    form.appendChild(people);
+
+    read = () => {
+      const name = title.value.replace(/[\u0000-\u001F\u007F\u2028\u2029]/g, " ").trim();
+      if (!name) return { problem: "Say what it was for.", focus: title };
+      const currency = amount.currency();
+      const minor = parseAmount(amount.input.value, snapshot.currencies[currency].digits);
+      if (minor === null) return { problem: "Enter an amount, like " + plainAmount(2450, snapshot.currencies[currency].digits) + ".", focus: amount.input };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date.value)) return { problem: "Pick the date it was paid.", focus: date };
+      const participants = boxes.filter((entry) => entry.box.checked).map((entry) => entry.index);
+      if (participants.length === 0) return { problem: "Pick at least one person to split it with.", focus: boxes[0].box };
+      return { input: { kind: "e", title: Array.from(name).slice(0, TITLE_LIMIT).join(""), amount: minor, currency, day: date.value, payer: Number(payer.value), participants } };
+    };
+  } else {
+    // start from what you owe, so paying it back is one tap
+    const { pays } = describePerson(snapshot, me);
+    const first = pays.length ? pays[0].to : (snapshot.sharedBy >= 0 && snapshot.sharedBy !== me ? snapshot.sharedBy : (others[0] || { index: -1 }).index);
+    const card = el("div", "card");
+    const to = picker(others.map((entry) => ({ value: entry.index, label: entry.member.name })), first);
+    to.setAttribute("aria-label", "Who you paid");
+    const amount = amountField(snapshot, 0);
+    let typed = false;
+    amount.input.addEventListener("input", () => { typed = true; });
+    const suggest = () => {
+      if (typed) return;
+      const owed = pays.find((transfer) => transfer.to === Number(to.value));
+      if (owed) {
+        if (amount.choice) amount.choice.value = String(owed.currency);
+        amount.input.value = plainAmount(owed.amount, snapshot.currencies[owed.currency].digits);
+      } else {
+        amount.input.value = "";
+      }
+    };
+    to.addEventListener("change", suggest);
+    suggest();
+    add(card, field("You paid", to), amount.row);
+    form.appendChild(card);
+
+    read = () => {
+      if (others.length === 0) return { problem: "There's nobody else in the group to pay." };
+      const currency = amount.currency();
+      const minor = parseAmount(amount.input.value, snapshot.currencies[currency].digits);
+      if (minor === null) return { problem: "Enter an amount, like " + plainAmount(2450, snapshot.currencies[currency].digits) + ".", focus: amount.input };
+      return { input: { kind: "p", amount: minor, currency, to: Number(to.value) } };
+    };
+  }
+
+  form.appendChild(error);
+  const make = el("button", "primary", "Make the link");
+  make.type = "submit";
+  form.appendChild(make);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const result = read();
+    if (result.problem) {
+      error.textContent = result.problem;
+      if (result.focus) result.focus.focus();
+      return;
+    }
+    error.textContent = "";
+    make.disabled = true;
+    try {
+      const reply = buildReply(snapshot, me, result.input, Date.now());
+      const link = replyLink(await encodeReply(reply));
+      state.sent({ link, reply: validateReply(reply) });
+    } catch (_) {
+      error.textContent = "This browser can't make the link. Try a recent version of Chrome, Safari, Firefox or Edge.";
+      make.disabled = false;
+    }
+  });
+  root.appendChild(form);
+
+  const cancel = el("button", "link quiet", "Cancel");
+  cancel.type = "button";
+  cancel.addEventListener("click", () => state.show("back"));
+  root.appendChild(cancel);
+}
+
+// What a reply says, as a card. `names` maps a member number to a name.
+function replyCard(reply, mine) {
+  const name = (index) => (index === mine ? "you" : reply.names.get(index) || "someone");
+  const title = (index) => { const value = name(index); return value.charAt(0).toUpperCase() + value.slice(1); };
+  const card = el("div", "card summary");
+  if (reply.kind === "e") {
+    const label = add(el("div", "grow", reply.title), el("div", "foot", "Paid by " + name(reply.payer) + " · " + shortDay(reply.day)));
+    card.appendChild(add(el("div", "row"), label, amountCell(replyMoney(reply), null, null)));
+    const among = reply.participants.map(name);
+    card.appendChild(add(el("div", "row"), el("div", "grow foot", "Split equally between " + nameList(among))));
+  } else {
+    card.appendChild(add(el("div", "row"), el("div", "grow", title(reply.from) + " paid " + name(reply.to)), amountCell(replyMoney(reply), null, null)));
+  }
+  return card;
+}
+
+// Step 4: the link is made; send it to the person who shared the balances.
+function drawSent(root, snapshot, me, sent, state) {
+  const sharer = sharerName(snapshot);
+  root.appendChild(add(el("div", "top"), brand()));
+  root.appendChild(el("h1", "title", sharer ? "Send this to " + sharer : "Send this back"));
+  root.appendChild(el("p", "sub", "Nothing goes into " + snapshot.name + " until " + (sharer || "they") + " opens the link in Splt and adds it."));
+  root.appendChild(replyCard(sent.reply, me));
+
+  const message = (sent.reply.kind === "e" ? "An expense" : "A payment") + " for " + snapshot.name + ", to add in Splt";
+  const copy = el("button", "secondary", "Copy the link");
+  copy.type = "button";
+  const copied = async () => {
+    try {
+      await navigator.clipboard.writeText(sent.link);
+      copy.textContent = "Copied";
+    } catch (_) {
+      copy.textContent = "Select the link below to copy it";
+    }
+  };
+  copy.addEventListener("click", copied);
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    const share = el("button", "primary", sharer ? "Send to " + sharer : "Send the link");
+    share.type = "button";
+    share.addEventListener("click", async () => {
+      try { await navigator.share({ text: message, url: sent.link }); } catch (_) {
+        // closed without sending: the link is still here to copy
+      }
+    });
+    add(root, share, copy);
+  } else {
+    copy.classList.replace("secondary", "primary");
+    root.appendChild(copy);
+  }
+  root.appendChild(el("p", "linkbox", sent.link));
+
+  const back = el("button", "link quiet", "Back to the balances");
+  back.type = "button";
+  back.addEventListener("click", () => state.show("back"));
+  root.appendChild(back);
+}
+
+// A reply link opened in a browser: what it says, and the way into Splt.
+function drawReply(root, reply, payload) {
+  root.appendChild(add(el("div", "top"), brand()));
+  const author = reply.names.get(reply.author) || "Someone";
+  root.appendChild(el("p", "sub lead invited", author + " sent this for"));
+  root.appendChild(add(el("div"), el("h1", "title", reply.group)));
+  root.appendChild(replyCard(reply, -1));
+  if (isAndroid()) {
+    root.appendChild(el("p", "foot center note", "Open this link on the iPhone that shared the balances. Splt adds it there, after a check."));
+  } else {
+    const open = el("a", "primary", "Check it in Splt");
+    open.href = appReplyLink(payload);
+    root.appendChild(open);
+    root.appendChild(el("p", "foot center note", "Opens on the iPhone that shared the balances. Nothing is added until it's checked there."));
+  }
+  const line = el("p", "foot center get");
+  line.appendChild(document.createTextNode("Splt is free on iPhone. "));
+  const link = el("a", null, "Get Splt");
+  link.href = APP_STORE_URL;
+  link.rel = "noopener noreferrer";
+  line.appendChild(link);
+  root.appendChild(line);
+  document.title = reply.group + " · Splt";
+}
+
 // Everyone: who pays whom across the group.
 function drawEveryone(root, snapshot, state) {
   add(root, add(el("div", "top"), brand()));
@@ -736,6 +1178,20 @@ async function start() {
   const turn = ++drawing;
   const root = document.getElementById("app");
   const fragment = window.location.hash.replace(/^#/, "");
+  if (fragment.startsWith(REPLY_PREFIX)) {
+    const payload = fragment.slice(REPLY_PREFIX.length);
+    let reply = null;
+    let trouble = null;
+    try { reply = await decodeReply(payload); } catch (error) {
+      trouble = error instanceof LinkProblem ? error.kind : "broken";
+    }
+    if (turn !== drawing) return;
+    root.replaceChildren();
+    if (trouble) drawProblem(root, trouble);
+    else drawReply(root, reply, payload);
+    window.scrollTo(0, 0);
+    return;
+  }
   let snapshot = null;
   let problem = null;
   if (!fragment) problem = "empty";
@@ -759,6 +1215,8 @@ async function start() {
     if (state.view === "join") drawJoin(root, snapshot, state);
     else if (state.view === "joinPicker") drawJoinPicker(root, snapshot, state);
     else if (state.view === "everyone") drawEveryone(root, snapshot, state);
+    else if (state.view === "compose" && state.chosen !== null) drawCompose(root, snapshot, state.chosen, state.kind, state);
+    else if (state.view === "sent" && state.chosen !== null) drawSent(root, snapshot, state.chosen, state.sending, state);
     else if (state.chosen === null) drawPicker(root, snapshot, state);
     else drawPerson(root, snapshot, state.chosen, state);
     window.scrollTo(0, 0);
@@ -769,6 +1227,8 @@ async function start() {
     else state.view = view === "back" ? null : view;
     draw();
   };
+  state.compose = (kind) => { state.kind = kind; state.view = "compose"; draw(); };
+  state.sent = (sending) => { state.sending = sending; state.view = "sent"; draw(); };
   state.look = () => { state.chosen = snapshot.join.person; state.view = null; draw(); };
   // picking yourself from a group invite gives the same view an invite made for you does
   state.joinAs = (seat) => { snapshot.join = { url: snapshot.groupJoin.url, person: seat.person, id: seat.id }; state.show("join"); };
@@ -782,6 +1242,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 } else {
   globalThis.SpltBalanceLink = {
     decodeFragment, validate, money, describePerson, expenseFor, stripSlices, subtitle, initial, joinLink, LinkProblem,
+    parseAmount, plainAmount, buildReply, encodeReply, decodeReply, validateReply, replyLink, appReplyLink, replyMoney,
     setLocale: (value) => { locale = value; formatters.clear(); }
   };
 }

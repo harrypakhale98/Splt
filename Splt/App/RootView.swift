@@ -12,6 +12,7 @@ struct RootView: View {
 
 private struct RootTabs: View {
     @Environment(Router.self) private var router
+    @Environment(\.dataServices) private var services
     @State private var unread: UnreadActivityStore?
 
     init(services: DataServices?) {
@@ -51,6 +52,12 @@ private struct RootTabs: View {
                 AddFriendView()
             case .account:
                 AccountView()
+            case .reviewReply:
+                if let services, let packed = router.pendingReply {
+                    // a second reply opened while one shows replaces it
+                    ReplyReviewSheet(fragment: packed, services: services)
+                        .id(packed)
+                }
             }
         }
     }

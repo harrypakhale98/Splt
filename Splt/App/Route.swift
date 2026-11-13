@@ -19,6 +19,8 @@ enum AppSheet: String, Identifiable, Hashable, Sendable {
     case newGroup
     case newFriend
     case account
+    /// A reply from a balance link, waiting in `Router.pendingReply`.
+    case reviewReply
 
     var id: String { rawValue }
 }

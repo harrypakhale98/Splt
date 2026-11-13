@@ -12,14 +12,18 @@ struct ShareBalanceLinkView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var includesExpenses = true
+    @State private var allowsReplies = true
     /// The moment the sheet opened: the link is a snapshot of it.
     @State private var now = Date()
+    /// The code a reply sends back, which this phone remembers. Made when the sheet opens.
+    @State private var replyToken: String?
 
     /// The link, or nil when the group doesn't fit in one.
     private var link: URL? {
         try? BalanceLink.url(for: BalanceSnapshot(
             group: group, me: me, people: people, expenses: expenses, balances: balances,
-            includesExpenses: includesExpenses, now: now
+            includesExpenses: includesExpenses, now: now,
+            replyToken: allowsReplies ? replyToken : nil
         ))
     }
 
@@ -45,6 +49,9 @@ struct ShareBalanceLinkView: View {
                         .accessibilityElement(children: .combine)
                         Toggle("Recent Expenses", isOn: $includesExpenses)
                             .tint(Ink.switchOn)
+                        Toggle("Let Them Send Expenses Back", isOn: $allowsReplies)
+                            .tint(Ink.switchOn)
+                            .accessibilityIdentifier("balanceLink.replies")
                     }
                 } footer: {
                     Text(footer(fits: link != nil))
@@ -81,6 +88,13 @@ struct ShareBalanceLinkView: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .task {
+            guard replyToken == nil else { return }
+            replyToken = BalanceReplyStore().token(
+                for: group.id,
+                people: BalanceSnapshot.memberOrder(group: group, expenses: expenses, balances: balances)
+            )
+        }
     }
 
     private var preview: some View {
@@ -102,7 +116,9 @@ struct ShareBalanceLinkView: View {
     }
 
     private func footer(fits: Bool) -> LocalizedStringKey {
-        if fits {
+        if fits, allowsReplies {
+            "The numbers travel inside the link, so nothing is uploaded. It's a snapshot and won't change after you send it. Anyone with the link can see these names and amounts, and can send you an expense or a payment as a link, which you check on this iPhone before it's added."
+        } else if fits {
             "The numbers travel inside the link, so nothing is uploaded. It's a snapshot and won't change after you send it. Anyone with the link can see these names and amounts."
         } else {
             "This group has too many people to fit in a link."

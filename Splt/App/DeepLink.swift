@@ -3,8 +3,8 @@ import Foundation
 /// A parsed `splt://` address.
 ///
 /// Supported forms: `splt://group/<uuid>`, `splt://friend/<uuid>`, `splt://settle/<friend uuid>`,
-/// `splt://add-expense`, `splt://invite?name=<name>&id=<uuid>` and
-/// `splt://join?share=<iCloud invite link>&as=<person uuid>`.
+/// `splt://add-expense`, `splt://invite?name=<name>&id=<uuid>`,
+/// `splt://join?share=<iCloud invite link>&as=<person uuid>` and `splt://reply?d=<balance reply>`.
 enum DeepLink: Hashable, Sendable {
     static let scheme = "splt"
 
@@ -18,6 +18,9 @@ enum DeepLink: Hashable, Sendable {
     case invite(FriendInvite)
     /// Joins a group as the person the invite was made for.
     case join(JoinInvite)
+    /// An expense or a payment a friend sent back from a balance link, still packed. It is read in the
+    /// review sheet, so a broken one says so there instead of doing nothing.
+    case reply(String)
 
     init?(url: URL) {
         guard url.scheme?.lowercased() == Self.scheme else { return nil }
@@ -44,6 +47,12 @@ enum DeepLink: Hashable, Sendable {
         case ("join", 1):
             guard let invite = JoinInvite(url: url) else { return nil }
             self = .join(invite)
+        case ("reply", 1):
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            guard let packed = items.first(where: { $0.name == "d" })?.value, !packed.isEmpty,
+                  packed.count <= BalanceReply.maxFragmentLength
+            else { return nil }
+            self = .reply(packed)
         default:
             return nil
         }
@@ -58,6 +67,7 @@ enum DeepLink: Hashable, Sendable {
         case .activity: URL(string: "\(Self.scheme)://activity")!
         case .invite(let invite): invite.url
         case .join(let invite): invite.url
+        case .reply(let packed): URL(string: "\(Self.scheme)://reply?d=\(packed)")!
         }
     }
 }

@@ -187,3 +187,34 @@ button.row:active { background: var(--press); }
 .secondary { color: var(--text); border: 1px solid var(--hairline); }
 .primary:focus-visible, .secondary:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .note { margin-top: 16px; }
+
+/* Sending an expense or a payment back */
+
+button.primary, button.secondary { width: 100%; text-align: center; }
+.compose { margin-top: 14px; }
+.chev.down { transform: rotate(90deg); margin-left: -6px; }
+button.primary:disabled { opacity: .45; cursor: default; }
+.field { cursor: text; }
+.field .label { flex: none; }
+.field input, .field select {
+  flex: 1; min-width: 0; font: inherit; letter-spacing: inherit; color: var(--text);
+  background: transparent; border: 0; border-radius: 6px; text-align: right; padding: 2px 0;
+  -webkit-appearance: none; appearance: none;
+}
+.field select { cursor: pointer; text-align-last: right; color: var(--secondary); }
+.field input::placeholder { color: var(--tertiary); }
+.field input:focus-visible, .field select:focus-visible, .pick input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.field input[type="date"] { color: var(--secondary); min-height: 1.35em; }
+.field .code { flex: none; color: var(--secondary); }
+.money input { font-family: var(--serif); font-variant-numeric: tabular-nums; }
+.pick { cursor: pointer; }
+.pick input { flex: none; width: 22px; height: 22px; accent-color: var(--text); }
+.error { color: var(--owe); margin: 4px 4px 0; min-height: 0; }
+.error:empty { display: none; }
+.linkbox {
+  display: block; width: 100%; margin-top: 12px; padding: 12px 14px; border-radius: 14px;
+  background: var(--sheet); box-shadow: var(--toplight), var(--shadow);
+  font: 13px/1.38 ui-monospace, Menlo, monospace; color: var(--secondary); overflow-wrap: anywhere;
+  user-select: all; -webkit-user-select: all;
+}
+.summary .amt { font-size: 22px; }

@@ -29,7 +29,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Groups
 - Any currency per expense, and recurring expenses.
 - Quick add from a sentence, by typing or by voice, and receipt scanning. Receipt photos sync through iCloud, and each person can pick their own items.
 - Settle up in full or in part. Splt never moves money.
-- Reminders you share as a message, and a balance link that opens in any browser for friends without an iPhone.
+- Reminders you share as a message, and a balance link that opens in any browser for friends without an iPhone. They can send an expense or a payment back as a link, and you check it before it goes in.
 - Spending charts for your share over the last 12 months, and a default split and a cover photo for each group.
 - Invites by link or QR code, and export as a spreadsheet (CSV), PDF or JSON.
 - Import from a Splitwise export, and back up everything to a file you can restore.

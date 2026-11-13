@@ -20,6 +20,8 @@ import SpltCore
 /// - `s` the member who shared it, or -1, and `t` the snapshot time in seconds since 1970
 /// - `j` an invite (optional): `[iCloud invite link, the invited member, that member's id]`
 /// - `k` an invite for everyone not on Splt yet (optional): `[iCloud invite link, [[member, id]]]`
+/// - `r` a reply code (optional): a random string the sharing phone remembers, so the page can offer
+///   to send an expense or a payment back. See `BalanceReply`. It carries no id either.
 struct BalanceSnapshot: Equatable, Sendable {
     static let version = 1
     /// The most recent expenses a link carries.
@@ -105,6 +107,14 @@ struct BalanceSnapshot: Equatable, Sendable {
     var join: Join? = nil
     /// Set only on an invite link for everyone not on Splt yet.
     var groupJoin: GroupJoin? = nil
+    /// Set when the friend may send an expense or a payment back. The sharing phone keeps what it
+    /// stands for in `BalanceReplyStore`.
+    var replyToken: String? = nil
+
+    /// What a reply code looks like: base64url, long enough that nobody guesses one.
+    static func isReplyToken(_ text: String) -> Bool {
+        (16...43).contains(text.count) && text.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
+    }
 }
 
 // MARK: Building
@@ -121,31 +131,14 @@ extension BalanceSnapshot {
         now: Date,
         calendar: Calendar = .current,
         invite: (shareURL: URL, person: PersonID)? = nil,
-        inviteEveryone: (shareURL: URL, people: [PersonID])? = nil
+        inviteEveryone: (shareURL: URL, people: [PersonID])? = nil,
+        replyToken: String? = nil
     ) {
         let live = expenses.filter { !$0.isDeleted }
-        let recent = includesExpenses
-            ? Array(live.sorted { $0.date > $1.date }.prefix(Self.expenseLimit))
-            : []
+        let recent = Self.recent(live, includesExpenses: includesExpenses)
         let debts = balances?.suggestedSettlements ?? []
-        let shares: [ExpenseID: [PersonID: Money]] = Dictionary(
-            uniqueKeysWithValues: recent.compactMap { expense in
-                (try? expense.shares().shares).map { (expense.id, $0) }
-            }
-        )
-
-        // Members in the group's order, then anyone who left but still appears.
-        var order: [PersonID] = []
-        var seen = Set<PersonID>()
-        func note(_ id: PersonID) {
-            if seen.insert(id).inserted { order.append(id) }
-        }
-        group.memberIDs.forEach(note)
-        debts.forEach { note($0.debtor); note($0.creditor) }
-        for expense in recent where shares[expense.id] != nil {
-            expense.payers.keys.sorted().forEach(note)
-            shares[expense.id]?.keys.sorted().forEach(note)
-        }
+        let shares = Self.shares(of: recent)
+        let order = Self.memberOrder(group: group, debts: debts, recent: recent, shares: shares)
         let index = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
         let current = Set(group.memberIDs)
         let hues = PersonPalette.indices(for: group.memberIDs)
@@ -211,8 +204,49 @@ extension BalanceSnapshot {
             groupJoin: inviteEveryone.flatMap { invite in
                 let seats = invite.people.compactMap { id in index[id].map { Seat(person: $0, personID: id.rawValue) } }
                 return seats.isEmpty ? nil : GroupJoin(shareURL: invite.shareURL, seats: seats)
-            }
+            },
+            replyToken: replyToken
         )
+    }
+
+    /// The people a link numbers, in the order it numbers them: the group's members, then anyone in a
+    /// suggested payment, then anyone else in a recent expense. A link without expenses numbers a
+    /// prefix of the same list, so the order with expenses answers a reply to either.
+    static func memberOrder(
+        group: SplitGroup, expenses: [Expense], balances: GroupBalances?, includesExpenses: Bool = true
+    ) -> [PersonID] {
+        let recent = recent(expenses.filter { !$0.isDeleted }, includesExpenses: includesExpenses)
+        return memberOrder(
+            group: group, debts: balances?.suggestedSettlements ?? [], recent: recent, shares: shares(of: recent)
+        )
+    }
+
+    private static func recent(_ live: [Expense], includesExpenses: Bool) -> [Expense] {
+        includesExpenses ? Array(live.sorted { $0.date > $1.date }.prefix(expenseLimit)) : []
+    }
+
+    private static func shares(of recent: [Expense]) -> [ExpenseID: [PersonID: Money]] {
+        Dictionary(uniqueKeysWithValues: recent.compactMap { expense in
+            (try? expense.shares().shares).map { (expense.id, $0) }
+        })
+    }
+
+    private static func memberOrder(
+        group: SplitGroup, debts: [Debt], recent: [Expense], shares: [ExpenseID: [PersonID: Money]]
+    ) -> [PersonID] {
+        // Members in the group's order, then anyone who left but still appears.
+        var order: [PersonID] = []
+        var seen = Set<PersonID>()
+        func note(_ id: PersonID) {
+            if seen.insert(id).inserted { order.append(id) }
+        }
+        group.memberIDs.forEach(note)
+        debts.forEach { note($0.debtor); note($0.creditor) }
+        for expense in recent where shares[expense.id] != nil {
+            expense.payers.keys.sorted().forEach(note)
+            shares[expense.id]?.keys.sorted().forEach(note)
+        }
+        return order
     }
 
     /// Trimmed, on one line and no longer than `limit` characters.
@@ -235,7 +269,7 @@ extension BalanceSnapshot {
 
 extension BalanceSnapshot: Codable {
     private enum Key: String, CodingKey {
-        case v, n, d, c, m, x, e, s, t, j, k
+        case v, n, d, c, m, x, e, s, t, j, k, r
     }
 
     enum FormatError: Error, Equatable {
@@ -306,6 +340,7 @@ extension BalanceSnapshot: Codable {
                 try pair.encode(seat.personID.uuidString)
             }
         }
+        try root.encodeIfPresent(replyToken, forKey: .r)
     }
 
     init(from decoder: any Decoder) throws {
@@ -395,6 +430,7 @@ extension BalanceSnapshot: Codable {
         } else {
             groupJoin = nil
         }
+        replyToken = try root.decodeIfPresent(String.self, forKey: .r)
         try validate()
     }
 
@@ -420,5 +456,6 @@ extension BalanceSnapshot: Codable {
                   groupJoin.seats.allSatisfy({ people.contains($0.person) })
             else { throw FormatError.invalid("join") }
         }
+        if let replyToken, !Self.isReplyToken(replyToken) { throw FormatError.invalid("reply") }
     }
 }

@@ -4,7 +4,8 @@
 //   node docs/b/test/decode-fixture.mjs --pin-csp  rewrite the page's script hash after editing it
 //
 // fixture.txt and fixture-large.txt are written by BalanceLinkTests in SpltTests, so the Swift encoder
-// and the page's decoder have to agree. Needs Node 18 or later.
+// and the page's decoder have to agree. The other way round, this writes reply-fixture.txt, a reply the
+// page made, and BalanceReplyTests reads it. Needs Node 18 or later.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -65,7 +66,7 @@ await check("the stylesheet loads nothing from other hosts", () => {
 
 // MARK: Decoding
 
-const sandbox = { atob, Blob, DecompressionStream, TextDecoder, URL, console };
+const sandbox = { atob, btoa, Blob, CompressionStream, DecompressionStream, TextDecoder, TextEncoder, URL, Intl, console };
 vm.createContext(sandbox);
 vm.runInContext(script, sandbox);
 const page$ = sandbox.SpltBalanceLink;
@@ -219,6 +220,92 @@ await check("refuses broken and hostile links calmly", async () => {
     assert.ok(kind === "broken", `${name}: ${kind}`);
   }
   assert.equal(await problem(pack({ ...valid, v: 2 })), "newer");
+});
+
+// MARK: Replies
+
+const token = "Qm9vdHN0cmFwUmVwbHlDb2Rl";
+const replyable = { ...valid, n: "Lisbon trip", c: [["EUR", 2], ["JPY", 0]], m: [["Maya", 0, 0], ["Leo", 5, 0], ["Priya", 10, 0]], x: [[1, 0, 8420, 0]], r: token };
+
+await check("reads a reply code and refuses a bad one", async () => {
+  assert.equal((await page$.decodeFragment(pack(replyable))).reply, token);
+  assert.equal((await page$.decodeFragment(pack(valid))).reply, null);
+  for (const r of ["short", "has spaces in it here", "x".repeat(44), 12345678901234567890, "<script>alert(1)</script>"]) {
+    assert.equal(await problem(pack({ ...valid, r })), "broken", String(r));
+  }
+});
+
+await check("reads amounts the way people type them", () => {
+  const cases = [
+    ["24.50", 2, 2450], ["24,50", 2, 2450], ["24", 2, 2400], ["24.5", 2, 2450], ["€ 24,50", 2, 2450],
+    ["1,234.50", 2, 123450], ["1.234,50", 2, 123450], ["1 234,50", 2, 123450], ["1,500", 2, 150000],
+    ["1,500", 0, 1500], ["1500", 0, 1500], [".5", 2, 50], ["24.", 2, 2400], ["1.234", 3, 1234],
+    // a lone separator with more digits after it than the currency has is grouping, as in "24.505" in Germany
+    ["24.505", 2, 2450500]
+  ];
+  for (const [typed, digits, minor] of cases) assert.equal(page$.parseAmount(typed, digits), minor, typed);
+  for (const [typed, digits] of [["", 2], ["0", 2], ["abc", 2], ["24.5055", 2], ["1.5", 0], ["12,34,56", 2], ["-5", 2], ["\u22125", 2], ["1e3", 2], ["1000000000000", 2]]) {
+    assert.equal(page$.parseAmount(typed, digits), null, typed);
+  }
+  assert.equal(page$.plainAmount(8420, 2), "84.20");
+  assert.equal(page$.plainAmount(1200, 0), "1200");
+});
+
+await check("an expense goes out and comes back the same", async () => {
+  const snapshot = await page$.decodeFragment(pack(replyable));
+  const reply = page$.buildReply(snapshot, 1, {
+    kind: "e", title: "Taxi <b>", amount: 2400, currency: 0, day: "2026-11-11", payer: 1, participants: [0, 1, 2]
+  }, Date.UTC(2026, 10, 11, 20, 15));
+  const payload = await page$.encodeReply(reply);
+  const link = page$.replyLink(payload);
+  assert.ok(link.startsWith("https://harrypakhale98.github.io/Splt/b/#r."));
+  assert.equal(page$.appReplyLink(payload), "splt://reply?d=" + payload);
+  const back = await page$.decodeReply(payload);
+  assert.equal(back.kind, "e");
+  assert.equal(back.title, "Taxi <b>");
+  assert.equal(back.group, "Lisbon trip");
+  assert.equal(back.author, 1);
+  assert.deepEqual(Array.from(back.participants), [0, 1, 2]);
+  assert.equal(back.names.get(2), "Priya");
+  assert.equal(page$.replyMoney(back), "€24.00");
+  writeFileSync(join(here, "reply-fixture.txt"), link + "\n");
+});
+
+await check("a payment names who paid and who was paid", async () => {
+  const snapshot = await page$.decodeFragment(pack(replyable));
+  const reply = page$.buildReply(snapshot, 1, { kind: "p", amount: 1200, currency: 1, to: 0 }, Date.UTC(2026, 10, 11));
+  const back = await page$.decodeReply(await page$.encodeReply(reply));
+  assert.equal(back.kind, "p");
+  assert.equal(back.from, 1);
+  assert.equal(back.to, 0);
+  assert.equal(page$.replyMoney(back), "JP¥1,200");
+  assert.deepEqual(Array.from(back.names.keys()), [0, 1]);
+});
+
+await check("refuses broken and hostile replies calmly", async () => {
+  const good = { v: 1, r: token, g: "Flat", a: 1, t: 1794336000, u: [[0, "A"], [1, "B"]], c: ["EUR", 2], m: 500, k: "p", f: 1, o: 0 };
+  assert.equal((await page$.decodeReply(pack(good))).amount, 500);
+  const cases = {
+    "no code": { ...good, r: undefined },
+    "zero": { ...good, m: 0 },
+    "negative": { ...good, m: -5 },
+    "fraction": { ...good, m: 5.5 },
+    "paying yourself": { ...good, o: 1 },
+    "odd kind": { ...good, k: "x" },
+    "bad currency": { ...good, c: ["<b>", 2] },
+    "huge digits": { ...good, c: ["EUR", 9] },
+    "expense without people": { ...good, k: "e", n: "X", d: "2026-11-01", p: 0, w: [] },
+    "expense twice for one person": { ...good, k: "e", n: "X", d: "2026-11-01", p: 0, w: [0, 0] },
+    "expense on no day": { ...good, k: "e", n: "X", d: "2026-02-30", p: 0, w: [0] },
+    "blank title": { ...good, k: "e", n: "  ", d: "2026-11-01", p: 0, w: [0] },
+    "name as object": { ...good, u: [[0, { a: 1 }]] }
+  };
+  for (const [name, raw] of Object.entries(cases)) {
+    const kind = await page$.decodeReply(pack(raw)).then(() => "opened", (error) => error.kind);
+    assert.equal(kind, "broken", name);
+  }
+  assert.equal(await page$.decodeReply(pack({ ...good, v: 2 })).then(() => "opened", (error) => error.kind), "newer");
+  assert.equal(await page$.decodeReply("x".repeat(5000)).then(() => "opened", (error) => error.kind), "broken");
 });
 
 console.log(`\nfixture link: ${smallLink.length} characters`);

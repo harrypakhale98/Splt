@@ -12,6 +12,7 @@ final class Router {
         didSet {
             // the invitation belongs to the add friend sheet and goes with it, however it was closed
             if oldValue == .newFriend, sheet != .newFriend { pendingInvite = nil }
+            if oldValue == .reviewReply, sheet != .reviewReply { pendingReply = nil }
         }
     }
     /// True while an open form holds typed work. A link then waits, so it cannot close the form
@@ -32,6 +33,8 @@ final class Router {
     private var showsTourAfterSheet = false
     /// An invite that was opened from a link or a scan, waiting for the add friend sheet to confirm it.
     var pendingInvite: FriendInvite?
+    /// A reply from a balance link, still packed, for the review sheet.
+    var pendingReply: String?
     /// A friend whose settle up sheet should open as soon as their screen appears.
     var pendingSettleFriend: UUID?
     /// A group invite made for one person, waiting for sync to accept it.
@@ -146,6 +149,10 @@ final class Router {
         case .join(let invite):
             sheet = nil
             pendingJoin = invite
+        case .reply(let packed):
+            // set after the sheet, whose change clears a reply that was showing before
+            sheet = .reviewReply
+            pendingReply = packed
         }
     }
 }
