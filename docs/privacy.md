@@ -33,6 +33,7 @@ When an expense is in another currency than its group, Splt can look up a rate f
 - **Camera.** Receipts are scanned on the device with Apple's frameworks. A receipt photo you keep stays on the device that scanned it and that device's backup. Only its file name syncs.
 - **Photos and files.** When you attach a receipt from your photo library or import a Splitwise file, the system picker hands Splt only the photo or file you choose.
 - **Microphone and speech.** Voice entry is turned into text on the device.
+- **Face ID.** The lock is off until you turn it on in Account. iOS checks your face or passcode and tells Splt only whether it matched. Splt never sees or stores your face data.
 - **Smart entry and suggestions.** These use Apple's on-device language model when it is available.
 - **Translation.** Comments are translated with Apple's system translation.
 - **Notifications.** Reminders are local notifications that Splt schedules on your device. A notice about a friend's change is built on your device after iCloud wakes the app. Splt has no push server.
