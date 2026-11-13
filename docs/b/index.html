@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-iT5j685K06oNjRY8osRk8bGGIIwk+uMU1ijeIml6yRw='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4Zntgtnvi7snqqeBfq3iNRexiFBvCNUMyA4UP2qiJOY='; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="light dark">
@@ -905,7 +905,8 @@ function drawCompose(root, snapshot, me, kind, state) {
     date.value = todayString(Date.now());
     const everyone = activeMembers(snapshot);
     if (!everyone.some((entry) => entry.index === me)) everyone.unshift({ member: snapshot.members[me], index: me });
-    const payer = picker(everyone.map((entry) => ({ value: entry.index, label: entry.index === me ? "You" : entry.member.name })), me);
+    const label = (entry) => (entry.index === me ? entry.member.name + " (you)" : entry.member.name);
+    const payer = picker(everyone.map((entry) => ({ value: entry.index, label: label(entry) })), me);
     payer.setAttribute("aria-label", "Paid by");
     add(card, field("What for", title), amount.row, field("Date", date), field("Paid by", payer));
     form.appendChild(card);
@@ -918,7 +919,7 @@ function drawCompose(root, snapshot, me, kind, state) {
       const box = textInput("checkbox", { "aria-label": entry.member.name });
       box.checked = true;
       boxes.push({ box, index: entry.index });
-      add(row, disc(entry.member, false), el("span", "grow", entry.index === me ? entry.member.name + " (you)" : entry.member.name), box);
+      add(row, disc(entry.member, false), el("span", "grow", label(entry)), box);
       people.appendChild(row);
     }
     form.appendChild(people);

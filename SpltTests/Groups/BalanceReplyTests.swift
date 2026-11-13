@@ -239,6 +239,15 @@ struct ReplyReviewModelTests {
             return
         }
         #expect(proposal.author.id == fixture.sam.id)
+        #expect(proposal.me == fixture.me.id)
+        #expect(proposal.name(of: fixture.me) == "You")
+        if case .expense(_, _, let shares) = proposal.item {
+            // in the group's order, each with their part
+            #expect(shares.map(\.person.id) == [fixture.me.id, fixture.sam.id, fixture.priya.id])
+            #expect(shares.map(\.amount) == [usdAmount(1000), usdAmount(1000), usdAmount(1000)])
+        } else {
+            Issue.record("expected an expense")
+        }
         #expect(try fixture.services.expenses.expenses(in: fixture.group.id).isEmpty)
 
         #expect(model.add() == fixture.group.id)
@@ -280,23 +289,20 @@ struct ReplyReviewModelTests {
         let token = store.token(for: fixture.group.id, people: [fixture.priya.id, fixture.sam.id, fixture.me.id])
         let packed = try fragment(BalanceReplyFormatTests.expense(author: 0, payer: 0, participants: [0, 2]), token: token)
         let model = ReplyReviewModel(fragment: packed, services: fixture.services, store: store)
-        guard case .ready(let proposal) = model.state, case .expense(let expense, let payer, _) = proposal.item else {
+        guard case .ready(let proposal) = model.state, case .expense(let expense, let payer, let shares) = proposal.item else {
             Issue.record("expected an expense, got \(model.state)")
             return
         }
         #expect(payer.id == fixture.priya.id)
         #expect(expense.split.participants == [fixture.priya.id, fixture.me.id])
+        #expect(shares.map(\.person.id) == [fixture.me.id, fixture.priya.id])
     }
 
     @Test func refusesAReplyFromAnotherPhone() throws {
         let (fixture, store, _) = try setUp()
         let packed = try fragment(BalanceReplyFormatTests.expense(), token: BalanceReplyStore.makeToken())
         let model = ReplyReviewModel(fragment: packed, services: fixture.services, store: store)
-        guard case .problem(let title, _) = model.state else {
-            Issue.record("expected a problem, got \(model.state)")
-            return
-        }
-        #expect(title == "Open This on the Other iPhone")
+        #expect(model.state == .problem(.otherPhone(groupName: "Flat")))
         #expect(model.add() == nil)
     }
 
@@ -304,10 +310,7 @@ struct ReplyReviewModelTests {
         let (fixture, store, token) = try setUp()
         let packed = try fragment(BalanceReplyFormatTests.expense(participants: [0, 7]), token: token)
         let model = ReplyReviewModel(fragment: packed, services: fixture.services, store: store)
-        guard case .problem = model.state else {
-            Issue.record("expected a problem, got \(model.state)")
-            return
-        }
+        #expect(model.state == .problem(.unknownPerson))
     }
 
     @Test func refusesSomeoneWhoLeft() throws {
@@ -315,21 +318,13 @@ struct ReplyReviewModelTests {
         try fixture.services.groups.removeMember(fixture.priya.id, from: fixture.group.id)
         let packed = try fragment(BalanceReplyFormatTests.expense(), token: token)
         let model = ReplyReviewModel(fragment: packed, services: fixture.services, store: store)
-        guard case .problem(let title, let message) = model.state else {
-            Issue.record("expected a problem, got \(model.state)")
-            return
-        }
-        #expect(title == "Someone Left")
-        #expect(message.contains("Priya"))
+        #expect(model.state == .problem(.personLeft(name: "Priya", groupName: "Flat")))
     }
 
     @Test func saysWhenALinkIsBroken() throws {
         let (fixture, store, _) = try setUp()
         let model = ReplyReviewModel(fragment: "AAAA", services: fixture.services, store: store)
-        #expect(model.state == .problem(
-            title: "This Link Doesn't Open",
-            message: "It may have been cut short when it was copied. Ask for it to be sent again."
-        ))
+        #expect(model.state == .problem(.unreadable))
     }
 }
 

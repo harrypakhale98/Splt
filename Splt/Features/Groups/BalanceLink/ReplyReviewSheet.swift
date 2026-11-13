@@ -1,8 +1,8 @@
 import SpltCore
 import SwiftUI
 
-/// Shows an expense or a payment a friend sent back from a balance link, so you can check it before
-/// it goes into the group. Nothing is added until you tap Add.
+/// Shows an expense or a payment a friend sent back from a balance link, laid out like the expense
+/// screen, so you can check it before it goes into the group. Nothing is added until you tap Add.
 struct ReplyReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(Router.self) private var router
@@ -29,7 +29,8 @@ struct ReplyReviewSheet: View {
                     Text(model.errorMessage ?? "")
                 }
         }
-        .presentationDetents([.medium, .large])
+        // the split is what needs checking, so the sheet opens tall enough to show it
+        .presentationDetents([.large])
         .accessibilityIdentifier("reply.sheet")
     }
 
@@ -48,57 +49,34 @@ struct ReplyReviewSheet: View {
         case .ready(let proposal):
             ready(proposal)
         case .alreadyAdded(let groupName, let group):
-            ContentUnavailableView {
-                Label("Already Added", systemImage: "checkmark.circle")
-            } description: {
-                Text("This is already in \(groupName).")
-            } actions: {
-                Button("Open \(groupName)") { router.open(.group(group.rawValue)) }
-                    .buttonStyle(.bordered)
-            }
-        case .problem(let title, let message):
-            ContentUnavailableView {
-                Label(title, systemImage: "link")
-            } description: {
-                Text(message)
-            }
+            EmptyStateView(
+                title: "Already Added",
+                systemImage: "checkmark.circle",
+                description: "This is already in \(groupName).",
+                actionTitle: "Open \(groupName)",
+                action: { router.open(.group(group.rawValue)) }
+            )
+        case .problem(let problem):
+            problemView(problem)
         }
     }
 
+    // MARK: Ready
+
     private func ready(_ proposal: ReplyReviewModel.Proposal) -> some View {
         List {
-            Section {
-                RaisedRows {
-                    HStack(spacing: 12) {
-                        AvatarView(person: proposal.author, members: proposal.group.memberIDs, size: 32)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(sentLine(proposal))
-                                .font(.subheadline.weight(.semibold))
-                            Text("For \(proposal.groupName) · \(proposal.sentAt.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.footnote)
-                                .foregroundStyle(Ink.secondary)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
+            header(proposal)
+            if case .expense(let expense, _, let shares) = proposal.item {
+                splitSection(expense, shares: shares, group: proposal.group)
             }
-            .raisedSection()
-
-            Section {
-                RaisedRows {
-                    switch proposal.item {
-                    case .expense(let expense, let payer, let participants):
-                        expenseRows(expense, payer: payer, participants: participants, group: proposal.group)
-                    case .payment(let payment, let from, let to):
-                        paymentRows(payment, from: from, to: to, group: proposal.group)
-                    }
-                }
-            } footer: {
-                Text("Nothing is added until you tap below. You can edit or delete it afterwards, like anything else in the group.")
-                    .padding(.horizontal, Depth.pageMargin + 4)
-            }
-            .raisedSection()
+            Text(sentLine(proposal))
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
         }
+        .listStyle(.plain)
+        .listRowSeparatorTint(Ink.hairline)
         .safeAreaInset(edge: .bottom) {
             Button(addLabel(proposal)) {
                 if let group = model.add() {
@@ -112,62 +90,99 @@ struct ReplyReviewSheet: View {
         }
     }
 
-    @ViewBuilder
-    private func expenseRows(_ expense: Expense, payer: Person, participants: [Person], group: SplitGroup) -> some View {
-        detail("What for", expense.title)
-        detail("Amount", MoneyFormatting.string(expense.total))
-        detail("Date", expense.date.formatted(date: .abbreviated, time: .omitted))
-        HStack {
-            Text("Paid by")
-            Spacer()
-            AvatarView(person: payer, members: group.memberIDs, size: 22)
-            Text(payer.name).foregroundStyle(Ink.secondary)
-        }
-        .accessibilityElement(children: .combine)
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Split equally")
-                Spacer()
-                if let each = equalShare(expense, count: participants.count) {
-                    Text("\(each) each").foregroundStyle(Ink.secondary)
+    /// The expense screen's header: what it was, the one big number, who paid and when.
+    private func header(_ proposal: ReplyReviewModel.Proposal) -> some View {
+        Section {
+            VStack(spacing: 8) {
+                Text(headline(proposal))
+                    .font(Typeface.heading)
+                    .multilineTextAlignment(.center)
+                HeroAmount(amount(proposal), showsSign: false)
+                Text(quietLine(proposal))
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.secondary)
+                    .multilineTextAlignment(.center)
+                if case .expense(_, _, let shares) = proposal.item {
+                    ShareStrip(
+                        people: shares.map(\.person.id),
+                        members: proposal.group.memberIDs,
+                        weights: shares.map { Double(max($0.amount.minorUnits, 0)) },
+                        isGrooved: true
+                    )
+                    .padding(.top, 8)
                 }
             }
-            Text(ListFormatter.localizedString(byJoining: participants.map(\.name)))
-                .font(.subheadline)
-                .foregroundStyle(Ink.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .accessibilityElement(children: .combine)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
-        .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder
-    private func paymentRows(_ payment: Payment, from: Person, to: Person, group: SplitGroup) -> some View {
-        HStack(spacing: 8) {
-            AvatarView(person: from, members: group.memberIDs, size: 22)
-            Text("\(from.name) paid \(to.name)")
-            Spacer()
-            Text(MoneyFormatting.string(payment.amount))
+    /// Each person's share, as the expense screen lists them.
+    private func splitSection(_ expense: Expense, shares: [ReplyReviewModel.ShareLine], group: SplitGroup) -> some View {
+        Section {
+            RaisedRows {
+                ForEach(shares) { line in
+                    HStack {
+                        AvatarView(person: line.person, members: group.memberIDs, size: 28)
+                        Text(line.person.name)
+                        Spacer(minLength: 8)
+                        MoneyLabel(money: line.amount).font(Typeface.figure)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        } header: {
+            SectionHeader("Split")
+        } footer: {
+            Text(SplitMethod(expense.split).title)
+                .font(.footnote)
                 .foregroundStyle(Ink.secondary)
         }
-        .accessibilityElement(children: .combine)
-        detail("Date", payment.date.formatted(date: .abbreviated, time: .omitted))
+        // a plain list draws a section footer on white, not on the paper behind it
+        .listRowBackground(Ink.paper)
     }
 
-    private func detail(_ label: LocalizedStringKey, _ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label)
-            Spacer(minLength: 16)
-            Text(value)
-                .foregroundStyle(Ink.secondary)
-                .multilineTextAlignment(.trailing)
+    // MARK: Words
+
+    private func amount(_ proposal: ReplyReviewModel.Proposal) -> Money {
+        switch proposal.item {
+        case .expense(let expense, _, _): expense.total
+        case .payment(let payment, _, _): payment.amount
         }
-        .accessibilityElement(children: .combine)
+    }
+
+    private func headline(_ proposal: ReplyReviewModel.Proposal) -> String {
+        switch proposal.item {
+        case .expense(let expense, _, _): expense.title
+        case .payment: String(localized: "Payment")
+        }
+    }
+
+    /// "Maya Chen paid · 11 Nov 2026", or who paid whom for a payment.
+    private func quietLine(_ proposal: ReplyReviewModel.Proposal) -> String {
+        switch proposal.item {
+        case .expense(let expense, let payer, _):
+            let who = ExpenseSummary.payerText(expense.payers, currentPerson: proposal.me, names: [payer.id: payer.name])
+            return [who, expense.date.formatted(.dateTime.day().month(.abbreviated).year())].joined(separator: " \u{00B7} ")
+        case .payment(let payment, let from, let to):
+            let who: String = if from.id == proposal.me {
+                String(localized: "You paid \(to.name)")
+            } else if to.id == proposal.me {
+                String(localized: "\(from.name) paid you")
+            } else {
+                String(localized: "\(from.name) paid \(to.name)")
+            }
+            return [who, payment.date.formatted(.dateTime.day().month(.abbreviated).year())].joined(separator: " \u{00B7} ")
+        }
     }
 
     private func sentLine(_ proposal: ReplyReviewModel.Proposal) -> String {
-        switch proposal.item {
-        case .expense: String(localized: "\(proposal.author.name) sent an expense")
-        case .payment: String(localized: "\(proposal.author.name) sent a payment")
-        }
+        let name = proposal.author.name
+        let when = proposal.sentAt.formatted(date: .abbreviated, time: .shortened)
+        return String(localized: "Sent by \(name) from a balance link on \(when). Nothing is added until you tap below, and you can edit or delete it afterwards.")
     }
 
     private func addLabel(_ proposal: ReplyReviewModel.Proposal) -> String {
@@ -177,10 +192,52 @@ struct ReplyReviewSheet: View {
         }
     }
 
-    /// What each person's share comes to, when it splits evenly to the cent.
-    private func equalShare(_ expense: Expense, count: Int) -> String? {
-        guard count > 0, expense.total.minorUnits % Int64(count) == 0 else { return nil }
-        return MoneyFormatting.string(Money(minorUnits: expense.total.minorUnits / Int64(count), currencyCode: expense.total.currencyCode))
+    // MARK: Problems
+
+    @ViewBuilder
+    private func problemView(_ problem: ReplyReviewModel.Problem) -> some View {
+        switch problem {
+        case .unreadable:
+            EmptyStateView(
+                title: "This Link Doesn't Open", systemImage: "link",
+                description: "It may have been cut short when it was copied. Ask for it to be sent again."
+            )
+        case .newerVersion:
+            EmptyStateView(
+                title: "Update Splt", systemImage: "arrow.down.circle",
+                description: "This was sent from a newer balance page than this version of Splt reads. Update Splt and open the link again."
+            )
+        case .otherPhone(let groupName):
+            EmptyStateView(
+                title: "Open This on the Other iPhone", systemImage: "iphone",
+                description: "This answers a balance link for \(groupName) that was shared from another iPhone, or more than six months ago. Only the iPhone that shared the link can add it."
+            )
+        case .groupMissing(let groupName):
+            EmptyStateView(
+                title: "Group Not Found", systemImage: "questionmark.circle",
+                description: "\(groupName) isn't on this iPhone anymore."
+            )
+        case .unknownPerson:
+            EmptyStateView(
+                title: "This Link Doesn't Open", systemImage: "link",
+                description: "It names someone the balance link didn't. Ask for it to be sent again."
+            )
+        case .personMissing(let name, let groupName):
+            EmptyStateView(
+                title: "Someone Is Missing", systemImage: "person.crop.circle.badge.questionmark",
+                description: "\(name) isn't in \(groupName) anymore, so this can't be added."
+            )
+        case .personLeft(let name, let groupName):
+            EmptyStateView(
+                title: "Someone Left", systemImage: "person.crop.circle.badge.minus",
+                description: "\(name) has left \(groupName), so this can't be added."
+            )
+        case .cannotSplit:
+            EmptyStateView(
+                title: "This Can't Be Split", systemImage: "divide",
+                description: "The amount doesn't divide between these people. Ask for it to be sent again."
+            )
+        }
     }
 
     private var errorBinding: Binding<Bool> {
