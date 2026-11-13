@@ -31,9 +31,26 @@ final class AppLock {
         self.authenticator = authenticator
         self.store = store
         self.now = now
+        Self.dropLockIfUnopenable(store: store, authenticator: authenticator)
         let enabled = store.bool(forKey: Preferences.Key.biometricLockEnabled)
         isLocked = enabled
         promptPending = enabled
+    }
+
+    /// A phone whose passcode was removed can't open the lock. Turn it off rather than lock the person
+    /// out of their own data, which deleting the app would be the only way back from.
+    private static func dropLockIfUnopenable(store: UserDefaults, authenticator: any OwnerAuthenticating) {
+        if store.bool(forKey: Preferences.Key.biometricLockEnabled), authenticator.isPasscodeMissing() {
+            store.set(false, forKey: Preferences.Key.biometricLockEnabled)
+        }
+    }
+
+    private func releaseIfUnopenable() {
+        Self.dropLockIfUnopenable(store: store, authenticator: authenticator)
+        if !isEnabled {
+            isLocked = false
+            promptPending = false
+        }
     }
 
     var isEnabled: Bool {
@@ -60,6 +77,8 @@ final class AppLock {
     @discardableResult
     func didReturn() -> Bool {
         defer { leftAt = nil }
+        // the passcode may have been removed while the app was away
+        releaseIfUnopenable()
         guard let leftAt else { return false }
         if isEnabled, !isLocked, now().timeIntervalSince(leftAt) >= Self.gracePeriod { isLocked = true }
         if isLocked { promptPending = true }
@@ -80,7 +99,16 @@ final class AppLock {
         defer { isUnlocking = false }
         if await authenticator.authenticate(reason: String(localized: "Unlock Splt")) {
             isLocked = false
+        } else {
+            releaseIfUnopenable()
         }
+    }
+
+    /// Confirms the owner before the lock is turned off, so whoever picks up an unlocked phone inside
+    /// the grace period can't switch it off. Where nothing can confirm anyone, it can always be turned off.
+    func confirmDisabling() async -> Bool {
+        guard authenticator.isAvailable() else { return true }
+        return await authenticator.authenticate(reason: String(localized: "Turn off the lock for Splt"))
     }
 
     /// Confirms the owner before the setting is turned on, so it is never on with a lock that can't be opened.

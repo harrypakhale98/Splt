@@ -26,7 +26,8 @@ struct SystemNotificationPoster: LocalNotificationPosting {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    func post(_ content: LocalNotificationContent) async {
+    func post(_ original: LocalNotificationContent) async {
+        let content = NotificationPrivacy.apply(to: original)
         let message = UNMutableNotificationContent()
         message.title = content.title
         message.body = content.body

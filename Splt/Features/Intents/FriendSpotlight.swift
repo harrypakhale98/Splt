@@ -79,11 +79,18 @@ extension View {
 private struct FriendSpotlightModifier: ViewModifier {
     let services: DataServices?
     let router: Router
+    // with the lock on, friends' names stay out of Spotlight, where a locked phone could show them
+    @AppStorage(Preferences.Key.biometricLockEnabled) private var lockOn = false
 
     private struct Entry: Hashable {
         var id: PersonID
         var name: String
         var isPlaceholder: Bool
+    }
+
+    private struct IndexState: Hashable {
+        var entries: [Entry]
+        var lockOn: Bool
     }
 
     private var entries: [Entry] {
@@ -97,8 +104,12 @@ private struct FriendSpotlightModifier: ViewModifier {
                     router.open(.friend(id.rawValue))
                 }
             }
-            .task(id: entries) {
+            .task(id: IndexState(entries: entries, lockOn: lockOn)) {
                 guard let services else { return }
+                if lockOn {
+                    await FriendIndexer().update(friends: [], blocked: [])
+                    return
+                }
                 let friends = services.friendsStore.summaries.map(\.person)
                 await FriendIndexer().update(friends: friends, blocked: FriendVisibilityStore().ids(in: .blocked))
             }

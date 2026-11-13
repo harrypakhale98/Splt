@@ -12,6 +12,8 @@ extension View {
 private struct GroupSpotlightModifier: ViewModifier {
     let services: DataServices?
     let router: Router
+    // with the lock on, group names and members stay out of Spotlight, where a locked phone could show them
+    @AppStorage(Preferences.Key.biometricLockEnabled) private var lockOn = false
 
     /// What the index shows. Used as the task id so the index updates only when it would change.
     private struct Entry: Hashable {
@@ -23,6 +25,11 @@ private struct GroupSpotlightModifier: ViewModifier {
         /// The members' names are search keywords, so renaming someone must re-index.
         var memberNames: [String]
         var isIndexed: Bool
+    }
+
+    private struct IndexState: Hashable {
+        var entries: [Entry]
+        var lockOn: Bool
     }
 
     private var entries: [Entry] {
@@ -49,8 +56,12 @@ private struct GroupSpotlightModifier: ViewModifier {
                     router.open(.group(id.rawValue))
                 }
             }
-            .task(id: entries) {
+            .task(id: IndexState(entries: entries, lockOn: lockOn)) {
                 guard let services else { return }
+                if lockOn {
+                    await GroupIndexer().update(groups: [], people: [:])
+                    return
+                }
                 let left = LeftGroupsStore()
                 let groups = services.groupsStore.summaries.map(\.group).filter { !left.contains($0.id) }
                 let people = Dictionary(

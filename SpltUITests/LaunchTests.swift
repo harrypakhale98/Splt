@@ -32,6 +32,16 @@ final class LaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testFaceIDLockIsOffByDefaultAndLeavesTheAppOpen() {
+        let app = launchApp()
+        openAccount(in: app)
+        let toggle = app.switches["account.biometricLock"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "the Face ID toggle is missing from Account")
+        XCTAssertEqual(toggle.value as? String, "0", "the lock must be off until the user turns it on")
+        XCTAssertFalse(app.otherElements["lock.screen"].exists, "nothing should be locked by default")
+    }
+
+    @MainActor
     func testWelcomeTourOpensFromAccount() {
         let app = launchApp()
         openAccount(in: app)

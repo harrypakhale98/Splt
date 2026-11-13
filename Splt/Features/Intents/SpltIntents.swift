@@ -27,6 +27,7 @@ struct AddExpenseIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        try await IntentLock.requireUnlocked()
         guard let services = IntentServices.shared.live() else { throw IntentError.noStorage }
         do {
             let added = try IntentActions(services: services).addExpense(
@@ -76,6 +77,7 @@ struct ViewBalanceIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        try await IntentLock.requireUnlocked()
         guard let services = IntentServices.shared.live() else { throw IntentError.noStorage }
         do {
             let text = try IntentActions(services: services).balanceSentence(friend: friend?.id, group: group?.id)
@@ -91,6 +93,7 @@ struct IntentError: Error, CustomLocalizedStringResourceConvertible {
     let localizedStringResource: LocalizedStringResource
 
     static let noStorage = IntentError(localizedStringResource: "Splt couldn't open its data.")
+    static let locked = IntentError(localizedStringResource: "Splt is locked. Unlock it to continue.")
 
     init(localizedStringResource: LocalizedStringResource) {
         self.localizedStringResource = localizedStringResource

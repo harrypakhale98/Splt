@@ -31,6 +31,9 @@ enum BiometricKind: Equatable, Sendable {
 protocol OwnerAuthenticating: Sendable {
     /// Whether the phone can confirm its owner at all. False when it has no passcode.
     func isAvailable() -> Bool
+    /// True when the phone has no passcode at all, so nothing can confirm its owner and a lock
+    /// that was on could never be opened.
+    func isPasscodeMissing() -> Bool
     func kind() -> BiometricKind
     func authenticate(reason: String) async -> Bool
 }
@@ -39,6 +42,12 @@ struct BiometricAuth: OwnerAuthenticating {
     func isAvailable() -> Bool {
         // the passcode policy, so a phone with a passcode but no face enrolled still works
         LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
+    }
+
+    func isPasscodeMissing() -> Bool {
+        var error: NSError?
+        _ = LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
+        return error?.code == LAError.passcodeNotSet.rawValue
     }
 
     func kind() -> BiometricKind {

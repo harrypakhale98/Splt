@@ -65,7 +65,8 @@ struct SystemReminderCenter: ReminderCenter {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
-    func add(_ request: ReminderRequest) async throws {
+    func add(_ original: ReminderRequest) async throws {
+        let request = NotificationPrivacy.apply(to: original)
         let content = UNMutableNotificationContent()
         content.title = request.title
         content.body = request.body

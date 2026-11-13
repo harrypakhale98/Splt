@@ -48,28 +48,31 @@ struct SettingsSections: View {
         } header: {
             SectionHeader("Preferences")
         } footer: {
-            VStack(alignment: .leading, spacing: 0) {
-                if notificationsBlocked {
-                    // turning the toggle on can't work until notifications are allowed in the Settings app
-                    Text("Notifications are turned off in the Settings app.")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.secondary)
-                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
-                        Link("Open Settings", destination: url)
+            // nothing at all when there is nothing to say, so no empty element is left for VoiceOver
+            if notificationsBlocked || !lockAvailable || preferences.biometricLockEnabled {
+                VStack(alignment: .leading, spacing: 0) {
+                    if notificationsBlocked {
+                        // turning the toggle on can't work until notifications are allowed in the Settings app
+                        Text("Notifications are turned off in the Settings app.")
                             .font(.footnote)
-                            .foregroundStyle(Ink.text)
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
+                            .foregroundStyle(Ink.secondary)
+                        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                            Link("Open Settings", destination: url)
+                                .font(.footnote)
+                                .foregroundStyle(Ink.text)
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
                     }
-                }
-                if !lockAvailable {
-                    Text("Set a passcode on your iPhone to lock Splt with \(lockKind.name).")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.secondary)
-                } else if preferences.biometricLockEnabled {
-                    Text("Splt asks for \(lockKind.name) when you open it, and again if you have been away for more than \(Int(AppLock.gracePeriod)) seconds.")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.secondary)
+                    if !lockAvailable {
+                        Text("Set a passcode on your iPhone to lock Splt with \(lockKind.name).")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.secondary)
+                    } else if preferences.biometricLockEnabled {
+                        Text("Splt asks for \(lockKind.name) when you open it, and again if you have been away for more than \(Int(AppLock.gracePeriod)) seconds.")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.secondary)
+                    }
                 }
             }
         }
@@ -108,13 +111,16 @@ struct SettingsSections: View {
         }
     }
 
-    /// Turning it on asks for Face ID first, so the lock is never on without a way to open it.
+    /// Turning it on or off asks for Face ID first: on, so the lock is never on without a way to open it,
+    /// off, so a borrowed unlocked phone can't switch it off.
     private var lockBinding: Binding<Bool> {
         Binding(
             get: { preferences.biometricLockEnabled },
             set: { isOn in
                 guard isOn else {
-                    preferences.biometricLockEnabled = false
+                    Task {
+                        if await lock.confirmDisabling() { preferences.biometricLockEnabled = false }
+                    }
                     return
                 }
                 Task {
