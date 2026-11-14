@@ -19,6 +19,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Your d
 - Group invites through iCloud, by link or by QR code
 - Reminders you share as a message, and a balance link for friends without an iPhone, who can send an expense or a payment back for you to check
 - A default split and a cover photo for each group
+- Catch Payments: card payments from Wallet, a bank text or a screenshot wait in a To Split list, kept on your iPhone, ready to split in a swipe
 - Import from Splitwise, and export to a spreadsheet (CSV), PDF or JSON
 - A trip recap for each group, and Spending charts for your share over the last 12 months
 - Backup and restore of everything to a file

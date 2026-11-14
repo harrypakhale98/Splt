@@ -26,6 +26,10 @@ On your device and in your own iCloud. There is no Splt server, and the develope
 
 Open Account in Splt to see the sync status. Check that you are signed in to iCloud on your device and that you have free iCloud storage. A group someone else shared uses their iCloud storage, not yours. Splt keeps changes on the device and uploads them when it can. Sync does not run in the iOS Simulator.
 
+### How do I catch card payments?
+
+Open Account, then Catch Payments, for the setup steps. In short, a Shortcuts automation for Wallet, or Log Payment from a bank text or email, hands Splt a shop name and an amount. You can also share a screenshot to Splt. Each one waits in To Split at the top of Activity: swipe right to split it into the suggested group, swipe left to mark it as yours, or tap it to open the filled-in form. Nothing is split until you choose. Payments stay on your iPhone and never sync, and Splt never asks for a bank login.
+
 ### Can I move my data out?
 
 Yes. Open a group, then Group Settings, and export it as a spreadsheet (CSV), PDF or JSON. To keep everything at once, make a backup, as below.
