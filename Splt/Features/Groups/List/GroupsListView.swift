@@ -30,7 +30,6 @@ private struct GroupsListContent: View {
     @Environment(\.groupSharing) private var sharing
     @State private var model: GroupsListViewModel
     @State private var pendingDelete: SplitGroup?
-    @State private var showsImport = false
     @State private var settingsGroup: SplitGroup?
 
     init(services: DataServices) {
@@ -84,21 +83,12 @@ private struct GroupsListContent: View {
                 }
                 .disabled(!model.hasGroups)
             }
-            ToolbarItem(placement: .secondaryAction) {
-                Button("Import from Splitwise", systemImage: "square.and.arrow.down") {
-                    showsImport = true
-                }
-            }
-        }
-        .sheet(isPresented: $showsImport) {
-            SplitwiseImportSheet()
         }
         // a sheet, as from the group screen, so Done is the one way out and nothing is dropped by Back
         .sheet(item: $settingsGroup) { group in
             GroupSettingsView(groupID: group.id, onGroupRemoved: { model.refresh() })
         }
         .closingSheetsOnLink {
-            showsImport = false
             settingsGroup = nil
         }
         .onAppear { model.refresh() }

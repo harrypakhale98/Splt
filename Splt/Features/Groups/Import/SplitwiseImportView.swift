@@ -2,7 +2,7 @@ import SpltCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Imports a Splitwise CSV export as a new group. Push it, or present it with `SplitwiseImportSheet`.
+/// Imports a Splitwise CSV export as a new group. Settings pushes it.
 struct SplitwiseImportView: View {
     /// Called with the new group. Without it the group opens in the Groups tab.
     var onImported: ((GroupID) -> Void)?
@@ -16,26 +16,6 @@ struct SplitwiseImportView: View {
             EmptyStateView.dataUnavailable
             .navigationTitle("Import from Splitwise")
             .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
-
-/// The import flow in its own sheet, with a Cancel button.
-struct SplitwiseImportSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(Router.self) private var router
-
-    var body: some View {
-        NavigationStack {
-            SplitwiseImportView(onImported: { id in
-                dismiss()
-                router.open(.group(id.rawValue))
-            })
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", role: .cancel) { dismiss() }
-                }
-            }
         }
     }
 }
