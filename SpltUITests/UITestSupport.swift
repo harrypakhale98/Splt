@@ -47,6 +47,31 @@ extension XCTestCase {
         app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != 'BackButton'", name)).firstMatch
     }
 
+    /// A button in a sheet's navigation bar, such as Create. On iPhone Duo the bar hides while the form is scrolled
+    /// down, which happens when a field low in the form takes the keyboard, so this scrolls back to the top first.
+    @MainActor
+    func toolbarButton(_ title: String, in app: XCUIApplication) -> XCUIElement {
+        let button = app.buttons[title]
+        var attempts = 0
+        while !button.exists && attempts < 6 {
+            scroll(.down, in: app)
+            attempts += 1
+        }
+        if attempts > 0 {
+            // a tap while the bar is still sliding back in lands where the button is not yet
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.8))
+            _ = waitUntilHittable(button, timeout: 5)
+        }
+        return button
+    }
+
+    /// Taps the back button, in the navigation bar on most iPhones or in the side rail iPhone Duo shows instead.
+    @MainActor
+    func goBack(in app: XCUIApplication) {
+        let back = app.buttons["BackButton"].firstMatch
+        (back.exists ? back : app.navigationBars.buttons.firstMatch).tap()
+    }
+
     /// The first element with this accessibility identifier, whatever its type.
     @MainActor
     func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
@@ -183,7 +208,7 @@ extension XCTestCase {
             memberField.typeText("\(member)\n")
             XCTAssertTrue(app.staticTexts[member].waitForExistence(timeout: 5))
         }
-        app.buttons["Create"].tap()
+        toolbarButton("Create", in: app).tap()
         XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 10), "\(name) was not created")
     }
 

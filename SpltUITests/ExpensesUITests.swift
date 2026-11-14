@@ -111,6 +111,8 @@ final class ExpensesUITests: XCTestCase {
 
         let describe = field("expense-describe", in: app)
         XCTAssertTrue(describe.waitForExistence(timeout: 5))
+        // below the number pad on a short screen such as iPhone Duo's
+        reveal(describe, in: app)
         describe.tap()
         describe.typeText("Pizza 30 with Alex, I paid")
         app.buttons["Fill In"].tap()

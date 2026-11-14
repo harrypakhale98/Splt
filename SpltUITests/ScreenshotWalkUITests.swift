@@ -51,7 +51,7 @@ final class ScreenshotWalkUITests: XCTestCase {
         shot("06-expense-detail")
         for _ in 0..<3 { app.swipeUp() }
         shot("06b-expense-history")
-        app.navigationBars.buttons.firstMatch.tap()
+        goBack(in: app)
 
         let link = app.buttons["Share as a Link"].firstMatch
         if link.waitForExistence(timeout: 5) {
@@ -93,12 +93,7 @@ final class ScreenshotWalkUITests: XCTestCase {
             }
         }
 
-        let backToGroups = app.navigationBars.buttons["Groups"]
-        if backToGroups.exists {
-            backToGroups.tap()
-        } else if app.navigationBars.buttons.firstMatch.exists {
-            app.navigationBars.buttons.firstMatch.tap()
-        }
+        goBack(in: app)
 
         if visit("Friends", in: app) {
             shot("11-friends")
@@ -117,7 +112,7 @@ final class ScreenshotWalkUITests: XCTestCase {
             if spending.waitForExistence(timeout: 5) {
                 spending.tap()
                 shot("13b-spending")
-                app.navigationBars.buttons.firstMatch.tap()
+                goBack(in: app)
             }
         }
 

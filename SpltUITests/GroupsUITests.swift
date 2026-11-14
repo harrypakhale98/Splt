@@ -29,13 +29,13 @@ final class GroupsUITests: XCTestCase {
         member.typeText("Alex\n")
         XCTAssertTrue(app.staticTexts["Alex"].waitForExistence(timeout: 5))
 
-        app.buttons["Create"].tap()
+        toolbarButton("Create", in: app).tap()
 
         XCTAssertTrue(app.navigationBars["Weekend Away"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["All settled up"].exists)
         XCTAssertFalse(app.buttons["Settle Up"].exists)
 
-        app.navigationBars.buttons["Groups"].tap()
+        goBack(in: app)
         XCTAssertTrue(app.navigationBars["Groups"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Weekend Away"].exists)
         XCTAssertTrue(app.staticTexts["Settled up"].exists)

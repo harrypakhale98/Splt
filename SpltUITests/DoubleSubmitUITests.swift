@@ -28,7 +28,7 @@ final class DoubleSubmitUITests: XCTestCase {
         let bar = app.navigationBars[title]
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "\(title) did not open")
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 1))
-        bar.buttons.firstMatch.tap()
+        goBack(in: app)
         // a stray second push would leave another copy of the screen behind it
         XCTAssertFalse(app.navigationBars[title].waitForExistence(timeout: 2), "\(title) was pushed twice")
     }
@@ -79,7 +79,7 @@ final class DoubleSubmitUITests: XCTestCase {
     func testADoubleTapOnAddMemberAddsOnePerson() {
         let app = launchApp()
         createGroup(named: "Members", members: ["Alex"], in: app)
-        app.navigationBars["Members"].buttons.element(boundBy: app.navigationBars["Members"].buttons.count - 1).tap()
+        app.buttons["More"].firstMatch.tap()
         let settings = app.buttons["Group Settings"].firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 5), visibleControls(in: app))
         settings.tap()

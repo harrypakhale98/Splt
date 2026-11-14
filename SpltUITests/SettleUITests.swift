@@ -69,7 +69,7 @@ final class SettleUITests: XCTestCase {
         undo.doubleTap()
         XCTAssertTrue(app.staticTexts["Payment undone"].waitForExistence(timeout: 10))
 
-        app.navigationBars.buttons.firstMatch.tap()
+        goBack(in: app)
         XCTAssertTrue(app.navigationBars["Friends"].waitForExistence(timeout: 5))
         reveal(row, in: app)
         XCTAssertEqual(row.label, before)
