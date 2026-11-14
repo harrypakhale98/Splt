@@ -11,6 +11,10 @@ struct SplitBarView: View {
     var onDrag: (Int, Double) -> SplitBarDrag?
     var onStep: (PersonID, Bool) -> Void
     var onTap: (PersonID) -> Void
+    /// Fixed hues for people the color book has never seen, such as the welcome tour's sample split.
+    var hues: [PersonID: Int]?
+    /// False where tapping a person opens nothing, so VoiceOver offers no Fine tune action.
+    var offersFineTune = true
 
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 56
     @Environment(\.locale) private var locale
@@ -33,7 +37,7 @@ struct SplitBarView: View {
             let width = proxy.size.width
             let layout = SplitBarLayout.make(weights: data.weights, scale: data.scale, width: width)
             let _ = PersonColorRevision.shared.value
-            let palette = PersonPalette.colors(for: members)
+            let palette = hues?.mapValues { PersonPalette.color(at: $0) } ?? PersonPalette.colors(for: members)
             ZStack(alignment: .topLeading) {
                 segmentsRow(layout: layout, palette: palette)
                 if data.canDrag {
@@ -84,7 +88,9 @@ struct SplitBarView: View {
                 .accessibilityValue(spokenValue(for: segment))
                 .accessibilityHint(data.canDrag ? String(localized: "Swipe up or down to change. \(stepHint) at a time.") : "")
                 .adjustable(when: data.canDrag) { increase in onStep(segment.id, increase) }
-                .accessibilityAction(named: Text("Fine tune")) { onTap(segment.id) }
+                .accessibilityActions {
+                    if offersFineTune { Button("Fine tune") { onTap(segment.id) } }
+                }
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))

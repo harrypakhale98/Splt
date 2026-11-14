@@ -8,6 +8,8 @@ struct SplitShareList: View {
     let members: [PersonID]
     let currentPerson: PersonID?
     var onStep: (PersonID, Bool) -> Void
+    /// Fixed hues for people the color book has never seen, as on the bar.
+    var hues: [PersonID: Int]?
 
     @Environment(\.locale) private var locale
 
@@ -51,7 +53,11 @@ struct SplitShareList: View {
 
     private func identity(_ segment: SplitBarSegment, name: String) -> some View {
         HStack(spacing: 10) {
-            AvatarView(name: segment.person.name, id: segment.id, members: members, size: 28)
+            if let hue = hues?[segment.id] {
+                AvatarView(name: segment.person.name, hue: hue, size: 28)
+            } else {
+                AvatarView(name: segment.person.name, id: segment.id, members: members, size: 28)
+            }
             Text(name)
         }
     }

@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Onboarding</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;--serif:"New York",ui-serif,"Iowan Old Style",Georgia,serif}
+body{background:#E7E4DE;color:#1A1917;font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:40px 40px 80px}
+.page-head{max-width:1340px;margin:0 auto 32px}
+.page-head h1{font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:-.2px}
+.page-head p{color:#5f5c55;font-size:15px;line-height:1.45;margin-top:6px;max-width:880px}
+.page-head p b{color:#1A1917;font-weight:600}
+h2.sec{font-family:var(--serif);font-size:22px;font-weight:600;max-width:1340px;margin:56px auto 6px}
+p.sec{font-size:13.5px;line-height:1.45;color:#3e3c37;max-width:1340px;margin:0 auto 18px}
+
+/* ---------- walkthrough ---------- */
+.walk{max-width:1340px;margin:0 auto;display:flex;gap:44px;justify-content:center;align-items:flex-start}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:inline-flex;background:rgba(118,118,128,.14);border-radius:9px;padding:2px}
+.seg button{border:0;background:none;font:500 13px var(--sans);padding:5px 12px;border-radius:7px;color:#1A1917;cursor:pointer}
+.seg button.on{background:#FFFEFB;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.chk{font-size:13px;display:inline-flex;gap:6px;align-items:center;color:#3e3c37;cursor:pointer}
+.linkbtn{border:0;background:none;font:500 13px var(--sans);color:#1A1917;text-decoration:underline;cursor:pointer}
+.notes{width:430px;padding-top:6px}
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.steps span{font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#8d8a83;padding:4px 10px;border-radius:12px;background:rgba(0,0,0,.04)}
+.steps span.on{background:#1A1917;color:#F3F0EA}
+.notes h3{font-family:var(--serif);font-size:24px;font-weight:600}
+.notes .lede{font-size:14px;line-height:1.5;color:#3e3c37;margin-top:6px}
+.notes table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.notes th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:#8d8a83;font-weight:600;padding:0 8px 6px 0;border-bottom:1px solid #d6d2c9}
+.notes td{padding:8px 8px 8px 0;border-bottom:1px solid #dedad2;vertical-align:top;line-height:1.4;color:#2f2d29}
+.notes td code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(0,0,0,.05);padding:1px 4px;border-radius:4px}
+.notes ul{margin:14px 0 0 18px;font-size:13.5px;line-height:1.5;color:#3e3c37}
+.notes li{margin-bottom:5px}
+.haptic{display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:12px;font-weight:600;color:#8d8a83;padding:5px 11px;border-radius:14px;border:1px dashed #c9c4b9;transition:background .12s,color .12s}
+.haptic.fire{background:#1A1917;color:#F3F0EA;border-color:#1A1917}
+.state{margin-top:14px;font-size:12.5px;color:#6c6962}
+
+/* ---------- gallery ---------- */
+.gallery{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;max-width:1400px;margin:0 auto}
+.gallery figure{display:flex;flex-direction:column;align-items:center}
+.gallery figcaption{font-size:12px;color:#6c6962;margin-top:14px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.decisions{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px}
+.decisions div{font-size:13.5px;line-height:1.5;color:#3e3c37}
+.decisions b{color:#1A1917;font-weight:600;display:block;margin-bottom:2px}
+
+/* ---------- device ---------- */
+.device{--paper:#F3F0EA;--sheet:#FFFEFB;--text:#1A1917;--secondary:#66635B;--tertiary:#9A968C;--hairline:#E2DED5;
+  --shadow:0 0 0 .5px rgba(42,33,24,.05),0 1px 2px rgba(42,33,24,.06),0 6px 14px -4px rgba(42,33,24,.12);--toplight:inset 0 1px 0 #fff;
+  --glass:rgba(250,249,246,.72);--glassedge:inset 0 .5px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.08);
+  --fill:rgba(118,118,128,.12);--btn:#1A1917;--btnText:#F3F0EA;--pastefill:#1A1917;--on:#fff;
+  --oxide:#B5432F;--ochre:#8A660C;--moss:#3B7A4B;--lagoon:#1F7488;--indigo:#4B55A0;--pine:#1F7668;--cobalt:#2F66A8;
+  width:393px;height:852px;border-radius:55px;position:relative;overflow:hidden;background:var(--paper);color:var(--text);
+  font-family:var(--sans);font-size:17px;letter-spacing:-.4px;line-height:1.29;flex:none;contain:paint;
+  box-shadow:0 0 0 10px #161616,0 0 0 11px #4a4a4c,0 30px 50px -16px rgba(0,0,0,.35);user-select:none;-webkit-user-select:none}
+.device.dark{--paper:#131210;--sheet:#23211D;--text:#EFEDE6;--secondary:#A3A097;--tertiary:#6E6B63;--hairline:#2E2C28;
+  --shadow:0 1px 1px rgba(0,0,0,.5);--toplight:inset 0 1px 0 rgba(255,255,255,.07);
+  --glass:rgba(44,42,38,.72);--glassedge:inset 0 .5px 0 rgba(255,255,255,.14),0 0 0 .5px rgba(255,255,255,.06),0 4px 14px rgba(0,0,0,.4);
+  --fill:rgba(118,118,128,.24);--btn:#EFEDE6;--btnText:#131210;--pastefill:#5E5B54;--on:#0E0E12;
+  --oxide:#E58E7A;--ochre:#D9BC6A;--moss:#8CC99A;--lagoon:#74C1D3;--indigo:#A3A9E8;--pine:#6FC7B5;--cobalt:#8DB3E5}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:30}
+.sb{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:4px 30px 0 52px;font-weight:600;font-size:17px;letter-spacing:-.3px;z-index:20}
+.sb svg{width:78px;height:13px}
+.hi{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:139px;height:5px;border-radius:3px;background:var(--text);z-index:40}
+
+.screen{position:absolute;inset:0;background:var(--paper);transition:transform .42s cubic-bezier(.32,.72,0,1),opacity .42s cubic-bezier(.32,.72,0,1);will-change:transform}
+.screen.hidden{visibility:hidden}
+.screen.no-anim{transition:none}
+.screen.at-right{transform:translateX(100%)}
+.screen.at-left{transform:translateX(-30%)}
+.reduce .screen.at-right,.reduce .screen.at-left{transform:none;opacity:0}
+.reduce .screen{transition:opacity .25s linear}
+
+.nav{position:absolute;top:54px;left:0;right:0;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:10}
+.gb{width:44px;height:44px;border-radius:22px;background:var(--glass);box-shadow:var(--glassedge);display:grid;place-items:center;color:var(--text);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:0;cursor:pointer}
+.gpill{height:44px;border-radius:22px;background:var(--glass);box-shadow:var(--glassedge);display:flex;align-items:center;padding:0 16px;font:500 17px var(--sans);letter-spacing:-.4px;color:var(--text);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:0;cursor:pointer}
+.spacer{width:44px}
+
+.content{position:absolute;top:106px;left:0;right:0;bottom:118px;padding:48px 16px 0;overflow:hidden}
+.stack{display:flex;flex-direction:column;gap:24px;align-items:flex-start}
+.display{font-family:var(--serif);font-size:34px;line-height:1.2;font-weight:400;letter-spacing:.2px}
+.sub{font-size:20px;line-height:1.25;color:var(--secondary);letter-spacing:-.45px}
+.strip{display:flex;gap:2px;height:4px;width:100%}
+.strip i{flex:1;border-radius:1px}
+
+.card{background:var(--sheet);border-radius:24px;box-shadow:var(--toplight),var(--shadow);width:100%}
+.invite{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-top:8px}
+.invite .t{flex:1}
+.invite .t div:first-child{font-size:17px}
+.invite .t div:last-child{font-size:15px;color:var(--secondary);letter-spacing:-.24px;margin-top:2px}
+.paste{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:17px;background:var(--pastefill);color:#fff;font:600 15px var(--sans);letter-spacing:-.2px;border:0;cursor:pointer}
+
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--pine);color:var(--on);display:grid;place-items:center;font-size:22.4px;font-weight:500;letter-spacing:0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(42,33,24,.18)}
+.avatar span{transition:opacity .2s cubic-bezier(.2,.8,.2,1)}
+.reduce .avatar span{transition:none}
+.rows{margin-top:28px}
+.row{display:flex;align-items:center;min-height:44px;padding:11px 14px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;left:14px;right:0;height:.5px;background:var(--hairline)}
+.row input{flex:1;border:0;background:none;font:17px var(--sans);letter-spacing:-.4px;color:var(--text);outline:none;padding:0}
+.row input::placeholder{color:var(--tertiary)}
+.row .lbl{flex:1}
+.row .val{color:var(--secondary);margin-right:8px}
+.row .chev{color:var(--tertiary)}
+.row select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;font-size:17px}
+
+.hero{font-family:var(--serif);font-size:52px;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;white-space:nowrap}
+.barwrap{width:100%;margin-top:20px;position:relative}
+.bar{height:56px;border-radius:14px;overflow:hidden;display:flex;position:relative;touch-action:none;cursor:ew-resize}
+.bar.settle .segm{transition:flex-basis .35s cubic-bezier(.3,1.3,.5,1)}
+.reduce .bar.settle .segm{transition:none}
+.segm{flex:0 0 50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--on);position:relative;min-width:0}
+.segm:first-child::after{content:"";position:absolute;right:0;top:0;bottom:0;width:1px;background:var(--paper)}
+.segm .n{font-size:12px;font-weight:500;letter-spacing:0}
+.segm .v{font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:0;margin-top:1px}
+.handle{position:absolute;top:14px;width:4px;height:28px;margin-left:-2px;border-radius:2px;background:var(--paper);pointer-events:none;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.handle.held{transform:scale(1.2)}
+.reduce .handle{transition:none}
+.callout{position:absolute;top:-38px;transform:translateX(-50%);display:flex;gap:12px;align-items:center;white-space:nowrap;background:var(--sheet);border:1px solid var(--hairline);border-radius:16px;padding:5px 12px;pointer-events:none;opacity:0;transition:opacity .2s}
+.reduce .callout{transition:none}
+.callout.show{opacity:1}
+.callout .p{display:flex;align-items:center;gap:6px}
+.callout i{width:10px;height:10px;border-radius:50%}
+.callout .n{font-size:12px;letter-spacing:0}
+.callout .v{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:0}
+.share{display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-top:-12px}
+.share .l{color:var(--secondary)}
+.share .a{font-family:var(--serif);font-variant-numeric:tabular-nums;font-size:17px}
+
+.foot{position:absolute;left:16px;right:16px;bottom:50px}
+.primary{width:100%;min-height:52px;border-radius:14px;border:0;background:var(--btn);color:var(--btnText);font:500 17px var(--sans);letter-spacing:-.4px;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 4px rgba(42,33,24,.2);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.primary:active{transform:translateY(1px) scale(.985)}
+
+/* groups */
+.lt{position:absolute;top:106px;left:20px;font-family:var(--serif);font-weight:700;font-size:34px}
+.empty{position:absolute;top:300px;left:32px;right:32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty svg{color:var(--tertiary);margin-bottom:6px}
+.empty .h{font-family:var(--serif);font-size:20px}
+.empty .d{color:var(--secondary);font-size:15px;letter-spacing:-.24px;line-height:1.35}
+.empty .primary{margin-top:14px;width:auto;padding:0 24px}
+.tabs{position:absolute;bottom:22px;left:20px;right:20px;display:flex;gap:10px}
+.tabcap{flex:1;height:62px;border-radius:31px;background:var(--glass);box-shadow:var(--glassedge);display:flex;padding:4px}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;letter-spacing:0}
+.tab.on{background:var(--fill);border-radius:27px}
+.tabsearch{width:62px;height:62px;border-radius:31px;background:var(--glass);box-shadow:var(--glassedge)}
+.toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;letter-spacing:0;color:var(--secondary);background:var(--sheet);border:1px solid var(--hairline);border-radius:12px;padding:4px 10px;white-space:nowrap;z-index:15}
+
+@media (max-width:900px){body{padding:24px 16px 60px}.walk{flex-direction:column;align-items:center}.notes{width:100%;max-width:430px}.decisions{grid-template-columns:1fr}.device{transform:scale(.86);transform-origin:top center;margin-bottom:-110px}}
+</style></head><body>
+
+<div class="page-head">
+  <h1>Onboarding</h1>
+  <p>Three pages that hand something forward: <b>your name becomes your avatar, your avatar's color becomes your segment of the bar, and your currency is the one you split in.</b> It stands out by letting people use Splt's signature control in the first 20 seconds. Every movement is one the app already has, and each one happens because the person did something. Type a name, change the currency, and drag the bar. The three phones at the bottom share the same state, in dark mode.</p>
+</div>
+
+<div class="walk">
+  <div>
+    <div class="controls">
+      <div class="seg" id="themeSeg"><button class="on" data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+      <label class="chk"><input type="checkbox" id="reduceToggle"> Reduce Motion</label>
+      <button class="linkbtn" id="restart">Restart tour</button>
+    </div>
+    <div id="walkDevice"></div>
+  </div>
+  <div class="notes" id="notes"></div>
+</div>
+
+<h2 class="sec">All three pages, dark</h2>
+<p class="sec">These share state with the walkthrough, so anything you type or drag above shows here too, and the other way round.</p>
+<div class="gallery" id="gallery"></div>
+
+<h2 class="sec">What the team decided</h2>
+<p class="sec">Agreed between the design, engineering and skeptic reviews, checked against docs/design.md.</p>
+<div class="decisions">
+  <div><b>"Sam's share" in ink, not "Sam owes you" in green</b>Green means real money coming to you (rule 1), and this money is pretend. The subtitle says "Say you paid…" so it reads as a story, not a balance.</div>
+  <div><b>The bar is the real bar</b>It starts equal and the first drag switches it to percentages, like the expense form. It moves in 1% steps, snaps at equal and every 5% with the detent haptic, and keeps a 3% minimum. VoiceOver steps by one percent.</div>
+  <div><b>"You" on the bar, not your name</b>Every bar in the app says "You" for you. Your name reaches page 3 through your color.</div>
+  <div><b>Buttons change pages, and Back is new</b>Swiping between pages would fight the bar's drag. Back also restores the only way back to the Paste card.</div>
+  <div><b>Ends on your groups</b>"Start Splitting" and Skip both land on Groups, whose empty state already offers Create Group. No sheet opens by itself, so the first screen is still your groups.</div>
+  <div><b>Nothing is saved, nothing celebrates</b>The demo writes no expense, and it doesn't use up the form's "Drag the dividers" hint. Settling up stays the one celebration (rule 7).</div>
+  <div><b>The avatar replaces the strip</b>56pt, your fixed hue (pine). Its initials cross-fade as you type, using Motion.quick. The name field isn't focused for you, because a keyboard rising by itself would cover Continue on an SE.</div>
+  <div><b>Fits everyone</b>With VoiceOver or accessibility text sizes, page 3 shows the share list instead of the bar, as the form does. Right-to-left languages mirror the bar. With Reduce Motion, page changes become fades.</div>
+</div>
+
+<script>
+const ICON = {
+  back:'<svg width="12" height="20" viewBox="0 0 12 20" fill="none"><path d="M10 2L2 10l8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chev:'<svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M1.5 1.5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  paste:'<svg width="14" height="16" viewBox="0 0 14 16" fill="none"><rect x="1.5" y="2.5" width="11" height="12.5" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="4.5" y="1" width="5" height="3" rx="1" fill="currentColor"/></svg>',
+  people:'<svg width="64" height="42" viewBox="0 0 64 42" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="32" cy="12" r="7"/><path d="M19 38c1.5-8 6.5-12 13-12s11.5 4 13 12"/><circle cx="13" cy="16" r="5.5"/><path d="M2 36c1-6 5-9 11-9 2 0 4 .4 5.5 1.2"/><circle cx="51" cy="16" r="5.5"/><path d="M62 36c-1-6-5-9-11-9-2 0-4 .4-5.5 1.2"/></svg>',
+  sb:'<svg viewBox="0 0 78 13"><g fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3.5" width="3" height="8.5" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/><path d="M33 3.2a9 9 0 0 1 11.8 0l-1.3 1.4a7 7 0 0 0-9.2 0zM35.4 5.9a5.4 5.4 0 0 1 7 0l-1.3 1.4a3.4 3.4 0 0 0-4.4 0zM38.9 11.2l-1.9-2a1.6 1.6 0 0 1 3.8 0z"/><rect x="51" y="1" width="24" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".4"/><rect x="53" y="3" width="18" height="7" rx="1.6"/><rect x="76" y="4.5" width="1.5" height="4" rx=".7" opacity=".4"/></g></svg>'
+};
+
+// ---------- the model: mirrors ExpenseFormModel+SplitBar percentage drags ----------
+const SAMPLE = {USD:120,EUR:120,GBP:100,INR:1200,JPY:12000,KRW:120000,IDR:600000,VND:1200000,KWD:40,BHD:40};
+const CURRENCIES = [['USD','US Dollar'],['EUR','Euro'],['GBP','British Pound'],['INR','Indian Rupee'],['JPY','Japanese Yen'],['KRW','South Korean Won'],['IDR','Indonesian Rupiah'],['VND','Vietnamese Dong'],['KWD','Kuwaiti Dinar'],['CAD','Canadian Dollar']];
+const DECIMALS = c => ({JPY:0,KRW:0,IDR:0,VND:0,KWD:3,BHD:3})[c] ?? 2;
+const SCALE = 10000, STEP = 100, THRESHOLD = 150, MIN = 300; // basis points, as SplitBarMath
+
+const state = { name:'Priya', currency:'USD', method:'equal', you:5000, page:0, dark:false, reduce:false, ended:null };
+
+function totalMinor(){ return (SAMPLE[state.currency] ?? 120) * 10 ** DECIMALS(state.currency); }
+function shares(){
+  const t = totalMinor();
+  if (state.method === 'equal') { const a = Math.floor(t/2); return {you:t-a, sam:a}; }
+  const you = Math.round(t * state.you / SCALE); return {you, sam:t-you};
+}
+function money(minor){
+  const c = state.currency, d = DECIMALS(c), v = minor / 10 ** d;
+  const whole = Number.isInteger(v);
+  return new Intl.NumberFormat(c === 'INR' ? 'en-IN' : 'en-US', {style:'currency', currency:c, currencyDisplay:'narrowSymbol', minimumFractionDigits: whole ? 0 : d, maximumFractionDigits:d}).format(v);
+}
+function pct(bp){ return (Math.round(bp/10)/10).toString().replace(/\.0$/,'') + '%'; }
+function initials(name){
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return 'Y';           // effectiveName falls back to "You"
+  return (w.length > 1 ? w[0][0] + w[w.length-1][0] : w[0][0]).toUpperCase();
+}
+let lastSnap = null;
+function drag(fraction){
+  if (state.method === 'equal') state.method = 'percentage';   // same switch as the form (ExpenseFormModel+SplitBar.swift:115)
+  const raw = Math.round(fraction * SCALE);
+  const detents = [{p:5000,k:'equal'}];
+  for (let p = 500; p < SCALE; p += 500) if (p !== 5000) detents.push({p,k:'percent'});
+  let best = null;
+  for (const d of detents) if (Math.abs(raw - d.p) <= THRESHOLD && (!best || Math.abs(raw-d.p) < Math.abs(raw-best.p))) best = d;
+  let v = best ? best.p : Math.round(raw / STEP) * STEP;
+  v = Math.min(Math.max(v, MIN), SCALE - MIN);
+  state.you = v;
+  const snap = best && v === best.p ? best.p : null;
+  if (snap !== null && snap !== lastSnap) fireHaptic();
+  lastSnap = snap;
+}
+
+// ---------- devices ----------
+const devices = [];
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+function buildDevice({fixedPage = null, dark = false} = {}){
+  const d = el(`<div class="device${dark ? ' dark' : ''}"><div class="island"></div><div class="sb"><span>9:41</span>${ICON.sb}</div><div class="hi"></div></div>`);
+  const screens = [
+    el(`<section class="screen" data-p="0">
+      <div class="nav"><span class="spacer"></span><button class="gpill" data-act="skip">Skip</button></div>
+      <div class="content"><div class="stack">
+        <div class="strip"><i style="background:var(--oxide)"></i><i style="background:var(--ochre)"></i><i style="background:var(--moss)"></i><i style="background:var(--lagoon)"></i><i style="background:var(--indigo)"></i></div>
+        <div class="display">Split bills with friends</div>
+        <div class="sub">Add what you paid and see who owes whom.</div>
+        <div class="card invite"><div class="t"><div>Got an invite?</div><div>Paste the link you were sent.</div></div><button class="paste" data-act="paste">${ICON.paste} Paste</button></div>
+      </div></div>
+      <div class="foot"><button class="primary" data-act="next">Continue</button></div>
+    </section>`),
+    el(`<section class="screen" data-p="1">
+      <div class="nav"><button class="gb" data-act="back" aria-label="Back">${ICON.back}</button><button class="gpill" data-act="skip">Skip</button></div>
+      <div class="content"><div class="stack">
+        <div class="avatar" role="img"><span></span></div>
+        <div class="display">Make it yours</div>
+        <div class="sub">Your name is what friends see. You can change both later.</div>
+      </div>
+      <div class="card rows">
+        <div class="row"><input type="text" placeholder="Your Name" autocomplete="off" spellcheck="false"></div>
+        <div class="row"><span class="lbl">Default Currency</span><span class="val"></span><span class="chev">${ICON.chev}</span>
+          <select aria-label="Default Currency">${CURRENCIES.map(([c,n]) => `<option value="${c}">${n}</option>`).join('')}</select></div>
+      </div></div>
+      <div class="foot"><button class="primary" data-act="next">Continue</button></div>
+    </section>`),
+    el(`<section class="screen" data-p="2">
+      <div class="nav"><button class="gb" data-act="back" aria-label="Back">${ICON.back}</button><span class="spacer"></span></div>
+      <div class="content"><div class="stack">
+        <div class="display">Try it</div>
+        <div class="sub">Say you paid for dinner with Sam. Drag to split it.</div>
+        <div class="hero"></div>
+        <div class="barwrap">
+          <div class="callout"><span class="p"><i style="background:var(--pine)"></i><span class="n">You</span><span class="v cy"></span></span><span class="p"><i style="background:var(--cobalt)"></i><span class="n">Sam</span><span class="v cs"></span></span></div>
+          <div class="bar settle">
+            <div class="segm" style="background:var(--pine)"><span class="n">You</span><span class="v"></span></div>
+            <div class="segm" style="background:var(--cobalt)"><span class="n">Sam</span><span class="v"></span></div>
+          </div>
+          <div class="handle"></div>
+        </div>
+        <div class="share"><span class="l">Sam's share</span><span class="a"></span></div>
+      </div></div>
+      <div class="foot"><button class="primary" data-act="next">Start Splitting</button></div>
+    </section>`),
+    el(`<section class="screen" data-p="3">
+      <div class="toast"></div>
+      <div class="lt">Groups</div>
+      <div class="empty">${ICON.people}<div class="h">No Groups Yet</div><div class="d">Create a group for a trip, a home or a night out.</div><button class="primary">Create Group</button></div>
+      <div class="tabs"><div class="tabcap"><div class="tab on">Groups</div><div class="tab">Friends</div><div class="tab">Activity</div></div><div class="tabsearch"></div></div>
+    </section>`)
+  ];
+  screens.forEach(s => d.appendChild(s));
+  const dev = {d, screens, fixedPage, shown: fixedPage ?? 0,
+    input: screens[1].querySelector('input'), select: screens[1].querySelector('select'),
+    avatar: screens[1].querySelector('.avatar span'), avatarBox: screens[1].querySelector('.avatar'), curVal: screens[1].querySelector('.val'),
+    hero: screens[2].querySelector('.hero'), bar: screens[2].querySelector('.bar'), segs: screens[2].querySelectorAll('.segm'),
+    handle: screens[2].querySelector('.handle'), callout: screens[2].querySelector('.callout'), share: screens[2].querySelector('.share .a'),
+    toast: screens[3].querySelector('.toast')};
+  screens.forEach((s, i) => { if (i !== dev.shown) s.classList.add('hidden', 'at-right'); });
+  if (fixedPage !== null) d.querySelectorAll('[data-act]').forEach(b => b.style.pointerEvents = 'none');
+
+  d.addEventListener('click', e => {
+    const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
+    if (act === 'next') state.page === 2 ? end('finished') : go(state.page + 1, 1);
+    if (act === 'back') go(state.page - 1, -1);
+    if (act === 'skip') end('skipped');
+    if (act === 'paste') end('invite');
+  });
+  dev.input.addEventListener('input', () => { state.name = dev.input.value; update(dev); });
+  dev.select.addEventListener('change', () => { state.currency = dev.select.value; update(); });
+  attachDrag(dev);
+  devices.push(dev);
+  return dev;
+}
+
+function attachDrag(dev){
+  const bar = dev.bar; let held = false;
+  const frac = e => { const r = bar.getBoundingClientRect(); return Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1); };
+  bar.addEventListener('pointerdown', e => {
+    const r = bar.getBoundingClientRect(), dividerX = r.left + r.width * currentFraction();
+    if (Math.abs(e.clientX - dividerX) > 22 * (r.width / bar.offsetWidth)) return;   // 44pt grip around the divider
+    held = true; bar.setPointerCapture(e.pointerId); lastSnap = state.method === 'equal' ? 5000 : null;
+    devices.forEach(x => { x.bar.classList.remove('settle'); x.handle.classList.add('held'); x.callout.classList.add('show'); });
+    drag(frac(e)); update();
+  });
+  bar.addEventListener('pointermove', e => { if (held) { drag(frac(e)); update(); } });
+  const release = () => { if (!held) return; held = false;
+    devices.forEach(x => { x.bar.classList.add('settle'); x.handle.classList.remove('held'); x.callout.classList.remove('show'); }); };
+  bar.addEventListener('pointerup', release); bar.addEventListener('pointercancel', release);
+}
+function currentFraction(){ return state.method === 'equal' ? .5 : state.you / SCALE; }
+
+function update(only){
+  const s = shares(), f = currentFraction();
+  for (const dev of devices) {
+    dev.d.classList.toggle('reduce', state.reduce);
+    if (dev !== only && document.activeElement !== dev.input) dev.input.value = state.name;
+    const ini = initials(state.name);
+    if (dev.avatar.textContent !== ini) {
+      if (state.reduce || !dev.avatar.textContent) dev.avatar.textContent = ini;
+      else { dev.avatar.style.opacity = 0; setTimeout(() => { dev.avatar.textContent = ini; dev.avatar.style.opacity = 1; }, 110); }
+    }
+    dev.avatarBox.setAttribute('aria-label', state.name.trim() || 'You');
+    dev.select.value = state.currency;
+    dev.curVal.textContent = CURRENCIES.find(c => c[0] === state.currency)[1];
+    dev.hero.textContent = money(totalMinor());
+    dev.segs[0].style.flexBasis = (f * 100) + '%';
+    dev.segs[1].style.flexBasis = ((1 - f) * 100) + '%';
+    const lbl = state.method === 'equal' ? [money(s.you), money(s.sam)] : [pct(state.you), pct(SCALE - state.you)];
+    dev.segs[0].querySelector('.v').textContent = lbl[0];
+    dev.segs[1].querySelector('.v').textContent = lbl[1];
+    dev.callout.querySelector('.cy').textContent = lbl[0];
+    dev.callout.querySelector('.cs').textContent = lbl[1];
+    const w = dev.bar.offsetWidth || 361, x = w * f, half = (dev.callout.offsetWidth || 180) / 2;
+    dev.handle.style.left = x + 'px';
+    dev.callout.style.left = Math.min(Math.max(x, half), w - half) + 'px';
+    dev.share.textContent = money(s.sam);
+  }
+  renderNotes();
+}
+
+// ---------- walkthrough paging ----------
+function show(dev, to, dir){
+  const from = dev.shown; if (from === to) return;
+  const a = dev.screens[from], b = dev.screens[to];
+  b.classList.add('no-anim'); b.classList.remove('hidden', 'at-left', 'at-right'); b.classList.add(dir > 0 ? 'at-right' : 'at-left');
+  void b.offsetWidth; b.classList.remove('no-anim'); b.classList.remove('at-right', 'at-left');
+  a.classList.add(dir > 0 ? 'at-left' : 'at-right');
+  const done = () => { if (dev.shown !== from) a.classList.add('hidden'); };
+  setTimeout(done, state.reduce ? 260 : 440);
+  dev.shown = to;
+}
+function go(page, dir){ state.page = Math.max(0, Math.min(2, page)); state.ended = null; devices.filter(d => d.fixedPage === null).forEach(d => show(d, state.page, dir)); renderNotes(); }
+function end(how){
+  state.ended = how;
+  const msg = {finished:'Start Splitting: lands on your groups', skipped:'Skip: lands on your groups', invite:'Paste: the existing join flow opens'}[how];
+  devices.filter(d => d.fixedPage === null).forEach(d => { d.toast.textContent = msg; show(d, 3, 1); });
+  renderNotes();
+}
+
+// ---------- notes ----------
+let hapticTimer;
+function fireHaptic(){ const h = document.getElementById('haptic'); if (!h) return; h.classList.add('fire'); clearTimeout(hapticTimer); hapticTimer = setTimeout(() => h.classList.remove('fire'), 160); }
+const NOTES = [
+  {t:'Welcome', lede:'No changes. The Paste card stays where people who came from an invite will look for it. Pasting a link skips the rest of the tour.',
+   rows:[['Nothing moves by itself','—','The page simply appears with the full-screen cover.']],
+   list:['Skip lands on your groups.','Continue slides to page 2 with <code>Motion.smooth</code>. Swiping is turned off on purpose.']},
+  {t:'Make it yours', lede:'Your avatar replaces the one-color strip. It is the first time you see your own color, and it travels to page 3.',
+   rows:[['Avatar initials cross-fade','You type','<code>Motion.quick</code>'],['Back slides to Welcome','You tap Back','<code>Motion.smooth</code>']],
+   list:['56pt <code>AvatarView(name:hue:)</code> in your fixed hue (pine). An empty field shows "Y" for You.','The name is often filled in from the device name. The field isn\'t focused for you.','Currency opens the existing picker. Here it\'s a menu so you can try different currencies.']},
+  {t:'Try it', lede:'The real split bar, with you in your color. Nothing is saved. Drag the divider: it snaps at equal and every 5%.',
+   rows:[['Divider grows while held','Finger down','<code>Motion.quick</code>'],['Callout fades in and out','Drag starts / ends','<code>.opacity</code>'],['Bar settles on release','Letting go','<code>Motion.snappy</code>'],['Labels and share roll','Dragging','<code>.numericText(value:)</code>']],
+   list:['The first drag switches equal to percent, exactly as the expense form does.','"Sam\'s share" is in ink, never the green that means real money.','VoiceOver and accessibility sizes show the share list, one percent per step.'], haptic:true}
+];
+function renderNotes(){
+  const n = document.getElementById('notes');
+  if (state.ended) {
+    n.innerHTML = `<div class="steps">${NOTES.map(x => `<span>${x.t}</span>`).join('')}</div><h3>Your groups</h3>
+      <p class="lede">${state.ended === 'invite' ? 'Pasting an invite closes the tour and opens the existing join flow, using the invite\'s name if you never reached page 2.' : 'The tour closes on the Groups tab. Its empty state already offers one primary action, Create Group. No sheet opens by itself.'}</p>
+      <ul><li>Reopening the tour from Account shows all three pages with your current name filled in, and saves only if you change something.</li></ul>
+      <div class="state">Restart the tour to go again.</div>`;
+    return;
+  }
+  const x = NOTES[state.page], s = shares();
+  n.innerHTML = `<div class="steps">${NOTES.map((y,i) => `<span class="${i === state.page ? 'on' : ''}">${i+1} ${y.t}</span>`).join('')}</div>
+    <h3>${x.t}</h3><p class="lede">${x.lede}</p>
+    <table><tr><th>What moves</th><th>Because</th><th>Token</th></tr>${x.rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
+    <ul>${x.list.map(l => `<li>${l}</li>`).join('')}</ul>
+    ${x.haptic ? `<div class="haptic" id="haptic">◆ Haptic: detent</div><div class="state">Method: ${state.method === 'equal' ? 'equal' : 'percent'} · You ${money(s.you)} · Sam ${money(s.sam)}</div>` : ''}`;
+}
+
+// ---------- boot ----------
+const walk = buildDevice();
+document.getElementById('walkDevice').appendChild(walk.d);
+[0,1,2].forEach(p => { const fig = el(`<figure><figcaption>${['1 Welcome','2 Make it yours','3 Try it'][p]}</figcaption></figure>`); const dv = buildDevice({fixedPage:p, dark:true}); fig.prepend(dv.d); document.getElementById('gallery').appendChild(fig); });
+
+document.getElementById('themeSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#themeSeg button').forEach(x => x.classList.toggle('on', x === b));
+  walk.d.classList.toggle('dark', b.dataset.theme === 'dark');
+});
+document.getElementById('reduceToggle').addEventListener('change', e => { state.reduce = e.target.checked; update(); });
+document.getElementById('restart').addEventListener('click', () => { state.method = 'equal'; state.you = 5000; state.ended = null; const from = state.page; state.page = 0; walk.screens.forEach((s,i) => { s.classList.add('no-anim'); s.classList.toggle('hidden', i !== 0); s.classList.remove('at-left','at-right'); if (i) s.classList.add('at-right'); void s.offsetWidth; s.classList.remove('no-anim'); }); walk.shown = 0; update(); });
+update();
+</script>
+</body></html>

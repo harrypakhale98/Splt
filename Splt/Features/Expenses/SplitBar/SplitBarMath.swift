@@ -143,6 +143,31 @@ enum SplitBarMath {
         return SplitBarDrag(weights: next, snappedTo: near?.kind, didChange: next != weights)
     }
 
+    /// Moves a divider to `fraction` of the bar's width, with the detents and minimum every drag
+    /// of the bar uses. The expense form and the welcome tour both drag through here, so they feel the same.
+    ///
+    /// - Parameters:
+    ///   - totalMinor: the total in minor units when the bar's space is the total itself, for whole amount detents.
+    ///   - thresholdBasisPoints: how close, in basis points of the bar, a divider must come to snap.
+    static func dragDivider(
+        _ divider: Int, toFraction fraction: Double, weights: [Int64], scale: Int64,
+        totalMinor: Int64? = nil, unitMinor: Int64 = 100, freeStep: Int64, thresholdBasisPoints: Int64
+    ) -> SplitBarDrag {
+        let count = weights.count
+        let threshold = max(scale * thresholdBasisPoints / basisPoints, 1)
+        let prefix = weights.indices.contains(divider) ? weights[..<divider].reduce(0, +) : 0
+        let detents = detents(
+            divider: divider, count: count, scale: scale, prefix: prefix,
+            totalMinor: totalMinor, unitMinor: unitMinor,
+            spaceIsMinorUnits: totalMinor != nil, threshold: threshold
+        )
+        let raw = Int64((min(max(fraction, 0), 1) * Double(scale)).rounded())
+        return drag(
+            divider: divider, to: raw, weights: weights, detents: detents, freeStep: freeStep,
+            minimum: minimumSegment(count: count, scale: scale), threshold: threshold
+        )
+    }
+
     /// Drags a divider in a bar of whole shares. When neighbours are too coarse to move smoothly,
     /// every weight is multiplied first, and the result is reduced again afterwards.
     static func dragShares(divider: Int, toFraction fraction: Double, weights: [Int64]) -> SplitBarDrag {

@@ -114,7 +114,6 @@ extension ExpenseFormModel {
         // Leaving an equal split turns it into percentages; the switcher slides across rather than jumping.
         if split.method == .equal { Motion.perform(Motion.snappy) { selectMethod(.percentage) } }
         let fraction = min(max(fraction, 0), 1)
-        let count = data.segments.count
 
         switch split.method {
         case .shares:
@@ -124,9 +123,9 @@ extension ExpenseFormModel {
         case .percentage:
             let weights = barFractions()
             let scale = SplitBarMath.basisPoints
-            let result = run(
-                divider: divider, fraction: fraction, weights: weights, scale: scale, count: count,
-                total: nil, freeStep: 100, thresholdBasisPoints: thresholdBasisPoints
+            let result = SplitBarMath.dragDivider(
+                divider, toFraction: fraction, weights: weights, scale: scale,
+                freeStep: 100, thresholdBasisPoints: thresholdBasisPoints
             )
             if result.didChange { writePercent(result.weights, for: data.segments) }
             return result
@@ -134,9 +133,9 @@ extension ExpenseFormModel {
             guard let total = data.total, total.minorUnits > 0 else { return nil }
             let unit = minorUnitsPerUnit
             let freeStep = total.minorUnits >= unit * 20 ? unit : 1
-            let result = run(
-                divider: divider, fraction: fraction, weights: data.weights, scale: data.scale, count: count,
-                total: total, freeStep: freeStep, thresholdBasisPoints: thresholdBasisPoints
+            let result = SplitBarMath.dragDivider(
+                divider, toFraction: fraction, weights: data.weights, scale: data.scale,
+                totalMinor: total.minorUnits, unitMinor: unit, freeStep: freeStep, thresholdBasisPoints: thresholdBasisPoints
             )
             if result.didChange {
                 if split.method == .exact {
@@ -149,24 +148,6 @@ extension ExpenseFormModel {
         default:
             return nil
         }
-    }
-
-    private func run(
-        divider: Int, fraction: Double, weights: [Int64], scale: Int64, count: Int,
-        total: Money?, freeStep: Int64, thresholdBasisPoints: Int64
-    ) -> SplitBarDrag {
-        let threshold = max(scale * thresholdBasisPoints / SplitBarMath.basisPoints, 1)
-        let prefix = weights.indices.contains(divider) ? weights[..<divider].reduce(0, +) : 0
-        let detents = SplitBarMath.detents(
-            divider: divider, count: count, scale: scale, prefix: prefix,
-            totalMinor: total?.minorUnits, unitMinor: minorUnitsPerUnit,
-            spaceIsMinorUnits: total != nil, threshold: threshold
-        )
-        let raw = Int64((fraction * Double(scale)).rounded())
-        return SplitBarMath.drag(
-            divider: divider, to: raw, weights: weights, detents: detents, freeStep: freeStep,
-            minimum: SplitBarMath.minimumSegment(count: count, scale: scale), threshold: threshold
-        )
     }
 
     // MARK: Writing back
