@@ -2,7 +2,7 @@ import SpltCore
 import SwiftUI
 
 /// The add expense sheet opened from anywhere in the app. It starts in the group you used last,
-/// or your newest group.
+/// or your newest group. Expenses with one friend are started from the Friends tab instead.
 struct AddExpenseLauncher: View {
     @Environment(\.dataServices) private var services
     @Environment(Router.self) private var router
@@ -52,12 +52,18 @@ struct AddExpenseLauncher: View {
     }
 
     private func resolve() -> Resolution {
-        let left = LeftGroupsStore()
-        let groups = ((try? services?.groups.groups(includeArchived: false)) ?? []).filter { !left.contains($0.id) }
-        if let remembered = UUID(uuidString: lastGroupID), groups.contains(where: { $0.id.rawValue == remembered }) {
-            return .group(GroupID(rawValue: remembered))
+        let groups = (try? services?.groups.groups(includeArchived: false)) ?? []
+        return Self.startingGroup(among: groups, lastUsed: lastGroupID, left: LeftGroupsStore()).map { .group($0) } ?? .noGroups
+    }
+
+    /// The group you used last, or the newest one. A friend's direct group is left out even when it
+    /// was used last, since it is not a group you see on the Groups tab.
+    static func startingGroup(among groups: [SplitGroup], lastUsed: String, left: LeftGroupsStore) -> GroupID? {
+        let open = groups.filter { $0.kind != .friend && !left.contains($0.id) }
+        if let remembered = UUID(uuidString: lastUsed), open.contains(where: { $0.id.rawValue == remembered }) {
+            return GroupID(rawValue: remembered)
         }
-        return groups.first.map { .group($0.id) } ?? .noGroups
+        return open.first?.id
     }
 }
 
