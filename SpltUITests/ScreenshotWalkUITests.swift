@@ -14,11 +14,43 @@ final class ScreenshotWalkUITests: XCTestCase {
     @MainActor
     func testWalkDefaultSize() {
         walk(variant: "default", textSize: nil)
+        tour(variant: "default", textSize: nil)
     }
 
     @MainActor
     func testWalkLargestText() {
         walk(variant: "xxxl", textSize: Self.largest)
+        tour(variant: "xxxl", textSize: Self.largest)
+    }
+
+    /// The welcome tour's three pages, and the sample split after a drag. The tour covers the tabs, so it
+    /// launches on its own rather than through `launchApp`.
+    @MainActor
+    private func tour(variant: String, textSize: String?) {
+        let dark = ProcessInfo.processInfo.environment["SPLT_SHOTS_DARK"] != nil
+        let app = XCUIApplication()
+        app.launchArguments = ["-uitesting", "-onboarding"] + (dark ? ["-darkmode"] : [])
+        if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
+        app.launch()
+        func shot(_ name: String) { snapshot(app, "\(variant)/\(name)") }
+
+        let next = app.buttons["onboarding.continue"]
+        XCTAssertTrue(next.waitForExistence(timeout: 30), "the tour never opened")
+        shot("00a-tour-welcome")
+        next.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.profile"].firstMatch.waitForExistence(timeout: 5))
+        shot("00b-tour-profile")
+        next.tap()
+        let bar = app.otherElements["onboarding.demo.bar"]
+        let list = app.descendants(matching: .any)["onboarding.demo.list"].firstMatch
+        XCTAssertTrue(bar.waitForExistence(timeout: 5) || list.waitForExistence(timeout: 5), "the sample split did not show")
+        shot("00c-tour-try-it")
+        if bar.exists {
+            bar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                .press(forDuration: 0.1, thenDragTo: bar.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.5)))
+            shot("00d-tour-try-it-dragged")
+        }
+        app.terminate()
     }
 
     @MainActor

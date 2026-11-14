@@ -9,7 +9,6 @@ enum OnboardingPage: Int, CaseIterable {
     case demo
 
     var next: OnboardingPage? { OnboardingPage(rawValue: rawValue + 1) }
-    var previous: OnboardingPage? { OnboardingPage(rawValue: rawValue - 1) }
     var isLast: Bool { next == nil }
     /// The sample split is quick and is the point of the tour, so it has no Skip.
     var showsSkip: Bool { self != .demo }
@@ -32,6 +31,7 @@ enum OnboardingLayout {
 struct OnboardingWelcomePage: View {
     var onInvite: (JoinInvite) -> Void = { _ in }
     @State private var notAnInvite = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         ScrollView {
@@ -57,7 +57,12 @@ struct OnboardingWelcomePage: View {
     /// Someone who installed Splt from an invite copied it on the way. Apple's Paste button reads
     /// the clipboard only when tapped, so there is no "Allow Paste" prompt.
     private var inviteCard: some View {
-        HStack(spacing: 12) {
+        // at accessibility sizes the button goes under the words, so they are not squeezed a word to a line
+        let stacked = typeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Got an invite?")
                     .foregroundStyle(Ink.text)
@@ -65,7 +70,7 @@ struct OnboardingWelcomePage: View {
                     .font(.subheadline)
                     .foregroundStyle(Ink.secondary)
             }
-            Spacer(minLength: 8)
+            if !stacked { Spacer(minLength: 8) }
             PasteButton(payloadType: String.self) { strings in
                 let invite = strings.lazy.compactMap { JoinInvite(text: $0) }.first
                 Task { @MainActor in
@@ -168,10 +173,13 @@ struct OnboardingDemoPage: View {
                     .font(.title3)
                     .foregroundStyle(Ink.secondary)
                 HeroAmount(demo.total, showsSign: false)
+                    // a figure is never read alone: it says what it is, as the other heroes do
+                    .accessibilityLabel(Text("Dinner, \(MoneyFormatting.magnitudeString(demo.total, locale: locale))"))
                     .accessibilityIdentifier("onboarding.demo.amount")
                 VStack(alignment: .leading, spacing: 12) {
                     split
-                    friendShare
+                    // the list already says what Sam pays on Sam's row
+                    if !showsList { friendShare }
                 }
                 // room above the bar for the label that floats over a divider while it is held
                 .padding(.top, showsList ? 0 : 20)
@@ -213,9 +221,8 @@ struct OnboardingDemoPage: View {
             Text("\(OnboardingDemoModel.friendName)'s share")
                 .foregroundStyle(Ink.secondary)
             Spacer(minLength: 8)
-            Text(MoneyFormatting.magnitudeString(share, locale: locale))
+            MoneyLabel(money: share)
                 .font(Typeface.figure)
-                .foregroundStyle(Ink.text)
                 .contentTransition(.numericText(value: Double(share.minorUnits)))
                 .motion(Motion.quick, value: share)
         }

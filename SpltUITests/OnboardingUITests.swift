@@ -27,16 +27,16 @@ final class OnboardingUITests: XCTestCase {
         let app = launchTour()
         let next = app.buttons["onboarding.continue"]
 
-        // pages change only with the buttons, so a swipe leaves the welcome page where it is
+        // there is no swipe forward, so a swipe leaves the welcome page where it is
         XCTAssertTrue(page("welcome", in: app).waitForExistence(timeout: 5))
         app.swipeLeft()
         XCTAssertTrue(page("welcome", in: app).exists)
-        XCTAssertFalse(app.buttons["onboarding.back"].exists)
+        XCTAssertFalse(app.buttons["BackButton"].exists)
 
         next.tap()
         let name = app.textFields["onboarding.name"]
         XCTAssertTrue(waitUntilHittable(name))
-        XCTAssertTrue(app.buttons["onboarding.back"].exists)
+        XCTAssertTrue(app.buttons["BackButton"].waitForExistence(timeout: 2), "the system back button should lead back to the welcome page")
         name.tap()
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 40) + "Maya Lin")
         XCTAssertEqual(app.images["onboarding.avatar"].label, "Maya Lin")
@@ -56,9 +56,9 @@ final class OnboardingUITests: XCTestCase {
         start.press(forDuration: 0.1, thenDragTo: end)
         XCTAssertNotEqual(share.label, before, "dragging the divider should change Sam's share")
 
-        app.buttons["onboarding.back"].tap()
+        goBack(in: app)
         XCTAssertTrue(waitUntilHittable(app.textFields["onboarding.name"]))
-        app.buttons["onboarding.back"].tap()
+        goBack(in: app)
         XCTAssertTrue(waitUntilHittable(app.buttons["onboarding.skip"]))
 
         app.buttons["onboarding.skip"].tap()

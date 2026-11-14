@@ -4,15 +4,14 @@ import SwiftUI
 /// The welcome tour on first launch: what Splt is, your name and currency, then the real Split Bar on a
 /// sample dinner. There is no sign in. It can be skipped and is reachable again from Account.
 ///
-/// Pages change only with the buttons: a swipe between pages would fight the bar's dragging.
+/// Each page is pushed like any other screen, so it has the system back button and transition, and the
+/// edge swipe back. There is no swipe forward: a swipe between pages would fight the bar's dragging.
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dataServices) private var services
     @Environment(Router.self) private var router: Router?
 
-    @State private var page = OnboardingPage.welcome
-    /// Which way the pages slide, set before the page changes so the leaving page knows too.
-    @State private var forward = true
+    @State private var path: [OnboardingPage] = []
     @State private var profile = AccountProfile.shared
     @State private var demo: OnboardingDemoModel
     private let preferences = Preferences()
@@ -25,20 +24,18 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ZStack {
-                    pageView(page)
-                        .id(page)
-                        .motionTransition(.asymmetric(
-                            insertion: .move(edge: forward ? .trailing : .leading),
-                            removal: .move(edge: forward ? .leading : .trailing)
-                        ))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
+        NavigationStack(path: $path) {
+            screen(.welcome)
+                .navigationDestination(for: OnboardingPage.self) { screen($0) }
+        }
+        .accessibilityIdentifier("onboarding")
+    }
 
-                Button(action: advance) {
+    private func screen(_ page: OnboardingPage) -> some View {
+        pageView(page)
+            .accessibilityIdentifier(page.identifier)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Button { advance(from: page) } label: {
                     Text(page.isLast ? "Start Splitting" : "Continue")
                 }
                 .buttonStyle(PrimaryButtonStyle())
@@ -47,15 +44,6 @@ struct OnboardingView: View {
                 .accessibilityIdentifier("onboarding.continue")
             }
             .toolbar {
-                if let previous = page.previous {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button { go(to: previous) } label: {
-                            Image(systemName: "chevron.backward")
-                        }
-                        .accessibilityLabel("Back")
-                        .accessibilityIdentifier("onboarding.back")
-                    }
-                }
                 if page.showsSkip {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Skip", action: finish)
@@ -64,42 +52,28 @@ struct OnboardingView: View {
                 }
             }
             .paperBackground()
-        }
-        .accessibilityIdentifier("onboarding")
     }
 
     @ViewBuilder
     private func pageView(_ page: OnboardingPage) -> some View {
-        Group {
-            switch page {
-            case .welcome: OnboardingWelcomePage(onInvite: join)
-            case .profile: OnboardingProfilePage(profile: profile, preferences: preferences)
-            case .demo: OnboardingDemoPage(demo: demo)
-            }
+        switch page {
+        case .welcome: OnboardingWelcomePage(onInvite: join)
+        case .profile: OnboardingProfilePage(profile: profile, preferences: preferences)
+        case .demo: OnboardingDemoPage(demo: demo)
         }
-        .accessibilityIdentifier(page.identifier)
     }
 
-    private func advance() {
-        if let next = page.next {
-            go(to: next)
-        } else {
+    private func advance(from page: OnboardingPage) {
+        guard let next = page.next else {
             finish()
+            return
         }
-    }
-
-    private func go(to next: OnboardingPage) {
         if next == .demo {
             // the sample split is in the currency just chosen, with your name on your avatar
             demo.currencyCode = preferences.defaultCurrencyCode
             demo.myName = profile.effectiveName
         }
-        forward = next.rawValue > page.rawValue
-        // a leaving page keeps the transition from its last update, so the direction lands first
-        Task { @MainActor in
-            Motion.perform(Motion.smooth) { page = next }
-            AccessibilityNotification.ScreenChanged().post()
-        }
+        path.append(next)
     }
 
     /// A pasted invite skips the rest of the tour: joining is what this person came for.

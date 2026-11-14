@@ -184,4 +184,26 @@ final class AccessibilityAuditUITests: XCTestCase {
             audit(app, "Empty \(name)")
         }
     }
+
+    @MainActor
+    func testWelcomeTour() {
+        for textSize in [nil, "UICTContentSizeCategoryAccessibilityXXXL"] {
+            let size = textSize == nil ? "" : " at the largest text size"
+            let app = XCUIApplication()
+            app.launchArguments = ["-uitesting", "-onboarding"]
+            if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
+            app.launch()
+            let next = app.buttons["onboarding.continue"]
+            XCTAssertTrue(next.waitForExistence(timeout: 30), "the tour never opened")
+            audit(app, "Tour welcome\(size)")
+            next.tap()
+            // at the largest sizes on a short screen the name field starts below the fold
+            XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.profile"].firstMatch.waitForExistence(timeout: 5))
+            audit(app, "Tour profile\(size)")
+            next.tap()
+            XCTAssertTrue(app.staticTexts["Try it"].waitForExistence(timeout: 5))
+            audit(app, "Tour sample split\(size)")
+            app.terminate()
+        }
+    }
 }
