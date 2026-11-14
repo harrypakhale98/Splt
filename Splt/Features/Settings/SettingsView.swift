@@ -82,6 +82,10 @@ struct SettingsSections: View {
 
         Section {
             RaisedRows {
+                NavigationLink("Catch Payments") {
+                    PaymentCaptureSetupView()
+                }
+                .accessibilityIdentifier("account.catchPayments")
                 NavigationLink("Import from Splitwise") {
                     SplitwiseImportView()
                 }

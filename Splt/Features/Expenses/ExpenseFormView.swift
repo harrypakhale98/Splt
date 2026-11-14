@@ -4,12 +4,14 @@ import SwiftUI
 /// Adds or edits an expense. Present it in a sheet; it brings its own navigation stack.
 struct ExpenseFormView: View {
     let mode: ExpenseFormMode
+    /// Told about the saved expense, as when a payment from To Split becomes one.
+    var onSaved: (@MainActor (Expense) -> Void)?
 
     @Environment(\.dataServices) private var services
 
     var body: some View {
         if let services {
-            ExpenseFormScreen(mode: mode, services: services)
+            ExpenseFormScreen(mode: mode, services: services, onSaved: onSaved)
         } else {
             NavigationStack {
                 EmptyStateView.dataUnavailable
@@ -33,8 +35,10 @@ private struct ExpenseFormScreen: View {
     @State private var fineTune: PersonSelection?
     @State private var confirmsDiscard = false
     @State private var confirmsDuplicate = false
+    private let onSaved: (@MainActor (Expense) -> Void)?
 
-    init(mode: ExpenseFormMode, services: DataServices) {
+    init(mode: ExpenseFormMode, services: DataServices, onSaved: (@MainActor (Expense) -> Void)? = nil) {
+        self.onSaved = onSaved
         let model = ExpenseFormModel(mode: mode, services: services)
         _model = State(initialValue: model)
         _keypadOpen = State(initialValue: !model.isEditing && model.total == nil)
@@ -250,7 +254,8 @@ private struct ExpenseFormScreen: View {
 
     private func save() {
         do {
-            try model.save()
+            let saved = try model.save()
+            onSaved?(saved)
             dismiss()
         } catch {
             model.saveError = model.message(for: error)

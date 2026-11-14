@@ -15,6 +15,8 @@ enum DeepLink: Hashable, Sendable {
     case addExpense
     /// Opens the Activity tab.
     case activity
+    /// Opens a payment from To Split in the expense form, from a notification or Siri.
+    case payment(UUID)
     case invite(FriendInvite)
     /// Joins a group as the person the invite was made for.
     case join(JoinInvite)
@@ -41,6 +43,9 @@ enum DeepLink: Hashable, Sendable {
             self = .settle(id)
         case ("activity", 1):
             self = .activity
+        case ("payment", 2):
+            guard let id = UUID(uuidString: parts[1]) else { return nil }
+            self = .payment(id)
         case ("invite", 1):
             guard let invite = FriendInvite(url: url) else { return nil }
             self = .invite(invite)
@@ -65,6 +70,7 @@ enum DeepLink: Hashable, Sendable {
         case .settle(let id): URL(string: "\(Self.scheme)://settle/\(id.uuidString)")!
         case .addExpense: URL(string: "\(Self.scheme)://add-expense")!
         case .activity: URL(string: "\(Self.scheme)://activity")!
+        case .payment(let id): URL(string: "\(Self.scheme)://payment/\(id.uuidString)")!
         case .invite(let invite): invite.url
         case .join(let invite): invite.url
         case .reply(let packed): URL(string: "\(Self.scheme)://reply?d=\(packed)")!

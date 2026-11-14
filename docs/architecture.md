@@ -75,6 +75,12 @@ Fetched from the free ECB-backed Frankfurter API, cached on the device, and alwa
 | `Splt` | iOS app |
 | `SpltTests` | Unit tests |
 | `SpltUITests` | UI tests |
+| `SpltWidgets` | Lock Screen To Split count, Control Center button, trip Live Activity |
+| `SpltShare` | Share extension that reads a payment from a screenshot or text |
 | `SpltKit/SpltCore` | Shared logic package |
 
-Widgets and share extensions are not built yet. Siri and Shortcuts work through App Intents inside the app target.
+Siri and Shortcuts work through App Intents inside the app target.
+
+### To Split
+
+Payments caught by Shortcuts automations (Wallet, Message, Email), the share extension or Siri wait in To Split, at the top of Activity. Everything lives in `Shared/Inbox`, a JSON file in the `group.com.harrypakhale.splt` app group that the app and both extensions read and write through `NSFileCoordinator`. It never syncs. `LogPaymentIntent` runs without Face ID, because Wallet runs it at the checkout, often on a locked phone, and it only adds to the inbox. The app (`Splt/Features/Inbox`) decides how loudly to ask about each payment, which group it goes to, when to nudge, the evening summary, and the trip wrap-up and Live Activity.

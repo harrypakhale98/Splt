@@ -30,14 +30,17 @@ private struct ActivityContent: View {
 
     @State private var model: ActivityModel
     @State private var spending: SpendingModel
+    @State private var inbox: InboxController
 
     init(services: DataServices) {
         _model = State(initialValue: ActivityModel(services: services))
         _spending = State(initialValue: SpendingModel(services: services, range: .thisMonth))
+        _inbox = State(initialValue: InboxController(services: services))
     }
 
     var body: some View {
         List {
+            InboxSection(controller: inbox)
             if !model.entries.isEmpty {
                 spendingHeader
                 typePicker
@@ -79,6 +82,7 @@ private struct ActivityContent: View {
         .listStyle(.plain)
         .paperBackground()
         .overlay { emptyState }
+        .inboxPresentation(inbox)
         .toolbar { toolbar }
         .alert("Couldn't Finish", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
@@ -103,7 +107,7 @@ private struct ActivityContent: View {
 
     @ViewBuilder
     private var emptyState: some View {
-        if model.entries.isEmpty, model.didLoad {
+        if model.entries.isEmpty, model.didLoad, inbox.review?.rows.isEmpty != false {
             EmptyStateView(
                 title: "No Activity Yet",
                 systemImage: "list.bullet.rectangle",

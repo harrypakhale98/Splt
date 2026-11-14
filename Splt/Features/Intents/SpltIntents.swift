@@ -140,5 +140,14 @@ struct SpltShortcuts: AppShortcutsProvider {
             shortTitle: "View Balance",
             systemImageName: "scalemass"
         )
+        AppShortcut(
+            intent: SplitLastPaymentIntent(),
+            phrases: [
+                "Split my last payment in \(.applicationName)",
+                "Split my last purchase with \(.applicationName)"
+            ],
+            shortTitle: "Split Last Payment",
+            systemImageName: "creditcard"
+        )
     }
 }

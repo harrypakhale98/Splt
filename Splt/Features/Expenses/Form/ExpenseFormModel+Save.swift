@@ -36,6 +36,11 @@ extension ExpenseFormModel {
         case .add:
             try saveNew(&expense)
             dependencies.defaults.set(expense.groupID?.description, forKey: Self.lastGroupKey)
+            // typed from scratch, so To Split can offer to catch the next one
+            if case .add(_, nil) = mode {
+                let added = dependencies.defaults.integer(forKey: PaymentInbox.manualAddsKey)
+                dependencies.defaults.set(added + 1, forKey: PaymentInbox.manualAddsKey)
+            }
         case .edit:
             try saveEdit(expense)
         case .editRecurring:

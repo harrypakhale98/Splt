@@ -37,6 +37,8 @@ final class Router {
     var pendingReply: String?
     /// A friend whose settle up sheet should open as soon as their screen appears.
     var pendingSettleFriend: UUID?
+    /// A payment from To Split to open in the expense form once Activity shows.
+    var pendingPayment: UUID?
     /// A group invite made for one person, waiting for sync to accept it.
     var pendingJoin: JoinInvite?
     /// A group just joined from an invite made for someone added by name, waiting for its
@@ -143,6 +145,11 @@ final class Router {
         case .activity:
             sheet = nil
             selectedTab = .activity
+        case .payment(let id):
+            sheet = nil
+            activityPath = []
+            selectedTab = .activity
+            pendingPayment = id
         case .invite(let invite):
             pendingInvite = invite
             sheet = .newFriend

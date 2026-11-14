@@ -47,6 +47,17 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
         let request = response.notification.request
+        if request.content.categoryIdentifier.hasPrefix(PaymentNotifier.categoryPrefix) {
+            // a payment's buttons can finish without opening the app
+            let info = request.content.userInfo
+            let paymentID = info[PaymentNotifier.paymentKey] as? String
+            let groupID = info[PaymentNotifier.groupKey] as? String
+            let action = response.actionIdentifier
+            if let url = await PaymentNotificationActions.handle(action: action, paymentID: paymentID, groupID: groupID) {
+                await handle(url)
+            }
+            return
+        }
         guard let url = Self.destination(identifier: request.identifier, userInfo: request.content.userInfo) else { return }
         await handle(url)
     }

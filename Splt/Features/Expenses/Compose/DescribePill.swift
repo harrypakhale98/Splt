@@ -117,6 +117,15 @@ struct DescribePill: View {
                     }
                     .accessibilityLabel("Dictate")
                 }
+                // a copied bank text fills the form; anything else is read like a typed description
+                PasteButton(payloadType: String.self) { strings in
+                    guard let text = strings.first else { return }
+                    Task { @MainActor in await model.fill(fromPasted: text) }
+                }
+                .labelStyle(.iconOnly)
+                .buttonBorderShape(.circle)
+                .tint(Ink.secondary)
+                .accessibilityIdentifier("expense-paste")
                 ReceiptActions(model: model)
                     .labelStyle(.iconOnly)
             }

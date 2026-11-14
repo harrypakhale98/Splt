@@ -21,6 +21,19 @@ extension ExpenseFormModel {
         apply(quickAdd: draft)
     }
 
+    /// Fills the form from pasted text. A bank text or receipt gives the shop and the amount; anything else
+    /// is read like a typed description.
+    func fill(fromPasted text: String) async {
+        let trimmed = String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.longestNote))
+        if let payment = PaymentTextParser.parse(trimmed, localCurrency: currencyCode) {
+            apply(ExpenseDraft(title: payment.merchant ?? "", total: payment.amount))
+            filledNotice = String(localized: "Filled in from the pasted text.")
+            return
+        }
+        describeText = trimmed
+        await fillFromNote()
+    }
+
     func apply(quickAdd draft: QuickAddDraft) {
         guard !draft.isEmpty else {
             filledNotice = String(localized: "Nothing to fill in. Try adding an amount and what it was for.")

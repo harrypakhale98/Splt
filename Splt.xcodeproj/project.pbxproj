@@ -7,16 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C0F5D17359317EA0996524D /* SpltShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2482162EFBC42F4DF03CDF17 /* SpltShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		195BE4B72D43E217DD7C8A4A /* SpltWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 59F75129D13462C477B32C3C /* SpltWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		423FFDC1ED69F52898D847D0 /* SpltCore in Frameworks */ = {isa = PBXBuildFile; productRef = 86D67AA99E343EE52F707BA2 /* SpltCore */; };
+		DB898E6778C4DF4EC9C8D34A /* SpltCore in Frameworks */ = {isa = PBXBuildFile; productRef = 83F187B9FCB38E34B6DE40B6 /* SpltCore */; };
 		DF17DDCC89C004676CCF1107 /* SpltCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5EF76B9526D763596849BDC /* SpltCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0F1FADE8577AE3D8A04FE87C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260721B218F7E61DA17DCC4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7F855FC50B23CC7E681C1C25;
+			remoteInfo = SpltWidgets;
+		};
 		5246FA9438E9A6D3700011B0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 260721B218F7E61DA17DCC4F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 8FC5153111E7AA4790072F82;
 			remoteInfo = Splt;
+		};
+		9E150A8CE142B8B80CF200F6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260721B218F7E61DA17DCC4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 97CAAB8BAEBE289902ED0401;
+			remoteInfo = SpltShare;
 		};
 		BBC14C0EF898CD4A9FCA20AD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,14 +45,59 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		DAC3450BF161BDCC5798CE19 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				195BE4B72D43E217DD7C8A4A /* SpltWidgets.appex in Embed Foundation Extensions */,
+				0C0F5D17359317EA0996524D /* SpltShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2482162EFBC42F4DF03CDF17 /* SpltShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SpltShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5221EDC14D74376768D4DC93 /* SpltKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpltKit; path = Packages/SpltKit; sourceTree = SOURCE_ROOT; };
+		59F75129D13462C477B32C3C /* SpltWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SpltWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		96F33279B0DEA0DFCC8E555A /* Splt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Splt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SpltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2B39A14E9FF9F0229F06CBE7 /* Inbox */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			name = Inbox;
+			path = Inbox;
+			sourceTree = "<group>";
+		};
+		70A7678024BEEBDD640C136B /* SpltWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = SpltWidgets;
+			sourceTree = "<group>";
+		};
+		73F0F7C09D7691A633081478 /* SpltShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = SpltShare;
+			sourceTree = "<group>";
+		};
 		91AB7BEAAEAA8000769548EE /* Splt */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			explicitFileTypes = {
@@ -51,6 +114,15 @@
 			explicitFolders = (
 			);
 			path = SpltUITests;
+			sourceTree = "<group>";
+		};
+		BE442D9FA124502E3519A30B /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		FDABB17870C7B5C7334A5750 /* SpltTests */ = {
@@ -73,6 +145,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E2E84023533359A393BBC4EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB898E6778C4DF4EC9C8D34A /* SpltCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EA467F06C03D1DE9E393D61B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				423FFDC1ED69F52898D847D0 /* SpltCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -88,9 +176,13 @@
 			isa = PBXGroup;
 			children = (
 				25816D36B1DC00496B3F2DF0 /* Packages */,
+				84C353BD83172D3540F647C5 /* Shared */,
+				BE442D9FA124502E3519A30B /* Shared */,
 				91AB7BEAAEAA8000769548EE /* Splt */,
+				73F0F7C09D7691A633081478 /* SpltShare */,
 				FDABB17870C7B5C7334A5750 /* SpltTests */,
 				A9C2F22DFA6DB41AA1481EA0 /* SpltUITests */,
+				70A7678024BEEBDD640C136B /* SpltWidgets */,
 				6BE860C27D73AADB9E571A4B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,10 +191,20 @@
 			isa = PBXGroup;
 			children = (
 				96F33279B0DEA0DFCC8E555A /* Splt.app */,
+				2482162EFBC42F4DF03CDF17 /* SpltShare.appex */,
 				CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */,
 				AF91B74D706ABCE56E024AF9 /* SpltUITests.xctest */,
+				59F75129D13462C477B32C3C /* SpltWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		84C353BD83172D3540F647C5 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				2B39A14E9FF9F0229F06CBE7 /* Inbox */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -152,6 +254,30 @@
 			productReference = CDDDB533A1F58604276D7DE0 /* SpltTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		7F855FC50B23CC7E681C1C25 /* SpltWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 93EDDB48BFC48211328C4D74 /* Build configuration list for PBXNativeTarget "SpltWidgets" */;
+			buildPhases = (
+				EBFE541DAE98647970A8C14D /* Sources */,
+				0EAE2AC86D9397CAD73FEF78 /* Resources */,
+				E2E84023533359A393BBC4EA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BE442D9FA124502E3519A30B /* Shared */,
+				70A7678024BEEBDD640C136B /* SpltWidgets */,
+			);
+			name = SpltWidgets;
+			packageProductDependencies = (
+				83F187B9FCB38E34B6DE40B6 /* SpltCore */,
+			);
+			productName = SpltWidgets;
+			productReference = 59F75129D13462C477B32C3C /* SpltWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		8FC5153111E7AA4790072F82 /* Splt */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C88EFD206B8AC353DFAEAB97 /* Build configuration list for PBXNativeTarget "Splt" */;
@@ -159,12 +285,16 @@
 				D9F1F496D85ED096CB13BF69 /* Sources */,
 				778B8115E338553259BA6CB3 /* Resources */,
 				511CFCA3EBA7DEF268EF20D3 /* Frameworks */,
+				DAC3450BF161BDCC5798CE19 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				99F0BD65D56C9BCB04132AE1 /* PBXTargetDependency */,
+				A8EBFDB74114743CCF89A415 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				BE442D9FA124502E3519A30B /* Shared */,
 				91AB7BEAAEAA8000769548EE /* Splt */,
 			);
 			name = Splt;
@@ -174,6 +304,30 @@
 			productName = Splt;
 			productReference = 96F33279B0DEA0DFCC8E555A /* Splt.app */;
 			productType = "com.apple.product-type.application";
+		};
+		97CAAB8BAEBE289902ED0401 /* SpltShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6C41324FA0AD118C7DE9EF36 /* Build configuration list for PBXNativeTarget "SpltShare" */;
+			buildPhases = (
+				1AF0E246868EB9200E3F7910 /* Sources */,
+				A75E95874B870F9A10364C49 /* Resources */,
+				EA467F06C03D1DE9E393D61B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2B39A14E9FF9F0229F06CBE7 /* Inbox */,
+				73F0F7C09D7691A633081478 /* SpltShare */,
+			);
+			name = SpltShare;
+			packageProductDependencies = (
+				86D67AA99E343EE52F707BA2 /* SpltCore */,
+			);
+			productName = SpltShare;
+			productReference = 2482162EFBC42F4DF03CDF17 /* SpltShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -191,7 +345,15 @@
 					19920EC43439FDAF41F1F604 = {
 						DevelopmentTeam = DUHVN68KBA;
 					};
+					7F855FC50B23CC7E681C1C25 = {
+						DevelopmentTeam = DUHVN68KBA;
+						ProvisioningStyle = Automatic;
+					};
 					8FC5153111E7AA4790072F82 = {
+						DevelopmentTeam = DUHVN68KBA;
+						ProvisioningStyle = Automatic;
+					};
+					97CAAB8BAEBE289902ED0401 = {
 						DevelopmentTeam = DUHVN68KBA;
 						ProvisioningStyle = Automatic;
 					};
@@ -215,6 +377,8 @@
 			projectRoot = "";
 			targets = (
 				8FC5153111E7AA4790072F82 /* Splt */,
+				7F855FC50B23CC7E681C1C25 /* SpltWidgets */,
+				97CAAB8BAEBE289902ED0401 /* SpltShare */,
 				19920EC43439FDAF41F1F604 /* SpltTests */,
 				022ADBAB17BA8A292126955B /* SpltUITests */,
 			);
@@ -222,6 +386,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0EAE2AC86D9397CAD73FEF78 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		778B8115E338553259BA6CB3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -230,6 +401,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8F58A1FD97985E1F09588AE3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A75E95874B870F9A10364C49 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +431,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		1AF0E246868EB9200E3F7910 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D9F1F496D85ED096CB13BF69 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -267,6 +452,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EBFE541DAE98647970A8C14D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -274,6 +466,16 @@
 			isa = PBXTargetDependency;
 			target = 8FC5153111E7AA4790072F82 /* Splt */;
 			targetProxy = BBC14C0EF898CD4A9FCA20AD /* PBXContainerItemProxy */;
+		};
+		99F0BD65D56C9BCB04132AE1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7F855FC50B23CC7E681C1C25 /* SpltWidgets */;
+			targetProxy = 0F1FADE8577AE3D8A04FE87C /* PBXContainerItemProxy */;
+		};
+		A8EBFDB74114743CCF89A415 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 97CAAB8BAEBE289902ED0401 /* SpltShare */;
+			targetProxy = 9E150A8CE142B8B80CF200F6 /* PBXContainerItemProxy */;
 		};
 		F42FEAB66F8A03A872ED287E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -316,6 +518,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts and invite codes, and take group photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Splt uses Face ID to keep your groups and expenses private.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Dictate expenses by voice.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -325,6 +528,25 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt;
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		2A25E0EF712F9C4DA0B4DA8A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/SpltWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = "Config/SpltWidgets-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -346,6 +568,25 @@
 				TEST_TARGET_NAME = Splt;
 			};
 			name = Debug;
+		};
+		493DCA563FE99D6FE8F1227A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/SpltWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = "Config/SpltWidgets-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
 		};
 		5D47B6EB5831ECE8A1910053 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -410,6 +651,25 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+		A9B3CE77D0F201E13C27A229 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/SpltShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = "Config/SpltShare-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		ADEF597D06FCF9AE59524BA6 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -515,6 +775,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan receipts and invite codes, and take group photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Splt uses Face ID to keep your groups and expenses private.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Dictate expenses by voice.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -524,6 +785,25 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt;
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		EF56E47FF2069D34BC1B95E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/SpltShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = "Config/SpltShare-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.harrypakhale.splt.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -558,11 +838,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		6C41324FA0AD118C7DE9EF36 /* Build configuration list for PBXNativeTarget "SpltShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9B3CE77D0F201E13C27A229 /* Debug */,
+				EF56E47FF2069D34BC1B95E1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		86976DD4EBD0F3A5A997BA2B /* Build configuration list for PBXNativeTarget "SpltTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				ADEF597D06FCF9AE59524BA6 /* Debug */,
 				05F02F0C18329167691A7570 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		93EDDB48BFC48211328C4D74 /* Build configuration list for PBXNativeTarget "SpltWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A25E0EF712F9C4DA0B4DA8A /* Debug */,
+				493DCA563FE99D6FE8F1227A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -595,6 +893,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		83F187B9FCB38E34B6DE40B6 /* SpltCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SpltCore;
+		};
+		86D67AA99E343EE52F707BA2 /* SpltCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SpltCore;
+		};
 		E5EF76B9526D763596849BDC /* SpltCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SpltCore;

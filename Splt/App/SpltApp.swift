@@ -28,6 +28,7 @@ struct SpltApp: App {
                         .groupSpotlight(services: services, router: router)
                         .friendSpotlight(services: services, router: router)
                         .notificationRouting(router: router)
+                        .paymentInboxRefresh(services: services)
                         .onboardingTour(router: router)
                         .tint(Ink.text)
                 } else {

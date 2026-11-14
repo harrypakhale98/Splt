@@ -35,6 +35,7 @@ When an expense is in another currency than its group, Splt can look up a rate f
 - **Microphone and speech.** Voice entry is turned into text on the device.
 - **Face ID.** The lock is off until you turn it on in Account. iOS checks your face or passcode and tells Splt only whether it matched. Splt never sees or stores your face data.
 - **Smart entry and suggestions.** These use Apple's on-device language model when it is available.
+- **Catch Payments.** If you set up a Shortcuts automation, Wallet, a bank text or an email hands Splt a shop name and an amount. A screenshot you share to Splt is read on the device for the same two things. They wait in To Split in one file on this iPhone, shared only with Splt's own widgets and share extension. They never sync, and Splt never keeps the text or the screenshot. Only an expense you choose to make from one syncs like any other expense. Payments you split or mark as yours are forgotten after 30 days, and waiting ones after 90. Splt never asks for a bank login.
 - **Translation.** Comments are translated with Apple's system translation.
 - **Notifications.** Reminders are local notifications that Splt schedules on your device. A notice about a friend's change is built on your device after iCloud wakes the app. Splt has no push server.
 - **Spotlight and Siri.** Group and friend names, and who is in each group, go into the search index on your device so Spotlight and Siri can find them. Adding an expense or hearing a balance through Siri needs an unlocked iPhone.
