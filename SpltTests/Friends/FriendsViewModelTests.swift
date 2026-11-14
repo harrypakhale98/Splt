@@ -99,6 +99,30 @@ struct FriendsViewModelTests {
         #expect(model.settleRequest(for: summary) == nil)
     }
 
+    @Test func expenseFriendsAreByNameAndLeaveOutHiddenAndBlocked() throws {
+        let fixture = try Fixture()
+        fixture.services.friendsStore.refresh()
+        let model = model(fixture)
+        #expect(model.expenseFriends.map(\.name) == ["Priya", "Sam"])
+        model.setState(.hidden, for: fixture.sam.id)
+        #expect(model.expenseFriends.map(\.name) == ["Priya"])
+        model.setState(.blocked, for: fixture.priya.id)
+        #expect(model.expenseFriends.isEmpty)
+    }
+
+    @Test func anExpenseWithAFriendGoesInTheirDirectGroup() throws {
+        let fixture = try Fixture()
+        fixture.services.friendsStore.refresh()
+        let model = model(fixture)
+        let id = try #require(model.expenseGroup(with: fixture.sam.id))
+        let group = try #require(try fixture.services.groups.group(id: id))
+        #expect(group.kind == .friend)
+        #expect(Set(group.memberIDs) == [fixture.me.id, fixture.sam.id])
+        // the same group the next time, not a second one
+        #expect(model.expenseGroup(with: fixture.sam.id) == id)
+        #expect(model.errorMessage == nil)
+    }
+
     @Test func directGroupsAreLabelledAsDirectExpenses() {
         let direct = SplitGroup(name: "Sam", currencyCode: "USD", kind: .friend)
         let trip = SplitGroup(name: "Trip", currencyCode: "USD")

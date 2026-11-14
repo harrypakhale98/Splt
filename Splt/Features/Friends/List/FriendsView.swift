@@ -32,6 +32,7 @@ private struct FriendsContent: View {
     @State private var model: FriendsViewModel
     @State private var settleRequest: SettleRequest?
     @State private var remindTarget: RemindTarget?
+    @State private var expenseTarget: ExpenseTarget?
 
     init(services: DataServices) {
         _model = State(initialValue: FriendsViewModel(services: services))
@@ -77,10 +78,11 @@ private struct FriendsContent: View {
         .overlay { emptyState(sections) }
         .toolbar {
             AccountToolbarItem()
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
                 Button("Add Friend", systemImage: "person.badge.plus") {
                     router.present(.newFriend)
                 }
+                addExpenseMenu
             }
         }
         .task(id: model.summaries) { await model.cancelRemindersForFriendsWhoOweNothing() }
@@ -91,7 +93,37 @@ private struct FriendsContent: View {
         .sheet(item: $remindTarget) { target in
             RemindSheet(friend: target.person, owed: target.owed, groupNames: target.groupNames)
         }
-        .closingSheetsOnLink { remindTarget = nil }
+        .sheet(item: $expenseTarget) { target in
+            ExpenseFormView(mode: .add(groupID: target.groupID, prefill: nil))
+        }
+        .closingSheetsOnLink {
+            remindTarget = nil
+            expenseTarget = nil
+        }
+        .alert("Couldn't Finish", isPresented: errorBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(model.errorMessage ?? "")
+        }
+    }
+
+    /// Starts an expense with one friend, outside any shared group.
+    private var addExpenseMenu: some View {
+        let friends = model.expenseFriends
+        return Menu("Add Expense", systemImage: "plus") {
+            Section("Split With") {
+                ForEach(friends) { friend in
+                    Button(friend.name) {
+                        expenseTarget = model.expenseGroup(with: friend.id).map(ExpenseTarget.init)
+                    }
+                }
+            }
+        }
+        .disabled(friends.isEmpty)
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
     }
 
     @ViewBuilder

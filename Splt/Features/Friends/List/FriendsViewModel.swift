@@ -44,6 +44,25 @@ final class FriendsViewModel {
         return summaries.filter { left.contains($0.id) }
     }
 
+    /// The friends the Add Expense menu offers, by name. Hidden and blocked friends are left out.
+    var expenseFriends: [Person] {
+        _ = visibilityRevision
+        let left = visibility.hiddenOrBlocked
+        return summaries.map(\.person)
+            .filter { !left.contains($0.id) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// The group a new expense with this friend goes into, made the first time it is needed.
+    func expenseGroup(with friend: PersonID) -> GroupID? {
+        do {
+            return try DirectGroupResolver.group(with: friend, services: services)
+        } catch {
+            errorMessage = SettleErrorMessage.text(for: error)
+            return nil
+        }
+    }
+
     func state(of id: PersonID) -> FriendVisibilityStore.State? {
         _ = visibilityRevision
         return visibility.state(of: id)

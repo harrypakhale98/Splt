@@ -18,7 +18,8 @@ struct FriendDetailView: View {
     }
 }
 
-private struct ExpenseTarget: Identifiable {
+/// The group a new expense with a friend opens in, as a sheet item.
+struct ExpenseTarget: Identifiable {
     let groupID: GroupID
     var id: GroupID { groupID }
 }
