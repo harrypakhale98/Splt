@@ -16,7 +16,9 @@ enum TripLiveActivity {
         end(running.filter { $0.attributes.groupID != trip.id.rawValue })
         let rows = review.rows.filter(\.isInActiveTrip)
         let state = TripActivityAttributes.ContentState(unsplitCount: rows.count, totalText: totalText(rows.map(\.payment.amount)))
-        let content = ActivityContent(state: state, staleDate: nil)
+        // goes stale when the trip's last day ends, so the Lock Screen stops counting a finished trip
+        let tripEnd = SplitTargetPicker.tripRange(of: trip, calendar: .current)?.upperBound
+        let content = ActivityContent(state: state, staleDate: tripEnd)
         let tripID = trip.id.rawValue
         if running.contains(where: { $0.attributes.groupID == tripID }) {
             Task {

@@ -19,7 +19,9 @@ final class RecurringExpensesModel {
     init(groupID: GroupID, services: DataServices) {
         self.groupID = groupID
         self.services = services
-        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.reload() }
+        observer = ContainerChangeObserver(
+            container: services.container, watching: [RecurringExpenseRecord.self, GroupRecord.self, PersonRecord.self]
+        ) { [weak self] in self?.reload() }
         reload()
     }
 

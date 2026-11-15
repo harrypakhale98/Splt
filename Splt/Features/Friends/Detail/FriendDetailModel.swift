@@ -39,7 +39,7 @@ final class FriendDetailModel {
     init(friendID: PersonID, services: DataServices) {
         self.friendID = friendID
         self.services = services
-        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
+        observer = ContainerChangeObserver(container: services.container, watching: WatchedRecords.balances) { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
 

@@ -78,9 +78,16 @@ struct ChangeTracker {
         recordEdit(record)
     }
 
+    /// Saves everything changed since the last save. When the save fails it throws the changes away too, so a
+    /// failed edit never lingers in memory to be written later by autosave or by the next, unrelated save.
     func save() throws {
         if context.hasChanges {
-            try context.save()
+            do {
+                try context.save()
+            } catch {
+                rollback()
+                throw error
+            }
         }
         flushUnsavedGroups()
     }

@@ -15,6 +15,32 @@ struct StoresTests {
         return condition()
     }
 
+    @Test func aWatchingObserverHearsOnlyTheRecordsItWatches() throws {
+        let fixture = try Fixture()
+        var expenseSaves = 0, anySaves = 0
+        let expenses = ContainerChangeObserver(container: fixture.services.container, watching: [ExpenseRecord.self]) {
+            expenseSaves += 1
+        }
+        let everything = ContainerChangeObserver(container: fixture.services.container) { anySaves += 1 }
+        try fixture.addExpense(cents: 3000)
+        #expect(expenseSaves >= 1)
+        let expensesBefore = expenseSaves, anyBefore = anySaves
+        // a reminder saves only an activity row, which an expenses screen has no reason to reload for
+        try fixture.services.activity.recordReminder(to: fixture.sam.id, amounts: [usdAmount(1000)], in: fixture.group.id)
+        #expect(anySaves > anyBefore)
+        #expect(expenseSaves == expensesBefore)
+        _ = (expenses, everything)
+    }
+
+    @Test func keptDecodingFollowsTheBytes() throws {
+        let first = RecordCoding.encode(["a": 1])
+        let second = RecordCoding.encode(["a": 2])
+        #expect(try RecordCoding.decodeKept([String: Int].self, from: first) == ["a": 1])
+        #expect(try RecordCoding.decodeKept([String: Int].self, from: second) == ["a": 2])
+        #expect(try RecordCoding.decodeKept([String: Int].self, from: first) == ["a": 1])
+        #expect(throws: (any Error).self) { try RecordCoding.decodeKept([String: Int].self, from: Data("null".utf8)) }
+    }
+
     @Test func groupsStoreShowsYourBalanceInEachGroup() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)

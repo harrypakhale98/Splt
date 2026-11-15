@@ -7,6 +7,8 @@ protocol ExpenseRepository {
     func expenses(in group: GroupID, includeDeleted: Bool) throws -> [Expense]
     /// Expenses in any group where both you and the friend take part, newest first.
     func sharedExpenses(with friend: PersonID) throws -> [Expense]
+    /// Expenses in any of these groups dated inside the window, in no particular order. Reads only that window.
+    func expenses(in groups: Set<GroupID>, dated window: Range<Date>) throws -> [Expense]
     func expense(id: ExpenseID) throws -> Expense?
     func details(id: ExpenseID) throws -> ExpenseDetails?
 

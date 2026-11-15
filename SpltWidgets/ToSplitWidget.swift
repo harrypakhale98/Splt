@@ -44,7 +44,8 @@ struct ToSplitProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ToSplitEntry>) -> Void) {
-        completion(Timeline(entries: entries(from: Date()), policy: .never))
+        // asks again after the last hourly entry, so captions keep moving while the app stays closed
+        completion(Timeline(entries: entries(from: Date()), policy: .atEnd))
     }
 
     private func entries(from now: Date) -> [ToSplitEntry] {

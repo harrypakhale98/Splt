@@ -11,6 +11,17 @@ struct SettleControls: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if model.balanceChanged {
+                Label(
+                    model.debts.isEmpty ? "This is already settled up." : "The balance changed while you were here. The amounts are up to date.",
+                    systemImage: "arrow.triangle.2.circlepath"
+                )
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .accessibilityIdentifier("settle.balanceChanged")
+            }
             if model.isBatch {
                 plan
             } else {
@@ -114,7 +125,7 @@ struct SettleControls: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader("Payments")
                 .padding(.bottom, 4)
-            ForEach(model.route.debts, id: \.self) { debt in
+            ForEach(model.debts, id: \.self) { debt in
                 let layout = typeSize.isAccessibilitySize
                     ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
                     : AnyLayout(HStackLayout(spacing: 12))

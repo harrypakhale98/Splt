@@ -33,7 +33,7 @@ final class BalanceWidgetPublisher {
         self.services = services
         self.defaults = defaults
         self.visibility = visibility
-        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.schedule() }
+        observer = ContainerChangeObserver(container: services.container, watching: WatchedRecords.balances) { [weak self] in self?.schedule() }
         for name in [UIApplication.didBecomeActiveNotification, FriendVisibilityStore.didChange] {
             tokens.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.schedule() }
@@ -47,8 +47,14 @@ final class BalanceWidgetPublisher {
     }
 
     /// Waits a moment, so the friends store has read the change and a burst of saves publishes once.
+    /// In the background, after a silent push or a Siri add, iOS may suspend the app inside that moment,
+    /// so there it publishes straight away.
     private func schedule() {
         pending?.cancel()
+        guard UIApplication.shared.applicationState == .active else {
+            publish()
+            return
+        }
         pending = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -61,7 +67,7 @@ final class BalanceWidgetPublisher {
         store.refresh()
         let snapshot = Self.snapshot(
             summaries: store.summaries, totals: store.totals, hidden: visibility.hiddenOrBlocked,
-            hidesDetails: NotificationPrivacy.isHidingDetails()
+            hidesDetails: NotificationPrivacy.isHidingDetails(), unitValues: services.rates.snapshot.unitValues()
         )
         guard snapshot != BalanceWidgetSnapshot.load(from: defaults) else { return }
         snapshot.save(to: defaults)
@@ -71,12 +77,14 @@ final class BalanceWidgetPublisher {
     /// The same totals as the Friends tab hero, and the friends with the most money between you,
     /// leaving out anyone hidden or blocked. With the lock on, nothing at all.
     static func snapshot(
-        summaries: [FriendSummary], totals: BalanceTotals, hidden: Set<PersonID>, hidesDetails: Bool
+        summaries: [FriendSummary], totals: BalanceTotals, hidden: Set<PersonID>, hidesDetails: Bool,
+        unitValues: [String: Double] = [:]
     ) -> BalanceWidgetSnapshot {
         guard !hidesDetails else { return .hidden }
-        let friends = summaries
-            .filter { !$0.balance.isEmpty && !hidden.contains($0.id) }
-            .sorted { largest($0.balance) > largest($1.balance) }
+        let shown = summaries.filter { !$0.balance.isEmpty && !hidden.contains($0.id) }
+        let weight = NetPosition.weigher(for: shown.flatMap(\.balance), unitValues: unitValues)
+        let friends = shown
+            .sorted { largest($0.balance, weight) > largest($1.balance, weight) }
             .prefix(BalanceWidgetSnapshot.mostFriends)
             .map { summary in
                 BalanceWidgetSnapshot.Friend(
@@ -89,7 +97,7 @@ final class BalanceWidgetPublisher {
         let owedTo = summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }
         return BalanceWidgetSnapshot(
             owedToYou: totals.owedToYou, youOwe: totals.youOwe, friends: friends,
-            strip: (owedBy + owedTo).map { color(of: $0.id) }
+            strip: (owedBy + owedTo).map { color(of: $0.id) }, unitValues: unitValues
         )
     }
 
@@ -100,7 +108,7 @@ final class BalanceWidgetPublisher {
         return .init(lightFill: light.fill, lightText: light.text, darkFill: dark.fill, darkText: dark.text)
     }
 
-    private static func largest(_ balance: [Money]) -> UInt64 {
-        balance.map(\.minorUnits.magnitude).max() ?? 0
+    private static func largest(_ balance: [Money], _ weight: (Money) -> Double) -> Double {
+        balance.map(weight).max() ?? 0
     }
 }

@@ -17,9 +17,12 @@ struct NetPositionHero: View {
     var owedTo: [Person] = []
 
     @Environment(\.locale) private var locale
+    @Environment(\.dataServices) private var services
     @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = HeroAmount.baseSize
 
-    private var position: NetPosition { NetPosition(totals: totals) }
+    private var position: NetPosition {
+        NetPosition(owedToYou: totals.owedToYou, youOwe: totals.youOwe, unitValues: services?.rates.snapshot.unitValues() ?? [:])
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -54,7 +57,7 @@ struct NetPositionHero: View {
                     .accessibilityLabel(Text("Also \(spokenOthers)"))
             }
         } else {
-            Text("All settled up")
+            Text(position.settledTitle)
                 .font(Typeface.hero(size: min(heroSize, HeroAmount.maxSize)))
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)

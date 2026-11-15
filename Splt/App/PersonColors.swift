@@ -16,7 +16,7 @@ private struct PersonColors: ViewModifier {
             guard let services else { return }
             refresh(services)
             if observer == nil {
-                observer = ContainerChangeObserver(container: services.container) { refresh(services) }
+                observer = ContainerChangeObserver(container: services.container, watching: [PersonRecord.self, GroupRecord.self]) { refresh(services) }
             }
         }
     }

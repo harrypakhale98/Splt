@@ -63,8 +63,23 @@ final class ExpenseDetailModel {
         self.expenseID = expenseID
         self.services = services
         self.currentLocale = locale
-        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.reload() }
+        observer = ContainerChangeObserver(
+            container: services.container,
+            watching: [ExpenseRecord.self, CommentRecord.self, ActivityRecord.self, PersonRecord.self, ItemClaimRecord.self, GroupRecord.self]
+        ) { [weak self] in self?.scheduleReload() }
         reload()
+    }
+
+    @ObservationIgnored private var reloadScheduled = false
+
+    /// One reload per run of the main loop, however many saves land in it.
+    private func scheduleReload() {
+        guard !reloadScheduled else { return }
+        reloadScheduled = true
+        Task { @MainActor [weak self] in
+            self?.reloadScheduled = false
+            self?.reload()
+        }
     }
 
     var isDeleted: Bool { expense?.isDeleted ?? false }

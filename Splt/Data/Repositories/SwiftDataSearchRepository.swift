@@ -18,6 +18,8 @@ final class SwiftDataSearchRepository: SearchRepository {
         let groups = try env.allGroups()
         let peopleByID = Dictionary(people.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         let groupNames = Dictionary(groups.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        // a word no one's name contains can't be matched by who took part, so those expenses are never decoded
+        let nameWords = Set(tokens.filter { token in people.contains { Self.matches($0.name, token) } })
 
         let descriptor = FetchDescriptor<ExpenseRecord>(
             predicate: #Predicate { $0.deletedAt == nil },
@@ -31,7 +33,7 @@ final class SwiftDataSearchRepository: SearchRepository {
             let remaining = tokens.filter { !Self.matches(text, $0) }
             if remaining.isEmpty {
                 if let expense = try? Expense(record) { expenses.append(expense) }
-            } else if let expense = try? Expense(record) {
+            } else if remaining.allSatisfy(nameWords.contains), let expense = try? Expense(record) {
                 let names = expense.participants.compactMap { peopleByID[$0] }.joined(separator: " ")
                 if remaining.allSatisfy({ Self.matches(names, $0) }) { expenses.append(expense) }
             }
@@ -50,6 +52,8 @@ final class SwiftDataSearchRepository: SearchRepository {
 
     private static func amountText(_ record: ExpenseRecord) -> String {
         Money(minorUnits: record.totalMinorUnits, currencyCode: record.currencyCode)
-            .plainString(locale: Locale(identifier: "en_US_POSIX"))
+            .plainString(locale: posix)
     }
+
+    private static let posix = Locale(identifier: "en_US_POSIX")
 }

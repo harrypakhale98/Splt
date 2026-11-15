@@ -14,16 +14,44 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         try env.expenses(inGroup: group, includeDeleted: includeDeleted)
     }
 
+    func expenses(in groups: Set<GroupID>, dated window: Range<Date>) throws -> [Expense] {
+        let start = window.lowerBound, end = window.upperBound
+        // the date is indexed, so only the window is read; the group is checked on the few rows that come back
+        let records = try env.context.fetch(FetchDescriptor<ExpenseRecord>(
+            predicate: #Predicate { $0.deletedAt == nil && $0.date >= start && $0.date < end }
+        ))
+        return records.compactMap { record in
+            guard let group = record.groupID, groups.contains(GroupID(rawValue: group)) else { return nil }
+            return try? Expense(record)
+        }
+    }
+
+    /// Only groups whose ledger has both of you on some entry can hold a shared expense, and the cached ledgers say
+    /// which those are, so the rest of the store is never read. Expenses outside any group are always looked at.
     func sharedExpenses(with friend: PersonID) throws -> [Expense] {
         guard let me = try env.currentUser()?.personID else { return [] }
-        let descriptor = FetchDescriptor<ExpenseRecord>(
-            predicate: #Predicate { $0.deletedAt == nil },
-            sortBy: [SortDescriptor(\.date, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        return try env.context.fetch(descriptor).compactMap { try? Expense($0) }.filter {
-            let participants = $0.participants
-            return participants.contains(me) && participants.contains(friend)
+        var records: [ExpenseRecord] = []
+        for group in try env.allGroups() {
+            let people = try env.ledger(forGroup: group.id).people
+            guard people.contains(me), people.contains(friend) else { continue }
+            let gid: UUID? = group.id.rawValue
+            records += try env.context.fetch(FetchDescriptor<ExpenseRecord>(
+                predicate: #Predicate { $0.groupID == gid && $0.deletedAt == nil }
+            ))
         }
+        records += try env.context.fetch(FetchDescriptor<ExpenseRecord>(
+            predicate: #Predicate { $0.groupID == nil && $0.deletedAt == nil }
+        ))
+        // each stored value is read once: reading a model's properties inside a sort comparison is slow
+        let shared = records.compactMap { record -> (expense: Expense, createdAt: Date)? in
+            guard let expense = try? Expense(record) else { return nil }
+            let participants = expense.participants
+            guard participants.contains(me), participants.contains(friend) else { return nil }
+            return (expense, record.createdAt)
+        }
+        return shared
+            .sorted { ($0.expense.date, $0.createdAt) > ($1.expense.date, $1.createdAt) }
+            .map(\.expense)
     }
 
     func expense(id: ExpenseID) throws -> Expense? {

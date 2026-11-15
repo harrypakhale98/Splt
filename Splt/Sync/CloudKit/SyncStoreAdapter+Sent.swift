@@ -42,10 +42,12 @@ extension SyncStoreAdapter {
             } else {
                 try tracker.markSynced(
                     recordType: type, recordName: record.recordID.recordName,
-                    sentModifiedAt: sentAt, systemFields: systemFields
+                    sentModifiedAt: sentAt, systemFields: systemFields, saves: false
                 )
             }
         }
+        // one save for the whole batch: a save after each record woke every open screen hundreds of times
+        try tracker.save()
         if !copies.isEmpty {
             // an uploaded person is marked with system fields so a later delete is not dropped as "never synced"
             for (key, copy) in copies {

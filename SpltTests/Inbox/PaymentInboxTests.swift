@@ -84,6 +84,35 @@ struct PaymentInboxStateTests {
         let second = state.capture(merchant: "Netflix", amount: usd(15), date: now.addingTimeInterval(30 * 86_400), source: .wallet, now: now).payment
         #expect(state.isRecurring(second))
     }
+
+    @Test func oneUnreadablePaymentLeavesTheRest() throws {
+        let id = UUID()
+        let json = """
+        {"payments": [
+          {"id": "\(id.uuidString)", "merchant": "Taqueria", "amount": {"minorUnits": 1200, "currencyCode": "USD"}, "date": 0},
+          {"id": "not a uuid", "merchant": "Broken"}
+        ],
+        "merchants": {"taqueria": {"splitCount": 2}, "broken": {"isMuted": "yes"}}}
+        """
+        let state = try JSONDecoder().decode(PaymentInboxState.self, from: Data(json.utf8))
+        #expect(state.payments.map(\.id) == [id])
+        // fields added later default when an older file lacks them
+        #expect(state.payments.first?.status == .pending)
+        #expect(state.payments.first?.source == .wallet)
+        #expect(state.merchants["taqueria"]?.splitCount == 2)
+        #expect(state.merchants["broken"]?.isMuted == false)
+    }
+
+    @Test func anUnreadableFileIsPutAsideNotOverwritten() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "inbox-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = PaymentInboxFile(url: folder.appending(path: "PaymentInbox.json"))
+        try Data("not json".utf8).write(to: file.url)
+        file.update { $0.capture(merchant: "Cafe", amount: usd(4), date: now, source: .text, now: now) }
+        let aside = try Data(contentsOf: folder.appending(path: "PaymentInbox.unreadable.json"))
+        #expect(String(decoding: aside, as: UTF8.self) == "not json")
+        #expect(file.read().payments.count == 1)
+    }
 }
 
 @Suite("Payment scoring")

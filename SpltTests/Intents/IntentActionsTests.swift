@@ -94,10 +94,17 @@ struct IntentActionsTests {
         let fixture = try Fixture()
         let actions = actions(fixture)
         #expect(try actions.balanceSentence(friend: nil, group: fixture.group.id.rawValue, locale: english) == "You are settled up in Flat.")
-        #expect(try actions.balanceSentence(friend: nil, group: nil, locale: english) == "You are all settled up.")
+        #expect(try actions.balanceSentence(friend: nil, group: nil, locale: english) == "You're all settled up.")
         try fixture.addExpense("Dinner", cents: 3000)
         #expect(try actions.balanceSentence(friend: nil, group: fixture.group.id.rawValue, locale: english) == "In Flat, you are owed $20.00.")
-        #expect(try actions.balanceSentence(friend: nil, group: nil, locale: english) == "Friends owe you $20.00.")
+        #expect(try actions.balanceSentence(friend: nil, group: nil, locale: english) == "You're owed $20.00.")
+    }
+
+    @Test func overallLeadsWithTheNetAndSaysWhenYouAreEven() {
+        let both = BalanceTotals(owedToYou: [Money(minorUnits: 5_000, currencyCode: "USD")], youOwe: [Money(minorUnits: 3_000, currencyCode: "USD")])
+        #expect(IntentActions.overallSentence(both, locale: english) == "You're owed $20.00 overall. Friends owe you $50.00, and you owe $30.00.")
+        let even = BalanceTotals(owedToYou: [Money(minorUnits: 1_000, currencyCode: "USD")], youOwe: [Money(minorUnits: 1_000, currencyCode: "USD")])
+        #expect(IntentActions.overallSentence(even, locale: english) == "You're even: friends owe you $10.00, and you owe $10.00.")
     }
 
     @Test func unknownTargetsThrow() throws {

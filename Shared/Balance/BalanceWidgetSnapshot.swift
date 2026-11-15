@@ -36,18 +36,21 @@ struct BalanceWidgetSnapshot: Codable, Hashable, Sendable {
     var strip: [PersonColor] = []
     /// The Face ID lock is on, so nothing here names a person or an amount.
     var hidesDetails = false
+    /// What one unit of each currency is worth, from the app's rates, so the widget leads with the same currency as the app.
+    var unitValues: [String: Double] = [:]
 
-    var position: NetPosition { NetPosition(owedToYou: owedToYou, youOwe: youOwe) }
+    var position: NetPosition { NetPosition(owedToYou: owedToYou, youOwe: youOwe, unitValues: unitValues) }
 
     init(
         owedToYou: [Money] = [], youOwe: [Money] = [], friends: [Friend] = [], strip: [PersonColor] = [],
-        hidesDetails: Bool = false
+        hidesDetails: Bool = false, unitValues: [String: Double] = [:]
     ) {
         self.owedToYou = owedToYou
         self.youOwe = youOwe
         self.friends = friends
         self.strip = strip
         self.hidesDetails = hidesDetails
+        self.unitValues = unitValues
     }
 
     /// Reads one saved by an earlier build, which had no strip.
@@ -58,6 +61,7 @@ struct BalanceWidgetSnapshot: Codable, Hashable, Sendable {
         friends = try container.decode([Friend].self, forKey: .friends)
         strip = try container.decodeIfPresent([PersonColor].self, forKey: .strip) ?? []
         hidesDetails = try container.decode(Bool.self, forKey: .hidesDetails)
+        unitValues = try container.decodeIfPresent([String: Double].self, forKey: .unitValues) ?? [:]
     }
 
     /// With the lock on, the snapshot keeps nothing that could be read from the widget.

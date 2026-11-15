@@ -160,7 +160,12 @@ private struct ExpenseFormScreen: View {
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { formHeight = $0 }
-        .onChange(of: model.refreshKey) { model.refreshDuplicates() }
+        // the duplicate check reads the store, so it waits for a pause in typing instead of running per key
+        .task(id: model.refreshKey) {
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            model.refreshDuplicates()
+        }
         .onChange(of: model.amountText) { model.refollowPayments() }
         .onChange(of: focus) { _, new in if new != nil { closeKeypad() } }
         .safeAreaBar(edge: .bottom) {

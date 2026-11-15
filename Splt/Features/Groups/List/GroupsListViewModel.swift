@@ -20,6 +20,7 @@ final class GroupsListViewModel {
     @ObservationIgnored private let people: any PersonRepository
     @ObservationIgnored private let groups: any GroupRepository
     @ObservationIgnored private let leftGroups: LeftGroupsStore
+    @ObservationIgnored private var observer: ContainerChangeObserver?
 
     init(services: DataServices, leftGroups: LeftGroupsStore = LeftGroupsStore()) {
         store = services.groupsStore
@@ -27,6 +28,9 @@ final class GroupsListViewModel {
         groups = services.groups
         self.leftGroups = leftGroups
         refresh()
+        // the totals come from the store, which follows every save; the avatars beside them follow too,
+        // so a sheet's save or a friend's synced payment moves both together
+        observer = ContainerChangeObserver(container: services.container, watching: WatchedRecords.balances) { [weak self] in self?.refreshPeople() }
     }
 
     func refresh() {

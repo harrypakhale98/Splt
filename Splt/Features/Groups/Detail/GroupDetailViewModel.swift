@@ -76,6 +76,8 @@ final class GroupDetailViewModel {
         var summariesRevision = -1
         var summaries: [ExpenseID: ExpenseRowSummary] = [:]
         var summaryNames: [PersonID: String] = [:]
+        var searchTextsRevision = -1
+        var searchTexts: [ExpenseID: String] = [:]
     }
 
     init(
@@ -162,7 +164,19 @@ final class GroupDetailViewModel {
     }
 
     var visibleExpenses: [Expense] {
-        filter.apply(to: expenses, names: names, now: now(), calendar: calendar)
+        filter.apply(to: expenses, names: names, now: now(), calendar: calendar, searchTexts: searchTexts)
+    }
+
+    /// Each expense's search text, built once per load and only once a search has started.
+    private var searchTexts: [ExpenseID: String] {
+        guard !filter.trimmedQuery.isEmpty else { return [:] }
+        if memo.searchTextsRevision == revision { return memo.searchTexts }
+        let names = names
+        memo.searchTexts = Dictionary(
+            expenses.map { ($0.id, ExpenseFilter.searchText(of: $0, names: names)) }, uniquingKeysWith: { first, _ in first }
+        )
+        memo.searchTextsRevision = revision
+        return memo.searchTexts
     }
 
     var sections: [ExpenseSection] {

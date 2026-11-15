@@ -29,7 +29,16 @@ final class PaymentInbox {
     @ObservationIgnored private let file: PaymentInboxFile
     @ObservationIgnored var now: () -> Date = { Date() }
     /// The data the app window uses. An intent that starts the app in the background falls back to the shared store.
-    @ObservationIgnored var services: DataServices?
+    @ObservationIgnored var services: DataServices? {
+        didSet {
+            guard services !== oldValue else { return }
+            storeObserver = services.map { services in
+                ContainerChangeObserver(container: services.container, watching: [GroupRecord.self, ExpenseRecord.self]) { [weak self] in self?.scheduleStoreChange() }
+            }
+        }
+    }
+    @ObservationIgnored private var storeObserver: ContainerChangeObserver?
+    @ObservationIgnored private var pendingStoreChange: Task<Void, Never>?
     /// Off in tests, so nothing is posted or reloaded.
     @ObservationIgnored var runsEffects = true
 
@@ -103,6 +112,18 @@ final class PaymentInbox {
         afterChange()
     }
 
+    /// A trip's dates, an archived or deleted trip or a left group change which payments count and what the
+    /// trip shows, so To Split and the Live Activity follow the store too. A burst of saves catches up once.
+    private func scheduleStoreChange() {
+        guard !state.pending.isEmpty else { return }
+        pendingStoreChange?.cancel()
+        pendingStoreChange = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            self?.afterChange()
+        }
+    }
+
     private func afterChange(new: PendingPayment? = nil, resolved: UUID? = nil) {
         guard runsEffects else { return }
         if let resolved { PaymentNotifier.cancel(resolved) }
@@ -112,12 +133,12 @@ final class PaymentInbox {
             var snapshot = ToSplitSnapshot.load(from: defaults)
             snapshot.hidesDetails = hidesDetails
             snapshot.save(to: defaults)
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetCenter.shared.reloadTimelines(ofKind: SpltWidgetKind.inbox)
             return
         }
         let review = InboxReview(state: state, services: services, now: now())
         ToSplitSnapshot(review, hidesDetails: hidesDetails).save(to: defaults)
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetCenter.shared.reloadTimelines(ofKind: SpltWidgetKind.inbox)
         TripLiveActivity.sync(review)
         Task {
             if let new, let row = review.row(for: new.id), row.priority == .high {

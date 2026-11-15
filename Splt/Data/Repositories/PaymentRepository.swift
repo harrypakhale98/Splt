@@ -6,6 +6,8 @@ protocol PaymentRepository {
     /// Newest first.
     func payments(in group: GroupID, includeDeleted: Bool) throws -> [Payment]
     func payment(id: PaymentID) throws -> Payment?
+    /// Several payments in one query, for lists that would otherwise ask once per row.
+    func payments(ids: Set<PaymentID>) throws -> [Payment]
     /// Validates and stores a settlement, and writes an activity entry.
     func record(_ payment: Payment) throws
     /// Records a payment that settles a suggested debt.

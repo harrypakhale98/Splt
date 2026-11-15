@@ -22,8 +22,8 @@ final class SpendingModel {
     var range: SpendingRange {
         didSet {
             guard range != oldValue else { return }
-            rebuild()
-            loadRates()
+            // a wider range needs expenses that were not read for the narrower one
+            refresh()
         }
     }
 
@@ -65,7 +65,9 @@ final class SpendingModel {
         self.now = now
         self.calendar = calendar
         currencyCode = Self.defaultCurrency(in: defaults)
-        observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
+        observer = ContainerChangeObserver(
+            container: services.container, watching: [ExpenseRecord.self, PersonRecord.self, GroupRecord.self]
+        ) { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
 
@@ -83,7 +85,12 @@ final class SpendingModel {
         let all = (try? services.groups.groups(includeArchived: true)) ?? []
         let kept = all.filter { !leftGroups.contains($0.id) }
         groups = Dictionary(kept.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        expenses = kept.flatMap { (try? services.expenses.expenses(in: $0.id, includeDeleted: false)) ?? [] }
+        // a bounded range reads only its own months; all time needs every expense, for where it starts
+        if let window = range.dateRange(now: now(), calendar: calendar) {
+            expenses = (try? services.expenses.expenses(in: Set(kept.map(\.id)), dated: window)) ?? []
+        } else {
+            expenses = kept.flatMap { (try? services.expenses.expenses(in: $0.id, includeDeleted: false)) ?? [] }
+        }
         rebuild()
         didLoad = true
         loadRates()

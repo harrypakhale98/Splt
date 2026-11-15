@@ -28,10 +28,11 @@ extension ChangeTracker {
     }
 
     /// Call when the server accepted an upload. `sentModifiedAt` is the modified date of the
-    /// payload that was sent: if the record changed again meanwhile it stays dirty.
+    /// payload that was sent: if the record changed again meanwhile it stays dirty. Pass `saves: false` when
+    /// marking a whole batch, then save once, so every screen hears about the upload once rather than per record.
     @inline(never)
     func markSynced(
-        recordType: SyncRecordType, recordName: String, sentModifiedAt: Date, systemFields: Data?
+        recordType: SyncRecordType, recordName: String, sentModifiedAt: Date, systemFields: Data?, saves: Bool = true
     ) throws {
         guard let record = try recordType.modelType.find(recordName: recordName, in: context) else { return }
         if let systemFields {
@@ -41,15 +42,21 @@ extension ChangeTracker {
             record.isDirty = false
             record.pendingOperation = nil
         }
-        try save()
+        if saves { try save() }
     }
 
     /// Applies versions received from the server and saves once. Nothing is marked dirty.
     @discardableResult
     func applyRemote(_ payloads: [SyncPayload]) throws -> [RemoteApplyOutcome] {
-        let outcomes = try payloads.map(applyWithoutSaving)
-        try save()
-        return outcomes
+        do {
+            let outcomes = try payloads.map(applyWithoutSaving)
+            try save()
+            return outcomes
+        } catch {
+            // half a batch is never left in memory; the engine fetches it again
+            rollback()
+            throw error
+        }
     }
 
     @discardableResult

@@ -20,6 +20,11 @@ final class SettleModel {
     }
 
     let route: SettleRoute
+    /// What is owed now. It starts as the route's debts and follows the group while the sheet is open,
+    /// so a payment that syncs in from someone else's phone is not recorded twice.
+    private(set) var debts: [Debt]
+    /// True once the balance moved while the sheet was open, so the sheet can say so.
+    private(set) var balanceChanged = false
     var amountMode: AmountMode = .full {
         didSet { if amountMode == .partial, amountText.isEmpty { amountText = fullAmount?.plainString(locale: locale) ?? "" } }
     }
@@ -42,6 +47,10 @@ final class SettleModel {
     static let methodKey = "settle.lastMethod"
 
     @ObservationIgnored private let payments: any PaymentRepository
+    @ObservationIgnored private let groups: any GroupRepository
+    @ObservationIgnored private var observer: ContainerChangeObserver?
+    /// Set while this sheet writes, since a save tells observers at once and its own payment is not news.
+    @ObservationIgnored private var isWriting = false
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let locale: Locale
 
@@ -53,7 +62,9 @@ final class SettleModel {
         locale: Locale = .current
     ) {
         self.route = route
+        self.debts = route.debts
         self.payments = services.payments
+        self.groups = services.groups
         self.defaults = defaults
         self.locale = locale
         self.date = now
@@ -63,6 +74,25 @@ final class SettleModel {
             ((try? services.people.allPeople()) ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
         )
         memberIDs = (try? services.groups.group(id: route.groupID))?.memberIDs ?? []
+        observer = ContainerChangeObserver(container: services.container, watching: WatchedRecords.balances) { [weak self] in self?.followBalances() }
+    }
+
+    /// Reads the group again after any save. A single debt keeps its pair and currency at the new amount, or goes
+    /// when it was paid elsewhere; "settle everything" takes the group's current suggestions.
+    func followBalances() {
+        guard receipt == nil, !isWriting, let balances = try? groups.balances(for: route.groupID) else { return }
+        let current = balances.suggestedSettlements
+        let updated = isBatch ? current : debts.compactMap { debt in
+            current.first {
+                $0.debtor == debt.debtor && $0.creditor == debt.creditor && $0.amount.currencyCode == debt.amount.currencyCode
+            }
+        }
+        guard updated != debts else { return }
+        debts = updated
+        balanceChanged = true
+        if amountMode == .partial, let full = fullAmount, let typed = amount, typed.minorUnits > full.minorUnits {
+            amountText = full.plainString(locale: locale)
+        }
     }
 
     // MARK: What is being paid
@@ -70,7 +100,7 @@ final class SettleModel {
     var isBatch: Bool { route.debts.count > 1 }
 
     /// The debt being edited when there is exactly one.
-    var singleDebt: Debt? { route.debts.count == 1 ? route.debts.first : nil }
+    var singleDebt: Debt? { isBatch ? nil : debts.first }
 
     var fullAmount: Money? { singleDebt?.amount }
 
@@ -177,11 +207,11 @@ final class SettleModel {
 
     var totals: [Money] {
         if let amount { return [amount] }
-        return MoneyTotals.sum(route.debts.map(\.amount))
+        return MoneyTotals.sum(debts.map(\.amount))
     }
 
     var canRecord: Bool {
-        receipt == nil && !route.debts.isEmpty && (isBatch || (amount != nil && amountIssue == nil))
+        receipt == nil && !debts.isEmpty && (isBatch || (amount != nil && amountIssue == nil))
     }
 
     // MARK: Names
@@ -211,7 +241,7 @@ final class SettleModel {
         if let payer, let receiver {
             ordered = [payer, receiver]
         } else {
-            for debt in route.debts {
+            for debt in debts {
                 for id in [debt.debtor, debt.creditor] where !ordered.contains(id) { ordered.append(id) }
             }
         }
@@ -244,7 +274,7 @@ final class SettleModel {
         if singleDebt != nil, let amount, let payer, let receiver {
             return [Payment(groupID: route.groupID, payer: payer, receiver: receiver, amount: amount, date: date, note: text)]
         }
-        return route.debts.map {
+        return debts.map {
             Payment(groupID: route.groupID, payer: $0.debtor, receiver: $0.creditor, amount: $0.amount, date: date, note: text)
         }
     }
@@ -253,6 +283,8 @@ final class SettleModel {
     @discardableResult
     func record() -> SettleReceipt? {
         guard canRecord else { return nil }
+        isWriting = true
+        defer { isWriting = false }
         let planned = makePayments()
         var saved: [Payment] = []
         do {

@@ -1,3 +1,5 @@
+import Synchronization
+
 /// Balances for a set of expenses and payments.
 ///
 /// The ledger never throws. Entries it cannot use (an invalid split, payers that do not add
@@ -16,12 +18,19 @@ public struct Ledger: Sendable {
     public let debts: [Debt]
     /// Entries that were skipped, in the order they were found.
     public let issues: [LedgerIssue]
+    /// Everyone on an entry the ledger read, settled or not, so a caller can tell which groups two people share.
+    public let people: Set<PersonID>
+    /// `simplifiedDebts`, worked out the first time it is asked for. A cached ledger is read again and again,
+    /// and simplifying is the slowest thing it does.
+    let simplified = SimplifiedDebts()
 
     public init(expenses: [Expense] = [], payments: [Payment] = []) {
         var accumulator = LedgerAccumulator()
         var issues: [LedgerIssue] = []
+        var people = Set<PersonID>()
 
         for expense in expenses where !expense.isDeleted {
+            people.formUnion(expense.participants)
             do {
                 let balances = try expense.netBalances()
                 let net = balances.mapValues(\.minorUnits)
@@ -37,6 +46,8 @@ public struct Ledger: Sendable {
         }
 
         for payment in payments where !payment.isDeleted {
+            people.insert(payment.payer)
+            people.insert(payment.receiver)
             do {
                 try payment.validate()
             } catch let error as PaymentError {
@@ -58,6 +69,7 @@ public struct Ledger: Sendable {
         }
         self.debts = Ledger.debts(from: accumulator)
         self.issues = issues
+        self.people = people
     }
 
     private static func debts(from accumulator: LedgerAccumulator) -> [Debt] {

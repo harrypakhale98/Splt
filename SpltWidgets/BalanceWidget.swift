@@ -191,7 +191,7 @@ struct BalanceWidgetView: View {
                 .widgetAccentable()
                 .accessibilityLabel(MoneyFormatting.spokenBalance(primary))
         } else {
-            Text("All settled up")
+            Text(snapshot.position.settledTitle)
                 .font(Typeface.hero(size: size * 0.7))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -206,7 +206,7 @@ struct BalanceWidgetView: View {
 
     /// The hero's words, short: "You're owed $508.65".
     private func inlineText(_ snapshot: BalanceWidgetSnapshot) -> String {
-        guard let primary = snapshot.position.primary else { return String(localized: "All settled up") }
+        guard let primary = snapshot.position.primary else { return snapshot.position.settledTitle }
         let amount = MoneyFormatting.magnitudeString(primary)
         return primary.minorUnits > 0 ? String(localized: "You're owed \(amount)") : String(localized: "You owe \(amount)")
     }

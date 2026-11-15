@@ -49,7 +49,7 @@ final class DataServices {
         self.search = SwiftDataSearchRepository(environment)
         self.groupsStore = GroupsStore(groups: groups, people: people, activity: activity, container: container)
         self.friendsStore = FriendsStore(people: people, container: container)
-        currencyObserver = ContainerChangeObserver(container: container) { [weak self] in self?.warmRatesIfNeeded() }
+        currencyObserver = ContainerChangeObserver(container: container, watching: [GroupRecord.self]) { [weak self] in self?.warmRatesIfNeeded() }
         warmRatesIfNeeded()
     }
 

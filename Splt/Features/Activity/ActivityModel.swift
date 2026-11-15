@@ -197,12 +197,20 @@ final class ActivityModel {
 
     /// Only the newest event about a payment offers an action, so an old row never contradicts the current state.
     private func loadPaymentActions() throws -> [UUID: PaymentAction] {
+        // the newest entry for each payment, then every payment in one query rather than one per row
+        var newest: [(entry: UUID, payment: PaymentID)] = []
         var seen = Set<PaymentID>()
-        var actions: [UUID: PaymentAction] = [:]
         for entry in entries {
-            guard let id = paymentID(of: entry), seen.insert(id).inserted,
-                  let payment = try services.payments.payment(id: id) else { continue }
-            actions[entry.id] = payment.isDeleted ? .restore : .undo
+            guard let id = paymentID(of: entry), seen.insert(id).inserted else { continue }
+            newest.append((entry.id, id))
+        }
+        let found = Dictionary(
+            try services.payments.payments(ids: seen).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
+        )
+        var actions: [UUID: PaymentAction] = [:]
+        for (entry, id) in newest {
+            guard let payment = found[id] else { continue }
+            actions[entry] = payment.isDeleted ? .restore : .undo
         }
         return actions
     }

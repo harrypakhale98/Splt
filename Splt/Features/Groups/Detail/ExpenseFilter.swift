@@ -47,7 +47,7 @@ struct ExpenseFilter: Equatable, Sendable {
         period = .anytime
     }
 
-    private var trimmedQuery: String {
+    var trimmedQuery: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -77,18 +77,42 @@ struct ExpenseFilter: Equatable, Sendable {
     }
 
     func matches(_ expense: Expense, names: [PersonID: String], now: Date, calendar: Calendar) -> Bool {
-        if let payer, expense.payers[payer] == nil { return false }
-        if let category, expense.category != category { return false }
-        if let range = dateRange(now: now, calendar: calendar), !range.contains(expense.date) { return false }
         let words = trimmedQuery.split(whereSeparator: \.isWhitespace)
-        guard !words.isEmpty else { return true }
-        let haystack = ([expense.title, expense.note, expense.category.title] + expense.payers.keys.compactMap { names[$0] })
-            .joined(separator: " ")
-        return words.allSatisfy { haystack.localizedStandardContains($0) }
+        return matches(expense, range: dateRange(now: now, calendar: calendar), words: words) {
+            Self.searchText(of: expense, names: names)
+        }
     }
 
-    func apply(to expenses: [Expense], names: [PersonID: String], now: Date, calendar: Calendar) -> [Expense] {
+    /// Everything a search looks through for one expense: its title, note, category and who paid.
+    static func searchText(of expense: Expense, names: [PersonID: String]) -> String {
+        ([expense.title, expense.note, expense.category.title] + expense.payers.keys.compactMap { names[$0] })
+            .joined(separator: " ")
+    }
+
+    /// The date range and search words are worked out once for the whole list, and `searchTexts`, kept by the
+    /// screen per load, saves building each expense's text again on every key typed.
+    func apply(
+        to expenses: [Expense], names: [PersonID: String], now: Date, calendar: Calendar,
+        searchTexts: [ExpenseID: String] = [:]
+    ) -> [Expense] {
         guard isActive else { return expenses }
-        return expenses.filter { matches($0, names: names, now: now, calendar: calendar) }
+        let range = dateRange(now: now, calendar: calendar)
+        let words = trimmedQuery.split(whereSeparator: \.isWhitespace)
+        return expenses.filter { expense in
+            matches(expense, range: range, words: words) {
+                searchTexts[expense.id] ?? Self.searchText(of: expense, names: names)
+            }
+        }
+    }
+
+    private func matches(
+        _ expense: Expense, range: Range<Date>?, words: [Substring], text: () -> String
+    ) -> Bool {
+        if let payer, expense.payers[payer] == nil { return false }
+        if let category, expense.category != category { return false }
+        if let range, !range.contains(expense.date) { return false }
+        guard !words.isEmpty else { return true }
+        let haystack = text()
+        return words.allSatisfy { haystack.localizedStandardContains($0) }
     }
 }

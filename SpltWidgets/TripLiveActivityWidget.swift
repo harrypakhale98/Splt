@@ -15,7 +15,7 @@ struct TripLiveActivityWidget: Widget {
                     Text(context.attributes.tripName)
                         .font(Typeface.heading)
                         .foregroundStyle(Ink.text)
-                    Text(summary(context.state))
+                    Text(context.isStale ? String(localized: "Trip over · tap to wrap up") : summary(context.state))
                         .font(.subheadline)
                         .monospacedDigit()
                         .foregroundStyle(Ink.secondary)

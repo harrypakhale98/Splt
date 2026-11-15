@@ -46,6 +46,13 @@ struct UIRouterTests {
         #expect(router.sheet == nil)
     }
 
+    @Test func activityLinkOpensTheListNotAScreenLeftOpen() {
+        let router = Router()
+        router.push(.expense(id), in: .activity)
+        router.open(.activity)
+        #expect(router.activityPath.isEmpty)
+    }
+
     @Test func friendsLinkOpensTheFriendsTabAtTheTop() throws {
         let router = Router(selectedTab: .groups)
         router.push(.friend(id), in: .friends)

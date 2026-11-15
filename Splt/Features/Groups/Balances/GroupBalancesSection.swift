@@ -179,9 +179,10 @@ private struct TransferRow: View {
         .accessibilityHint("Opens settle up")
     }
 
-    /// Signed and colored when it involves you; otherwise the sentence says who pays whom.
+    /// Colored when it involves you. The sentence already says who pays whom, so there is no sign,
+    /// as on the Friends tab: "You owe Priya $40.75", never "-$40.75".
     private var amount: some View {
-        Text(MoneyFormatting.string(displayAmount, locale: locale, showsSign: involvesMe))
+        Text(MoneyFormatting.magnitudeString(displayAmount, locale: locale))
             .font(Typeface.figure)
             .foregroundStyle(involvesMe ? Ink.direction(of: displayAmount.minorUnits) : Ink.text)
             .lineLimit(1)

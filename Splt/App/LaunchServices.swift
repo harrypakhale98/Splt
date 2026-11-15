@@ -21,7 +21,13 @@ enum LaunchServices {
         }
         #endif
         let services = IntentServices.shared.live()
-        if let services { removeLeftovers(services) }
+        if let services {
+            // housekeeping waits until the first screen is up and settled, so launch never waits on it
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(3))
+                removeLeftovers(services)
+            }
+        }
         return services
     }
 
@@ -31,8 +37,10 @@ enum LaunchServices {
     private static func removeLeftovers(_ services: DataServices) {
         try? PhotoStore.receipts.removeUnreferenced(in: services.environment.context)
         try? PhotoStore.covers.removeUnreferencedCovers(in: services.environment.context)
-        try? FileManager.default.removeItem(at: GroupExportFile.defaultDirectory)
-        try? FileManager.default.removeItem(at: BackupFileJob.defaultDirectory)
+        let leftovers = [GroupExportFile.defaultDirectory, BackupFileJob.defaultDirectory]
+        Task.detached(priority: .utility) {
+            for folder in leftovers { try? FileManager.default.removeItem(at: folder) }
+        }
         // after the leftovers are gone, so only photos something still shows are sent
         PhotoBackfill.runOnce(tracker: services.environment.tracker)
     }

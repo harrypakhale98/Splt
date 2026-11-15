@@ -18,6 +18,13 @@ final class SwiftDataPaymentRepository: PaymentRepository {
         try env.paymentRecord(id).map(Payment.init)
     }
 
+    func payments(ids: Set<PaymentID>) throws -> [Payment] {
+        guard !ids.isEmpty else { return [] }
+        let raw = ids.map(\.rawValue)
+        let descriptor = FetchDescriptor<PaymentRecord>(predicate: #Predicate { raw.contains($0.id) })
+        return try env.context.fetch(descriptor).map(Payment.init)
+    }
+
     func record(_ payment: Payment) throws {
         try insert(payment)
         try env.save()

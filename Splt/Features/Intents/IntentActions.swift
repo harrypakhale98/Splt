@@ -80,11 +80,19 @@ struct IntentActions {
         if let group {
             let id = GroupID(rawValue: group)
             guard let found = try services.groups.group(id: id), let me = try services.people.me() else { throw Failure.unknownGroup }
-            let net = try services.groups.balances(for: id).net(for: me.id)
-            return Self.groupSentence(name: found.name, amounts: net, locale: locale)
+            let balances = try services.groups.balances(for: id)
+            // as the group's own screen: pair by pair when the group does not simplify, so a debt and a credit
+            // that cancel are both said rather than "settled up"
+            let amounts = balances.simplifiesDebts
+                ? balances.net(for: me.id)
+                : balances.ledger.balances(with: me.id).values.flatMap { $0 }
+            let totals = BalanceTotals(amounts: amounts)
+            return Self.groupSentence(name: found.name, amounts: totals.owedToYou + totals.youOwe.map(Self.negated), locale: locale)
         }
         services.friendsStore.refresh()
-        return Self.overallSentence(services.friendsStore.totals, locale: locale)
+        let totals = services.friendsStore.totals
+        let position = NetPosition(owedToYou: totals.owedToYou, youOwe: totals.youOwe, unitValues: services.rates.snapshot.unitValues())
+        return Self.overallSentence(totals, position: position, locale: locale)
     }
 
     static func sentence(about name: String, amounts: [Money], locale: Locale) -> String {
@@ -109,15 +117,27 @@ struct IntentActions {
         }
     }
 
-    static func overallSentence(_ totals: BalanceTotals, locale: Locale) -> String {
+    /// Leads with where you stand overall, as the Friends tab hero does, then the two sides.
+    static func overallSentence(_ totals: BalanceTotals, position: NetPosition? = nil, locale: Locale) -> String {
         let owed = list(totals.owedToYou, locale: locale)
         let owing = list(totals.youOwe, locale: locale)
+        let position = position ?? NetPosition(owedToYou: totals.owedToYou, youOwe: totals.youOwe)
         switch (owed.isEmpty, owing.isEmpty) {
-        case (true, true): return String(localized: "You are all settled up.")
-        case (false, true): return String(localized: "Friends owe you \(owed).")
-        case (true, false): return String(localized: "You owe friends \(owing).")
-        case (false, false): return String(localized: "Friends owe you \(owed), and you owe \(owing).")
+        case (true, true): return String(localized: "You're all settled up.")
+        case (false, true): return String(localized: "You're owed \(owed).")
+        case (true, false): return String(localized: "You owe \(owing).")
+        case (false, false):
+            guard let primary = position.primary else {
+                return String(localized: "You're even: friends owe you \(owed), and you owe \(owing).")
+            }
+            let net = MoneyFormatting.magnitudeString(primary, locale: locale)
+            let lead = primary.isPositive ? String(localized: "You're owed \(net) overall.") : String(localized: "You owe \(net) overall.")
+            return lead + " " + String(localized: "Friends owe you \(owed), and you owe \(owing).")
         }
+    }
+
+    private static func negated(_ money: Money) -> Money {
+        Money(minorUnits: -money.minorUnits, currencyCode: money.currencyCode)
     }
 
     private static func magnitude(_ money: Money) -> Money {

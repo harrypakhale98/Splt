@@ -7,8 +7,8 @@ extension Expense {
         let payers: [PersonID: Money]
         let split: SplitDefinition
         do {
-            payers = try RecordCoding.decode([PersonID: Money].self, from: record.payersData)
-            split = try RecordCoding.decode(SplitDefinition.self, from: record.splitData)
+            payers = try RecordCoding.decodeKept([PersonID: Money].self, from: record.payersData)
+            split = try RecordCoding.decodeKept(SplitDefinition.self, from: record.splitData)
         } catch {
             throw DataError.corruptRecord("expense \(record.recordName)")
         }

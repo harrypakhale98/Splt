@@ -44,8 +44,14 @@ struct PaymentInboxFile: Sendable {
     }
 
     private static func decode(at url: URL) -> PaymentInboxState {
-        guard let data = try? Data(contentsOf: url),
-              let state = try? JSONDecoder().decode(PaymentInboxState.self, from: data) else { return PaymentInboxState() }
+        guard let data = try? Data(contentsOf: url) else { return PaymentInboxState() }
+        guard let state = try? JSONDecoder().decode(PaymentInboxState.self, from: data) else {
+            // a file this build can't read at all is put aside, never written over, so nothing caught is lost for good
+            let aside = url.deletingPathExtension().appendingPathExtension("unreadable.json")
+            try? FileManager.default.removeItem(at: aside)
+            try? FileManager.default.copyItem(at: url, to: aside)
+            return PaymentInboxState()
+        }
         return state
     }
 

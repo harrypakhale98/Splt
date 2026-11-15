@@ -30,6 +30,21 @@ struct PendingPayment: Codable, Hashable, Sendable, Identifiable {
     var merchantKey: String { MerchantKey.make(merchant) }
 }
 
+extension PendingPayment {
+    /// Fields with a default may be missing, so a file from an older or newer build still reads.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        merchant = try container.decode(String.self, forKey: .merchant)
+        amount = try container.decode(Money.self, forKey: .amount)
+        date = try container.decode(Date.self, forKey: .date)
+        source = (try? container.decode(Source.self, forKey: .source)) ?? .wallet
+        status = (try? container.decode(Status.self, forKey: .status)) ?? .pending
+        resolvedAt = try? container.decodeIfPresent(Date.self, forKey: .resolvedAt)
+        expenseID = try? container.decodeIfPresent(UUID.self, forKey: .expenseID)
+    }
+}
+
 /// What Splt remembers about a merchant, by `MerchantKey`: where you split it last and whether to stay quiet about it.
 struct MerchantMemory: Codable, Hashable, Sendable {
     var groupID: UUID?
@@ -39,12 +54,46 @@ struct MerchantMemory: Codable, Hashable, Sendable {
     var isMuted = false
 }
 
+extension MerchantMemory {
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        groupID = try? container.decodeIfPresent(UUID.self, forKey: .groupID)
+        category = try? container.decodeIfPresent(ExpenseCategory.self, forKey: .category)
+        splitCount = (try? container.decodeIfPresent(Int.self, forKey: .splitCount)) ?? 0
+        dismissCount = (try? container.decodeIfPresent(Int.self, forKey: .dismissCount)) ?? 0
+        isMuted = (try? container.decodeIfPresent(Bool.self, forKey: .isMuted)) ?? false
+    }
+}
+
 /// Everything in the inbox file.
 struct PaymentInboxState: Codable, Hashable, Sendable {
     var payments: [PendingPayment] = []
     var merchants: [String: MerchantMemory] = [:]
     /// When the last payment came in from Wallet, so setup can say it works.
     var lastWalletCaptureAt: Date?
+
+    init() {}
+
+    /// Reads what it can: one payment or merchant that won't decode is left out, not the whole inbox.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rows = (try? container.decodeIfPresent([Lossy<PendingPayment>].self, forKey: .payments)) ?? []
+        payments = rows.compactMap(\.value)
+        let memories = (try? container.decodeIfPresent([String: Lossy<MerchantMemory>].self, forKey: .merchants)) ?? [:]
+        merchants = memories.compactMapValues(\.value)
+        lastWalletCaptureAt = try? container.decodeIfPresent(Date.self, forKey: .lastWalletCaptureAt)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case payments, merchants, lastWalletCaptureAt
+    }
+
+    private struct Lossy<Value: Decodable>: Decodable {
+        let value: Value?
+        init(from decoder: any Decoder) throws {
+            value = try? Value(from: decoder)
+        }
+    }
 
     static let duplicateWindow: TimeInterval = 120
     static let keepResolvedFor: TimeInterval = 30 * 86_400

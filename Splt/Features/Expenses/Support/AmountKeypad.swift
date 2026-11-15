@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// A key on the built-in number pad.
 enum AmountKey: Hashable, Sendable {
@@ -59,6 +60,16 @@ enum AmountKeypad {
 
     /// Whether the currency symbol comes before the number here: $12.50, but 12,50 € in de_DE.
     static func symbolLeads(currencyCode: String, locale: Locale = .current) -> Bool {
+        let key = "\(locale.identifier)|\(currencyCode)"
+        if let known = symbolLeadsByLocale.withLock({ $0[key] }) { return known }
+        let leads = findSymbolLeads(currencyCode: currencyCode, locale: locale)
+        symbolLeadsByLocale.withLock { $0[key] = leads }
+        return leads
+    }
+
+    private static let symbolLeadsByLocale = Mutex<[String: Bool]>([:])
+
+    private static func findSymbolLeads(currencyCode: String, locale: Locale) -> Bool {
         let formatter = NumberFormatter()
         formatter.locale = locale
         formatter.numberStyle = .currency
@@ -69,13 +80,25 @@ enum AmountKeypad {
         return symbol < number
     }
 
+    /// One formatter per locale, made once: the pad and the amount redraw on every key.
     private static func formatter(_ locale: Locale) -> NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.locale = locale
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter
+        formatters.withLock { kept in
+            if let formatter = kept[locale.identifier] { return formatter.value }
+            let formatter = NumberFormatter()
+            formatter.locale = locale
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 0
+            kept[locale.identifier] = KeptFormatter(value: formatter)
+            return formatter
+        }
     }
+
+    /// Formatting with a configured NumberFormatter is safe from any thread; it is never changed after it is made.
+    private struct KeptFormatter: @unchecked Sendable {
+        let value: NumberFormatter
+    }
+
+    private static let formatters = Mutex<[String: KeptFormatter]>([:])
 
     /// The value of a run of digits of any script, or nil when it holds anything else or is too long.
     private static func wholeNumber(_ text: String) -> Int64? {

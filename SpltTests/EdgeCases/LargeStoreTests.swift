@@ -52,6 +52,29 @@ struct LargeStoreTests {
         measure("group transfers", limit: .milliseconds(200)) { _ = loaded.transfers }
     }
 
+    /// What a screen does before it can slide in. Each one loads in its initializer, so this is time the push
+    /// animation waits for: a frame is about 16 ms, and anything past a few frames reads as a hitch.
+    @Test func screensLoadBeforeTheyPushWithoutAHitch() throws {
+        let fixture = try #require(Self.fixture)
+        let biggest = fixture.groups[0]
+        let friend = try #require(fixture.groups[0].memberIDs.first { $0 != fixture.me.id })
+        measure("push group detail, first", limit: .milliseconds(1500)) {
+            _ = GroupDetailViewModel(groupID: biggest.id, services: fixture.services)
+        }
+        measure("push group detail, again", limit: .milliseconds(1500)) {
+            _ = GroupDetailViewModel(groupID: biggest.id, services: fixture.services)
+        }
+        measure("push friend detail", limit: .milliseconds(1500)) {
+            _ = FriendDetailModel(friendID: friend, services: fixture.services)
+        }
+        measure("open activity tab", limit: .milliseconds(1500)) {
+            _ = ActivityModel(services: fixture.services)
+        }
+        measure("open spending", limit: .milliseconds(1500)) {
+            _ = SpendingModel(services: fixture.services)
+        }
+    }
+
     @Test func searchStaysResponsive() throws {
         let fixture = try #require(Self.fixture)
         measure("search", limit: .seconds(2)) {

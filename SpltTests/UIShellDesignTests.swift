@@ -29,6 +29,25 @@ struct UINetPositionTests {
         #expect(position.isSettled)
     }
 
+    @Test func evenIsNotCalledSettledUp() {
+        let even = NetPosition(totals: BalanceTotals(owedToYou: [usd(1_000)], youOwe: [usd(1_000)]))
+        #expect(even.isEven)
+        #expect(even.settledTitle == "You're even")
+        let square = NetPosition(totals: .zero)
+        #expect(!square.isEven)
+        #expect(square.settledTitle == "All settled up")
+    }
+
+    @Test func ratesDecideWhichCurrencyLeads() {
+        let yen = Money(minorUnits: 5_000, currencyCode: "JPY")
+        let totals = (owed: [yen], owe: [usd(4_000)])
+        // without rates the bigger number leads; with them, $40 outweighs ¥5,000
+        #expect(NetPosition(owedToYou: totals.owed, youOwe: totals.owe).primary == yen)
+        let rated = NetPosition(owedToYou: totals.owed, youOwe: totals.owe, unitValues: ["USD": 1, "JPY": 0.0066])
+        #expect(rated.primary == usd(-4_000))
+        #expect(rated.others == [yen])
+    }
+
     @Test func theBiggestSwingLeadsAndTheRestFollowByCode() {
         let totals = BalanceTotals(owedToYou: [usd(500), eur(9_000)], youOwe: [Money(minorUnits: 300, currencyCode: "GBP")])
         let position = NetPosition(totals: totals)

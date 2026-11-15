@@ -144,6 +144,7 @@ final class Router {
             sheet = .addExpense
         case .activity:
             sheet = nil
+            activityPath = []
             selectedTab = .activity
         case .friends:
             sheet = nil

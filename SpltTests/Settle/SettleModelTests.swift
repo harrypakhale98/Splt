@@ -43,6 +43,26 @@ struct SettleModelTests {
         #expect(balance.isSettled)
     }
 
+    @Test func followsAPaymentRecordedElsewhereWhileOpen() throws {
+        let (fixture, debts) = try scene()
+        let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
+        let model = model(fixture, debts: [debt])
+        // Sam's payment of 4.00 syncs in from their phone while the sheet is open
+        try fixture.services.payments.record(
+            Payment(groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(400), date: Date())
+        )
+        model.followBalances()
+        #expect(model.balanceChanged)
+        #expect(model.amount == usdAmount(600))
+        // and once the rest arrives too, nothing is left to record twice
+        try fixture.services.payments.record(
+            Payment(groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(600), date: Date())
+        )
+        model.followBalances()
+        #expect(model.debts.isEmpty)
+        #expect(!model.canRecord)
+    }
+
     @Test func partialPaymentLeavesTheRest() throws {
         let (fixture, debts) = try scene()
         let debt = try #require(debts.first { $0.debtor == fixture.sam.id })
