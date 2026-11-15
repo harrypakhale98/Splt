@@ -25,6 +25,11 @@ struct BalanceWidgetTests {
         #expect(snapshot.owedToYou == [usd(2_600)])
         #expect(snapshot.youOwe == [usd(9_000)])
         #expect(snapshot.friends.map(\.name) == ["Priya", "Jo", "Sam"])
+        // each friend keeps the avatar the Friends tab draws
+        #expect(snapshot.friends[0].initials == "P")
+        let hue = PersonPalette.index(for: big.id)
+        #expect(snapshot.friends[0].color.lightFill == PersonPalette.hexPair(at: hue, dark: false).fill)
+        #expect(snapshot.friends[0].color.darkText == PersonPalette.hexPair(at: hue, dark: true).text)
         #expect(snapshot.position.primary == usd(-6_400))
     }
 
@@ -57,7 +62,11 @@ struct BalanceWidgetTests {
         defaults.removePersistentDomain(forName: "BalanceWidgetTests")
         #expect(BalanceWidgetSnapshot.load(from: defaults) == nil)
         let snapshot = BalanceWidgetSnapshot(
-            owedToYou: [usd(100)], friends: [.init(id: UUID(), name: "Sam", balance: [usd(100)])]
+            owedToYou: [usd(100)],
+            friends: [.init(
+                id: UUID(), name: "Sam", balance: [usd(100)], initials: "S",
+                color: .init(lightFill: 0x96437F, lightText: 0xFFFFFF, darkFill: 0xDD9CCB, darkText: 0x0E0E12)
+            )]
         )
         snapshot.save(to: defaults)
         #expect(BalanceWidgetSnapshot.load(from: defaults) == snapshot)

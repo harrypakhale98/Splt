@@ -5,8 +5,8 @@ import WidgetKit
 @main
 struct SpltWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        ToSplitWidget()
         BalanceWidget()
+        ToSplitWidget()
         ToSplitControl()
         AddExpenseControl()
         SplitLastPaymentControl()

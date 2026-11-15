@@ -43,10 +43,10 @@ struct SplitLastPaymentIntent: AppIntent {
     }
 }
 
-/// Marks a payment as not shared, from the To Split widget, without opening the app. It changes only the
-/// inbox file, so it works in the widget, and the app catches up the next time it comes forward.
+/// Marks a payment as yours alone ("Mine" in the app's list), from the To Split widget, without opening the
+/// app. It changes only the inbox file, so it works in the widget, and the app catches up when it comes forward.
 struct NotSharedIntent: AppIntent {
-    static let title: LocalizedStringResource = "Not Shared"
+    static let title: LocalizedStringResource = "Mine"
     static let description = IntentDescription("Marks a payment in To Split as yours alone.")
     static let isDiscoverable = false
     static let authenticationPolicy = IntentAuthenticationPolicy.requiresAuthentication

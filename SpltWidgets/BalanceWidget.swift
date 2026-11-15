@@ -31,12 +31,16 @@ struct BalanceProvider: TimelineProvider {
     /// Made-up people and amounts for the widget gallery and previews.
     static let sample: BalanceEntry = {
         func usd(_ cents: Int64) -> Money { Money(minorUnits: cents, currencyCode: "USD") }
+        func friend(_ name: String, _ initials: String, _ cents: Int64, _ color: BalanceWidgetSnapshot.PersonColor) -> BalanceWidgetSnapshot.Friend {
+            .init(id: UUID(), name: name, balance: [usd(cents)], initials: initials, color: color)
+        }
+        // three of the app's person hues: plum, indigo, sienna
         return BalanceEntry(date: Date(), snapshot: BalanceWidgetSnapshot(
             owedToYou: [usd(14_250)], youOwe: [usd(3_800)],
             friends: [
-                .init(id: UUID(), name: "Sam Rivera", balance: [usd(9_000)]),
-                .init(id: UUID(), name: "Priya Nair", balance: [usd(5_250)]),
-                .init(id: UUID(), name: "Jo Park", balance: [usd(-3_800)]),
+                friend("Sam Rivera", "SR", 9_000, .init(lightFill: 0x96437F, lightText: 0xFFFFFF, darkFill: 0xDD9CCB, darkText: 0x0E0E12)),
+                friend("Priya Nair", "PN", 5_250, .init(lightFill: 0x4B55A0, lightText: 0xFFFFFF, darkFill: 0xA3A9E8, darkText: 0x0E0E12)),
+                friend("Jo Park", "JP", -3_800, .init(lightFill: 0xA85510, lightText: 0xFFFFFF, darkFill: 0xE3A26A, darkText: 0x0E0E12)),
             ]
         ))
     }()
@@ -50,7 +54,7 @@ struct BalanceWidget: Widget {
             BalanceWidgetView(entry: entry)
         }
         .configurationDisplayName("Your Balance")
-        .description("Where you stand with everyone, and who owes whom.")
+        .description("Where you stand with friends, as on the Friends tab, and who you have the most money with.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
     }
 }
@@ -80,11 +84,11 @@ struct BalanceWidgetView: View {
             if let shown {
                 Text(inlineText(shown)).privacySensitive()
             } else {
-                Text("Your balance")
+                Text("Open Splt to see your balance.")
             }
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 1) {
-                Text("Your balance")
+                Text("With friends")
                     .font(.caption)
                     .widgetAccentable()
                 if let shown {
@@ -98,7 +102,7 @@ struct BalanceWidgetView: View {
                             .privacySensitive()
                     }
                 } else {
-                    Text("Open Splt to see it.")
+                    Text("Open Splt to see your balance.")
                         .font(.body)
                 }
             }
@@ -114,7 +118,9 @@ struct BalanceWidgetView: View {
                         }
                         Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    // names come first: the big number shrinks a little before a name is cut short
+                    .frame(maxWidth: 184, maxHeight: .infinity, alignment: .topLeading)
+                    .layoutPriority(1)
                 }
             }
         default:
@@ -125,7 +131,7 @@ struct BalanceWidgetView: View {
     /// The hero of the Friends tab, small: what it covers, one big number, and the quiet sentence.
     private func summary(heroSize: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Your balance")
+            Text("With friends")
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)
             Spacer(minLength: 0)
@@ -181,37 +187,54 @@ struct BalanceWidgetView: View {
         return ListFormatter.localizedString(byJoining: others.map { MoneyFormatting.string($0, showsSign: true) })
     }
 
+    /// The hero's words, short: "You're owed $508.65".
     private func inlineText(_ snapshot: BalanceWidgetSnapshot) -> String {
-        snapshot.position.primary.map { MoneyFormatting.spokenBalance($0) } ?? String(localized: "All settled up")
+        guard let primary = snapshot.position.primary else { return String(localized: "All settled up") }
+        let amount = MoneyFormatting.magnitudeString(primary)
+        return primary.minorUnits > 0 ? String(localized: "You're owed \(amount)") : String(localized: "You owe \(amount)")
     }
 }
 
-/// A friend and where you stand with them, as on the Friends tab: the amount in the colour of its direction.
+/// A friend as the Friends tab lists them: their avatar, their name, and the amount in the colour of its
+/// direction. The widget has no sections, so the Friends tab's caption under the name says which way it goes.
 private struct FriendRow: View {
     let friend: BalanceWidgetSnapshot.Friend
 
     var body: some View {
         Link(destination: SpltWidgetKind.friendURL(friend.id)) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Ink.dynamic(light: friend.color.lightFill, dark: friend.color.darkFill))
+                    .frame(width: 24, height: 24)
+                    .overlay {
+                        Text(friend.initials)
+                            .font(.system(size: 9.6, weight: .medium))
+                            .foregroundStyle(Ink.dynamic(light: friend.color.lightText, dark: friend.color.darkText))
+                    }
+                    .widgetAccentable()
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 0) {
                     Text(friend.name)
                         .font(.subheadline)
                         .foregroundStyle(Ink.text)
                         .lineLimit(1)
-                    Text(direction)
-                        .font(.caption)
-                        .foregroundStyle(Ink.secondary)
+                    if let lead {
+                        Text(caption(for: lead))
+                            .font(.caption2)
+                            .foregroundStyle(Ink.secondary)
+                            .lineLimit(1)
+                    }
                 }
                 Spacer(minLength: 4)
                 if let lead {
-                    Text(MoneyFormatting.string(lead, showsSign: true))
+                    Text(MoneyFormatting.magnitudeString(lead))
                         .font(Typeface.figure)
                         .foregroundStyle(Ink.direction(of: lead.minorUnits))
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                 }
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, 4)
             .privacySensitive()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText)
@@ -223,21 +246,18 @@ private struct FriendRow: View {
         friend.balance.max { $0.minorUnits.magnitude < $1.minorUnits.magnitude }
     }
 
-    /// The Friends tab's section names.
-    private var direction: String {
-        let owes = friend.balance.contains { $0.minorUnits > 0 }
-        let owed = friend.balance.contains { $0.minorUnits < 0 }
-        switch (owes, owed) {
-        case (true, true): return String(localized: "Both ways")
-        case (true, false): return String(localized: "Owes you")
-        case (false, true): return String(localized: "You owe")
-        case (false, false): return String(localized: "Settled up")
-        }
+    /// The Friends tab's captions.
+    private func caption(for money: Money) -> String {
+        money.minorUnits > 0 ? String(localized: "owes you") : String(localized: "you owe")
     }
 
+    /// As VoiceOver reads a Friends tab row: "Maya Chen, owes you $511.85".
     private var accessibilityText: String {
-        let amounts = friend.balance.map { MoneyFormatting.spokenBalance($0) }
-        return "\(friend.name), " + ListFormatter.localizedString(byJoining: amounts)
+        let lines = friend.balance.map { money in
+            let amount = MoneyFormatting.magnitudeString(money)
+            return money.minorUnits > 0 ? String(localized: "owes you \(amount)") : String(localized: "you owe \(amount)")
+        }
+        return "\(friend.name), " + ListFormatter.localizedString(byJoining: lines)
     }
 }
 

@@ -75,7 +75,7 @@ Fetched from the free ECB-backed Frankfurter API, cached on the device, and alwa
 | `Splt` | iOS app |
 | `SpltTests` | Unit tests |
 | `SpltUITests` | UI tests |
-| `SpltWidgets` | To Split widget (Lock Screen count; Home Screen list with a Not Shared button), Your Balance widget, To Split, Add Expense and Split Last Payment controls, trip Live Activity. It can't open the store, so it reads `Shared/Inbox`, the `ToSplitSnapshot` and the `BalanceWidgetSnapshot` the app saves (`BalanceWidgetPublisher` after every save and sync), and draws with `Shared/Design` and `Shared/Balance` |
+| `SpltWidgets` | To Split widget (Lock Screen count; Home Screen list with a Mine button), Your Balance widget, To Split, Add Expense and Split Last Payment controls, trip Live Activity. It can't open the store, so it reads `Shared/Inbox`, the `ToSplitSnapshot` and the `BalanceWidgetSnapshot` the app saves (`BalanceWidgetPublisher` after every save and sync), and draws with `Shared/Design` and `Shared/Balance` |
 | `SpltShare` | Share extension that reads a payment from a screenshot or text |
 | `SpltKit/SpltCore` | Shared logic package |
 

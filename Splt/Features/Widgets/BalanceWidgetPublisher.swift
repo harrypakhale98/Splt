@@ -78,7 +78,15 @@ final class BalanceWidgetPublisher {
             .filter { !$0.balance.isEmpty && !hidden.contains($0.id) }
             .sorted { largest($0.balance) > largest($1.balance) }
             .prefix(BalanceWidgetSnapshot.mostFriends)
-            .map { BalanceWidgetSnapshot.Friend(id: $0.id.rawValue, name: $0.person.name, balance: $0.balance) }
+            .map { summary in
+                let hue = PersonPalette.index(for: summary.id)
+                let light = PersonPalette.hexPair(at: hue, dark: false), dark = PersonPalette.hexPair(at: hue, dark: true)
+                return BalanceWidgetSnapshot.Friend(
+                    id: summary.id.rawValue, name: summary.person.name, balance: summary.balance,
+                    initials: AvatarStyle.initials(for: summary.person.name),
+                    color: .init(lightFill: light.fill, lightText: light.text, darkFill: dark.fill, darkText: dark.text)
+                )
+            }
         return BalanceWidgetSnapshot(owedToYou: totals.owedToYou, youOwe: totals.youOwe, friends: friends)
     }
 

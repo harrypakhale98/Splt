@@ -26,7 +26,8 @@ enum Ink {
         return text
     }
 
-    private static func dynamic(light: UInt32, dark: UInt32) -> Color {
+    /// A color that follows light and dark mode, from hex values.
+    static func dynamic(light: UInt32, dark: UInt32) -> Color {
         Color(uiColor: UIColor { traits in
             uiColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
         })

@@ -10,6 +10,17 @@ struct BalanceWidgetSnapshot: Codable, Hashable, Sendable {
         var name: String
         /// Signed, one amount per currency: positive when they owe you.
         var balance: [Money]
+        /// Their avatar as the app draws it: initials on their person color.
+        var initials: String
+        var color: PersonColor
+    }
+
+    /// A person's color in light and dark, with the text that reads on it, as hex values.
+    struct PersonColor: Codable, Hashable, Sendable {
+        var lightFill: UInt32
+        var lightText: UInt32
+        var darkFill: UInt32
+        var darkText: UInt32
     }
 
     static let key = "widgets.balance"

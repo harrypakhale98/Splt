@@ -33,7 +33,7 @@ Splt is free forever. No ads, no accounts, no limits and no subscription. Groups
 - Spending charts for your share over the last 12 months, and a default split and a cover photo for each group.
 - Invites by link or QR code, and export as a spreadsheet (CSV), PDF or JSON.
 - Your Balance widget: where you stand with everyone, and the friends you have the most money with, on the Home Screen or Lock Screen. Hidden while the Face ID lock is on.
-- Catch Payments: a Shortcuts automation, a bank text or a screenshot adds a card payment to a To Split list on Activity. It stays on the device, never syncs, and splits into a group with a swipe. A To Split widget lists what waits and marks a payment as not shared without opening the app. Controls open To Split, Add Expense or the last payment, and a trip Live Activity keeps count.
+- Catch Payments: a Shortcuts automation, a bank text or a screenshot adds a card payment to a To Split list on Activity. It stays on the device, never syncs, and splits into a group with a swipe. A To Split widget lists what waits and marks a payment as yours without opening the app. Controls open To Split, Add Expense or the last payment, and a trip Live Activity keeps count.
 - Import from a Splitwise export, and back up everything to a file you can restore.
 - A light, dark or system appearance switch, and a full edit history on each expense.
 - An optional Face ID lock, which also keeps names and amounts out of notifications and Spotlight.

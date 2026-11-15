@@ -50,7 +50,10 @@ struct ToSplitProvider: TimelineProvider {
     private func entries(from now: Date) -> [ToSplitEntry] {
         let pending = PaymentInboxFile.shared.read().pending
         let snapshot = ToSplitSnapshot.load(from: PaymentInboxFile.sharedDefaults)
-        return ([now] + snapshot.changes(in: pending, after: now)).map { moment in
+        // every hour for a day as well, so "2 hours ago" and "yesterday" stay true while the app is closed
+        let hourly = (1...24).map { now.addingTimeInterval(Double($0) * 3_600) }
+        let moments = Set([now] + snapshot.changes(in: pending, after: now) + hourly).sorted()
+        return moments.map { moment in
             let toSplit = snapshot.toSplit(in: pending, at: moment)
             return ToSplitEntry(
                 date: moment,
@@ -74,7 +77,7 @@ struct ToSplitWidget: Widget {
             ToSplitWidgetView(entry: entry)
         }
         .configurationDisplayName("To Split")
-        .description("The payments waiting to be split. Mark one as not shared without opening Splt.")
+        .description("The payments waiting to be split. Mark one as yours without opening Splt.")
         .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline, .systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -206,7 +209,7 @@ struct ToSplitWidgetView: View {
                 }
                 ForEach(Array(payments.enumerated()), id: \.element.id) { index, payment in
                     if index > 0 { Divider().overlay(Ink.hairline) }
-                    PaymentRow(payment: payment)
+                    PaymentRow(payment: payment, now: entry.date)
                 }
                 Spacer(minLength: 0)
                 let more = entry.count - payments.count
@@ -224,6 +227,8 @@ struct ToSplitWidgetView: View {
 /// One payment, laid out like a To Split row in the app, with the one action that needs no app.
 private struct PaymentRow: View {
     let payment: PendingPayment
+    /// When the row is shown, so "yesterday" is said as the app would say it then.
+    let now: Date
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -240,7 +245,7 @@ private struct PaymentRow: View {
                             .foregroundStyle(Ink.text)
                             .lineLimit(1)
                             .privacySensitive()
-                        Text(payment.date, format: .dateTime.weekday(.abbreviated).hour().minute())
+                        Text(Self.when(payment.date, now: now))
                             .font(.caption)
                             .foregroundStyle(Ink.secondary)
                     }
@@ -256,16 +261,24 @@ private struct PaymentRow: View {
                 .accessibilityLabel("\(payment.merchant), \(MoneyFormatting.magnitudeString(payment.amount))")
                 .accessibilityHint("Opens the expense, filled in.")
             }
+            // the app's swipe action for the same thing: "Mine", with the person symbol
             Button(intent: NotSharedIntent(paymentID: payment.id)) {
-                Text("Not Shared")
+                Label("Mine", systemImage: "person")
                     .font(.caption.weight(.medium))
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
             .tint(Ink.secondary)
-            .accessibilityLabel("Not Shared: \(payment.merchant)")
+            .accessibilityLabel("Mine: \(payment.merchant)")
         }
         .padding(.vertical, 6)
+    }
+
+    /// The app's caption: "2 hours ago", "yesterday".
+    static func when(_ date: Date, now: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.dateTimeStyle = .named
+        return formatter.localizedString(for: date, relativeTo: now)
     }
 
     private var symbol: String {
