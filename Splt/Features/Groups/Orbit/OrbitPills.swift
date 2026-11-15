@@ -37,10 +37,13 @@ enum OrbitPills {
         CGSize(width: CGFloat(text.count) * (compact ? 6.4 : 7.4) + 18, height: compact ? 20 : height)
     }
 
-    /// The amount without decimals, such as "$316".
+    /// The amount without decimals, such as "$316". Under ten whole units it keeps them, since dropping them
+    /// there saves little room and can turn a real $0.40 into "$0".
     static func compactText(_ money: Money, locale: Locale) -> String {
-        money.decimalValue.formatted(
-            .currency(code: money.currencyCode).locale(locale).precision(.fractionLength(0))
+        let value = money.decimalValue
+        let small = abs(money.minorUnits) < 10 * Int64(Currency.minorUnitScale(for: money.currencyCode))
+        return value.formatted(
+            .currency(code: money.currencyCode).locale(locale).precision(.fractionLength(small ? money.exponent : 0))
         )
     }
 

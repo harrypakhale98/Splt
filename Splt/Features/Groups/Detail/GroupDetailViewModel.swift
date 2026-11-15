@@ -47,6 +47,8 @@ final class GroupDetailViewModel {
     @ObservationIgnored private let now: @Sendable () -> Date
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var observer: ContainerChangeObserver?
+    /// The "This month" filter and day headings move at midnight.
+    @ObservationIgnored private var dayChange: DayChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
     @ObservationIgnored private var revision = 0
     @ObservationIgnored private var memo = Memo()
@@ -94,6 +96,7 @@ final class GroupDetailViewModel {
         self.now = now
         self.calendar = calendar
         observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
+        dayChange = DayChangeObserver { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
 
@@ -113,7 +116,9 @@ final class GroupDetailViewModel {
             balances = try groups.balances(for: groupID)
             activity = try activityRepository.entries(in: groupID, limit: 100)
         } catch {
-            errorMessage = GroupErrorMessage.text(for: error)
+            // a refresh after a sync or another screen's save that fails keeps what is shown, quietly;
+            // only a screen that never loaded says so, since an alert out of nowhere explains nothing
+            if !didLoad { errorMessage = GroupErrorMessage.text(for: error) }
         }
         didLoad = true
     }

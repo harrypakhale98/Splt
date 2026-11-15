@@ -69,37 +69,44 @@ final class SwiftDataRecurringExpenseRepository: RecurringExpenseRepository {
                   let group = try env.groupRecord(groupID) else { continue }
             // An archived group is put away. What came due meanwhile is caught up when it is restored.
             if group.isArchived { continue }
-            // Anyone in a group can sync a template that started decades ago, and every member's device makes
-            // its expenses. Older occurrences are not billed, and a backlog goes a little on each run.
-            let oldest = now.addingTimeInterval(-366 * 86_400)
-            let due = template.rule.dueOccurrences(
-                after: max(template.lastCreatedOccurrence ?? .distantPast, oldest), through: now, limit: 100
-            )
-            guard let latest = due.last else { continue }
-            // a template that cannot make a valid expense must not stop the others
-            guard (try? template.expense(on: latest).validate()) != nil else { continue }
-            for occurrence in due {
-                var expense = template.expense(on: occurrence)
-                expense.id = OccurrenceID.expenseID(template: template.id, occurrence: occurrence)
-                if try env.expenseRecord(expense.id) == nil {
-                    try expenses.insert(expense, extras: ExpenseExtras(recurringExpenseID: template.id), logsActivity: false)
-                    try env.log(
-                        .expenseAdded(SwiftDataExpenseRepository.reference(expense)), groupID: groupID,
-                        actor: try env.currentUser()?.personID, id: OccurrenceID.addedEntryID(expense: expense.id),
-                        isNews: true
-                    )
-                    // This can run before the first fetch, so another device may have made this occurrence
-                    // and since edited or deleted it. Dated by its occurrence, this copy loses to any such change.
-                    try env.expenseRecord(expense.id)?.modifiedAt = occurrence
-                    created.append(expense)
+            // one template that fails is put back as it was and the rest still run; it is tried again next time
+            do {
+                // Anyone in a group can sync a template that started decades ago, and every member's device makes
+                // its expenses. Older occurrences are not billed, and a backlog goes a little on each run.
+                let oldest = now.addingTimeInterval(-366 * 86_400)
+                let due = template.rule.dueOccurrences(
+                    after: max(template.lastCreatedOccurrence ?? .distantPast, oldest), through: now, limit: 100
+                )
+                guard let latest = due.last else { continue }
+                // a template that cannot make a valid expense must not stop the others
+                guard (try? template.expense(on: latest).validate()) != nil else { continue }
+                var made: [Expense] = []
+                for occurrence in due {
+                    var expense = template.expense(on: occurrence)
+                    expense.id = OccurrenceID.expenseID(template: template.id, occurrence: occurrence)
+                    if try env.expenseRecord(expense.id) == nil {
+                        try expenses.insert(expense, extras: ExpenseExtras(recurringExpenseID: template.id), logsActivity: false)
+                        try env.log(
+                            .expenseAdded(SwiftDataExpenseRepository.reference(expense)), groupID: groupID,
+                            actor: try env.currentUser()?.personID, id: OccurrenceID.addedEntryID(expense: expense.id),
+                            isNews: true
+                        )
+                        // This can run before the first fetch, so another device may have made this occurrence
+                        // and since edited or deleted it. Dated by its occurrence, this copy loses to any such change.
+                        try env.expenseRecord(expense.id)?.modifiedAt = occurrence
+                        made.append(expense)
+                    }
                 }
+                // the date comes back from CloudKit cut to milliseconds, which is not a new occurrence
+                if record.lastCreatedOccurrence.map({ latest.isLaterEdit(than: $0) }) ?? true {
+                    record.lastCreatedOccurrence = latest
+                    env.tracker.recordBookkeeping(record)
+                }
+                try env.save()
+                created += made
+            } catch {
+                env.tracker.rollback()
             }
-            // the date comes back from CloudKit cut to milliseconds, which is not a new occurrence
-            if record.lastCreatedOccurrence.map({ latest.isLaterEdit(than: $0) }) ?? true {
-                record.lastCreatedOccurrence = latest
-                env.tracker.recordBookkeeping(record)
-            }
-            try env.save()
         }
         return created
     }

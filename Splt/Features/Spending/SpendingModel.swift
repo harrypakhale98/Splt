@@ -46,6 +46,9 @@ final class SpendingModel {
     @ObservationIgnored private var tried: Set<String> = []
     @ObservationIgnored private var ratesTask: Task<Void, Never>?
     @ObservationIgnored private var observer: ContainerChangeObserver?
+    /// "This month" moves at midnight on the first.
+    @ObservationIgnored private var dayChange: DayChangeObserver?
+    @ObservationIgnored nonisolated(unsafe) private var defaultsToken: (any NSObjectProtocol)?
     @ObservationIgnored private var refreshScheduled = false
 
     private static let latestKey = "latest"
@@ -68,7 +71,21 @@ final class SpendingModel {
         observer = ContainerChangeObserver(
             container: services.container, watching: [ExpenseRecord.self, PersonRecord.self, GroupRecord.self]
         ) { [weak self] in self?.scheduleRefresh() }
+        dayChange = DayChangeObserver { [weak self] in self?.scheduleRefresh() }
+        // a new default currency in Settings changes every figure here, and saves nothing to the store
+        defaultsToken = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, Self.defaultCurrency(in: self.defaults) != self.currencyCode else { return }
+                self.scheduleRefresh()
+            }
+        }
         refresh()
+    }
+
+    deinit {
+        if let defaultsToken { NotificationCenter.default.removeObserver(defaultsToken) }
     }
 
     func refresh() {

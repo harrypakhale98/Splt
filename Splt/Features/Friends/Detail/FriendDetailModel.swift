@@ -66,7 +66,8 @@ final class FriendDetailModel {
             expenses = try services.expenses.sharedExpenses(with: friendID).filter { !$0.isDeleted }
             payments = try loadPayments(in: allGroups)
         } catch {
-            errorMessage = SettleErrorMessage.text(for: error)
+            // as on the group screen: a background refresh that fails keeps what is shown, without an alert
+            if !didLoad { errorMessage = SettleErrorMessage.text(for: error) }
         }
         didLoad = true
     }

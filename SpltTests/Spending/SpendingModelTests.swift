@@ -16,6 +16,16 @@ struct SpendingModelTests {
         return store
     }
 
+    @Test func followsANewDefaultCurrencyWithoutASave() async throws {
+        let services = try DataServices.inMemory(now: { [now] in now })
+        let store = makeStore()
+        let model = SpendingModel(services: services, defaults: store, now: { [now] in now })
+        #expect(model.currencyCode == "USD")
+        store.set("EUR", forKey: Preferences.Key.defaultCurrency)
+        for _ in 0..<50 where model.currencyCode != "EUR" { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(model.currencyCode == "EUR")
+    }
+
     @Test func convertsAtTheRateOfEachExpensesDayAndKeepsTheRestApart() async throws {
         let provider = StubRatesProvider()
         let rates = RatesService(provider: provider, cache: RatesCache(directory: nil), now: { [now] in now })

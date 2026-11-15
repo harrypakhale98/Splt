@@ -280,6 +280,13 @@ struct OrbitSceneTests {
         #expect(short.width < wide.width && short.height < wide.height)
     }
 
+    @Test func aSmallAmountKeepsItsCentsWhenCrowded() {
+        #expect(OrbitPills.compactText(usdAmount(40), locale: GroupsTestCalendar.english) == "$0.40")
+        #expect(OrbitPills.compactText(usdAmount(950), locale: GroupsTestCalendar.english) == "$9.50")
+        #expect(OrbitPills.compactText(usdAmount(1_000), locale: GroupsTestCalendar.english) == "$10")
+        #expect(OrbitPills.compactText(Money(minorUnits: 5, currencyCode: "JPY"), locale: GroupsTestCalendar.english) == "¥5")
+    }
+
     @Test func pillsForNoArcsAreNoPills() {
         let layout = OrbitLayout(size: CGSize(width: 340, height: 340), count: 5)
         #expect(OrbitPills.place([], in: layout).isEmpty)

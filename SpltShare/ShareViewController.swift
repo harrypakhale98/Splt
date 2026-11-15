@@ -35,10 +35,25 @@ final class ShareModel {
         self.context = context
     }
 
+    /// Read as the app's amount field reads it, in this iPhone's way of writing numbers, and failing that
+    /// the forgiving way bank texts are read, so "12.50" still works on a phone that writes "12,50".
     var amount: Money? {
-        PaymentTextParser.decimal(amountText.trimmingCharacters(in: .whitespaces))
-            .flatMap { PaymentAmount.money($0, currencyCode: currencyCode) }
+        let text = amountText.trimmingCharacters(in: .whitespaces)
+        if let parsed = try? MoneyParser.parse(text, currencyCode: currencyCode, locale: .current, allowNegative: false),
+           parsed.isPositive {
+            return parsed
+        }
+        return PaymentTextParser.decimal(text).flatMap { PaymentAmount.money($0, currencyCode: currencyCode) }
     }
+
+    /// The currency menu: what was found and this iPhone's currency first, then every other in code order.
+    var currencyChoices: [String] {
+        let lead = [currencyCode, PaymentAmount.localCurrencyCode]
+        var seen = Set<String>()
+        return (lead + Self.allCurrencies).filter { seen.insert($0).inserted }
+    }
+
+    private static let allCurrencies = Locale.commonISOCurrencyCodes.sorted()
 
     func load() async {
         defer { isReading = false }
@@ -63,8 +78,8 @@ final class ShareModel {
         merchant = reading.merchant ?? ""
         if let found = reading.amount {
             currencyCode = found.currencyCode
-            let scale = Decimal(Currency.minorUnitScale(for: found.currencyCode))
-            amountText = "\(Decimal(found.minorUnits) / scale)"
+            // written as the app writes amounts: "12.50", or "12,50" where that is the way
+            amountText = found.plainString(locale: .current)
         }
     }
 
@@ -106,11 +121,12 @@ struct ShareView: View {
                             TextField("Amount", text: $model.amountText)
                                 .keyboardType(.decimalPad)
                                 .monospacedDigit()
-                            TextField("Currency", text: $model.currencyCode)
-                                .textInputAutocapitalization(.characters)
-                                .autocorrectionDisabled()
-                                .frame(width: 64)
-                                .multilineTextAlignment(.trailing)
+                            Picker("Currency", selection: $model.currencyCode) {
+                                ForEach(model.currencyChoices, id: \.self) { Text($0).tag($0) }
+                            }
+                            .pickerStyle(.menu)
+                            .labelsHidden()
+                            .fixedSize()
                         }
                     } footer: {
                         Text(model.foundNothing

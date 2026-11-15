@@ -40,6 +40,8 @@ final class ActivityModel {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let leftGroups: LeftGroupsStore
     @ObservationIgnored private var observer: ContainerChangeObserver?
+    /// "Today" and "Yesterday" move at midnight.
+    @ObservationIgnored private var dayChange: DayChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
     @ObservationIgnored private var sentences: [UUID: String] = [:]
     @ObservationIgnored private var sentenceLocale: Locale?
@@ -59,6 +61,7 @@ final class ActivityModel {
         self.pageSize = pageSize
         limit = pageSize
         observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
+        dayChange = DayChangeObserver { [weak self] in self?.scheduleRefresh() }
         refresh()
     }
 
