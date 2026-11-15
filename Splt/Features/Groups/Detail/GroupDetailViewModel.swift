@@ -29,6 +29,9 @@ final class GroupDetailViewModel {
     private(set) var drillRevision = 0
     var filter = ExpenseFilter()
     var errorMessage: String?
+    /// Expenses stored in the group that this version can't read, such as ones added with a newer version.
+    /// They are left out of the list and the balances, so the screen says so.
+    private(set) var unreadableCount = 0
 
     private(set) var group: SplitGroup?
     private(set) var me: Person?
@@ -113,6 +116,7 @@ final class GroupDetailViewModel {
             peopleByID = Dictionary(try people.allPeople().map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             members = loaded.memberIDs.compactMap { peopleByID[$0] }
             expenses = try expenseRepository.expenses(in: groupID, includeDeleted: false)
+            unreadableCount = max(0, try expenseRepository.storedCount(in: groupID) - expenses.count)
             balances = try groups.balances(for: groupID)
             activity = try activityRepository.entries(in: groupID, limit: 100)
         } catch {

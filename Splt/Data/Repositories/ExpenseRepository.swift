@@ -9,6 +9,9 @@ protocol ExpenseRepository {
     func sharedExpenses(with friend: PersonID) throws -> [Expense]
     /// Expenses in any of these groups dated inside the window, in no particular order. Reads only that window.
     func expenses(in groups: Set<GroupID>, dated window: Range<Date>) throws -> [Expense]
+    /// How many live expenses the group stores, readable or not. More than `expenses(in:)` returns means some
+    /// came from a newer version of Splt and can't be read here, so they are left out of balances.
+    func storedCount(in group: GroupID) throws -> Int
     func expense(id: ExpenseID) throws -> Expense?
     func details(id: ExpenseID) throws -> ExpenseDetails?
 

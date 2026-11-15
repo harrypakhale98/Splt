@@ -14,6 +14,13 @@ final class SwiftDataExpenseRepository: ExpenseRepository {
         try env.expenses(inGroup: group, includeDeleted: includeDeleted)
     }
 
+    func storedCount(in group: GroupID) throws -> Int {
+        let gid: UUID? = group.rawValue
+        return try env.context.fetchCount(FetchDescriptor<ExpenseRecord>(
+            predicate: #Predicate { $0.groupID == gid && $0.deletedAt == nil }
+        ))
+    }
+
     func expenses(in groups: Set<GroupID>, dated window: Range<Date>) throws -> [Expense] {
         let start = window.lowerBound, end = window.upperBound
         // the date is indexed, so only the window is read; the group is checked on the few rows that come back

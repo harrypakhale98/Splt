@@ -32,13 +32,10 @@ struct MoneyLabel: View {
         style == .balance ? Self.balanceTint(for: money) : Ink.text
     }
 
-    /// The one rule for money you owe or are owed in a row: green when you are owed, red when you owe,
-    /// quiet when settled. Heroes use the primary color and write the sign. Person colors never
-    /// color an amount, only avatars and bars.
+    /// Green when you are owed, red when you owe, plain ink when settled: `Ink.direction`, the one rule
+    /// every amount follows. Person colors never color an amount, only avatars and bars.
     static func balanceTint(for money: Money) -> Color {
-        if money.minorUnits > 0 { return Ink.owed }
-        if money.minorUnits < 0 { return Ink.owe }
-        return Ink.secondary
+        Ink.direction(of: money.minorUnits)
     }
 
     private var accessibilityText: String {

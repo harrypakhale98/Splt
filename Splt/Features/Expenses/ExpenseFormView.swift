@@ -64,8 +64,7 @@ private struct ExpenseFormScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
         }
-        .interactiveDismissDisabled(model.isDirty)
-        .onChange(of: model.isDirty, initial: true) { router?.hasUnsavedForm = model.isDirty }
+        .modifier(UnsavedChangesGuard(model: model, router: router))
         .onDisappear { router?.hasUnsavedForm = false }
         .confirmationDialog("Discard Expense?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
             Button("Discard Changes", role: .destructive) { dismiss() }
@@ -387,3 +386,18 @@ private struct DuplicateBanner: View {
     ExpenseFormView(mode: .add(groupID: GroupID(), prefill: nil))
 }
 #endif
+
+/// Keeps a sheet with unsaved changes from being swiped away. Working out whether the form changed reads every
+/// field, so it happens here, in a modifier of its own: a key or a drag of the split bar re-runs this, not the
+/// whole form.
+private struct UnsavedChangesGuard: ViewModifier {
+    let model: ExpenseFormModel
+    let router: Router?
+
+    func body(content: Content) -> some View {
+        let isDirty = model.isDirty
+        content
+            .interactiveDismissDisabled(isDirty)
+            .onChange(of: isDirty, initial: true) { router?.hasUnsavedForm = isDirty }
+    }
+}

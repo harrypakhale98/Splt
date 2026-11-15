@@ -23,7 +23,12 @@ final class FriendDetailModel {
     private(set) var groupRows: [GroupRow] = []
     private(set) var legs: [SettleLeg] = []
     /// Live expenses that you and the friend both take part in, newest first.
-    private(set) var expenses: [Expense] = []
+    private(set) var expenses: [Expense] = [] {
+        // worked out once per load, not on every redraw of the timeline
+        didSet { timeline = FriendTimeline.months(expenses); nets = [:] }
+    }
+    /// The shared expenses by month, newest first.
+    private(set) var timeline: [FriendTimeline.Month] = []
     /// Payments between the two of you, newest first. Undone ones stay in the list.
     private(set) var payments: [Payment] = []
     private(set) var people: [PersonID: Person] = [:]
@@ -35,6 +40,8 @@ final class FriendDetailModel {
     @ObservationIgnored private let services: DataServices
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
+    /// Your net in each expense, kept once a row has asked, so a redraw doesn't split every expense again.
+    @ObservationIgnored private var nets: [ExpenseID: Money?] = [:]
 
     init(friendID: PersonID, services: DataServices) {
         self.friendID = friendID
@@ -100,8 +107,12 @@ final class FriendDetailModel {
 
     /// What you paid minus what you owe for one expense. Nil when you are not part of it.
     func myNet(in expense: Expense) -> Money? {
-        guard let me, expense.participants.contains(me.id) else { return nil }
-        return (try? expense.netBalances())?[me.id]
+        if let known = nets[expense.id] { return known }
+        let net: Money? = me.flatMap { me in
+            expense.participants.contains(me.id) ? (try? expense.netBalances())?[me.id] : nil
+        }
+        nets[expense.id] = net
+        return net
     }
 
     /// Who paid for an expense, in words: one name, or the first two.
@@ -110,10 +121,6 @@ final class FriendDetailModel {
         let payers = expense.payers.keys.sorted { ($0 == me?.id ? 0 : 1, $0) < ($1 == me?.id ? 0 : 1, $1) }
         let names = payers.map { $0 == me?.id ? String(localized: "you") : name(of: $0) }
         return ListFormatter.localizedString(byJoining: Array(names.prefix(2)))
-    }
-
-    var timeline: [FriendTimeline.Month] {
-        FriendTimeline.months(expenses)
     }
 
     func name(of id: PersonID) -> String {

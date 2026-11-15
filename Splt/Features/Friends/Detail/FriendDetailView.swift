@@ -309,7 +309,9 @@ private struct PaymentRow: View {
                     .strikethrough(isUndone)
             }
             HStack(spacing: 6) {
-                Text(payment.date, format: .dateTime.day().month().year())
+                // the short date the expense rows use, with the year only when it isn't this one
+                Text(payment.date, format: Calendar.current.isDate(payment.date, equalTo: .now, toGranularity: .year)
+                     ? .dateTime.day().month(.abbreviated) : .dateTime.day().month(.abbreviated).year())
                 if !payment.note.isEmpty {
                     Text(payment.note)
                 }

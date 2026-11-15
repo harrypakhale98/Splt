@@ -56,7 +56,7 @@ struct DirectionAmount: View {
         VStack(alignment: .trailing, spacing: 0) {
             Text(MoneyFormatting.magnitudeString(money, locale: locale))
                 .font(Typeface.figure)
-                .foregroundStyle(direction == .owed ? Ink.owed : direction == .owes ? Ink.owe : Ink.text)
+                .foregroundStyle(Ink.direction(of: direction == .owed ? 1 : direction == .owes ? -1 : 0))
             Text(direction.phrase)
                 .font(.caption)
                 .foregroundStyle(Ink.secondary)

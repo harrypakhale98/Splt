@@ -151,7 +151,9 @@ struct UIBalanceTintTests {
     @Test func oneRuleForGreenRedAndQuiet() {
         #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 100, currencyCode: "USD")) == Ink.owed)
         #expect(MoneyLabel.balanceTint(for: Money(minorUnits: -100, currencyCode: "USD")) == Ink.owe)
-        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == Ink.secondary)
+        // settled reads in plain ink, as Ink.direction gives it everywhere else
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == Ink.text)
+        #expect(MoneyLabel.balanceTint(for: Money(minorUnits: 0, currencyCode: "USD")) == Ink.direction(of: 0))
     }
 
     @Test(arguments: [false, true])

@@ -6,6 +6,7 @@ struct AccountButton: View {
     @Environment(\.dataServices) private var services
     @State private var profile = AccountProfile.shared
     @State private var summary = AccountSummary()
+    @State private var observer: ContainerChangeObserver?
     private let runtime = SyncRuntime.shared
 
     var body: some View {
@@ -29,6 +30,14 @@ struct AccountButton: View {
         .accessibilityIdentifier("account.button")
         // the sheet is where your name changes, so read it again each time that closes
         .task(id: router.sheet) { summary = AccountSummary.load(from: services) }
+        // and whenever a person changes, so a name or identity that syncs in shows without opening anything
+        .task(id: services.map(ObjectIdentifier.init)) {
+            observer = services.map { services in
+                ContainerChangeObserver(container: services.container, watching: [PersonRecord.self]) {
+                    summary = AccountSummary.load(from: services)
+                }
+            }
+        }
     }
 
     private var needsAttention: Bool {

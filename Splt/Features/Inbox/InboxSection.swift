@@ -120,15 +120,19 @@ struct InboxSection: View {
             Text("You've added \(manualAdds) expenses by hand. Splt can catch Apple Pay payments as you pay, so they're waiting here.")
                 .font(.subheadline)
                 .foregroundStyle(Ink.text)
+            // each label fills a 44 point tall target, so a tap or VoiceOver finds the button and not just its word
             HStack(spacing: 16) {
-                Button("Set Up") { controller.showsSetup = true }
-                    .font(.subheadline.weight(.semibold))
-                Button("Not Now") { Motion.perform(Motion.smooth) { offerDismissed = true } }
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.secondary)
+                Button { controller.showsSetup = true } label: {
+                    Text("Set Up").frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .font(.subheadline.weight(.semibold))
+                Button { Motion.perform(Motion.smooth) { offerDismissed = true } } label: {
+                    Text("Not Now").frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .font(.subheadline)
+                .foregroundStyle(Ink.secondary)
             }
             .buttonStyle(.borderless)
-            .frame(minHeight: 44)
         }
         .padding(.top, 10)
     }

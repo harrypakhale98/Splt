@@ -17,6 +17,21 @@ struct GroupDetailViewModelTests {
 
     // MARK: Header
 
+
+    @Test func anExpenseThisVersionCantReadIsCountedNotHidden() throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000)
+        // as an expense saved by a newer version might look: a split this version doesn't understand
+        let record = ExpenseRecord(
+            groupID: fixture.group.id.rawValue, title: "From the future", totalMinorUnits: 500, currencyCode: "USD",
+            date: Date(), splitData: Data(#"{"futureSplit":{}}"#.utf8)
+        )
+        fixture.services.environment.context.insert(record)
+        try fixture.services.environment.context.save()
+        let model = GroupDetailViewModel(groupID: fixture.group.id, services: fixture.services)
+        #expect(model.expenses.count == 1)
+        #expect(model.unreadableCount == 1)
+    }
     @Test func headerShowsWhatYouAreOwed() throws {
         let fixture = try Fixture()
         try fixture.addExpense(cents: 3000)

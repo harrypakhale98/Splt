@@ -213,6 +213,15 @@ private struct GroupDetailContent: View {
             }
             .raisedSection()
         }
+        if model.unreadableCount > 0 {
+            Section {
+                if model.unreadableCount == 1 {
+                    GroupPaperNote("One expense here came from a newer version of Splt and isn't counted yet. Update Splt to see it.")
+                } else {
+                    GroupPaperNote("\(model.unreadableCount) expenses here came from a newer version of Splt and aren't counted yet. Update Splt to see them.")
+                }
+            }
+        }
         if model.expenses.isEmpty {
             Section {
                 GroupPaperNote("Add the first expense to start splitting.")
