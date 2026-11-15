@@ -2,7 +2,7 @@ import ActivityKit
 import Foundation
 import SpltCore
 
-/// Keeps one Live Activity for the trip happening now: "Lisbon · 4 unsplit · €312". It starts when the
+/// Keeps one Live Activity for the trip happening now: "Lisbon · 4 payments to split · €312". It starts when the
 /// app is open, since iOS only allows that from the foreground, and is updated whenever the inbox changes.
 /// It is left off with the Face ID lock on, because it would show amounts on the Lock Screen.
 @MainActor

@@ -12,10 +12,3 @@ struct TripActivityAttributes: ActivityAttributes {
     var groupID: UUID
     var tripName: String
 }
-
-/// Shared names between the app and its widgets.
-enum SpltWidgetKind {
-    static let inbox = "com.harrypakhale.splt.inbox"
-    static let inboxControl = "com.harrypakhale.splt.inbox-control"
-    static let activityURL = URL(string: "splt://activity")!
-}

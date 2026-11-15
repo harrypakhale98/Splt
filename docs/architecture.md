@@ -75,7 +75,7 @@ Fetched from the free ECB-backed Frankfurter API, cached on the device, and alwa
 | `Splt` | iOS app |
 | `SpltTests` | Unit tests |
 | `SpltUITests` | UI tests |
-| `SpltWidgets` | Lock Screen To Split count, Control Center button, trip Live Activity |
+| `SpltWidgets` | To Split widget (Lock Screen count; Home Screen list with a Not Shared button), To Split, Add Expense and Split Last Payment controls, trip Live Activity. It reads `Shared/Inbox` and the `ToSplitSnapshot` the app saves, and draws with `Shared/Design` |
 | `SpltShare` | Share extension that reads a payment from a screenshot or text |
 | `SpltKit/SpltCore` | Shared logic package |
 

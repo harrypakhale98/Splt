@@ -21,7 +21,7 @@ enum PaymentNotifier {
         nonisolated static let notShared = "splt.payment.notShared"
     }
 
-    static func identifier(for id: UUID) -> String { "\(categoryPrefix).\(id.uuidString)" }
+    static func identifier(for id: UUID) -> String { PendingPayment.notificationID(for: id) }
 
     private static var center: UNUserNotificationCenter { .current() }
 

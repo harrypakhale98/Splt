@@ -5,8 +5,6 @@ import Foundation
 /// unlocked after a restart, because Wallet hands payments over at the checkout.
 struct PaymentInboxFile: Sendable {
     static let appGroupID = "group.com.harrypakhale.splt"
-    /// How many payments the app counts as worth asking about, for the widgets.
-    static let toSplitCountKey = "inbox.toSplitCount"
 
     let url: URL
 

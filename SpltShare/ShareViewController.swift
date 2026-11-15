@@ -2,6 +2,7 @@ import SpltCore
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
+import WidgetKit
 
 /// Takes a screenshot, or a copied bank text, from the share sheet and saves the payment in it to To Split.
 /// It reads on the device, shows what it found, and keeps nothing but the shop and the amount.
@@ -73,6 +74,7 @@ final class ShareModel {
         PaymentInboxFile.shared.update {
             $0.capture(merchant: name, amount: amount, date: Date(), source: .screenshot, now: Date())
         }
+        WidgetCenter.shared.reloadAllTimelines()
         context?.completeRequest(returningItems: nil)
     }
 

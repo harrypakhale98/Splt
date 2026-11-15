@@ -65,19 +65,6 @@ struct LogPaymentTextIntent: AppIntent {
     }
 }
 
-/// Opens Splt on the newest payment waiting to be split.
-struct SplitLastPaymentIntent: AppIntent {
-    static let title: LocalizedStringResource = "Split Last Payment"
-    static let description = IntentDescription("Opens the newest payment in To Split, ready to split.")
-
-    @MainActor
-    func perform() async throws -> some IntentResult & OpensIntent {
-        PaymentInbox.shared.reload()
-        let link = PaymentInbox.shared.state.pending.first.map { DeepLink.payment($0.id).url } ?? DeepLink.activity.url
-        return .result(opensIntent: OpenURLIntent(link))
-    }
-}
-
 /// A Focus filter: while a Focus such as Travel is on, payments go to the group it names.
 struct SpltFocusFilter: SetFocusFilterIntent {
     static let title: LocalizedStringResource = "Set Splt Group"

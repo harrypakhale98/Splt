@@ -106,12 +106,17 @@ final class PaymentInbox {
     private func afterChange(new: PendingPayment? = nil, resolved: UUID? = nil) {
         guard runsEffects else { return }
         if let resolved { PaymentNotifier.cancel(resolved) }
+        let defaults = PaymentInboxFile.sharedDefaults
+        let hidesDetails = NotificationPrivacy.isHidingDetails()
         guard let services = services ?? IntentServices.shared.live() else {
+            var snapshot = ToSplitSnapshot.load(from: defaults)
+            snapshot.hidesDetails = hidesDetails
+            snapshot.save(to: defaults)
             WidgetCenter.shared.reloadAllTimelines()
             return
         }
         let review = InboxReview(state: state, services: services, now: now())
-        PaymentInboxFile.sharedDefaults.set(review.toSplit.count, forKey: PaymentInboxFile.toSplitCountKey)
+        ToSplitSnapshot(review, hidesDetails: hidesDetails).save(to: defaults)
         WidgetCenter.shared.reloadAllTimelines()
         TripLiveActivity.sync(review)
         Task {
@@ -127,6 +132,7 @@ final class PaymentInbox {
 private struct PaymentInboxRefresh: ViewModifier {
     let services: DataServices?
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(Preferences.Key.biometricLockEnabled) private var lockEnabled = false
 
     func body(content: Content) -> some View {
         content
@@ -138,6 +144,23 @@ private struct PaymentInboxRefresh: ViewModifier {
                 // payments shared from another app, the evening summary and the trip Live Activity all catch up here
                 if phase == .active { PaymentInbox.shared.refresh() }
             }
+            // the widgets hide what was bought while the Face ID lock is on
+            .onChange(of: lockEnabled) { PaymentInbox.shared.refresh() }
+    }
+}
+
+extension ToSplitSnapshot {
+    /// What the widgets need from a review: which payments to ask about and which trips to wrap up.
+    @MainActor
+    init(_ review: InboxReview, hidesDetails: Bool) {
+        self.init(
+            reviewed: Set(review.rows.map(\.id)),
+            counted: Set(review.toSplit.map(\.id)),
+            wrapUps: review.wrapUps.map {
+                WrapUp(groupID: $0.trip.id.rawValue, tripName: $0.trip.name, paymentIDs: $0.payments.map(\.id), offeredUntil: $0.offeredUntil)
+            },
+            hidesDetails: hidesDetails
+        )
     }
 }
 

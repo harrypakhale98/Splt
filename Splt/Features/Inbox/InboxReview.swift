@@ -149,10 +149,12 @@ struct InboxReview {
     struct WrapUp: Identifiable, Hashable {
         var trip: SplitGroup
         var payments: [PendingPayment]
+        /// Two weeks after the trip ends, when it stops being offered.
+        var offeredUntil: Date
         var id: GroupID { trip.id }
     }
 
-    static let staleAfter: TimeInterval = 7 * 86_400
+    static let staleAfter = ToSplitSnapshot.staleAfter
     static let wrapUpWindow: TimeInterval = 14 * 86_400
 
     let now: Date
@@ -191,7 +193,9 @@ struct InboxReview {
             guard let range = SplitTargetPicker.tripRange(of: trip, calendar: calendar), now >= range.upperBound,
                   now.timeIntervalSince(range.upperBound) < Self.wrapUpWindow else { return nil }
             let fromTrip = pending.filter { range.contains($0.date) }
-            return fromTrip.isEmpty ? nil : WrapUp(trip: trip, payments: fromTrip)
+            return fromTrip.isEmpty
+                ? nil
+                : WrapUp(trip: trip, payments: fromTrip, offeredUntil: range.upperBound.addingTimeInterval(Self.wrapUpWindow))
         }
     }
 
