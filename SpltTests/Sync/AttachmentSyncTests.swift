@@ -179,4 +179,34 @@ struct StoreUpgradeTests {
         #expect(group.defaultSplitData == nil)
         #expect(try current.mainContext.fetch(FetchDescriptor<ItemClaimRecord>()).isEmpty)
     }
+
+    @Test func aStoreSavedByVersionTwoOpensWithItsData() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "upgrade-\(UUID().uuidString).store")
+        let groupID = UUID()
+        let expense = Expense(
+            groupID: GroupID(rawValue: groupID), title: "Dinner", total: usdAmount(3000), date: Date(),
+            paidBy: PersonID(), split: .equal(participants: [PersonID()])
+        )
+        do {
+            let schema = Schema(versionedSchema: SpltSchemaV2.self)
+            let old = try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)])
+            let group = SpltSchemaV2.GroupRecord(id: groupID, name: "Flat", currencyCode: "USD")
+            old.mainContext.insert(group)
+            let record = SpltSchemaV2.ExpenseRecord(
+                id: expense.id.rawValue, groupID: groupID, title: "Dinner", totalMinorUnits: 3000, currencyCode: "USD", date: expense.date,
+                payersData: RecordCoding.encode(expense.payers), splitData: RecordCoding.encode(expense.split)
+            )
+            old.mainContext.insert(record)
+            try old.mainContext.save()
+        }
+        // version 3 only adds indexes, so everything comes across and reads as before
+        let current = try ModelContainerFactory.make(url: url)
+        let group = try #require(try GroupRecord.find(recordName: groupID.uuidString, in: current.mainContext))
+        #expect(group.name == "Flat")
+        let stored = try #require(try ExpenseRecord.find(recordName: expense.id.rawValue.uuidString, in: current.mainContext))
+        #expect(try Expense(stored).payers == expense.payers)
+        let gid: UUID? = groupID
+        let inGroup = FetchDescriptor<ExpenseRecord>(predicate: #Predicate { $0.groupID == gid && $0.deletedAt == nil })
+        #expect(try current.mainContext.fetchCount(inGroup) == 1)
+    }
 }

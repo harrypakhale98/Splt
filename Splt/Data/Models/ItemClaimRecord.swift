@@ -3,7 +3,7 @@ import Foundation
 import SpltCore
 import SwiftData
 
-extension SpltSchemaV2 {
+extension SpltSchemaV3 {
     /// One person's picks from the items of an expense split by item.
     ///
     /// Each person writes only their own claim, so people picking items at the same time never
@@ -11,7 +11,11 @@ extension SpltSchemaV2 {
     /// claim per expense: its id comes from the expense and the person, so every device makes the same one.
     @Model
     final class ItemClaimRecord {
-        @Attribute(.unique) var id: UUID
+        #Index<ItemClaimRecord>([\.expenseID], [\.groupID], [\.isDirty], [\.recordName])
+
+        // the hash modifier gives version 3 its own checksum: indexes alone don't change it, and without a
+        // migration a store saved by 1.1 would never be given them
+        @Attribute(.unique, hashModifier: "v3-indexes") var id: UUID
         var groupID: UUID?
         var expenseID: UUID
         var personID: UUID

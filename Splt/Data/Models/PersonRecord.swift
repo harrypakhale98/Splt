@@ -2,10 +2,14 @@ import Foundation
 import SpltCore
 import SwiftData
 
-extension SpltSchemaV2 {
+extension SpltSchemaV3 {
     @Model
     final class PersonRecord {
-        @Attribute(.unique) var id: UUID
+        #Index<PersonRecord>([\.isDirty], [\.recordName])
+
+        // the hash modifier gives version 3 its own checksum: indexes alone don't change it, and without a
+        // migration a store saved by 1.1 would never be given them
+        @Attribute(.unique, hashModifier: "v3-indexes") var id: UUID
         var name: String
         /// An email address or phone number the person was invited with.
         var contactHint: String?

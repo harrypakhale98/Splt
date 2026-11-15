@@ -12,16 +12,21 @@ struct SchemaTests {
         #expect(SpltSchemaV1.models.count == 7)
     }
 
-    @Test func currentVersionListsEveryRecordType() {
+    @Test func versionTwoKeepsEveryRecordTypeOf1_1() {
         #expect(SpltSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
         #expect(SpltSchemaV2.models.count == SyncRecordType.allCases.count)
     }
 
-    @Test func migrationPlanGoesFromOneToTwo() {
+    @Test func currentVersionListsEveryRecordType() {
+        #expect(SpltSchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
+        #expect(SpltSchemaV3.models.count == SyncRecordType.allCases.count)
+    }
+
+    @Test func migrationPlanGoesFromOneToThree() {
         #expect(SpltMigrationPlan.schemas.map(ObjectIdentifier.init) == [
-            ObjectIdentifier(SpltSchemaV1.self), ObjectIdentifier(SpltSchemaV2.self)
+            ObjectIdentifier(SpltSchemaV1.self), ObjectIdentifier(SpltSchemaV2.self), ObjectIdentifier(SpltSchemaV3.self)
         ])
-        #expect(SpltMigrationPlan.stages.count == 1)
+        #expect(SpltMigrationPlan.stages.count == 2)
     }
 
     @Test func inMemoryContainersAreIndependent() throws {
