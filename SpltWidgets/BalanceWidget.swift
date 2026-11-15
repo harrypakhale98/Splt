@@ -41,6 +41,11 @@ struct BalanceProvider: TimelineProvider {
                 friend("Sam Rivera", "SR", 9_000, .init(lightFill: 0x96437F, lightText: 0xFFFFFF, darkFill: 0xDD9CCB, darkText: 0x0E0E12)),
                 friend("Priya Nair", "PN", 5_250, .init(lightFill: 0x4B55A0, lightText: 0xFFFFFF, darkFill: 0xA3A9E8, darkText: 0x0E0E12)),
                 friend("Jo Park", "JP", -3_800, .init(lightFill: 0xA85510, lightText: 0xFFFFFF, darkFill: 0xE3A26A, darkText: 0x0E0E12)),
+            ],
+            strip: [
+                .init(lightFill: 0x96437F, lightText: 0xFFFFFF, darkFill: 0xDD9CCB, darkText: 0x0E0E12),
+                .init(lightFill: 0x4B55A0, lightText: 0xFFFFFF, darkFill: 0xA3A9E8, darkText: 0x0E0E12),
+                .init(lightFill: 0xA85510, lightText: 0xFFFFFF, darkFill: 0xE3A26A, darkText: 0x0E0E12),
             ]
         ))
     }()
@@ -109,7 +114,8 @@ struct BalanceWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         case .systemMedium:
             HStack(alignment: .top, spacing: 16) {
-                summary(heroSize: 34)
+                // the rows already say who owes what, so the number stands with the strip instead of the sentence
+                summary(heroSize: 34, withRows: !(shown?.friends.isEmpty ?? true))
                 if let shown, !shown.friends.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(shown.friends.enumerated()), id: \.element.id) { index, friend in
@@ -124,18 +130,19 @@ struct BalanceWidgetView: View {
                 }
             }
         default:
-            summary(heroSize: 34)
+            summary(heroSize: 34, withRows: false)
         }
     }
 
-    /// The hero of the Friends tab, small: what it covers, one big number, and the quiet sentence.
-    private func summary(heroSize: CGFloat) -> some View {
+    /// The hero of the Friends tab, small: what it covers, one big number, then the quiet sentence, or
+    /// beside the friend rows, the strip of who the money is between.
+    private func summary(heroSize: CGFloat, withRows: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("With friends")
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)
-            Spacer(minLength: 0)
             if let shown {
+                Spacer(minLength: 0)
                 figure(shown, size: heroSize)
                     .foregroundStyle(Ink.text)
                     .privacySensitive()
@@ -147,12 +154,22 @@ struct BalanceWidgetView: View {
                         .lineLimit(1)
                         .privacySensitive()
                 }
-                Text(NetPosition.sentence(owedToYou: shown.owedToYou, youOwe: shown.youOwe))
-                    .font(.caption)
-                    .foregroundStyle(Ink.secondary)
-                    .lineLimit(3)
-                    .privacySensitive()
+                if withRows {
+                    // right under the number, as under the Friends tab hero
+                    if !shown.strip.isEmpty {
+                        ShareStrip(colors: shown.strip.map { Ink.dynamic(light: $0.lightFill, dark: $0.darkFill) }, isGrooved: true)
+                            .widgetAccentable()
+                            .padding(.top, 6)
+                    }
+                } else {
+                    Text(NetPosition.sentence(owedToYou: shown.owedToYou, youOwe: shown.youOwe))
+                        .font(.caption)
+                        .foregroundStyle(Ink.secondary)
+                        .lineLimit(3)
+                        .privacySensitive()
+                }
             } else {
+                Spacer(minLength: 0)
                 Text("Open Splt to see your balance.")
                     .font(Typeface.heading)
                     .foregroundStyle(Ink.text)
@@ -199,19 +216,13 @@ struct BalanceWidgetView: View {
 /// direction. The widget has no sections, so the Friends tab's caption under the name says which way it goes.
 private struct FriendRow: View {
     let friend: BalanceWidgetSnapshot.Friend
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     var body: some View {
         Link(destination: SpltWidgetKind.friendURL(friend.id)) {
             HStack(spacing: 8) {
-                Circle()
-                    .fill(Ink.dynamic(light: friend.color.lightFill, dark: friend.color.darkFill))
+                avatar
                     .frame(width: 24, height: 24)
-                    .overlay {
-                        Text(friend.initials)
-                            .font(.system(size: 9.6, weight: .medium))
-                            .foregroundStyle(Ink.dynamic(light: friend.color.lightText, dark: friend.color.darkText))
-                    }
-                    .widgetAccentable()
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 0) {
                     // the full name when it fits, else the first name, as the split bar and orbit shorten names
@@ -242,6 +253,22 @@ private struct FriendRow: View {
             .privacySensitive()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText)
+        }
+    }
+
+    /// Initials on their person color, as `AvatarView` draws them. A tinted Home Screen paints the disc and
+    /// its letters one color, so there the disc becomes a ring and the initials stay readable.
+    @ViewBuilder
+    private var avatar: some View {
+        let initials = Text(friend.initials).font(.system(size: 9.6, weight: .medium))
+        if renderingMode == .fullColor {
+            Circle()
+                .fill(Ink.dynamic(light: friend.color.lightFill, dark: friend.color.darkFill))
+                .overlay { initials.foregroundStyle(Ink.dynamic(light: friend.color.lightText, dark: friend.color.darkText)) }
+        } else {
+            Circle()
+                .strokeBorder(.secondary, lineWidth: 1)
+                .overlay { initials }
         }
     }
 

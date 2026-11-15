@@ -31,6 +31,9 @@ struct BalanceWidgetTests {
         #expect(snapshot.friends[0].color.lightFill == PersonPalette.hexPair(at: hue, dark: false).fill)
         #expect(snapshot.friends[0].color.darkText == PersonPalette.hexPair(at: hue, dark: true).text)
         #expect(snapshot.position.primary == usd(-6_400))
+        // the strip runs as under the Friends tab hero: everyone who owes you, then everyone you owe
+        let stripFill = { (summary: FriendSummary) in PersonPalette.hexPair(at: PersonPalette.index(for: summary.id), dark: false).fill }
+        #expect(snapshot.strip.map(\.lightFill) == [small, middle, extra, big].map(stripFill))
     }
 
     @Test func leavesOutHiddenFriends() {

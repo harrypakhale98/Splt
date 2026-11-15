@@ -79,15 +79,25 @@ final class BalanceWidgetPublisher {
             .sorted { largest($0.balance) > largest($1.balance) }
             .prefix(BalanceWidgetSnapshot.mostFriends)
             .map { summary in
-                let hue = PersonPalette.index(for: summary.id)
-                let light = PersonPalette.hexPair(at: hue, dark: false), dark = PersonPalette.hexPair(at: hue, dark: true)
-                return BalanceWidgetSnapshot.Friend(
+                BalanceWidgetSnapshot.Friend(
                     id: summary.id.rawValue, name: summary.person.name, balance: summary.balance,
-                    initials: AvatarStyle.initials(for: summary.person.name),
-                    color: .init(lightFill: light.fill, lightText: light.text, darkFill: dark.fill, darkText: dark.text)
+                    initials: AvatarStyle.initials(for: summary.person.name), color: color(of: summary.id)
                 )
             }
-        return BalanceWidgetSnapshot(owedToYou: totals.owedToYou, youOwe: totals.youOwe, friends: friends)
+        // as FriendsView passes the hero: those who owe you, then those you owe
+        let owedBy = summaries.filter { $0.balance.contains(where: \.isPositive) }
+        let owedTo = summaries.filter { !$0.balance.isEmpty && !$0.balance.contains(where: \.isPositive) }
+        return BalanceWidgetSnapshot(
+            owedToYou: totals.owedToYou, youOwe: totals.youOwe, friends: friends,
+            strip: (owedBy + owedTo).map { color(of: $0.id) }
+        )
+    }
+
+    /// A person's color as `AvatarView` and `ShareStrip` draw it, in both appearances.
+    private static func color(of person: PersonID) -> BalanceWidgetSnapshot.PersonColor {
+        let hue = PersonPalette.index(for: person)
+        let light = PersonPalette.hexPair(at: hue, dark: false), dark = PersonPalette.hexPair(at: hue, dark: true)
+        return .init(lightFill: light.fill, lightText: light.text, darkFill: dark.fill, darkText: dark.text)
     }
 
     private static func largest(_ balance: [Money]) -> UInt64 {

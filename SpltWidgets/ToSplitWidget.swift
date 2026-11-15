@@ -143,11 +143,11 @@ struct ToSplitWidgetView: View {
     // MARK: Small
 
     private var small: some View {
+        // laid out like Your Balance: what it covers on top, the one number below
         VStack(alignment: .leading, spacing: 4) {
-            Image(systemName: ToSplitWidget.symbol)
-                .font(.title3)
+            Text("To Split")
+                .font(.footnote)
                 .foregroundStyle(Ink.secondary)
-                .accessibilityHidden(true)
             Spacer(minLength: 0)
             if entry.count == 0 {
                 Text("Nothing to split")
@@ -159,9 +159,6 @@ struct ToSplitWidgetView: View {
                     .monospacedDigit()
                     .foregroundStyle(Ink.text)
                     .widgetAccentable()
-                Text("To Split")
-                    .font(.subheadline)
-                    .foregroundStyle(Ink.secondary)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -173,14 +170,11 @@ struct ToSplitWidgetView: View {
 
     private func list(rows: Int) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
-                Image(systemName: ToSplitWidget.symbol)
-                    .accessibilityHidden(true)
-                Text("To Split")
-            }
-            .font(.footnote)
-            .foregroundStyle(Ink.secondary)
-            .padding(.bottom, 4)
+            // the app's section header: no symbol, which only ever marks where a payment came from
+            Text("To Split")
+                .font(.footnote)
+                .foregroundStyle(Ink.secondary)
+                .padding(.bottom, 4)
             if entry.hidesDetails {
                 Spacer(minLength: 0)
                 Text(countSentence)
@@ -262,13 +256,17 @@ private struct PaymentRow: View {
                 .accessibilityHint("Opens the expense, filled in.")
             }
             // the app's swipe action for the same thing: "Mine", with the person symbol
+            // quiet like the app's secondary buttons: a hairline outline, no fill, so the amounts read first
             Button(intent: NotSharedIntent(paymentID: payment.id)) {
                 Label("Mine", systemImage: "person")
-                    .font(.caption.weight(.medium))
+                    .font(.caption)
+                    .foregroundStyle(Ink.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .overlay { Capsule().strokeBorder(Ink.hairline) }
+                    .contentShape(Capsule())
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .tint(Ink.secondary)
+            .buttonStyle(.plain)
             .accessibilityLabel("Mine: \(payment.merchant)")
         }
         .padding(.vertical, 6)

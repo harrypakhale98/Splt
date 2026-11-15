@@ -32,10 +32,33 @@ struct BalanceWidgetSnapshot: Codable, Hashable, Sendable {
     var youOwe: [Money] = []
     /// The friends with the largest balances, largest first.
     var friends: [Friend] = []
+    /// The strip under the Friends tab hero: everyone you have money with, those who owe you first.
+    var strip: [PersonColor] = []
     /// The Face ID lock is on, so nothing here names a person or an amount.
     var hidesDetails = false
 
     var position: NetPosition { NetPosition(owedToYou: owedToYou, youOwe: youOwe) }
+
+    init(
+        owedToYou: [Money] = [], youOwe: [Money] = [], friends: [Friend] = [], strip: [PersonColor] = [],
+        hidesDetails: Bool = false
+    ) {
+        self.owedToYou = owedToYou
+        self.youOwe = youOwe
+        self.friends = friends
+        self.strip = strip
+        self.hidesDetails = hidesDetails
+    }
+
+    /// Reads one saved by an earlier build, which had no strip.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        owedToYou = try container.decode([Money].self, forKey: .owedToYou)
+        youOwe = try container.decode([Money].self, forKey: .youOwe)
+        friends = try container.decode([Friend].self, forKey: .friends)
+        strip = try container.decodeIfPresent([PersonColor].self, forKey: .strip) ?? []
+        hidesDetails = try container.decode(Bool.self, forKey: .hidesDetails)
+    }
 
     /// With the lock on, the snapshot keeps nothing that could be read from the widget.
     static let hidden = BalanceWidgetSnapshot(hidesDetails: true)
