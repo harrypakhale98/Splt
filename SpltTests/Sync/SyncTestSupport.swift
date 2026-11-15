@@ -102,9 +102,11 @@ extension SyncEnvironment {
     }
 }
 
-/// Waits until the condition holds, for tests of code that reacts on another task.
+/// Waits until the condition holds, for tests of code that reacts on another task. It returns as soon as
+/// the condition holds, so the limit only matters when something is wrong: it is generous because a busy CI
+/// machine can take seconds to run work that takes milliseconds locally.
 @MainActor
-func eventually(timeout: Duration = .seconds(2), _ condition: () -> Bool) async -> Bool {
+func eventually(timeout: Duration = .seconds(10), _ condition: () -> Bool) async -> Bool {
     let deadline = ContinuousClock.now + timeout
     while ContinuousClock.now < deadline {
         if condition() { return true }
