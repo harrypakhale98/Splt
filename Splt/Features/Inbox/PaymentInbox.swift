@@ -145,7 +145,10 @@ private struct PaymentInboxRefresh: ViewModifier {
                 if phase == .active { PaymentInbox.shared.refresh() }
             }
             // the widgets hide what was bought while the Face ID lock is on
-            .onChange(of: lockEnabled) { PaymentInbox.shared.refresh() }
+            .onChange(of: lockEnabled) {
+                PaymentInbox.shared.refresh()
+                BalanceWidgetPublisher.refresh()
+            }
     }
 }
 

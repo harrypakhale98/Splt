@@ -3,7 +3,7 @@ import Foundation
 /// A parsed `splt://` address.
 ///
 /// Supported forms: `splt://group/<uuid>`, `splt://friend/<uuid>`, `splt://settle/<friend uuid>`,
-/// `splt://add-expense`, `splt://invite?name=<name>&id=<uuid>`,
+/// `splt://add-expense`, `splt://activity`, `splt://friends`, `splt://payment/<uuid>`, `splt://invite?name=<name>&id=<uuid>`,
 /// `splt://join?share=<iCloud invite link>&as=<person uuid>` and `splt://reply?d=<balance reply>`.
 enum DeepLink: Hashable, Sendable {
     static let scheme = "splt"
@@ -15,6 +15,8 @@ enum DeepLink: Hashable, Sendable {
     case addExpense
     /// Opens the Activity tab.
     case activity
+    /// Opens the Friends tab, where the Your Balance widget's total is.
+    case friends
     /// Opens a payment from To Split in the expense form, from a notification or Siri.
     case payment(UUID)
     case invite(FriendInvite)
@@ -43,6 +45,8 @@ enum DeepLink: Hashable, Sendable {
             self = .settle(id)
         case ("activity", 1):
             self = .activity
+        case ("friends", 1):
+            self = .friends
         case ("payment", 2):
             guard let id = UUID(uuidString: parts[1]) else { return nil }
             self = .payment(id)
@@ -70,6 +74,7 @@ enum DeepLink: Hashable, Sendable {
         case .settle(let id): URL(string: "\(Self.scheme)://settle/\(id.uuidString)")!
         case .addExpense: URL(string: "\(Self.scheme)://add-expense")!
         case .activity: URL(string: "\(Self.scheme)://activity")!
+        case .friends: URL(string: "\(Self.scheme)://friends")!
         case .payment(let id): URL(string: "\(Self.scheme)://payment/\(id.uuidString)")!
         case .invite(let invite): invite.url
         case .join(let invite): invite.url

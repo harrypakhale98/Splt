@@ -8,7 +8,10 @@ enum LaunchServices {
     static func make(arguments: [String] = ProcessInfo.processInfo.arguments) -> DataServices? {
         #if DEBUG
         if arguments.contains("-sampledata") {
-            return SampleData.previewServices()
+            // the widgets show the sample trip too, for screenshots
+            let services = SampleData.previewServices()
+            BalanceWidgetPublisher.start(services: services)
+            return services
         }
         if arguments.contains("-nostore") {
             return nil

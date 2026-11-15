@@ -46,6 +46,17 @@ struct UIRouterTests {
         #expect(router.sheet == nil)
     }
 
+    @Test func friendsLinkOpensTheFriendsTabAtTheTop() throws {
+        let router = Router(selectedTab: .groups)
+        router.push(.friend(id), in: .friends)
+        router.present(.newGroup)
+        router.open(try #require(DeepLink(url: URL(string: "splt://friends")!)))
+        #expect(router.selectedTab == .friends)
+        #expect(router.friendsPath.isEmpty)
+        #expect(router.sheet == nil)
+        #expect(DeepLink.friends.url.absoluteString == "splt://friends")
+    }
+
     @Test func pushWithoutTabUsesSelectedTab() {
         let router = Router(selectedTab: .friends)
         router.push(.friend(id))

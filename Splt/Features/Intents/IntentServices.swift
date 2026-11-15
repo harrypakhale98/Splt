@@ -12,6 +12,7 @@ final class IntentServices {
     func live() -> DataServices? {
         if let cached { return cached }
         cached = try? DataServices.live()
+        if let cached { BalanceWidgetPublisher.start(services: cached) }
         return cached
     }
 

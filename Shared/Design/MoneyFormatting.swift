@@ -14,4 +14,12 @@ enum MoneyFormatting {
     static func magnitudeString(_ money: Money, locale: Locale = .current) -> String {
         money.formattedMagnitude(locale: locale)
     }
+
+    /// A signed balance in words, so VoiceOver says who owes whom instead of "plus" or "minus".
+    static func spokenBalance(_ money: Money, locale: Locale = .current) -> String {
+        let amount = magnitudeString(money, locale: locale)
+        if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
+        if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
+        return String(localized: "Settled up")
+    }
 }

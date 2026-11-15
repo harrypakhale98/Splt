@@ -47,10 +47,7 @@ struct MoneyLabel: View {
 
     /// A signed balance in words, so VoiceOver says who owes whom instead of "plus" or "minus".
     static func spokenBalance(_ money: Money, locale: Locale) -> String {
-        let amount = MoneyFormatting.magnitudeString(money, locale: locale)
-        if money.minorUnits > 0 { return String(localized: "You are owed \(amount)") }
-        if money.minorUnits < 0 { return String(localized: "You owe \(amount)") }
-        return String(localized: "Settled up")
+        MoneyFormatting.spokenBalance(money, locale: locale)
     }
 }
 

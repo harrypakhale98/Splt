@@ -145,6 +145,10 @@ final class Router {
         case .activity:
             sheet = nil
             selectedTab = .activity
+        case .friends:
+            sheet = nil
+            friendsPath = []
+            selectedTab = .friends
         case .payment(let id):
             sheet = nil
             activityPath = []

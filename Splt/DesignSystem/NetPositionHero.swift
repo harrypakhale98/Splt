@@ -1,30 +1,9 @@
 import SpltCore
 import SwiftUI
 
-/// Your net position across currencies: the currency with the biggest swing leads, the rest follow.
-struct NetPosition: Equatable, Sendable {
-    /// Signed net in the currency where it is largest. Nil when you are square everywhere.
-    var primary: Money?
-    /// Signed net in every other currency, by currency code.
-    var others: [Money]
-
-    var isSettled: Bool { primary == nil }
-
+extension NetPosition {
     init(totals: BalanceTotals) {
-        var net: [String: Int64] = [:]
-        for amount in totals.owedToYou { net[amount.currencyCode, default: 0] &+= amount.minorUnits }
-        for amount in totals.youOwe { net[amount.currencyCode, default: 0] &-= amount.minorUnits }
-        var signed: [Money] = []
-        for (code, value) in net where value != 0 {
-            signed.append(Money(minorUnits: value, currencyCode: code))
-        }
-        signed.sort { (lhs: Money, rhs: Money) -> Bool in
-            let left = lhs.minorUnits.magnitude, right = rhs.minorUnits.magnitude
-            if left != right { return left > right }
-            return lhs.currencyCode < rhs.currencyCode
-        }
-        primary = signed.first
-        others = Array(signed.dropFirst()).sorted { $0.currencyCode < $1.currencyCode }
+        self.init(owedToYou: totals.owedToYou, youOwe: totals.youOwe)
     }
 }
 
@@ -94,14 +73,7 @@ struct NetPositionHero: View {
     }
 
     private var sentence: String {
-        let owed = ListFormatter.localizedString(byJoining: totals.owedToYou.map { MoneyFormatting.magnitudeString($0, locale: locale) })
-        let owe = ListFormatter.localizedString(byJoining: totals.youOwe.map { MoneyFormatting.magnitudeString($0, locale: locale) })
-        switch (totals.owedToYou.isEmpty, totals.youOwe.isEmpty) {
-        case (true, true): return String(localized: "Nobody owes anything.")
-        case (false, true): return String(localized: "You're owed \(owed).")
-        case (true, false): return String(localized: "You owe \(owe).")
-        case (false, false): return String(localized: "You're owed \(owed) and you owe \(owe).")
-        }
+        NetPosition.sentence(owedToYou: totals.owedToYou, youOwe: totals.youOwe, locale: locale)
     }
 }
 
