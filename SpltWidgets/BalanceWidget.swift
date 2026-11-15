@@ -119,7 +119,7 @@ struct BalanceWidgetView: View {
                         Spacer(minLength: 0)
                     }
                     // names come first: the big number shrinks a little before a name is cut short
-                    .frame(maxWidth: 184, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(maxWidth: 196, maxHeight: .infinity, alignment: .topLeading)
                     .layoutPriority(1)
                 }
             }
@@ -202,7 +202,7 @@ private struct FriendRow: View {
 
     var body: some View {
         Link(destination: SpltWidgetKind.friendURL(friend.id)) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Circle()
                     .fill(Ink.dynamic(light: friend.color.lightFill, dark: friend.color.darkFill))
                     .frame(width: 24, height: 24)
@@ -214,10 +214,14 @@ private struct FriendRow: View {
                     .widgetAccentable()
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(friend.name)
-                        .font(.subheadline)
-                        .foregroundStyle(Ink.text)
-                        .lineLimit(1)
+                    // the full name when it fits, else the first name, as the split bar and orbit shorten names
+                    ViewThatFits(in: .horizontal) {
+                        Text(friend.name)
+                        Text(firstName)
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Ink.text)
+                    .lineLimit(1)
                     if let lead {
                         Text(caption(for: lead))
                             .font(.caption2)
@@ -239,6 +243,11 @@ private struct FriendRow: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText)
         }
+    }
+
+    /// "Maya Chen" becomes "Maya".
+    private var firstName: String {
+        friend.name.split(whereSeparator: \.isWhitespace).first.map(String.init) ?? friend.name
     }
 
     /// The currency with the most money in it.
