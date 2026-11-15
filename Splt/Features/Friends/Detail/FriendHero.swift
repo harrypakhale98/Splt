@@ -57,7 +57,7 @@ struct FriendHero: View {
                         .accessibilityLabel(Text("Also \(spokenOthers)"))
                 }
             } else {
-                Text("Settled up")
+                Text("All settled up")
                     .font(Typeface.hero(size: 44))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)

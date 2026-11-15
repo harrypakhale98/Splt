@@ -46,7 +46,7 @@ struct GroupReportPrintTests {
 
     @Test func aRefundPrintsWithAMinusSignAndSaysWhoGotTheMoney() {
         let rows = refundReport.rows(locale: english)
-        let refund = rows.firstIndex(of: ReportRow(.body, "Museum tickets refund", trailing: "\u{2212}$24.00"))
+        let refund = rows.firstIndex(of: ReportRow(.body, "Museum tickets refund", trailing: "-$24.00"))
         #expect(refund != nil)
         if let refund {
             #expect(rows[refund + 1].leading.contains("refund received by Sam"))

@@ -624,15 +624,15 @@ function drawPerson(root, snapshot, index, state) {
   const paying = pays.length > 0;
 
   if (lead.length === 0) {
-    root.appendChild(el("p", "settled", "You're all settled up"));
+    root.appendChild(el("p", "settled", "All settled up"));
   } else {
     const line = el("p", "sub lead");
     if (lead.length === 1) {
       const other = snapshot.members[paying ? lead[0].to : lead[0].from];
-      if (paying) add(line, document.createTextNode("You pay"), disc(other, true), document.createTextNode(other.name));
-      else add(line, disc(other, true), document.createTextNode(other.name + " pays you"));
+      if (paying) add(line, document.createTextNode("You owe"), disc(other, true), document.createTextNode(other.name));
+      else add(line, disc(other, true), document.createTextNode(other.name + " owes you"));
     } else {
-      line.textContent = paying ? "You pay" : "You get back";
+      line.textContent = paying ? "You owe" : "You're owed";
     }
     root.appendChild(line);
     for (const part of leadTotal) root.appendChild(el("p", "hero", money(snapshot, part.amount, part.currency)));
@@ -652,12 +652,12 @@ function drawPerson(root, snapshot, index, state) {
   }
 
   if (lead.length > 1) {
-    root.appendChild(el("h2", "sh", paying ? "Who you pay" : "Who pays you"));
-    root.appendChild(counterpartRows(snapshot, lead, paying ? "to" : "from", paying ? "you pay" : "pays you"));
+    root.appendChild(el("h2", "sh", paying ? "Who you owe" : "Who owes you"));
+    root.appendChild(counterpartRows(snapshot, lead, paying ? "to" : "from", paying ? "you owe" : "owes you"));
   }
   if (paying && gets.length) {
-    root.appendChild(el("h2", "sh", "You also get back"));
-    root.appendChild(counterpartRows(snapshot, gets, "from", "pays you"));
+    root.appendChild(el("h2", "sh", "You're also owed"));
+    root.appendChild(counterpartRows(snapshot, gets, "from", "owes you"));
   }
 
   if (snapshot.expenses && snapshot.expenses.length) {
@@ -714,9 +714,9 @@ function inviteLine(snapshot, index) {
   if (pays.length > 1) return amountCell(paysTotal.map((part) => money(snapshot, part.amount, part.currency)).join(" + "), "you owe", "owe");
   if (gets.length === 1) {
     const other = snapshot.members[gets[0].from];
-    return amountCell(money(snapshot, gets[0].amount, gets[0].currency), other.name + " pays you", "owed");
+    return amountCell(money(snapshot, gets[0].amount, gets[0].currency), other.name + " owes you", "owed");
   }
-  if (gets.length > 1) return amountCell(getsTotal.map((part) => money(snapshot, part.amount, part.currency)).join(" + "), "you get back", "owed");
+  if (gets.length > 1) return amountCell(getsTotal.map((part) => money(snapshot, part.amount, part.currency)).join(" + "), "you're owed", "owed");
   return amountCell(null, "settled up", null);
 }
 

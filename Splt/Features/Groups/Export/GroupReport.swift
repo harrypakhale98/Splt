@@ -193,10 +193,10 @@ struct GroupReport: Equatable, Sendable {
         }
     }
 
-    /// An amount with its sign, so a refund never reads as spending: "−$24.00".
+    /// An amount with its sign, so a refund never reads as spending: "-$24.00", with the same minus as the app.
     static func signedString(_ money: Money, locale: Locale) -> String {
         let magnitude = MoneyFormatting.magnitudeString(money, locale: locale)
-        return money.minorUnits < 0 ? "\u{2212}" + magnitude : magnitude
+        return money.minorUnits < 0 ? "-" + magnitude : magnitude
     }
 
     /// The report as rows, shared by the PDF and the plain text so they always agree.
