@@ -62,6 +62,13 @@ struct AmountHero: View {
         }
     }
 
+    private var rateDay: Date? {
+        guard let group = model.group else { return nil }
+        return RatesService.notableRateDay(
+            for: model.activeRates, from: model.currencyCode, to: group.currencyCode, expenseDate: model.date, now: Date()
+        )
+    }
+
     private var shown: String { AmountKeypad.display(model.signedAmountText, locale: locale) }
 
     private var symbolLeads: Bool { AmountKeypad.symbolLeads(currencyCode: model.currencyCode, locale: locale) }
@@ -96,10 +103,16 @@ struct AmountHero: View {
     @ViewBuilder
     private var conversion: some View {
         if let converted = model.convertedTotal {
-            HStack(spacing: 6) {
-                Text("About")
-                MoneyLabel(money: converted)
-                if let rate = model.rateText { Text("(\(rate))") }
+            VStack(spacing: 2) {
+                HStack(spacing: 6) {
+                    Text("About")
+                    MoneyLabel(money: converted)
+                    if let rate = model.rateText { Text("(\(rate))") }
+                }
+                // an old or later rate says so, so the converted figure isn't taken as that day's
+                if let day = rateDay {
+                    Text("Rate from \(day.formatted(.dateTime.month(.abbreviated).day().year()))")
+                }
             }
             .font(.footnote)
             .foregroundStyle(Ink.secondary)

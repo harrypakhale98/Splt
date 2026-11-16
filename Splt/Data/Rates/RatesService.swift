@@ -115,13 +115,39 @@ final class RatesService: Sendable {
         }
     }
 
-    static func exchangeRates(table: RateTable?, pinned: PinnedRate?) -> ExchangeRates? {
+    static func exchangeRates(table: RateTable?, pinned: PinnedRate?, timeZone: TimeZone = .current) -> ExchangeRates? {
         let pins = pinned.map { [$0] } ?? []
         if let table {
-            return ExchangeRates(baseCurrency: table.base, rates: table.rates, pinned: pins, asOf: table.fetchedAt)
+            // the day the rates were published, not when they were downloaded: a table fetched today can be weeks old
+            let published = date(ofDay: table.day, timeZone: timeZone) ?? table.fetchedAt
+            return ExchangeRates(baseCurrency: table.base, rates: table.rates, pinned: pins, asOf: published)
         }
         guard let pinned else { return nil }
         return ExchangeRates(baseCurrency: pinned.from, rates: [pinned.to: pinned.rate], pinned: pins)
+    }
+
+    /// The start of a `yyyy-MM-dd` day in `timeZone`, so it shows as that same day.
+    static func date(ofDay day: String, timeZone: TimeZone) -> Date? {
+        let parts = day.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    }
+
+    /// The day of the rate behind a conversion, when it is worth saying: the rate is from after the
+    /// expense, as when only the latest could be found for a past day, or more than two days before it,
+    /// as when an old table is all there is offline. Nil for a pinned rate, which has no day.
+    static func notableRateDay(
+        for rates: ExchangeRates?, from: String, to: String, expenseDate: Date, now: Date, calendar: Calendar = .current
+    ) -> Date? {
+        guard let rates, let asOf = rates.asOf else { return nil }
+        let pair = Set([from.uppercased(), to.uppercased()])
+        guard !rates.pinned.contains(where: { Set([$0.from, $0.to]) == pair }) else { return nil }
+        let rateDay = calendar.startOfDay(for: asOf)
+        let expenseDay = calendar.startOfDay(for: min(expenseDate, now))
+        guard let gap = calendar.dateComponents([.day], from: rateDay, to: expenseDay).day else { return nil }
+        return gap < 0 || gap > 2 ? rateDay : nil
     }
 
     static func dayString(_ date: Date, timeZone: TimeZone) -> String {

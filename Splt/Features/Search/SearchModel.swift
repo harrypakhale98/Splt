@@ -27,6 +27,7 @@ final class SearchModel {
     @ObservationIgnored private let reader: any SearchIntentReader
     @ObservationIgnored private let now: @Sendable () -> Date
     @ObservationIgnored private let calendar: Calendar
+    @ObservationIgnored private let locale: Locale
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
     /// How the model read the current question, kept so a refresh does not have to ask it again.
@@ -48,7 +49,8 @@ final class SearchModel {
         leftGroups: LeftGroupsStore = LeftGroupsStore(),
         reader: any SearchIntentReader = FoundationModelsSearchReader(),
         now: @escaping @Sendable () -> Date = { Date() },
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        locale: Locale = .current
     ) {
         self.services = services
         self.recentStore = recentStore
@@ -57,6 +59,7 @@ final class SearchModel {
         self.reader = reader
         self.now = now
         self.calendar = calendar
+        self.locale = locale
         recents = recentStore.queries
         observer = ContainerChangeObserver(container: services.container) { [weak self] in self?.scheduleRefresh() }
     }
@@ -103,13 +106,15 @@ final class SearchModel {
             peopleByID = Dictionary(known.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             knownPeople = known
             me = known.first(where: \.isMe)
-            let base = try services.search.search(text, limit: Self.resultLimit)
+            // a group you left is still in the shared data, but it is no longer yours to find; it is
+            // skipped before the result limit, so its expenses can't crowd out the ones you can open
+            let left = Set(try services.groups.groups(includeArchived: true).map(\.id).filter(leftGroups.contains))
+            let base = try services.search.search(text, limit: Self.resultLimit, excludingGroups: left)
             let blocked = visibility.ids(in: .blocked)
             people = base.people.filter { !$0.isMe && !blocked.contains($0.id) }
-            // a group you left is still in the shared data, but it is no longer yours to find
-            groups = base.groups.filter { $0.kind != .friend && !leftGroups.contains($0.id) }
-            let textMatches = base.expenses.filter { expense in expense.groupID.map { !leftGroups.contains($0) } ?? true }
-            let filter = NaturalSearchParser(people: known, now: now(), calendar: calendar).parse(text)
+            groups = base.groups.filter { $0.kind != .friend }
+            let textMatches = base.expenses
+            let filter = NaturalSearchParser(people: known, now: now(), calendar: calendar, locale: locale).parse(text)
             if filter.isStructured {
                 apply(filter)
                 if expenses.isEmpty, !textMatches.isEmpty {
@@ -154,13 +159,28 @@ final class SearchModel {
         let allGroups = (try? services.groups.groups(includeArchived: true)) ?? []
         let groupNames = Dictionary(allGroups.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         let names = peopleByID.mapValues(\.name)
+        let yours = allGroups.filter { !leftGroups.contains($0.id) }
+        let scale = SearchFilter.AmountScale(
+            currency: filter.amountCurrency ?? amountCurrency(among: yours),
+            unitValues: services.rates.snapshot.unitValues()
+        )
         var found: [Expense] = []
-        for group in allGroups where !leftGroups.contains(group.id) {
+        for group in yours {
             let inGroup = (try? services.expenses.expenses(in: group.id, includeDeleted: false)) ?? []
-            found += inGroup.filter { filter.matches($0, groupName: groupNames[group.id], names: names) }
+            found += inGroup.filter { filter.matches($0, groupName: groupNames[group.id], names: names, scale: scale, locale: locale) }
         }
         expenses = Array(found.sorted { ($0.date, $0.id) > ($1.date, $1.id) }.prefix(Self.resultLimit))
         understood = description(of: filter)
+    }
+
+    /// The currency "over 50" means when the question names none: your own, when a group of yours uses it,
+    /// else the one most of your groups use.
+    private func amountCurrency(among groups: [SplitGroup]) -> String {
+        let own = locale.currency?.identifier
+        let counts = Dictionary(groups.map { ($0.currencyCode.uppercased(), 1) }, uniquingKeysWith: +)
+        if let own, counts[own] != nil { return own }
+        let common = counts.max { ($0.value, $1.key) < ($1.value, $0.key) }?.key
+        return common ?? own ?? "USD"
     }
 
     /// Short phrases saying how the question was read, shown above the results.

@@ -5,17 +5,21 @@ import SwiftData
 @MainActor
 final class SwiftDataSearchRepository: SearchRepository {
     private let env: RepositoryContext
+    /// The locale's decimal mark, when it is not a point.
+    private let decimalMark: String?
 
-    init(_ env: RepositoryContext) {
+    init(_ env: RepositoryContext, locale: Locale = .current) {
         self.env = env
+        let mark = locale.decimalSeparator ?? "."
+        self.decimalMark = mark == "." ? nil : mark
     }
 
-    func search(_ query: String, limit: Int) throws -> SearchResults {
+    func search(_ query: String, limit: Int, excludingGroups excluded: Set<GroupID>) throws -> SearchResults {
         let tokens = query.split(whereSeparator: \.isWhitespace).map(String.init)
         guard !tokens.isEmpty else { return SearchResults(expenses: [], people: [], groups: []) }
 
         let people = try SwiftDataPersonRepository(env).allPeople()
-        let groups = try env.allGroups()
+        let groups = try env.allGroups().filter { !excluded.contains($0.id) }
         let peopleByID = Dictionary(people.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         let groupNames = Dictionary(groups.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         // a word no one's name contains can't be matched by who took part, so those expenses are never decoded
@@ -26,9 +30,11 @@ final class SwiftDataSearchRepository: SearchRepository {
             sortBy: [SortDescriptor(\.date, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
         )
         var expenses: [Expense] = []
+        let excludedIDs = Set(excluded.map(\.rawValue))
         for record in try env.context.fetch(descriptor) {
+            if let group = record.groupID, excludedIDs.contains(group) { continue }
             let groupName = record.groupID.flatMap { groupNames[GroupID(rawValue: $0)] } ?? ""
-            let text = [record.title, record.note, record.categoryRaw, groupName, Self.amountText(record)]
+            let text = ([record.title, record.note, record.categoryRaw, groupName] + amountTexts(record))
                 .joined(separator: " ")
             let remaining = tokens.filter { !Self.matches(text, $0) }
             if remaining.isEmpty {
@@ -50,9 +56,11 @@ final class SwiftDataSearchRepository: SearchRepository {
         text.range(of: token, options: [.caseInsensitive, .diacriticInsensitive]) != nil
     }
 
-    private static func amountText(_ record: ExpenseRecord) -> String {
-        Money(minorUnits: record.totalMinorUnits, currencyCode: record.currencyCode)
-            .plainString(locale: posix)
+    /// "42.50", and also the way the person writes it, such as "42,50" in German.
+    private func amountTexts(_ record: ExpenseRecord) -> [String] {
+        let plain = Money(minorUnits: record.totalMinorUnits, currencyCode: record.currencyCode).plainString(locale: Self.posix)
+        guard let decimalMark, plain.contains(".") else { return [plain] }
+        return [plain, plain.replacingOccurrences(of: ".", with: decimalMark)]
     }
 
     private static let posix = Locale(identifier: "en_US_POSIX")

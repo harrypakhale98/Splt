@@ -19,8 +19,8 @@ struct NaturalSearchParserTests {
     /// 15 June 2026.
     private let now = Date(timeIntervalSince1970: 1_781_524_800)
 
-    private func parser(_ people: [Person]? = nil) -> NaturalSearchParser {
-        NaturalSearchParser(people: people ?? [me, sam, maya], now: now, calendar: calendar)
+    private func parser(_ people: [Person]? = nil, locale: Locale = Locale(identifier: "en_US")) -> NaturalSearchParser {
+        NaturalSearchParser(people: people ?? [me, sam, maya], now: now, calendar: calendar, locale: locale)
     }
 
     private func day(_ year: Int, _ month: Int, _ day: Int) -> Date {
@@ -143,6 +143,46 @@ struct NaturalSearchParserTests {
         #expect(filter.category == nil)
         #expect(parser().parse("show me dinners").category == .dining)
         #expect(parser().parse("tickets to a show").category == .entertainment)
+    }
+
+    @Test func amountsAreReadTheWayTheLocaleWritesThem() {
+        let german = Locale(identifier: "de_DE")
+        #expect(parser(locale: german).parse("under 12,50").maxAmount == Decimal(string: "12.5"))
+        #expect(parser(locale: german).parse("over 1.000").minAmount == 1000)
+        #expect(parser().parse("over 1,000").minAmount == 1000)
+        #expect(parser().parse("under 12.50").maxAmount == Decimal(string: "12.5"))
+    }
+
+    @Test func anAmountCanNameItsCurrency() {
+        #expect(parser().parse("over 50 EUR").amountCurrency == "EUR")
+        #expect(parser().parse("over €50").amountCurrency == "EUR")
+        #expect(parser().parse("over 50eur").amountCurrency == "EUR")
+        #expect(parser().parse("over $50").amountCurrency == "USD")
+        #expect(parser().parse("over 50").amountCurrency == nil)
+        // "top" is also a currency code, but here it is a word
+        let top = parser().parse("over 50 top")
+        #expect(top.amountCurrency == nil)
+        #expect(top.terms == ["top"])
+    }
+
+    @Test func amountsInOtherCurrenciesAreConvertedOrLeftOut() {
+        let filter = parser().parse("over 500")
+        let yen = Expense(
+            title: "Coffee", total: Money(minorUnits: 600, currencyCode: "JPY"), date: now,
+            paidBy: me.id, split: .equal(participants: [me.id])
+        )
+        let bigYen = Expense(
+            title: "Hotel", total: Money(minorUnits: 100_000, currencyCode: "JPY"), date: now,
+            paidBy: me.id, split: .equal(participants: [me.id])
+        )
+        // without rates, 600 yen is not compared with dollars at all
+        let noRates = SearchFilter.AmountScale(currency: "USD")
+        #expect(!filter.matches(yen, groupName: nil, names: [:], scale: noRates))
+        #expect(!filter.matches(bigYen, groupName: nil, names: [:], scale: noRates))
+        // with rates, 600 yen is about four dollars and 100,000 yen about 670
+        let rates = SearchFilter.AmountScale(currency: "USD", unitValues: ["USD": 1, "JPY": 0.0067])
+        #expect(!filter.matches(yen, groupName: nil, names: [:], scale: rates))
+        #expect(filter.matches(bigYen, groupName: nil, names: [:], scale: rates))
     }
 
     @Test func aNumberAfterAnAmountWordIsNotAYear() {

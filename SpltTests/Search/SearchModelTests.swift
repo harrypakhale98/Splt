@@ -74,6 +74,25 @@ struct SearchModelTests {
         #expect(model.expenses.isEmpty)
     }
 
+    @Test func aGroupYouLeftDoesNotCrowdOutYourResults() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Taxi home", cents: 1500, date: date(1, 5))
+        let old = SplitGroup(name: "Old Flat", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id])
+        try fixture.services.groups.create(old)
+        for index in 0..<(SearchModel.resultLimit + 5) {
+            try fixture.services.expenses.add(Expense(
+                groupID: old.id, title: "Taxi \(index)", total: usdAmount(1000), date: date(3, 1),
+                paidBy: fixture.me.id, split: .equal(participants: [fixture.me.id, fixture.sam.id])
+            ))
+        }
+        let leftGroups = isolatedLeftGroups()
+        leftGroups.insert(old.id)
+        let model = model(fixture, leftGroups: leftGroups)
+        model.query = "taxi"
+        await model.search()
+        #expect(model.expenses.map(\.title) == ["Taxi home"])
+    }
+
     @Test func resultsFollowTheDataWithoutTypingAgain() async throws {
         let fixture = try Fixture()
         let taxi = try fixture.addExpense("Taxi home", cents: 1500, paidBy: fixture.sam, date: date(3, 21))

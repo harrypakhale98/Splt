@@ -387,6 +387,40 @@ struct RatesServiceTests {
         #expect(rates.rate(from: "JPY", to: "USD") == nil)
     }
 
+    @Test func ratesCarryTheDayTheyWerePublished() throws {
+        let utc = TimeZone(identifier: "UTC")!
+        // downloaded today, published weeks ago
+        let old = table("USD", day: "2026-02-10", fetchedAt: clock.start, rates: ["EUR": 0.9])
+        let rates = try #require(RatesService.exchangeRates(table: old, pinned: nil, timeZone: utc))
+        #expect(rates.asOf == RatesService.date(ofDay: "2026-02-10", timeZone: utc))
+        #expect(RatesService.dayString(try #require(rates.asOf), timeZone: utc) == "2026-02-10")
+    }
+
+    @Test func theFormMentionsARateFromAnotherDay() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        func rates(_ day: String, pinned: PinnedRate? = nil) -> ExchangeRates? {
+            RatesService.exchangeRates(table: table("USD", day: day, fetchedAt: clock.start, rates: ["EUR": 0.9]), pinned: pinned, timeZone: calendar.timeZone)
+        }
+        func on(_ day: String) -> Date { try! #require(RatesService.date(ofDay: day, timeZone: calendar.timeZone)).addingTimeInterval(3600 * 12) }
+        let today = on("2026-03-10")
+        func notable(_ rates: ExchangeRates?, expense: String) -> Date? {
+            RatesService.notableRateDay(for: rates, from: "EUR", to: "USD", expenseDate: on(expense), now: today, calendar: calendar)
+        }
+        // the day before, as on a weekend or before rates are out, is not worth a word
+        #expect(notable(rates("2026-03-09"), expense: "2026-03-10") == nil)
+        #expect(notable(rates("2026-03-06"), expense: "2026-03-08") == nil)
+        // an old table offline, or the latest standing in for a past day, is
+        #expect(notable(rates("2026-02-10"), expense: "2026-03-10") != nil)
+        #expect(notable(rates("2026-03-10"), expense: "2026-03-01") != nil)
+        // a future expense is measured from today
+        #expect(notable(rates("2026-03-09"), expense: "2026-04-01") == nil)
+        // a pinned rate for the pair has no day
+        let pinned = PinnedRate(from: "EUR", to: "USD", rate: 1.1)
+        #expect(notable(rates("2026-02-10", pinned: pinned), expense: "2026-03-10") == nil)
+        #expect(notable(nil, expense: "2026-03-10") == nil)
+    }
+
     @Test func conversionsUseTheChosenTable() async throws {
         let service = service()
         provider.setLatest(table("USD", fetchedAt: clock.start, rates: ["EUR": 0.9]), base: "USD")

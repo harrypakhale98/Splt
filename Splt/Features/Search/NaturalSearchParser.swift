@@ -7,6 +7,8 @@ struct NaturalSearchParser {
     var people: [Person]
     var now: Date = Date()
     var calendar: Calendar = .current
+    /// How the person writes numbers, so "unter 12,50" reads as twelve and a half in German.
+    var locale: Locale = .current
 
     private struct Token {
         var text: String
@@ -157,18 +159,52 @@ struct NaturalSearchParser {
         for (phrases, isMinimum) in [(minimum, true), (maximum, false)] {
             for phrase in phrases {
                 guard let found = find(phrase, in: tokens), found.upperBound < tokens.count,
-                      let value = Self.amount(tokens[found.upperBound].folded) else { continue }
-                use(&tokens, found.lowerBound..<found.upperBound + 1)
+                      let value = amount(tokens[found.upperBound].text) else { continue }
+                var range = found.lowerBound..<found.upperBound + 1
+                if let code = currency(in: tokens[found.upperBound].text) {
+                    filter.amountCurrency = code
+                } else if range.upperBound < tokens.count, !tokens[range.upperBound].used,
+                          let code = currencyWord(tokens[range.upperBound].text) {
+                    // "over 50 EUR"
+                    filter.amountCurrency = code
+                    range = range.lowerBound..<range.upperBound + 1
+                }
+                use(&tokens, range)
                 if isMinimum { filter.minAmount = value } else { filter.maxAmount = value }
             }
         }
     }
 
-    private static func amount(_ word: String) -> Decimal? {
-        let cleaned = word.filter { $0.isNumber || $0 == "." }
-        guard !cleaned.isEmpty, cleaned.contains(where: \.isNumber) else { return nil }
-        return Decimal(string: cleaned, locale: Locale(identifier: "en_US_POSIX"))
+    /// A number as the locale writes it, so "1.000" is a thousand in German and "12,50" twelve and a half.
+    /// Read with three decimals, so no fraction anyone types is refused.
+    private func amount(_ text: String) -> Decimal? {
+        guard text.contains(where: { $0.isASCII && $0.isNumber }) else { return nil }
+        return (try? MoneyParser.parse(text, currencyCode: "KWD", locale: locale, allowNegative: false))?.decimalValue
     }
+
+    /// The currency written into an amount itself, as in "€50", "50eur" or "$50".
+    private func currency(in text: String) -> String? {
+        let letters = String(text.filter(\.isLetter)).uppercased()
+        if letters.count == 3, Locale.commonISOCurrencyCodes.contains(letters) { return letters }
+        let symbol = String(text.filter { !$0.isLetter && !$0.isNumber && !$0.isWhitespace && $0 != "." && $0 != "," })
+        guard !symbol.isEmpty else { return nil }
+        // a dollar or yen sign means the person's own when their currency writes it that way
+        if symbol == locale.currencySymbol, let own = locale.currency?.identifier { return own }
+        return Self.symbols[symbol]
+    }
+
+    /// A currency code written after the amount. Lower case only for the common ones, since codes
+    /// such as ALL and TOP are also English words.
+    private func currencyWord(_ text: String) -> String? {
+        let code = text.uppercased()
+        guard code.count == 3, Locale.commonISOCurrencyCodes.contains(code) else { return nil }
+        return text == code || Self.commonCodes.contains(code) || code == locale.currency?.identifier ? code : nil
+    }
+
+    private static let symbols = [
+        "$": "USD", "€": "EUR", "£": "GBP", "¥": "JPY", "₹": "INR", "₩": "KRW", "₺": "TRY", "₽": "RUB", "₪": "ILS", "฿": "THB", "₫": "VND"
+    ]
+    private static let commonCodes: Set<String> = ["EUR", "USD", "GBP", "JPY", "INR", "CAD", "AUD", "CHF", "CNY", "MXN"]
 
     // MARK: People
 
