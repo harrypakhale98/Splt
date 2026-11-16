@@ -17,6 +17,9 @@ final class ReminderSweeper {
 
     /// What each friend owes you now, positive amounts only.
     private var owed: [PersonID: (name: String, amounts: [Money])] = [:]
+    /// Nothing is known about balances until the first friends read, and an empty list must not be taken
+    /// for "nobody owes you": a read that failed at launch would otherwise wipe every reminder.
+    private var hasRead = false
     /// What the pending reminders were last written from, so an unrelated save does not rewrite them.
     private var written: (owed: [PersonID: [Money]], hiding: Bool)?
     private var running: Task<Void, Never>?
@@ -62,6 +65,7 @@ final class ReminderSweeper {
             if !amounts.isEmpty { owed[summary.id] = (summary.person.name, amounts) }
         }
         self.owed = owed
+        hasRead = true
         sweep(force: false)
     }
 
@@ -76,6 +80,7 @@ final class ReminderSweeper {
     }
 
     private func sweep(force: Bool) {
+        guard hasRead else { return }
         guard force || written.map({ $0.owed != owedAmounts || $0.hiding != isHidingDetails() }) ?? true else { return }
         guard running == nil else {
             sweepsAgain = true
