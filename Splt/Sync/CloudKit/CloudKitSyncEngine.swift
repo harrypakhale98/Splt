@@ -138,9 +138,16 @@ final class CloudKitSyncEngine: SyncEngine {
     }
 
     private func watchConnectivity(_ updates: AsyncStream<Bool>) async {
+        var wasOnline = true
         for await online in updates {
             coordinator.updateStatus { $0.isOnline = online }
             if online { scheduleReconcile() }
+            // A fetch that failed offline keeps showing until one goes through, and the next attempt could
+            // be minutes away. Back online, one is made now.
+            if online, !wasOnline {
+                Task { [weak self] in try? await self?.fetchChanges() }
+            }
+            wasOnline = online
         }
     }
 
@@ -178,10 +185,17 @@ final class CloudKitSyncEngine: SyncEngine {
         }
     }
 
+    /// Each database is fetched even when the other fails: groups you joined must not wait for your own.
     func fetchChanges() async throws {
+        var firstError: (any Error)?
         for syncer in syncers {
-            try await syncer.fetchChanges()
+            do {
+                try await syncer.fetchChanges()
+            } catch {
+                firstError = firstError ?? error
+            }
         }
+        if let firstError { throw firstError }
     }
 
     func share(group: GroupID, anyoneWithLink: Bool) async throws -> GroupShare {

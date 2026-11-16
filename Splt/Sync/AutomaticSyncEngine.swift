@@ -121,8 +121,8 @@ final class AutomaticSyncEngine: SyncEngine {
     }
 
     func leave(group: GroupID) async throws {
-        if case .noOp(let reason)? = choice, reason.isAboutTheAccount {
-            // iCloud is only out of reach for now: the CloudKit engine finishes this when it starts
+        if answersFromLastKnownState {
+            // iCloud is still being checked or only out of reach for now: the CloudKit engine finishes this when it starts
             var metadata = stateStore.loadMetadata()
             metadata.pendingLeaves = (metadata.pendingLeaves ?? []).union([group.description])
             stateStore.saveMetadata(metadata)
