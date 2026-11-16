@@ -231,6 +231,22 @@ struct BalanceLinkTests {
         )
     }
 
+    @Test func daysAreGregorianOnAPhoneWithAnotherCalendar() {
+        for identifier in [Calendar.Identifier.buddhist, .japanese] {
+            var calendar = Calendar(identifier: identifier)
+            calendar.timeZone = TimeZone(identifier: "UTC")!
+            #expect(BalanceSnapshot.day(utcDate(2026, 11, 15), calendar: calendar) == "2026-11-15")
+            let ledger = Ledger(expenses: expenses, payments: [])
+            let built = BalanceSnapshot(
+                group: group, me: maya.id, people: people, expenses: expenses,
+                balances: GroupBalances(groupID: group.id, ledger: ledger, simplifiesDebts: true),
+                includesExpenses: true, now: utcDate(2026, 11, 10, hour: 18), calendar: calendar
+            )
+            #expect(built.tripDays == ["2026-11-07", "2026-11-14"])
+            #expect(built.expenses?.allSatisfy { $0.day.hasPrefix("2026-11-") } == true)
+        }
+    }
+
     @Test func writesFixturesForTheWebPage() throws {
         let folder = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

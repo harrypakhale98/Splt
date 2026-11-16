@@ -90,13 +90,15 @@ extension BalanceReply {
         SHA256.hash(data: Data(fragment.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// The calendar day the reply names, at noon so no time zone moves it to another day.
+    /// The calendar day the reply names, at noon so no time zone moves it to another day. Only the
+    /// calendar's time zone is used: the page writes Gregorian dates, whatever calendar this phone shows.
     func date(calendar: Calendar = .current) -> Date? {
         guard case .expense(_, let day, _, _) = kind else { return nil }
         return Self.date(day, calendar: calendar)
     }
 
     static func date(_ day: String, calendar: Calendar = .current) -> Date? {
+        let calendar = calendar.gregorian
         let parts = day.split(separator: "-").compactMap { Int($0) }
         guard day.count == 10, parts.count == 3 else { return nil }
         let components = DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: 12)

@@ -83,8 +83,8 @@ struct RecapStats: Equatable, Sendable {
         leftOut = all.filter { $0.currencyCode != code && $0.total.minorUnits != 0 }.map(\.total)
 
         let dates = live.map(\.date)
-        var start = calendar.startOfDay(for: group.tripStart ?? dates.min() ?? now)
-        var end = calendar.startOfDay(for: group.tripEnd ?? dates.max() ?? now)
+        var start = group.tripStart.map { TripDay.startOfDay($0, calendar: calendar) } ?? calendar.startOfDay(for: dates.min() ?? now)
+        var end = group.tripEnd.map { TripDay.startOfDay($0, calendar: calendar) } ?? calendar.startOfDay(for: dates.max() ?? now)
         if let early = dates.min(), calendar.startOfDay(for: early) < start { start = calendar.startOfDay(for: early) }
         if let late = dates.max(), calendar.startOfDay(for: late) > end { end = calendar.startOfDay(for: late) }
         if end < start { end = start }

@@ -61,7 +61,7 @@ enum ExpenseSectioning {
     static func dayNumber(of date: Date, tripStart: Date?, calendar: Calendar) -> Int? {
         guard let tripStart else { return nil }
         let days = calendar.dateComponents(
-            [.day], from: calendar.startOfDay(for: tripStart), to: calendar.startOfDay(for: date)
+            [.day], from: TripDay.startOfDay(tripStart, calendar: calendar), to: calendar.startOfDay(for: date)
         ).day
         return days.map { $0 + 1 }
     }

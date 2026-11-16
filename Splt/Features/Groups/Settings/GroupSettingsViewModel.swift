@@ -58,15 +58,19 @@ final class GroupSettingsViewModel {
     @ObservationIgnored private let payments: any PaymentRepository
     @ObservationIgnored private let now: @Sendable () -> Date
     @ObservationIgnored private let leftGroups: LeftGroupsStore
+    /// The calendar the date pickers show, which says what day a picked date is.
+    @ObservationIgnored private let calendar: Calendar
 
     init(
         groupID: GroupID,
         services: DataServices,
         leftGroups: LeftGroupsStore = LeftGroupsStore(),
-        now: @escaping @Sendable () -> Date = { Date() }
+        now: @escaping @Sendable () -> Date = { Date() },
+        calendar: Calendar = .current
     ) {
         self.groupID = groupID
         self.leftGroups = leftGroups
+        self.calendar = calendar
         groups = services.groups
         people = services.people
         expenses = services.expenses
@@ -85,8 +89,9 @@ final class GroupSettingsViewModel {
             name = loaded.name
             symbol = loaded.symbol
             currencyCode = loaded.currencyCode
-            tripStart = loaded.tripStart ?? Date()
-            tripEnd = loaded.tripEnd ?? loaded.tripStart ?? Date()
+            // noon on the saved day, so the pickers show the day the trip was saved with here too
+            tripStart = loaded.tripStart.map { TripDay.noon($0, calendar: calendar) } ?? now()
+            tripEnd = (loaded.tripEnd ?? loaded.tripStart).map { TripDay.noon($0, calendar: calendar) } ?? tripStart
             if let pinned = loaded.pinnedRate {
                 pinsRate = true
                 rateCurrencyCode = pinned.from == loaded.currencyCode ? pinned.to : pinned.from
@@ -157,8 +162,8 @@ final class GroupSettingsViewModel {
         }
         if hasSplitEdits { return true }
         guard isTrip else { return false }
-        if let start = group.tripStart, start != tripStart { return true }
-        if let end = group.tripEnd, end != tripEnd { return true }
+        if let start = group.tripStart, !isSameDay(start, tripStart) { return true }
+        if let end = group.tripEnd, !isSameDay(end, tripEnd) { return true }
         if pinsRate != (group.pinnedRate != nil) { return true }
         if let pinned = group.pinnedRate, pinsRate {
             let other = pinned.from == group.currencyCode ? pinned.to : pinned.from
@@ -201,6 +206,11 @@ final class GroupSettingsViewModel {
         if tripEnd < tripStart { tripEnd = tripStart }
     }
 
+    /// Whether a saved trip date and a picked one are the same day, whichever way the saved one was stored.
+    private func isSameDay(_ saved: Date, _ picked: Date) -> Bool {
+        TripDay.normalized(saved, calendar: calendar) == TripDay.stored(picked, calendar: calendar)
+    }
+
     /// Saves the name, symbol, currency, trip dates, pinned rate and default split.
     func save() throws {
         guard var edited = group, canSave else { return }
@@ -208,8 +218,8 @@ final class GroupSettingsViewModel {
         edited.symbol = symbol
         edited.currencyCode = currencyCode.uppercased()
         if isTrip {
-            edited.tripStart = tripStart
-            edited.tripEnd = tripEnd
+            edited.tripStart = TripDay.stored(tripStart, calendar: calendar)
+            edited.tripEnd = TripDay.stored(tripEnd, calendar: calendar)
             if pinsRate, let rate {
                 edited.pinnedRate = PinnedRate(from: rateCurrencyCode, to: edited.currencyCode, rate: rate)
             } else {

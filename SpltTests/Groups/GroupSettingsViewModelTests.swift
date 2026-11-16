@@ -11,7 +11,7 @@ struct GroupSettingsViewModelTests {
     ) -> GroupSettingsViewModel {
         let model = GroupSettingsViewModel(
             groupID: groupID ?? fixture.group.id, services: fixture.services, leftGroups: leftGroups,
-            now: { utcDate(2026, 5, 20) }
+            now: { utcDate(2026, 5, 20) }, calendar: GroupsTestCalendar.utc
         )
         model.locale = GroupsTestCalendar.english
         return model
@@ -77,7 +77,7 @@ struct GroupSettingsViewModelTests {
         try model.save()
 
         let saved = try #require(try fixture.services.groups.group(id: trip.id))
-        #expect(saved.tripEnd == utcDate(2026, 5, 20))
+        #expect(saved.tripEnd == TripDay.stored(utcDate(2026, 5, 20), calendar: GroupsTestCalendar.utc))
         #expect(saved.pinnedRate == PinnedRate(from: "USD", to: "EUR", rate: Decimal(string: "0.92")!))
 
         let reloaded = makeModel(fixture, groupID: trip.id)
