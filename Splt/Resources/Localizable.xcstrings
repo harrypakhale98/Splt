@@ -496,7 +496,7 @@
 
     },
     "%@ shares" : {
-
+      "comment" : "A person's share count with a fraction, such as 1.5"
     },
     "%@ still has debts with other members. Settle up before removing them." : {
 
@@ -646,9 +646,6 @@
     },
     "%lld percent of what is owed" : {
 
-    },
-    "%lld shares" : {
-      "comment" : "A person's share count on the split bar"
     },
     "%lld, including you" : {
 
@@ -3554,6 +3551,9 @@
     },
     "^[%lld row](inflect: true) skipped" : {
 
+    },
+    "^[%lld share](inflect: true)" : {
+      "comment" : "A person's whole share count"
     },
     "amount" : {
 

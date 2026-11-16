@@ -98,6 +98,17 @@ struct BalanceReplyFormatTests {
         #expect(Self.payment().date(calendar: calendar) == nil)
     }
 
+    @Test func readsTheDayAsGregorianOnAPhoneWithAnotherCalendar() throws {
+        for identifier in [Calendar.Identifier.buddhist, .japanese] {
+            var calendar = Calendar(identifier: identifier)
+            calendar.timeZone = try #require(TimeZone(identifier: "Asia/Bangkok"))
+            let date = try #require(Self.expense(day: "2026-11-11").date(calendar: calendar))
+            var gregorian = Calendar(identifier: .gregorian)
+            gregorian.timeZone = calendar.timeZone
+            #expect(gregorian.dateComponents([.year, .month, .day, .hour], from: date) == DateComponents(year: 2026, month: 11, day: 11, hour: 12))
+        }
+    }
+
     @Test func namesEachReplyTheSameWayEveryTime() throws {
         let fragment = try Self.expense().fragment()
         #expect(BalanceReply.id(ofFragment: fragment) == BalanceReply.id(ofFragment: fragment))

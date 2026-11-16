@@ -190,7 +190,9 @@ extension BalanceSnapshot {
             groupName: Self.clipped(group.name, limit: Self.titleLimit, fallback: String(localized: "Group")),
             tripDays: {
                 guard let start = group.tripStart, let end = group.tripEnd else { return nil }
-                return [Self.day(start, calendar: calendar), Self.day(max(start, end), calendar: calendar)]
+                // the days the trip was saved with, not the moments they were saved at
+                let first = TripDay.startOfDay(start, calendar: calendar), last = TripDay.startOfDay(end, calendar: calendar)
+                return [Self.day(first, calendar: calendar), Self.day(max(first, last), calendar: calendar)]
             }(),
             currencies: codes.map { Currency(code: $0, digits: SpltCore.Currency.minorUnitExponent(for: $0)) },
             members: members,
@@ -258,9 +260,10 @@ extension BalanceSnapshot {
         return String(flat.prefix(limit - 1)).trimmingCharacters(in: .whitespaces) + "…"
     }
 
-    /// A calendar day as `yyyy-MM-dd`, read in the sharer's calendar so it never shifts a day.
+    /// A calendar day as `yyyy-MM-dd`, read in the sharer's time zone so it never shifts a day. Always a
+    /// Gregorian date, which the page reads, even on a phone set to the Buddhist or Japanese calendar.
     static func day(_ date: Date, calendar: Calendar) -> String {
-        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        let parts = calendar.gregorian.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", parts.year ?? 1970, parts.month ?? 1, parts.day ?? 1)
     }
 }
@@ -457,5 +460,14 @@ extension BalanceSnapshot: Codable {
             else { throw FormatError.invalid("join") }
         }
         if let replyToken, !Self.isReplyToken(replyToken) { throw FormatError.invalid("reply") }
+    }
+}
+
+extension Calendar {
+    /// The Gregorian calendar in this calendar's time zone, for the `yyyy-MM-dd` days balance links carry.
+    var gregorian: Calendar {
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = timeZone
+        return gregorian
     }
 }

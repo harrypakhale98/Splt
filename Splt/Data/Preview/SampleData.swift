@@ -50,7 +50,7 @@ enum SampleData {
         let trip = SplitGroup(
             id: GroupID(rawValue: uuid(101)), name: "Lisbon Trip", symbol: "airplane", currencyCode: "USD",
             kind: .trip, memberIDs: [me.id, maya.id, jonas.id, priya.id, diego.id, hana.id],
-            tripStart: day(0), tripEnd: day(6), createdAt: day(-20)
+            tripStart: tripDay(0), tripEnd: tripDay(6), createdAt: day(-20)
         )
         let flat = SplitGroup(
             id: GroupID(rawValue: uuid(102)), name: "Flat 4B", symbol: "house.fill", currencyCode: "USD",
@@ -145,6 +145,13 @@ enum SampleData {
     /// The trip starts on 8 May 2026; other dates are counted from it.
     private static func day(_ offset: Int) -> Date {
         Date(timeIntervalSince1970: 1_778_241_600 + TimeInterval(offset) * 86_400)
+    }
+
+    /// A trip day as the app saves one, so the trip shows 8 to 14 May in every time zone.
+    private static func tripDay(_ offset: Int) -> Date {
+        var gmt = Calendar(identifier: .gregorian)
+        gmt.timeZone = .gmt
+        return TripDay.stored(day(offset), calendar: gmt)
     }
 }
 

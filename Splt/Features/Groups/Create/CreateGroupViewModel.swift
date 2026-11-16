@@ -23,6 +23,8 @@ final class CreateGroupViewModel {
     @ObservationIgnored private var symbolWasChosen = false
     /// The group this form made. A second tap on Create hands it back and stores nothing.
     @ObservationIgnored private var createdID: GroupID?
+    /// The calendar the date pickers show, which says what day a picked date is.
+    @ObservationIgnored private let calendar: Calendar
 
     var hasCreated: Bool { createdID != nil }
 
@@ -35,6 +37,7 @@ final class CreateGroupViewModel {
         groups = services.groups
         people = services.people
         currencyCode = defaultCurrencyCode
+        self.calendar = calendar
         let start = calendar.startOfDay(for: today)
         tripStart = start
         tripEnd = calendar.date(byAdding: .day, value: 6, to: start) ?? start
@@ -150,8 +153,8 @@ final class CreateGroupViewModel {
             kind: template.kind,
             memberIDs: memberIDs,
             simplifiesDebts: simplifiesDebts,
-            tripStart: isTrip ? tripStart : nil,
-            tripEnd: isTrip ? tripEnd : nil
+            tripStart: isTrip ? TripDay.stored(tripStart, calendar: calendar) : nil,
+            tripEnd: isTrip ? TripDay.stored(tripEnd, calendar: calendar) : nil
         )
         try groups.create(group)
         createdID = group.id

@@ -92,7 +92,7 @@ enum PaymentNotifier {
     static func scheduleWrapUp(_ review: InboxReview, calendar: Calendar = .current) async {
         guard isOn, let trip = review.activeTrip, review.rows.contains(where: \.isInActiveTrip),
               let end = trip.tripEnd,
-              let fire = calendar.date(bySettingHour: wrapUpHour, minute: 0, second: 0, of: end),
+              let fire = calendar.date(bySettingHour: wrapUpHour, minute: 0, second: 0, of: TripDay.startOfDay(end, calendar: calendar)),
               fire > review.now else { return }
         let content = UNMutableNotificationContent()
         if NotificationPrivacy.isHidingDetails() {

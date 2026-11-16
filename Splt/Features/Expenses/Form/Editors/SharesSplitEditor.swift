@@ -17,7 +17,7 @@ struct SharesSplitEditor: View {
                             AvatarView(person: person, members: model.members.map(\.id), size: 28)
                             VStack(alignment: .leading) {
                                 Text(name)
-                                Text("\(count, format: .number.precision(.fractionLength(0...2))) shares")
+                                Text(SplitBarLabels.shares(count))
                                     .font(.subheadline)
                                     .foregroundStyle(Ink.secondary)
                                     .monospacedDigit()
@@ -25,7 +25,7 @@ struct SharesSplitEditor: View {
                         }
                     }
                     .accessibilityLabel(name)
-                    .accessibilityValue("\(count.formatted(.number.precision(.fractionLength(0...2)))) shares")
+                    .accessibilityValue(SplitBarLabels.shares(count))
                 }
             }
         } header: {

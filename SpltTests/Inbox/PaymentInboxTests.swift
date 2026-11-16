@@ -240,8 +240,9 @@ struct PaymentSplitterTests {
     }
 
     @Test func tripCoversWholeDays() throws {
-        let start = calendar.date(from: DateComponents(year: 2027, month: 5, day: 1, hour: 15))!
-        let end = calendar.date(from: DateComponents(year: 2027, month: 5, day: 4, hour: 9))!
+        // saved as the app saves trip days, from dates picked at any time of day
+        let start = TripDay.stored(calendar.date(from: DateComponents(year: 2027, month: 5, day: 1, hour: 15))!, calendar: calendar)
+        let end = TripDay.stored(calendar.date(from: DateComponents(year: 2027, month: 5, day: 4, hour: 9))!, calendar: calendar)
         let trip = SplitGroup(name: "Lisbon", currencyCode: "EUR", kind: .trip, tripStart: start, tripEnd: end)
         let range = try #require(SplitTargetPicker.tripRange(of: trip, calendar: calendar))
         #expect(range.lowerBound == calendar.date(from: DateComponents(year: 2027, month: 5, day: 1)))

@@ -118,8 +118,8 @@ struct SplitTargetPicker {
     /// The whole days a trip covers, from the start of its first day to the end of its last.
     nonisolated static func tripRange(of group: SplitGroup, calendar: Calendar) -> Range<Date>? {
         guard group.kind == .trip, !group.isArchived, let start = group.tripStart else { return nil }
-        let first = calendar.startOfDay(for: start)
-        guard let end = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: group.tripEnd ?? start)),
+        let first = TripDay.startOfDay(start, calendar: calendar)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: TripDay.startOfDay(group.tripEnd ?? start, calendar: calendar)),
               end > first else { return nil }
         return first..<end
     }

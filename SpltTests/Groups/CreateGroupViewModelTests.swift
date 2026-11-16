@@ -153,8 +153,9 @@ struct CreateGroupViewModelTests {
         let id = try model.create()
         let group = try #require(try services.groups.group(id: id))
         #expect(group.kind == .trip)
-        #expect(group.tripStart == GroupsTestCalendar.utc.startOfDay(for: utcDate(2026, 5, 8)))
-        #expect(group.tripEnd == GroupsTestCalendar.utc.startOfDay(for: utcDate(2026, 5, 14)))
+        // saved as calendar days, so they read the same in every time zone
+        #expect(group.tripStart == TripDay.stored(utcDate(2026, 5, 8), calendar: GroupsTestCalendar.utc))
+        #expect(group.tripEnd == TripDay.stored(utcDate(2026, 5, 14), calendar: GroupsTestCalendar.utc))
     }
 
     @Test func theNameSuggestsASymbolUntilOneIsChosen() throws {

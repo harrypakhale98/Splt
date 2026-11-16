@@ -95,7 +95,9 @@ struct GroupHeroSection: View {
     private var subtitle: String {
         let count = members.count
         let people = String(AttributedString(localized: "^[\(count) person](inflect: true)").characters)
-        if let start = group.tripStart, let end = group.tripEnd {
+        if let saved = group.tripStart, let savedEnd = group.tripEnd {
+            // noon on each saved day, so the range shows the days the trip was saved with wherever it is read
+            let start = TripDay.noon(saved), end = TripDay.noon(savedEnd)
             let range = (start..<max(end, start.addingTimeInterval(1))).formatted(.interval.day().month(.abbreviated).locale(locale))
             return "\(range) · \(people)"
         }
