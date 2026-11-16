@@ -8,6 +8,8 @@ struct SplitBarSegment: Identifiable, Equatable {
     var amount: Money?
     /// For adjusted splits, how far this person is from an equal share.
     var adjustment: Money?
+    /// For shares, the count as typed, such as 1.5. The weight can be scaled to whole numbers.
+    var shareCount: Double? = nil
 
     var id: PersonID { person.id }
 }

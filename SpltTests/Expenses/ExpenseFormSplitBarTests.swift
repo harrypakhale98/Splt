@@ -146,6 +146,19 @@ struct ExpenseFormSplitBarTests {
         #expect(model.issue == nil)
     }
 
+    @Test func fractionalSharesAreLabelledAsTyped() throws {
+        let harness = try ExpenseFormHarness()
+        let model = harness.filledDinner()
+        model.selectMethod(.shares)
+        model.setShareCount(1.5, for: harness.me)
+        let mine = try #require(model.barData?.segments.first { $0.id == harness.me })
+        #expect(mine.weight == 150)
+        let label = SplitBarLabels.make(method: .shares, segment: mine, scale: 250, wide: true, locale: Locale(identifier: "en_US"))
+        #expect(label.primary == "1.5 shares")
+        let narrow = SplitBarLabels.make(method: .shares, segment: mine, scale: 250, wide: false, locale: Locale(identifier: "en_US"))
+        #expect(narrow.primary == "1.5\u{00D7}")
+    }
+
     @Test func switchingFromEqualToSharesStartsAtOneEach() throws {
         let harness = try ExpenseFormHarness()
         let model = harness.filledDinner()

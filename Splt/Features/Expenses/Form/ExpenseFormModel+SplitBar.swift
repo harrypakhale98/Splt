@@ -89,7 +89,11 @@ extension ExpenseFormModel {
             adjustments = zip(amounts, equal).map { Money(minorUnits: $0.minorUnits - $1, currencyCode: total.currencyCode) }
         }
         let segments = people.indices.map {
-            SplitBarSegment(person: people[$0], weight: weights[$0], amount: amounts?[$0], adjustment: adjustments?[$0])
+            SplitBarSegment(
+                person: people[$0], weight: weights[$0], amount: amounts?[$0], adjustment: adjustments?[$0],
+                // the label shows the count as typed, 1.5, not the 150 the bar may draw it as
+                shareCount: method == .shares ? shareCount(for: people[$0].id) : nil
+            )
         }
         return SplitBarData(
             method: method, segments: segments, scale: scale, total: total,

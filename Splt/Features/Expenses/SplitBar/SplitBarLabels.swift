@@ -19,10 +19,10 @@ enum SplitBarLabels {
         case .percentage:
             return SplitBarLabel(primary: percent(segment, scale: scale, locale: locale), secondary: money)
         case .shares:
-            let count = segment.weight
+            let count = segment.shareCount ?? Double(segment.weight)
             let text = wide
-                ? shares(Double(count), locale: locale)
-                : "\(count)\u{00D7}"
+                ? shares(count, locale: locale)
+                : count.formatted(.number.locale(locale).precision(.fractionLength(0...2))) + "\u{00D7}"
             return SplitBarLabel(primary: text, secondary: money)
         case .exact, .itemized:
             return SplitBarLabel(primary: money ?? percent(segment, scale: scale, locale: locale), secondary: nil)
