@@ -35,6 +35,30 @@ struct SearchRepositoryTests {
         #expect(try fixture.services.search.search("42.50", limit: 10).expenses.map(\.title) == ["Sushi dinner"])
     }
 
+    @Test func findsAmountsWrittenTheLocalWay() throws {
+        let fixture = try fixtureWithExpenses()
+        let german = SwiftDataSearchRepository(fixture.services.environment, locale: Locale(identifier: "de_DE"))
+        #expect(try german.search("42,50", limit: 10).expenses.map(\.title) == ["Sushi dinner"])
+        #expect(try german.search("42.50", limit: 10).expenses.map(\.title) == ["Sushi dinner"])
+    }
+
+    @Test func excludedGroupsAreSkippedBeforeTheLimit() throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner at home", date: fixture.clock.start.addingTimeInterval(-86_400 * 30))
+        let left = SplitGroup(name: "Old Flat", currencyCode: "USD", memberIDs: [fixture.me.id, fixture.sam.id])
+        try fixture.services.groups.create(left)
+        for index in 0..<3 {
+            try fixture.services.expenses.add(Expense(
+                groupID: left.id, title: "Dinner \(index)", total: usdAmount(1000), date: fixture.clock.start,
+                paidBy: fixture.me.id, split: .equal(participants: [fixture.me.id, fixture.sam.id])
+            ))
+        }
+        // the newer dinners of a left group must not take the only places
+        let results = try fixture.services.search.search("dinner", limit: 2, excludingGroups: [left.id])
+        #expect(results.expenses.map(\.title) == ["Dinner at home"])
+        #expect(try fixture.services.search.search("old flat", limit: 10, excludingGroups: [left.id]).groups.isEmpty)
+    }
+
     @Test func findsExpensesByWhoPaidOrOwes() throws {
         let fixture = try Fixture()
         try fixture.addExpense("Sushi dinner", paidBy: fixture.sam, splitBetween: [fixture.sam.id, fixture.me.id])

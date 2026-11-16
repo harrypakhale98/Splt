@@ -10,6 +10,7 @@ enum PaymentNotifier {
     nonisolated static let paymentKey = "paymentID"
     nonisolated static let groupKey = "groupID"
     static let digestID = "splt.payments.digest"
+    static let wrapUpPrefix = "splt.trip.wrapup."
     /// Long enough that the nudge doesn't arrive at the till.
     static let pause: TimeInterval = 90 * 60
     static let digestHour = 21
@@ -105,8 +106,19 @@ enum PaymentNotifier {
         content.userInfo = [SystemReminderCenter.linkKey: DeepLink.activity.url.absoluteString]
         let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
         let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-        let id = "splt.trip.wrapup.\(trip.id.rawValue.uuidString)"
+        let id = wrapUpPrefix + trip.id.rawValue.uuidString
         try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+
+    /// Drops every nudge, evening summary and trip wrap-up still waiting, for when Notifications is turned off.
+    static func cancelAll() async {
+        let pending = await center.pendingNotificationRequests().map(\.identifier)
+        center.removePendingNotificationRequests(withIdentifiers: scheduledByThis(among: pending))
+    }
+
+    /// The identifiers among `identifiers` that this notifier posts.
+    static func scheduledByThis(among identifiers: [String]) -> [String] {
+        identifiers.filter { $0 == digestID || $0.hasPrefix(wrapUpPrefix) || $0.hasPrefix("\(categoryPrefix).") }
     }
 
     /// The buttons that fit: "Split with <group>" only when there is a group to split into.

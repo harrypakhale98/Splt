@@ -85,7 +85,6 @@ private struct FriendsContent: View {
                 addExpenseMenu
             }
         }
-        .task(id: model.summaries) { await model.cancelRemindersForFriendsWhoOweNothing() }
         .onReceive(NotificationCenter.default.publisher(for: FriendVisibilityStore.didChange)) { _ in
             model.visibilityDidChange()
         }

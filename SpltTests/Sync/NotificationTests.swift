@@ -131,9 +131,10 @@ struct RemoteChangeNotifierTests {
     }
 
     private func notifier(
-        _ poster: FakePoster, enabled: Bool = true, background: Bool = true
+        _ poster: FakePoster, enabled: Bool = true, background: Bool = true,
+        leftGroups: LeftGroupsStore = LeftGroupsStore(defaults: isolatedDefaults())
     ) -> RemoteChangeNotifier {
-        RemoteChangeNotifier(poster: poster, isEnabled: { enabled }, isInBackground: { background })
+        RemoteChangeNotifier(poster: poster, isEnabled: { enabled }, isInBackground: { background }, leftGroups: leftGroups)
     }
 
     @Test func postsAFriendlyNotificationInTheBackground() async throws {
@@ -153,6 +154,16 @@ struct RemoteChangeNotifierTests {
         notifier(poster, background: false).notify(for: change, services: services)
         poster.authorized = false
         notifier(poster).notify(for: change, services: services)
+        try? await Task.sleep(for: .milliseconds(100))
+        #expect(poster.posted.isEmpty)
+    }
+
+    @Test func staysQuietAboutAGroupYouLeft() async throws {
+        let populated = try PopulatedDevice()
+        let left = LeftGroupsStore(defaults: isolatedDefaults())
+        left.insert(populated.group.id)
+        let poster = FakePoster()
+        notifier(poster, leftGroups: left).notify(for: try report(for: populated, actor: populated.sam), services: populated.device.services)
         try? await Task.sleep(for: .milliseconds(100))
         #expect(poster.posted.isEmpty)
     }

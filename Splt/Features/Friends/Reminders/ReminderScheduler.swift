@@ -51,6 +51,8 @@ protocol ReminderCenter {
     func remove(identifier: String) async
     /// Removes every pending request whose identifier starts with `prefix`.
     func removeAll(withPrefix prefix: String) async
+    /// The requests still waiting to fire whose identifier starts with `prefix`, as they were posted.
+    func pending(withPrefix prefix: String) async -> [ReminderRequest]
 }
 
 struct SystemReminderCenter: ReminderCenter {
@@ -88,6 +90,17 @@ struct SystemReminderCenter: ReminderCenter {
         let identifiers = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
+
+    func pending(withPrefix prefix: String) async -> [ReminderRequest] {
+        await UNUserNotificationCenter.current().pendingNotificationRequests().compactMap { request in
+            guard request.identifier.hasPrefix(prefix),
+                  let fire = (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate(),
+                  let link = (request.content.userInfo[Self.linkKey] as? String).flatMap(URL.init(string:)) else { return nil }
+            return ReminderRequest(
+                identifier: request.identifier, title: request.content.title, body: request.content.body, fireDate: fire, link: link
+            )
+        }
+    }
 }
 
 /// Schedules one gentle local reminder per friend who owes you. Reminders are opt in: nothing is
@@ -116,6 +129,12 @@ struct ReminderScheduler {
 
     static func identifier(for friend: PersonID) -> String {
         identifierPrefix + friend.description
+    }
+
+    /// The friend a reminder identifier is for, or nil when it is not a reminder's.
+    static func friend(in identifier: String) -> PersonID? {
+        guard identifier.hasPrefix(identifierPrefix) else { return nil }
+        return UUID(uuidString: String(identifier.dropFirst(identifierPrefix.count))).map(PersonID.init(rawValue:))
     }
 
     func schedule(for friend: Person, owed amounts: [Money], after delay: ReminderDelay) async -> Outcome {

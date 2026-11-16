@@ -168,8 +168,11 @@ private struct SettingsBehavior: ViewModifier {
             .haptic(.selection, trigger: preferences.hapticsEnabled)
             .onChange(of: preferences.notificationsEnabled) { _, isOn in
                 guard isOn else {
-                    // reminders scheduled while it was on would still arrive
-                    Task { await ReminderScheduler().cancelAll() }
+                    // reminders, payment nudges, the evening summary and trip wrap-ups scheduled while it was on would still arrive
+                    Task {
+                        await ReminderScheduler().cancelAll()
+                        await PaymentNotifier.cancelAll()
+                    }
                     return
                 }
                 Task {
