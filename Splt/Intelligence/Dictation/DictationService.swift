@@ -1,4 +1,4 @@
-import AVFAudio
+@preconcurrency import AVFAudio
 import Foundation
 import Speech
 
@@ -176,7 +176,9 @@ final class AudioBufferConverter: @unchecked Sendable {
         let ratio = outputFormat.sampleRate / buffer.format.sampleRate
         let capacity = AVAudioFrameCount((Double(buffer.frameLength) * ratio).rounded(.up)) + 16
         guard let output = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: capacity) else { return nil }
-        var supplied = false
+        // the converter calls this block synchronously, inside convert, on this same thread
+        nonisolated(unsafe) var supplied = false
+        nonisolated(unsafe) let input = buffer
         var failure: NSError?
         let status = converter.convert(to: output, error: &failure) { _, inputStatus in
             if supplied {
@@ -185,7 +187,7 @@ final class AudioBufferConverter: @unchecked Sendable {
             }
             supplied = true
             inputStatus.pointee = .haveData
-            return buffer
+            return input
         }
         return status == .error ? nil : output
     }
