@@ -29,9 +29,9 @@ final class SyncCoordinator {
     private(set) var isReady = false
     private var queues: [DatabaseScope: any EngineQueue] = [:]
     private var retry: RetryScheduler?
-    /// The databases whose last send or fetch failed. One retry serves both, so a success in one must
-    /// not call off the retry the other is waiting for.
-    private var failingScopes: Set<DatabaseScope> = []
+    /// The sends and fetches, per database, whose last attempt failed. One retry serves them all, so a
+    /// success in one must not call off the retry another is waiting for.
+    private var failing: Set<SyncStatusMachine.Source> = []
 
     /// Called with the report of every batch of remote changes, for notifications and similar.
     var onRemoteChanges: (@MainActor (ApplyReport) -> Void)?
@@ -57,7 +57,7 @@ final class SyncCoordinator {
     }
 
     func cancelRetry() {
-        failingScopes.removeAll()
+        failing.removeAll()
         retry?.cancel()
     }
 
@@ -92,12 +92,13 @@ final class SyncCoordinator {
 
     func begin(user: String) throws {
         userRecordName = user
-        try adoptIdentity()
+        // the reset comes first, so the identity is taken on with the previous account's groups cut loose
         if let known = adapter.metadata.userRecordName, known != user {
             try adapter.resetForNewAccount(userRecordName: user)
         } else {
             adapter.updateMetadata { $0.userRecordName = user }
         }
+        try adoptIdentity()
     }
 
     /// Local changes are only queued once the first fetch has told us which zones are shared.
@@ -210,7 +211,22 @@ final class SyncCoordinator {
         for zone in deleted {
             needsSend = try adapter.zoneDeleted(zone.id, reason: zone.reason) || needsSend
         }
+        for scope in Set(deleted.map(\.id.scope)) {
+            try clearSendFailuresIfNothingIsLeft(in: scope)
+        }
         if needsSend { try reconcile() }
+    }
+
+    /// A group that is gone takes the sends that failed in it along. With nothing left to send in that
+    /// database, no later send would clear what they showed, such as a group you were removed from.
+    private func clearSendFailuresIfNothingIsLeft(in scope: DatabaseScope) throws {
+        let metadata = adapter.metadata
+        let waiting = try adapter.tracker.pendingChanges().contains { change in
+            guard let zone = change.zoneName, !metadata.isDetached(zoneName: zone) else { return false }
+            return metadata.scope(forZoneName: zone) == scope
+        }
+        guard !waiting else { return }
+        succeeded(SyncStatusMachine.Source(scope: scope, isSending: true))
     }
 
     func fetchedRecords(modifications: [CKRecord], deletions: [(id: CKRecord.ID, recordType: String)]) throws {
@@ -312,9 +328,13 @@ final class SyncCoordinator {
             Task.detached { [weak self] in await self?.settleMissingZones(missingZones, scope: scope) }
         }
         noteResult(failures: failures, scope: scope)
-        // no permission means the zone is no longer ours, so a leave has nothing more to wait for
-        let refused = failedSaves.filter { SyncFailure($0.error) == .noPermission }.map(\.record.recordID.zoneID.zoneName)
-        if failures.isEmpty || !refused.isEmpty { try reconcile(givingUpOn: Set(refused)) }
+        // No permission means the zone is no longer ours, so a leave has nothing more to wait for. In a
+        // group that is not being left the same records would only be sent and refused again at once:
+        // they wait for the retry, or for the fetch that says the group is gone.
+        let leaving = adapter.metadata.pendingLeaves ?? []
+        let refused = Set(failedSaves.filter { SyncFailure($0.error) == .noPermission }.map(\.record.recordID.zoneID.zoneName))
+            .intersection(leaving)
+        if failures.isEmpty || !refused.isEmpty { try reconcile(givingUpOn: refused) }
     }
 
     /// A fetch reports a zone deleted elsewhere or lost by the server, and both are handled there. If the zone
@@ -333,26 +353,32 @@ final class SyncCoordinator {
     private func noteResult(failures: [SyncFailure], scope: DatabaseScope) {
         let source = SyncStatusMachine.Source(scope: scope, isSending: true)
         if let worst = failures.first(where: { $0.status != nil }) ?? failures.first {
-            updateStatus { $0.failed(worst, source: source) }
-            failingScopes.insert(scope)
-            retry?.failed(worst)
+            failed(worst, source: source)
         } else {
-            updateStatus { $0.succeeded(source: source) }
-            failingScopes.remove(scope)
-            if failingScopes.isEmpty { retry?.succeeded() }
+            succeeded(source)
         }
     }
 
+    private func failed(_ failure: SyncFailure, source: SyncStatusMachine.Source) {
+        updateStatus { $0.failed(failure, source: source) }
+        failing.insert(source)
+        retry?.failed(failure)
+    }
+
+    /// Clears what a source showed. The waiting times start over once nothing is failing any more.
+    private func succeeded(_ source: SyncStatusMachine.Source) {
+        updateStatus { $0.succeeded(source: source) }
+        failing.remove(source)
+        if failing.isEmpty { retry?.succeeded() }
+    }
+
     func fetchSucceeded(scope: DatabaseScope) {
-        updateStatus { $0.succeeded(source: .init(scope: scope, isSending: false)) }
+        succeeded(SyncStatusMachine.Source(scope: scope, isSending: false))
         onFetchSucceeded?(scope)
     }
 
     func fetchFailed(_ error: any Error, scope: DatabaseScope) {
-        let failure = SyncFailure(error)
-        updateStatus { $0.failed(failure, source: .init(scope: scope, isSending: false)) }
-        failingScopes.insert(scope)
-        retry?.failed(failure)
+        failed(SyncFailure(error), source: SyncStatusMachine.Source(scope: scope, isSending: false))
     }
 
     // MARK: Account
@@ -366,8 +392,12 @@ final class SyncCoordinator {
             updateStatus { $0.failed(.noAccount, source: .init(scope: .privateDatabase, isSending: false)) }
         case .switched(let user):
             userRecordName = user
+            // Both engines report the switch. A second reset would cut loose the new account's groups
+            // that the first engine has fetched in the meantime.
+            if adapter.metadata.userRecordName != user {
+                try adapter.resetForNewAccount(userRecordName: user)
+            }
             try adoptIdentity()
-            try adapter.resetForNewAccount(userRecordName: user)
             updateStatus { $0.clearProblems() }
         }
     }

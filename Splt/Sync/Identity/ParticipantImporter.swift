@@ -96,5 +96,5 @@ struct ParticipantImporter {
 
 extension Date {
     /// The modified date of a stand in. Any real edit is later, and CloudKit can store it.
-    fileprivate static let distantStandIn = Date(timeIntervalSince1970: 0)
+    static let distantStandIn = Date(timeIntervalSince1970: 0)
 }
