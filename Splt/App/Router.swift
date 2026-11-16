@@ -53,8 +53,9 @@ final class Router {
     /// A backup file opened from Files or another app, waiting for Account to show what it holds.
     var openedBackup: OpenedBackup?
 
-    init(selectedTab: AppTab = .groups) {
+    init(selectedTab: AppTab = .groups, showsOnboarding: Bool = false) {
         self.selectedTab = selectedTab
+        self.showsOnboarding = showsOnboarding
     }
 
     func push(_ route: Route, in tab: AppTab? = nil) {
@@ -105,17 +106,39 @@ final class Router {
         showsOnboarding = true
     }
 
+    /// The tour is done. A backup opened while it showed, such as the file that launched Splt the
+    /// first time, opens now.
+    func onboardingDidDismiss() {
+        guard openedBackup != nil, !hasUnsavedForm, sheet == nil else { return }
+        openAccount()
+    }
+
     @discardableResult
     func open(_ url: URL) -> Bool {
         if url.isFileURL, url.pathExtension.lowercased() == BackupDocument.fileExtension {
             openedBackup = OpenedBackup(url: url)
-            // a form with typed work stays open; the backup waits for the next time Account opens
-            if !hasUnsavedForm { openAccount() }
+            // A form with typed work stays open, and Account can't open over the welcome tour. The
+            // backup waits for the tour to end, or for the next time Account opens.
+            if !hasUnsavedForm, !showsOnboarding, !showsTourAfterSheet { openAccount() }
             return true
         }
         guard let link = DeepLink(url: url) else { return false }
         open(link)
         return true
+    }
+
+    /// Opens the group or friend of a tapped Spotlight result. Returns false for any other activity.
+    @discardableResult
+    func open(_ activity: NSUserActivity) -> Bool {
+        if let id = GroupSpotlight.groupID(from: activity) {
+            open(.group(id.rawValue))
+            return true
+        }
+        if let id = FriendSpotlight.personID(from: activity) {
+            open(.friend(id.rawValue))
+            return true
+        }
+        return false
     }
 
     /// Shows what a link points at. The router's own sheet is closed here and the sheets screens

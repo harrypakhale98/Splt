@@ -1,8 +1,10 @@
+import CoreSpotlight
 import SwiftUI
 
 @main
 struct SpltApp: App {
-    @State private var router = Router()
+    /// Knows from the start whether the welcome tour is due, so a file opened at first launch waits for it.
+    @State private var router = Router(showsOnboarding: OnboardingGate.shouldShowAtLaunch())
     @State private var services: DataServices?
     @State private var isReady = false
     @State private var lock = AppLock()
@@ -20,22 +22,25 @@ struct SpltApp: App {
                     StoreUnavailableView { services = LaunchServices.make() }
                 } else if isReady {
                     RootView()
-                        .environment(router)
-                        .environment(lock)
-                        .environment(\.dataServices, services)
                         .personColors(services: services)
                         .syncLifecycle(services: services, router: router)
-                        .groupSpotlight(services: services, router: router)
-                        .friendSpotlight(services: services, router: router)
+                        .groupSpotlight(services: services)
+                        .friendSpotlight(services: services)
                         .notificationRouting(router: router)
                         .paymentInboxRefresh(services: services)
                         .onboardingTour(router: router)
+                        // last, so the welcome tour and the other screens these modifiers present get them too
+                        .environment(router)
+                        .environment(lock)
+                        .environment(\.dataServices, services)
                         .tint(Ink.text)
                 } else {
                     Ink.paper.ignoresSafeArea()
                 }
             }
             .onOpenURL { router.open($0) }
+            // here rather than on the tabs, so a result tapped while Splt was closed isn't lost before they exist
+            .onContinueUserActivity(CSSearchableItemActionType) { router.open($0) }
             .preferredColorScheme(LaunchAppearance.scheme())
             .appAppearance()
             .appLock(lock)

@@ -93,24 +93,20 @@ struct OnboardingView: View {
 }
 
 extension View {
-    /// Shows the welcome tour on first launch, and whenever the router asks for it.
-    func onboardingTour(router: Router, arguments: [String] = ProcessInfo.processInfo.arguments) -> some View {
-        modifier(OnboardingTour(router: router, arguments: arguments))
+    /// Shows the welcome tour whenever the router asks for it. The router starts with it showing on
+    /// first launch, see `OnboardingGate.shouldShowAtLaunch`.
+    func onboardingTour(router: Router) -> some View {
+        modifier(OnboardingTour(router: router))
     }
 }
 
 private struct OnboardingTour: ViewModifier {
     @Bindable var router: Router
-    let arguments: [String]
-    private let preferences = Preferences()
 
     func body(content: Content) -> some View {
         content
-            .fullScreenCover(isPresented: $router.showsOnboarding) { OnboardingView() }
-            .task {
-                if OnboardingGate.shouldShow(arguments: arguments, completed: preferences.onboardingCompleted) {
-                    router.showsOnboarding = true
-                }
+            .fullScreenCover(isPresented: $router.showsOnboarding, onDismiss: router.onboardingDidDismiss) {
+                OnboardingView()
             }
     }
 }
