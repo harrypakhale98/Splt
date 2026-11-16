@@ -33,6 +33,7 @@ struct AddExpenseIntent: AppIntent {
             let added = try IntentActions(services: services).addExpense(
                 title: title, amount: amount, group: group?.id, friend: friend?.id
             )
+            await IntentServices.shared.sendChanges()
             let total = MoneyFormatting.magnitudeString(added.amount)
             return .result(dialog: "Added \(added.title), \(total), to \(added.groupName).")
         } catch let failure as IntentActions.Failure {

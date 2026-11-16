@@ -143,7 +143,7 @@ struct DefaultSplitEditor: View {
                     AvatarView(person: person, members: memberIDs, size: 28)
                     VStack(alignment: .leading) {
                         Text(name(person))
-                        Text("\(count, format: .number.precision(.fractionLength(0...2))) shares")
+                        Text(SplitBarLabels.shares(count, locale: locale))
                             .font(.subheadline)
                             .foregroundStyle(Ink.secondary)
                             .monospacedDigit()
@@ -151,7 +151,7 @@ struct DefaultSplitEditor: View {
                 }
             }
             .accessibilityLabel(name(person))
-            .accessibilityValue("\(count.formatted(.number.precision(.fractionLength(0...2)))) shares")
+            .accessibilityValue(SplitBarLabels.shares(count, locale: locale))
         }
     }
 

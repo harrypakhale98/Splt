@@ -21,7 +21,7 @@ enum SplitBarLabels {
         case .shares:
             let count = segment.weight
             let text = wide
-                ? String(localized: "\(count) shares", comment: "A person's share count on the split bar")
+                ? shares(Double(count), locale: locale)
                 : "\(count)\u{00D7}"
             return SplitBarLabel(primary: text, secondary: money)
         case .exact, .itemized:
@@ -29,6 +29,18 @@ enum SplitBarLabels {
         case .adjustment:
             return SplitBarLabel(primary: money ?? percent(segment, scale: scale, locale: locale), secondary: adjustment(segment, locale: locale))
         }
+    }
+
+    /// "1 share", "2 shares" or "1.5 shares": the noun agrees with the count.
+    static func shares(_ count: Double, locale: Locale = .current) -> String {
+        // agreement needs the count as a number, which a formatted fraction no longer is
+        if let whole = Int(exactly: count) {
+            return String(AttributedString(
+                localized: "^[\(whole) share](inflect: true)", locale: locale, comment: "A person's whole share count"
+            ).characters)
+        }
+        let number = count.formatted(.number.locale(locale).precision(.fractionLength(0...2)))
+        return String(localized: "\(number) shares", locale: locale, comment: "A person's share count with a fraction, such as 1.5")
     }
 
     static func percent(_ segment: SplitBarSegment, scale: Int64, locale: Locale) -> String {

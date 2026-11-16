@@ -96,6 +96,15 @@ struct SplitBarPresentationTests {
         #expect(narrow.primary == "2\u{00D7}")
     }
 
+    @Test func oneShareIsSingular() {
+        let one = SplitBarLabels.make(method: .shares, segment: segment("Maya", weight: 1, cents: 1_500), scale: 2, wide: true, locale: us)
+        #expect(one.primary == "1 share")
+        #expect(SplitBarLabels.shares(1, locale: us) == "1 share")
+        #expect(SplitBarLabels.shares(2, locale: us) == "2 shares")
+        #expect(SplitBarLabels.shares(1.5, locale: us) == "1.5 shares")
+        #expect(SplitBarLabels.shares(0, locale: us) == "0 shares")
+    }
+
     @Test func exactSegmentsShowMoneyOnly() {
         let label = SplitBarLabels.make(method: .exact, segment: segment("Maya", weight: 2_500, cents: 2_500), scale: 10_000, wide: true, locale: us)
         #expect(label.primary == "$25.00")
