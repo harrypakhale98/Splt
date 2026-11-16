@@ -80,6 +80,12 @@ struct CategorySuggesterTests {
         #expect(await withoutModel.suggest(title: "Qwxz", merchant: nil) == embedded)
     }
 
+    @Test func aModelAnswerOfOtherIsNoSuggestion() {
+        #expect(ModelCategorySuggester.suggestion(fromAnswer: "other") == nil)
+        #expect(ModelCategorySuggester.suggestion(fromAnswer: nil) == nil)
+        #expect(ModelCategorySuggester.suggestion(fromAnswer: "gifts") == CategorySuggestion(category: .gifts, source: .model))
+    }
+
     @Test func emptyInputGivesNothing() async {
         let suggester = CategorySuggester(
             keyword: KeywordCategorySuggester(),

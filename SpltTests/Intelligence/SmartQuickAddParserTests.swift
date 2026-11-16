@@ -164,6 +164,26 @@ struct SmartQuickAddParserTests {
         ]))
     }
 
+    @Test func aModelCannotReplaceTheSplitTheRulesRead() async {
+        var reading = QuickAddReading()
+        reading.split = .equal
+        let exact = await parser(StubReader(reading: reading))
+            .parse("dinner 90 split with Sam and Priya, Sam owes 40", context: context)
+        #expect(exact.splitHint == .exactAmounts([
+            QuickAddShare(name: "Sam Carter", amount: Money(minorUnits: 4000, currencyCode: "USD"))
+        ]))
+
+        let adjusted = await parser(StubReader(reading: reading))
+            .parse("dinner 60 split with Sam and Priya, Priya owes 10 less", context: context)
+        #expect(adjusted.splitHint == .adjustments([
+            QuickAddShare(name: "Priya Shah", amount: Money(minorUnits: -1000, currencyCode: "USD"))
+        ]))
+
+        // with nothing read by the rules, the model's even split is still taken
+        let even = await parser(StubReader(reading: reading)).parse("dinner 60 with Sam, split it", context: context)
+        #expect(even.splitHint == .equal)
+    }
+
     @Test func aModelFillsInAPayerOrDirectionTheRulesMissed() async {
         var reading = QuickAddReading()
         reading.payer = "Sam"

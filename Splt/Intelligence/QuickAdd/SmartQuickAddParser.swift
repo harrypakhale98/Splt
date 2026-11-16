@@ -33,8 +33,7 @@ struct SmartQuickAddParser: QuickAddParsing {
     }
 
     /// Takes the amount and title from the checked model reading when it has them, otherwise from the
-    /// rules. People from both are kept. The payer and the direction of an adjustment stay as the
-    /// rules read them.
+    /// rules. People from both are kept. The payer and the split stay as the rules read them.
     static func merge(rules: QuickAddDraft, model: QuickAddDraft) -> QuickAddDraft {
         var merged = rules
         var usedModel = false
@@ -60,11 +59,13 @@ struct SmartQuickAddParser: QuickAddParsing {
             merged.payer = model.payer
             usedModel = true
         }
+        // The split the rules read is never replaced: "split" alone lets the model answer equal, which
+        // would drop "Sam owes 40". The model only adds people to adjustments or fills in a missing split.
         if case .adjustments(let read) = rules.splitHint, case .adjustments(let added) = model.splitHint {
             let known = Set(read.map(\.name.folded))
             merged.splitHint = .adjustments(read + added.filter { !known.contains($0.name.folded) })
             usedModel = true
-        } else if model.splitHint != nil {
+        } else if rules.splitHint == nil, model.splitHint != nil {
             merged.splitHint = model.splitHint
             usedModel = true
         }

@@ -103,7 +103,13 @@ struct ModelCategorySuggester: CategorySuggesting {
                 """,
             prompt: "Expense: \(text)"
         )
-        guard let answer, let category = ExpenseCategoryHint(rawValue: answer) else { return nil }
+        return Self.suggestion(fromAnswer: answer)
+    }
+
+    /// The model's answer as a suggestion. "other" means nothing fits, which is no opinion: the next
+    /// suggester gets a turn, and a quick add never files an expense as Other over a chosen category.
+    static func suggestion(fromAnswer answer: String?) -> CategorySuggestion? {
+        guard let answer, let category = ExpenseCategoryHint(rawValue: answer), category != .other else { return nil }
         return CategorySuggestion(category: category, source: .model)
     }
 }
