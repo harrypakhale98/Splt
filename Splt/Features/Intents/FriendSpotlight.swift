@@ -70,17 +70,19 @@ struct FriendIndexer: Sendable {
 }
 
 extension View {
-    /// Keeps friends in Spotlight and opens one when its result is tapped.
-    func friendSpotlight(services: DataServices?, router: Router) -> some View {
-        modifier(FriendSpotlightModifier(services: services, router: router))
+    /// Keeps friends in Spotlight, and the friends Siri offers for Settle Up, in step with the friend list.
+    /// A tapped result is opened by `Router.open(_:)` with the activity, from the app's window.
+    func friendSpotlight(services: DataServices?) -> some View {
+        modifier(FriendSpotlightModifier(services: services))
     }
 }
 
 private struct FriendSpotlightModifier: ViewModifier {
     let services: DataServices?
-    let router: Router
     // with the lock on, friends' names stay out of Spotlight, where a locked phone could show them
     @AppStorage(Preferences.Key.biometricLockEnabled) private var lockOn = false
+    /// Part of the index state, so blocking someone takes them out of Spotlight straight away.
+    @State private var blocked = FriendVisibilityStore().ids(in: .blocked)
 
     private struct Entry: Hashable {
         var id: PersonID
@@ -90,6 +92,7 @@ private struct FriendSpotlightModifier: ViewModifier {
 
     private struct IndexState: Hashable {
         var entries: [Entry]
+        var blocked: Set<PersonID>
         var lockOn: Bool
     }
 
@@ -99,19 +102,19 @@ private struct FriendSpotlightModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onContinueUserActivity(CSSearchableItemActionType) { activity in
-                if let id = FriendSpotlight.personID(from: activity) {
-                    router.open(.friend(id.rawValue))
-                }
+            .onReceive(NotificationCenter.default.publisher(for: FriendVisibilityStore.didChange)) { _ in
+                blocked = FriendVisibilityStore().ids(in: .blocked)
             }
-            .task(id: IndexState(entries: entries, lockOn: lockOn)) {
+            .task(id: IndexState(entries: entries, blocked: blocked, lockOn: lockOn)) {
                 guard let services else { return }
                 if lockOn {
                     await FriendIndexer().update(friends: [], blocked: [])
-                    return
+                } else {
+                    let friends = services.friendsStore.summaries.map(\.person)
+                    await FriendIndexer().update(friends: friends, blocked: blocked)
                 }
-                let friends = services.friendsStore.summaries.map(\.person)
-                await FriendIndexer().update(friends: friends, blocked: FriendVisibilityStore().ids(in: .blocked))
+                // the "Settle up with <friend>" phrases name friends, so Siri learns the new list too
+                SpltShortcuts.updateAppShortcutParameters()
             }
     }
 }

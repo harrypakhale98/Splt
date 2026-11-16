@@ -147,6 +147,30 @@ struct UIAccountProfileTests {
         #expect(try services.people.me()?.name == "Sammy")
     }
 
+    /// A group made right after a welcome tour that couldn't save its name left you as "You".
+    /// The next launch puts the chosen name on that person.
+    @Test func launchRepairsAProfileLeftWithTheStandInName() throws {
+        let services = try DataServices.inMemory()
+        let me = try services.people.ensureMe(name: String(localized: "You"))
+        let defaults = makeDefaults()
+        let tour = AccountProfile(defaults: defaults, deviceName: "iPhone")
+        tour.displayName = "Maya"
+        tour.save()
+
+        let profile = AccountProfile(defaults: defaults, deviceName: "iPhone")
+        try profile.applyNameIfNoProfile(to: services.people)
+        #expect(try services.people.me()?.id == me.id)
+        #expect(try services.people.me()?.name == "Maya")
+    }
+
+    @Test func launchLeavesTheStandInNameWhenNoNameWasChosen() throws {
+        let services = try DataServices.inMemory()
+        try services.people.ensureMe(name: String(localized: "You"))
+        let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")
+        try profile.applyNameIfNoProfile(to: services.people)
+        #expect(try services.people.me()?.name == String(localized: "You"))
+    }
+
     @Test func applyNameCreatesMeWhenMissing() throws {
         let services = try DataServices.inMemory()
         let profile = AccountProfile(defaults: makeDefaults(), deviceName: "iPhone")

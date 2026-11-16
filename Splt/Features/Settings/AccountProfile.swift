@@ -126,9 +126,11 @@ final class AccountProfile {
     }
 
     /// For launch. The name is stored per device, so applying it every launch would undo a rename made on
-    /// another device. Once a profile exists, only saving in the editor changes its name.
+    /// another device. Once a profile exists, only saving in the editor changes its name, unless it still
+    /// has the stand-in "You": that person was made before a name was given, such as by creating a group
+    /// right after a welcome tour that couldn't save its name, and the name chosen here belongs on it.
     func applyNameIfNoProfile(to people: any PersonRepository) throws {
-        guard try people.me() == nil else { return }
+        if let me = try people.me(), me.name != String(localized: "You") { return }
         try applyName(to: people)
     }
 

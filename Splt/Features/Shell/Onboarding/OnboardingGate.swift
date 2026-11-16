@@ -10,4 +10,11 @@ enum OnboardingGate {
         #endif
         return !completed
     }
+
+    /// Read as the app starts, before any file or link it was opened with is handled.
+    static func shouldShowAtLaunch(
+        arguments: [String] = ProcessInfo.processInfo.arguments, defaults: UserDefaults = .standard
+    ) -> Bool {
+        shouldShow(arguments: arguments, completed: defaults.bool(forKey: Preferences.Key.onboardingCompleted))
+    }
 }

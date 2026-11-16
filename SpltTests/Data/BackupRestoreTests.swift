@@ -231,7 +231,9 @@ struct BackupRestoreTests {
         #expect(try snapshot(target) == before)
     }
 
-    @Test func deletedGroupWithTheSameIDIsSkippedAndOthersAreRestored() throws {
+    /// Deleting a group by mistake is what a backup is for, so a tombstone under the group's own id
+    /// doesn't count as the group being here. (This test used to expect Flat to be skipped.)
+    @Test func groupDeletedHereIsRestoredWithTheOthers() throws {
         let source = try source()
         let services = source.device.services
         let trip = SplitGroup(name: "Trip", currencyCode: "USD", memberIDs: [source.populated.me.id, source.populated.priya.id])
@@ -249,13 +251,63 @@ struct BackupRestoreTests {
         tracker.context.insert(deleted)
         try tracker.save()
 
+        let plan = try restorer(target).plan(for: document)
+        #expect(plan.groupsToRestore == 2)
+        #expect(plan.groupsAlreadyHere.isEmpty)
         let summary = try restorer(target).restore(document)
-        #expect(summary.groupsRestored == 1)
-        #expect(summary.groupsAlreadyHere == 1)
-        let titles = try tracker.context.fetch(FetchDescriptor<ExpenseRecord>()).map(\.title)
-        #expect(titles == ["Ferry"])
-        // only the people Trip names are added; Sam is only in Flat
-        #expect(Set(try target.services.people.allPeople().map(\.name)) == ["Me", "Priya"])
+        #expect(summary.groupsRestored == 2)
+        #expect(summary.groupsAlreadyHere == 0)
+        let titles = Set(try tracker.context.fetch(FetchDescriptor<ExpenseRecord>()).map(\.title))
+        #expect(titles.isSuperset(of: ["Ferry", "Long Lunch"]))
+        #expect(Set(try target.services.people.allPeople().map(\.name)) == ["Me", "Sam", "Priya"])
+    }
+
+    /// A restored copy that was deleted again, after its delete synced, leaves tombstones under the
+    /// ids that copy had. Restoring once more makes a second copy with ids of its own.
+    @Test func restoredCopyDeletedAgainComesBackUnderNewIDs() throws {
+        let source = try source()
+        let document = try backup(of: source.device)
+        let (target, me) = try emptyDevice()
+        let first = try restorer(target).restore(document)
+
+        let tracker = target.tracker
+        for record in try tracker.allNonPersonRecords() {
+            record.deletedAt = target.clock.start
+        }
+        try tracker.save()
+        #expect(try restorer(target).plan(for: document).groupsToRestore == 1)
+
+        let second = try restorer(target).restore(document)
+        #expect(second.groupsRestored == 1)
+        #expect(second.expenses == first.expenses)
+        #expect(second.people == 0)
+        let round1 = BackupIDMap.derived(source.populated.group.id.rawValue, salt: me.id.rawValue, round: 1)
+        #expect(second.firstGroup == GroupID(rawValue: round1))
+        let group = try #require(try target.services.groups.group(id: GroupID(rawValue: round1)))
+        #expect(Set(group.memberIDs).count == 3)
+
+        // and a third time it is already here
+        #expect(try restorer(target).restore(document).groupsRestored == 0)
+    }
+
+    /// The new ids are made from your person's id, which changes once when Splt takes on the id of
+    /// your iCloud account. A restore made before that is still found afterwards.
+    @Test func restoreBeforeTheICloudIdentityIsNotDoubledAfterIt() throws {
+        let source = try source()
+        let document = try backup(of: source.device)
+        let (target, me) = try emptyDevice()
+        try restorer(target).restore(document)
+
+        #expect(try IdentityAdopter(tracker: target.tracker).adopt(userRecordName: "_restorer") != .alreadyUsing(me.id))
+        #expect(try target.services.people.me()?.id != me.id)
+        let before = try target.tracker.allNonPersonRecords().count
+
+        let plan = try restorer(target).plan(for: document)
+        #expect(plan.groupsAlreadyHere == ["Flat"])
+        let summary = try restorer(target).restore(document)
+        #expect(summary.groupsRestored == 0)
+        #expect(summary.people == 0)
+        #expect(try target.tracker.allNonPersonRecords().count == before)
     }
 
     // MARK: Photos
@@ -398,6 +450,27 @@ struct BackupRestoreTests {
         #expect(busy.open(url))
         #expect(busy.sheet == .addExpense)
         #expect(busy.openedBackup?.url == url)
+    }
+
+    @Test func aBackupOpenedDuringTheWelcomeTourWaitsForIt() {
+        let router = Router(showsOnboarding: true)
+        let url = URL(fileURLWithPath: "/private/var/mobile/Splt Backup 2026-11-10.spltbackup")
+        #expect(router.open(url))
+        #expect(router.sheet == nil)
+        #expect(router.showsOnboarding)
+        #expect(router.openedBackup?.url == url)
+
+        router.showsOnboarding = false
+        router.onboardingDidDismiss()
+        #expect(router.sheet == .account)
+        #expect(router.openedBackup?.url == url)
+    }
+
+    @Test func endingTheTourWithoutABackupOpensNothing() {
+        let router = Router(showsOnboarding: true)
+        router.showsOnboarding = false
+        router.onboardingDidDismiss()
+        #expect(router.sheet == nil)
     }
 
     @Test func fileNameCarriesTheDate() {

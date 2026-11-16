@@ -1,4 +1,6 @@
+import CoreSpotlight
 import Foundation
+import SpltCore
 import Testing
 @testable import Splt
 
@@ -30,6 +32,38 @@ struct UIRouterTests {
         #expect(!router.showsOnboarding)
         router.sheetDidDismiss()
         #expect(router.showsOnboarding)
+    }
+
+    @Test func spotlightResultsOpenTheirGroupOrFriend() {
+        func activity(_ identifier: String) -> NSUserActivity {
+            let activity = NSUserActivity(activityType: CSSearchableItemActionType)
+            activity.userInfo = [CSSearchableItemActivityIdentifier: identifier]
+            return activity
+        }
+        let router = Router()
+        router.present(.newGroup)
+        #expect(router.open(activity(GroupSpotlight.identifier(for: GroupID(rawValue: id)))))
+        #expect(router.groupsPath == [.group(id)])
+        #expect(router.selectedTab == .groups)
+        #expect(router.sheet == nil)
+
+        #expect(router.open(activity(FriendSpotlight.identifier(for: PersonID(rawValue: id)))))
+        #expect(router.friendsPath == [.friend(id)])
+        #expect(router.selectedTab == .friends)
+
+        #expect(!router.open(activity("something.else")))
+        #expect(!router.open(NSUserActivity(activityType: "com.example.other")))
+    }
+
+    @Test func aSpotlightResultWaitsForAFormWithTypedWork() {
+        let router = Router()
+        router.hasUnsavedForm = true
+        let activity = NSUserActivity(activityType: CSSearchableItemActionType)
+        activity.userInfo = [CSSearchableItemActivityIdentifier: GroupSpotlight.identifier(for: GroupID(rawValue: id))]
+        #expect(router.open(activity))
+        #expect(router.groupsPath.isEmpty)
+        router.hasUnsavedForm = false
+        #expect(router.groupsPath == [.group(id)])
     }
 
     @Test func welcomeTourOpensAtOnceWithNoSheet() {

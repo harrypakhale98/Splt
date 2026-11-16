@@ -1,17 +1,16 @@
-import CoreSpotlight
 import SpltCore
 import SwiftUI
 
 extension View {
-    /// Keeps groups in Spotlight and opens one when its result is tapped.
-    func groupSpotlight(services: DataServices?, router: Router) -> some View {
-        modifier(GroupSpotlightModifier(services: services, router: router))
+    /// Keeps groups in Spotlight. A tapped result is opened by `Router.open(_:)` with the activity,
+    /// from the app's window.
+    func groupSpotlight(services: DataServices?) -> some View {
+        modifier(GroupSpotlightModifier(services: services))
     }
 }
 
 private struct GroupSpotlightModifier: ViewModifier {
     let services: DataServices?
-    let router: Router
     // with the lock on, group names and members stay out of Spotlight, where a locked phone could show them
     @AppStorage(Preferences.Key.biometricLockEnabled) private var lockOn = false
 
@@ -51,11 +50,6 @@ private struct GroupSpotlightModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onContinueUserActivity(CSSearchableItemActionType) { activity in
-                if let id = GroupSpotlight.groupID(from: activity) {
-                    router.open(.group(id.rawValue))
-                }
-            }
             .task(id: IndexState(entries: entries, lockOn: lockOn)) {
                 guard let services else { return }
                 if lockOn {

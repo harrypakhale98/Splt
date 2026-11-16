@@ -12,14 +12,18 @@ import Foundation
 struct BackupIDMap {
     /// Mixed into every new id, so another person restoring the same backup gets other ids.
     let salt: UUID
+    /// Which copy of a group this is. A restored group that was deleted again keeps its old ids as
+    /// tombstones, so restoring it once more needs ids of its own. Round 0 is the first copy.
+    var round = 0
     private(set) var overrides: [UUID: UUID] = [:]
 
-    init(salt: UUID) {
+    init(salt: UUID, round: Int = 0) {
         self.salt = salt
+        self.round = round
     }
 
     subscript(_ old: UUID) -> UUID {
-        overrides[old] ?? Self.derived(old, salt: salt)
+        overrides[old] ?? Self.derived(old, salt: salt, round: round)
     }
 
     mutating func set(_ old: UUID, to new: UUID) {
@@ -49,8 +53,10 @@ struct BackupIDMap {
         Self.hashed("splt.restore.photo.v1:\(salt.uuidString):\(folder.rawValue):\(original)").uuidString + ".jpg"
     }
 
-    static func derived(_ old: UUID, salt: UUID) -> UUID {
-        hashed("splt.restore.v1:\(salt.uuidString):\(old.uuidString)")
+    static func derived(_ old: UUID, salt: UUID, round: Int = 0) -> UUID {
+        // round 0 keeps the text earlier versions used, so groups they restored are still found
+        let base = "splt.restore.v1:\(salt.uuidString):\(old.uuidString)"
+        return hashed(round == 0 ? base : "\(base):\(round)")
     }
 
     private static func hashed(_ text: String) -> UUID {
