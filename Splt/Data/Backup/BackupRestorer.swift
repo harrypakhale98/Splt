@@ -4,8 +4,11 @@ import SwiftData
 
 /// Adds what a backup holds and this device lacks. It never deletes or changes anything already here.
 ///
-/// - A group that is here, under its own id or as the copy an earlier restore made, live or
-///   deleted, is skipped with everything in it.
+/// - A group that is here, under its own id or as the copy an earlier restore made, is skipped with
+///   everything in it. A copy is also known by its name and the moment it was made, which a restore
+///   keeps, so it is found even after this device's "me" took another id, which the ids are made from.
+/// - A group that was deleted here comes back: deleting is what a backup is kept for. It is added
+///   as a new copy, with ids no tombstone holds. See `BackupIDMap.round`.
 /// - Any other group becomes a new group of your own, in your iCloud, with every id in it new,
 ///   also those inside splits, events and history. See `BackupIDMap`.
 /// - The backup's "me" becomes this device's "me". Everyone else becomes a new person without the
@@ -89,18 +92,24 @@ struct BackupRestorer {
         var map = BackupIDMap(salt: me.id)
         if let id = document.meID { map.set(id, to: me.id) }
 
+        // people keep the same new id in every group and every round, so a person is never added twice
+        for person in document.people where person.id != document.meID {
+            map.set(person.id, to: BackupIDMap.derived(person.id, salt: me.id))
+        }
+
         let split = try partition(document, salt: me.id)
-        addWorkedOutIDs(split.restore, to: &map)
         var summary = Summary(groupsAlreadyHere: split.alreadyHere.count)
 
         // people first, so the groups that name them never point at nobody
-        let needed = Self.mentionedIDs(in: split.restore)
+        let needed = Self.mentionedIDs(in: split.restore.map(\.group))
         let inAnyGroup = Self.mentionedIDs(in: document.groups)
         for person in document.people where person.id != document.meID {
             // a friend without a group is only added when they aren't here under either id
             let isOnlyAFriend = !inAnyGroup.contains(person.id)
             guard needed.contains(person.id) || isOnlyAFriend else { continue }
-            if isOnlyAFriend, try PersonRecord.find(recordName: person.id.uuidString, in: context) != nil { continue }
+            if isOnlyAFriend, try PersonRecord.find(recordName: person.id.uuidString, in: context) != nil || hasLiveCopy(of: person) {
+                continue
+            }
             let id = map[person.id]
             guard try PersonRecord.find(recordName: id.uuidString, in: context) == nil else { continue }
             let record = PersonRecord(Self.placeholder(person, id: id, now: environment.now()))
@@ -110,7 +119,10 @@ struct BackupRestorer {
         }
 
         let photos = Dictionary(document.photos.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
-        for group in split.restore {
+        for (group, round) in split.restore {
+            var map = map
+            map.round = round
+            addWorkedOutIDs(group, to: &map)
             let zone = map[group.group.id].uuidString
             for type in BackupGroup.recordTypes {
                 for backup in group.records(of: type) {
@@ -155,46 +167,83 @@ struct BackupRestorer {
         return summary
     }
 
-    /// Groups to restore, and those already here under their own id or as an earlier restore's copy.
-    private func partition(_ document: BackupDocument, salt: UUID?) throws -> (restore: [BackupGroup], alreadyHere: [BackupGroup]) {
-        var restore: [BackupGroup] = []
+    /// Groups to restore, each with the round of ids it gets, and those already here, live, under their
+    /// own id or as an earlier restore's copy. Deleted ones don't count: their tombstones are skipped over.
+    private func partition(
+        _ document: BackupDocument, salt: UUID?
+    ) throws -> (restore: [(group: BackupGroup, round: Int)], alreadyHere: [BackupGroup]) {
+        var restore: [(group: BackupGroup, round: Int)] = []
         var alreadyHere: [BackupGroup] = []
         for group in document.groups {
-            var names = [group.group.id.uuidString]
-            if let salt { names.append(BackupIDMap.derived(group.group.id, salt: salt).uuidString) }
-            if try names.contains(where: { try GroupRecord.find(recordName: $0, in: context) != nil }) {
+            if try isLive(group.group.id) || hasLiveCopy(of: group) {
                 alreadyHere.append(group)
+                continue
+            }
+            guard let salt else {
+                restore.append((group, 0))
+                continue
+            }
+            // the first round whose id is free; a live copy in any round before it means it is here
+            var round = 0
+            var found: GroupRecord?
+            repeat {
+                found = try GroupRecord.find(recordName: BackupIDMap.derived(group.group.id, salt: salt, round: round).uuidString, in: context)
+                if let found, found.deletedAt == nil { break }
+                if found != nil { round += 1 }
+            } while found != nil
+            if found == nil {
+                restore.append((group, round))
             } else {
-                restore.append(group)
+                alreadyHere.append(group)
             }
         }
         return (restore, alreadyHere)
     }
 
+    /// A live person with the backup person's name, made at the same instant, as a restore makes them.
+    private func hasLiveCopy(of person: BackupRecord) throws -> Bool {
+        guard case .date(let createdAt)? = person.fields["createdAt"], case .string(let name)? = person.fields["name"] else {
+            return false
+        }
+        let descriptor = FetchDescriptor<PersonRecord>(predicate: #Predicate { $0.createdAt == createdAt && $0.deletedAt == nil })
+        return try context.fetch(descriptor).contains { $0.name == name.limited(to: RecordLimits.name) }
+    }
+
+    private func isLive(_ id: UUID) throws -> Bool {
+        try GroupRecord.find(recordName: id.uuidString, in: context).map { $0.deletedAt == nil } ?? false
+    }
+
+    /// A live group with the backup group's name, made at the same instant. A restore keeps both, so
+    /// this finds a copy whatever ids it was given.
+    private func hasLiveCopy(of group: BackupGroup) throws -> Bool {
+        guard case .date(let createdAt)? = group.group.fields["createdAt"] else { return false }
+        let name = Self.name(of: group)
+        let descriptor = FetchDescriptor<GroupRecord>(predicate: #Predicate { $0.createdAt == createdAt && $0.deletedAt == nil })
+        return try context.fetch(descriptor).contains { $0.name == name }
+    }
+
     /// Some ids are worked out from others so every device arrives at the same one: a person's claim
     /// on an expense, a recurring expense's occurrence and the activity that announced it. They are
     /// worked out again from the new ids, so the app still finds them.
-    private func addWorkedOutIDs(_ groups: [BackupGroup], to map: inout BackupIDMap) {
-        for group in groups {
-            var announcements: [UUID: UUID] = [:]
-            for expense in group.expenses {
-                let fields = expense.syncFields
-                if let template = fields.uuid("recurringExpenseID"), let date = fields.date("date"),
-                   OccurrenceID.expenseID(template: template, occurrence: date).rawValue == expense.id {
-                    map.set(expense.id, to: OccurrenceID.expenseID(template: map[template], occurrence: date).rawValue)
-                }
-                announcements[OccurrenceID.addedEntryID(expense: ExpenseID(rawValue: expense.id))] = expense.id
+    private func addWorkedOutIDs(_ group: BackupGroup, to map: inout BackupIDMap) {
+        var announcements: [UUID: UUID] = [:]
+        for expense in group.expenses {
+            let fields = expense.syncFields
+            if let template = fields.uuid("recurringExpenseID"), let date = fields.date("date"),
+               OccurrenceID.expenseID(template: template, occurrence: date).rawValue == expense.id {
+                map.set(expense.id, to: OccurrenceID.expenseID(template: map[template], occurrence: date).rawValue)
             }
-            for entry in group.activity {
-                if let expense = announcements[entry.id] {
-                    map.set(entry.id, to: OccurrenceID.addedEntryID(expense: ExpenseID(rawValue: map[expense])))
-                }
+            announcements[OccurrenceID.addedEntryID(expense: ExpenseID(rawValue: expense.id))] = expense.id
+        }
+        for entry in group.activity {
+            if let expense = announcements[entry.id] {
+                map.set(entry.id, to: OccurrenceID.addedEntryID(expense: ExpenseID(rawValue: map[expense])))
             }
-            for claim in group.itemClaims {
-                let fields = claim.syncFields
-                guard let expense = fields.uuid("expenseID"), let person = fields.uuid("personID") else { continue }
-                map.set(claim.id, to: ItemClaimRecord.claimID(expenseID: map[expense], personID: map[person]))
-            }
+        }
+        for claim in group.itemClaims {
+            let fields = claim.syncFields
+            guard let expense = fields.uuid("expenseID"), let person = fields.uuid("personID") else { continue }
+            map.set(claim.id, to: ItemClaimRecord.claimID(expenseID: map[expense], personID: map[person]))
         }
     }
 
