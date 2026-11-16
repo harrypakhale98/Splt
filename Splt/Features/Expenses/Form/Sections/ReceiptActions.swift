@@ -29,7 +29,7 @@ struct ReceiptActions: View {
             DocumentCameraView(
                 onFinish: { pages in
                     showsScanner = false
-                    Task { await model.importReceipt(pages: pages) }
+                    Task { await model.importReceipt(pageImages: pages) }
                 },
                 onCancel: { showsScanner = false }
             )
@@ -39,11 +39,7 @@ struct ReceiptActions: View {
             guard let item else { return }
             pickedPhoto = nil
             Task {
-                if let data = try? await item.loadTransferable(type: Data.self) {
-                    await model.importReceipt(imageData: data)
-                } else {
-                    model.scanNotice = String(localized: "That photo could not be loaded.")
-                }
+                await model.importReceipt { try? await item.loadTransferable(type: Data.self) }
             }
         }
     }

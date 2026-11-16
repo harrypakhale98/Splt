@@ -1,6 +1,7 @@
 import Foundation
 import ImageIO
 import SpltCore
+import UIKit
 
 extension ExpenseFormModel {
     // MARK: Describe it
@@ -192,35 +193,68 @@ extension ExpenseFormModel {
 
     // MARK: Receipts
 
-    /// Scans a photo from the library or the camera and fills the itemized editor.
-    func importReceipt(imageData: Data) async {
-        guard let compressed = PhotoStore.compressed(imageData) else {
-            scanNotice = String(localized: "That image could not be read.")
+    /// Scans a photo from the library or the camera and fills the itemized editor. The spinner shows
+    /// while the photo is still loading, and a second pick during a scan is ignored.
+    func importReceipt(loading load: @escaping @Sendable () async -> Data?) async {
+        guard beginScan() else { return }
+        defer { isScanning = false }
+        guard let data = await load() else {
+            scanNotice = String(localized: "That photo could not be loaded.")
             return
         }
-        await scan(images: [compressed])
+        await read(pages: [data], unreadable: String(localized: "That image could not be read."))
+    }
+
+    /// Scans a photo given as image data.
+    func importReceipt(imageData: Data) async {
+        guard beginScan() else { return }
+        defer { isScanning = false }
+        await read(pages: [imageData], unreadable: String(localized: "That image could not be read."))
+    }
+
+    /// Scans the pages of a document camera result, in reading order.
+    func importReceipt(pageImages: [UIImage]) async {
+        guard beginScan() else { return }
+        defer { isScanning = false }
+        // encoding full size camera pages takes a while, so it happens away from the main actor
+        let pages = await Task.detached(priority: .userInitiated) {
+            pageImages.compactMap { $0.jpegData(compressionQuality: 0.9) }
+        }.value
+        await read(pages: pages, unreadable: String(localized: "That scan could not be read."))
     }
 
     /// Scans the pages of a document camera result, given as image data in reading order.
     func importReceipt(pages: [Data]) async {
-        let compressed = pages.compactMap { PhotoStore.compressed($0) }
-        guard !compressed.isEmpty else {
-            scanNotice = String(localized: "That scan could not be read.")
-            return
-        }
-        await scan(images: compressed)
+        guard beginScan() else { return }
+        defer { isScanning = false }
+        await read(pages: pages, unreadable: String(localized: "That scan could not be read."))
     }
 
-    private func scan(images: [Data]) async {
+    /// Starts a scan, or returns false while one is running so its items are never overwritten.
+    private func beginScan() -> Bool {
+        guard !isScanning else { return false }
         isScanning = true
         scanNotice = nil
-        defer { isScanning = false }
+        return true
+    }
+
+    private func read(pages: [Data], unreadable: String) async {
+        // shrinking, decoding and stitching photos is slow, so none of it runs on the main actor
+        let prepared = await Task.detached(priority: .userInitiated) { () -> (pages: [Data], images: [CGImage], photo: Data?) in
+            let compressed = pages.compactMap { PhotoStore.compressed($0) }
+            let images = compressed.compactMap(Self.cgImage)
+            let photo = compressed.count > 1 ? PhotoStore.stitched(compressed) : compressed.first
+            return (compressed, images, photo)
+        }.value
+        guard !prepared.pages.isEmpty else {
+            scanNotice = unreadable
+            return
+        }
         let scanner = dependencies.scanner(currencyCode)
-        let parsed = await scanner.scan(images.compactMap(Self.cgImage))
-        // The items come from every page, so the photo kept with them shows every page too.
-        let photo = images.count > 1 ? await Task.detached { PhotoStore.stitched(images) }.value : nil
+        let parsed = await scanner.scan(prepared.images)
         guard !Task.isCancelled else { return }
-        receipt.pendingImage = photo ?? images.first
+        // The items come from every page, so the photo kept with them shows every page too.
+        receipt.pendingImage = prepared.photo ?? prepared.pages.first
         apply(receipt: parsed)
     }
 
@@ -232,7 +266,11 @@ extension ExpenseFormModel {
             return
         }
         if let merchant = parsed.merchant, title.trimmingCharacters(in: .whitespaces).isEmpty { title = merchant }
-        if let receiptDate = parsed.date { date = receiptDate }
+        var changedDay: Date?
+        if let receiptDate = parsed.date {
+            if !Calendar.current.isDate(receiptDate, inSameDayAs: date) { changedDay = receiptDate }
+            date = receiptDate
+        }
         currencyCode = parsed.currencyCode
         split.items = charged.map {
             ItemDraft(name: $0.name, amountText: AmountInput.text(for: $0.total, locale: locale), assignees: [])
@@ -248,12 +286,18 @@ extension ExpenseFormModel {
         selectedItemID = split.items.first?.id
         let computed = split.itemizedTotal(currencyCode: parsed.currencyCode, locale: locale)
         if let amount = parsed.total ?? computed { amountText = AmountInput.text(for: amount, locale: locale) }
-        scanNotice = parsed.isConsistent
+        var notice = parsed.isConsistent
             ? String(localized: "Scanned \(charged.count) items. Tap people under each item to assign it.")
             : String(localized: "Scanned \(charged.count) items. The numbers do not fully add up, so check them against the receipt.")
+        // the date moves quietly otherwise, and a misread one would file the expense on the wrong day
+        if let changedDay {
+            let day = changedDay.formatted(.dateTime.day().month(.abbreviated).year().locale(locale))
+            notice += " " + String(localized: "The date is now \(day), from the receipt.")
+        }
+        scanNotice = notice
     }
 
-    private static func cgImage(from data: Data) -> CGImage? {
+    nonisolated private static func cgImage(from data: Data) -> CGImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }

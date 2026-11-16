@@ -56,11 +56,16 @@ enum ReceiptPrice {
         if tokens.count >= 2, isFlag(tokens[tokens.count - 1]), minorUnits(of: tokens[tokens.count - 2], fractionDigits: fractionDigits) != nil {
             tokens.removeLast()
         }
+        var signAfter = false
         while let trailing = tokens.last, tokens.count > 1, isSymbolOnly(trailing) || isCurrencyCode(trailing) {
+            signAfter = signAfter || isCurrencySign(trailing) || isCurrencyCode(trailing)
             tokens.removeLast()
         }
         tokens = joiningSpacedThousands(tokens, fractionDigits: fractionDigits)
-        guard let last = tokens.last, let value = minorUnits(of: last, fractionDigits: fractionDigits) else { return nil }
+        // "¥ 98" and "98 JPY" print the currency apart from the price, and it still marks the number as money
+        let signBefore = tokens.count >= 2 && isCurrencySign(tokens[tokens.count - 2])
+        guard let last = tokens.last,
+              let value = minorUnits(of: last, fractionDigits: fractionDigits, signBeside: signBefore || signAfter) else { return nil }
         tokens.removeLast()
         while let trailing = tokens.last, isSymbolOnly(trailing) { tokens.removeLast() }
         return Split(name: tokens.joined(separator: " "), minorUnits: value)
@@ -93,12 +98,18 @@ enum ReceiptPrice {
         token.count <= 2 && token.allSatisfy { $0.isLetter && $0.isASCII }
     }
 
+    private static func isCurrencySign(_ token: String) -> Bool {
+        token == "R$" || (!token.isEmpty && token.unicodeScalars.allSatisfy { currencySymbols.contains($0) })
+    }
+
     private static func isSymbolOnly(_ token: String) -> Bool {
         token == "R$" || token.unicodeScalars.allSatisfy { currencySymbols.contains($0) || CharacterSet.punctuationCharacters.contains($0) }
     }
 
     /// Reads one token as a price. Requires the printed decimals so that "12" or "2x" are not prices.
-    static func minorUnits(of token: String, fractionDigits: Int) -> Int64? {
+    /// A currency without decimals needs three digits, or two with its sign beside them: "¥98" is a
+    /// price, a bare "98" is more often a count or a code.
+    static func minorUnits(of token: String, fractionDigits: Int, signBeside: Bool = false) -> Int64? {
         var body = token
         var negative = false
         if body.hasPrefix("(") && body.hasSuffix(")") {
@@ -114,15 +125,18 @@ enum ReceiptPrice {
             body = String(body.dropLast(sign.count))
         }
         if body.hasPrefix("R$") { body.removeFirst() }
-        body = body.trimmingCharacters(in: currencySymbols)
+        let unsigned = body.trimmingCharacters(in: currencySymbols)
+        let hasSign = signBeside || unsigned != body
+        body = unsigned
         for sign in ["-", "\u{2212}", "\u{2013}"] where body.hasPrefix(sign) {
             negative = true
             body = String(body.dropFirst())
         }
 
+        // Indian receipts group lakhs in twos: 1,23,456.00
         let shape = fractionDigits > 0
-            ? #"^\d{1,3}(?:[,.']\d{3})*[.,]\d{\#(fractionDigits)}$|^\d+[.,]\d{\#(fractionDigits)}$"#
-            : #"^\d{1,3}(?:[,.']\d{3})+$|^\d{3,}$"#
+            ? #"^\d{1,3}(?:[,.']\d{3})*[.,]\d{\#(fractionDigits)}$|^\d{1,2}(?:,\d{2})+,\d{3}\.\d{\#(fractionDigits)}$|^\d+[.,]\d{\#(fractionDigits)}$"#
+            : hasSign ? #"^\d{1,3}(?:[,.']\d{3})+$|^\d{2,}$"# : #"^\d{1,3}(?:[,.']\d{3})+$|^\d{3,}$"#
         guard TextPattern(shape).isMatch(in: body),
               let magnitude = MinorUnitParser.minorUnits(from: body, fractionDigits: fractionDigits),
               magnitude <= largestPrice else { return nil }
@@ -447,15 +461,25 @@ enum ReceiptDateReader {
         "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
     ]
 
-    /// The first plausible calendar date printed anywhere on the receipt.
+    /// Words on a line whose date is not the day of the purchase: "Member since", "Valid until", "Best before".
+    private static let otherDateWords: Set<String> = [
+        "since", "member", "joined", "valid", "until", "till", "expires", "expiry", "exp", "before",
+        "return", "returns", "renew", "renews", "birthday", "dob"
+    ]
+
+    /// The day of the purchase. A date printed with a time wins, since the till stamps both together;
+    /// otherwise the first plausible date. Dates on lines such as "Member since" never count.
     static func date(in rows: [String], options: ReceiptParsingOptions) -> Date? {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = options.locale
         let dayFirst = prefersDayFirst(options.locale)
+        var firstDate: Date?
         for row in rows {
-            guard let parts = dateParts(in: row, dayFirst: dayFirst) else { continue }
+            guard Set(row.foldedWords).isDisjoint(with: otherDateWords),
+                  let parts = dateParts(in: row, dayFirst: dayFirst) else { continue }
             var components = DateComponents(year: parts.year, month: parts.month, day: parts.day, hour: 12)
-            if let time = timeParts(in: row) {
+            let time = timeParts(in: row)
+            if let time {
                 components.hour = time.hour
                 components.minute = time.minute
             }
@@ -463,9 +487,10 @@ enum ReceiptDateReader {
                   calendar.component(.month, from: date) == parts.month,
                   parts.year >= 2000,
                   date <= options.referenceDate.addingTimeInterval(86_400) else { continue }
-            return date
+            if time != nil { return date }
+            if firstDate == nil { firstDate = date }
         }
-        return nil
+        return firstDate
     }
 
     private static func prefersDayFirst(_ locale: Locale) -> Bool {

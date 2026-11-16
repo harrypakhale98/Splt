@@ -1,9 +1,10 @@
 import SwiftUI
 import VisionKit
 
-/// The system document camera. `onFinish` gets each scanned page as JPEG data, in order.
+/// The system document camera. `onFinish` gets each scanned page, in order. Encoding them is left to
+/// the caller, away from the main thread.
 struct DocumentCameraView: UIViewControllerRepresentable {
-    let onFinish: ([Data]) -> Void
+    let onFinish: ([UIImage]) -> Void
     let onCancel: () -> Void
 
     static var isSupported: Bool { VNDocumentCameraViewController.isSupported }
@@ -21,10 +22,10 @@ struct DocumentCameraView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: VNDocumentCameraViewController, context: Context) {}
 
     final class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
-        let onFinish: ([Data]) -> Void
+        let onFinish: ([UIImage]) -> Void
         let onCancel: () -> Void
 
-        init(onFinish: @escaping ([Data]) -> Void, onCancel: @escaping () -> Void) {
+        init(onFinish: @escaping ([UIImage]) -> Void, onCancel: @escaping () -> Void) {
             self.onFinish = onFinish
             self.onCancel = onCancel
         }
@@ -32,8 +33,7 @@ struct DocumentCameraView: UIViewControllerRepresentable {
         func documentCameraViewController(
             _ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan
         ) {
-            let pages = (0..<scan.pageCount).compactMap { scan.imageOfPage(at: $0).jpegData(compressionQuality: 0.9) }
-            onFinish(pages)
+            onFinish((0..<scan.pageCount).map { scan.imageOfPage(at: $0) })
         }
 
         func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {

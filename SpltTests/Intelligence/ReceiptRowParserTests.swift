@@ -278,6 +278,38 @@ struct ReceiptRowParserTests {
         #expect(ReceiptRowParser.parse(lines: future.lines, options: options).date == nil)
     }
 
+    @Test func theDateStampedWithATimeIsThePurchaseDay() {
+        let calendar = Calendar(identifier: .gregorian)
+        let member = receipt(["Big Store", "Member since 03/02/2019", "Pen 1.00", "Total 1.00", "03/14/2026 19:47"])
+        let parts = calendar.dateComponents([.year, .month, .day, .hour], from: member.date ?? .distantPast)
+        #expect(parts.year == 2026 && parts.month == 3 && parts.day == 14 && parts.hour == 19)
+
+        // with no time printed anywhere, a "since" line is still never the purchase day
+        let untimed = receipt(["Big Store", "Member since 03/02/2019", "03/14/2026", "Pen 1.00", "Total 1.00"])
+        #expect(calendar.component(.year, from: untimed.date ?? .distantPast) == 2026)
+
+        let other = receipt(["Big Store", "Returns valid until 04/14/2026", "Pen 1.00", "Total 1.00"])
+        #expect(other.date == nil)
+    }
+
+    @Test func indianReceiptsGroupLakhsInTwos() {
+        let parsed = receipt(["Electronics Hub", "Laptop ₹1,23,456.00", "Mouse ₹1,499.00", "Total ₹1,24,955.00"])
+        #expect(parsed.currencyCode == "INR")
+        #expect(parsed.items.map(\.total.minorUnits) == [12_345_600, 149_900])
+        #expect(parsed.total?.minorUnits == 12_495_500)
+        #expect(parsed.isConsistent)
+    }
+
+    @Test func smallYenPricesNeedTheirSign() {
+        let parsed = receipt(["Konbini", "Onigiri ¥98", "Tea ¥ 150", "Gum 45", "Total ¥248"])
+        #expect(parsed.currencyCode == "JPY")
+        #expect(parsed.items.map(\.name) == ["Onigiri", "Tea"])
+        #expect(parsed.items.map(\.total.minorUnits) == [98, 150])
+        #expect(parsed.total?.minorUnits == 248)
+        #expect(ReceiptPrice.minorUnits(of: "98", fractionDigits: 0) == nil)
+        #expect(ReceiptPrice.minorUnits(of: "¥98", fractionDigits: 0) == 98)
+    }
+
     @Test func longReceiptsAcrossPagesReadAsOne() {
         var first = Page()
         first.row("Big Store", height: 0.04)
