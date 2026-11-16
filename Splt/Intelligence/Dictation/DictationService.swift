@@ -42,13 +42,22 @@ struct DictationTranscript: Equatable, Sendable {
 /// model runs on the device, and its language data is downloaded once by the system if needed.
 actor SpeechDictationService: Dictating {
     private struct Live {
+        var generation: Int
         var engine: AVAudioEngine
         var analyzer: SpeechAnalyzer
         var input: AsyncStream<AnalyzerInput>.Continuation
     }
 
+    /// Bumped by every start and stop. A run whose number is no longer current gives up at its next
+    /// step, so a stop that arrives while dictation is still being set up never leaves the microphone on.
+    private var generation = 0
     private var task: Task<Void, Never>?
+    private var output: AsyncStream<String>.Continuation?
+    /// The microphone once it is running. Set with no await after the run's last check, so a stop finds
+    /// either a session still being set up or one it can finish.
     private var live: Live?
+    /// The run that turned the audio session on, so an older run never turns off a newer one's session.
+    private var sessionOwner: Int?
 
     func requestPermission() async -> DictationPermission {
         // asking without a usage description would end the app, so stay quiet instead
@@ -64,62 +73,100 @@ actor SpeechDictationService: Dictating {
 
     func start(locale: Locale) async -> AsyncStream<String> {
         await stop()
+        generation += 1
+        let number = generation
         let (stream, output) = AsyncStream<String>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        // only this session: a late call from an old stream must not stop a newer one
         output.onTermination = { [weak self] _ in
-            Task { await self?.stop() }
+            Task { await self?.stop(generation: number) }
         }
-        task = Task { await self.run(locale: locale, output: output) }
+        self.output = output
+        task = Task { await self.run(locale: locale, generation: number, output: output) }
         return stream
     }
 
     func stop() async {
-        guard task != nil || live != nil else { return }
+        await stop(generation: generation)
+    }
+
+    private func stop(generation number: Int) async {
+        guard number == generation, task != nil || live != nil else { return }
+        generation += 1
         let running = task
-        if let live {
+        let stream = output
+        task = nil
+        output = nil
+        if let live, live.generation == number {
+            // The microphone is on: finish the audio so the last words still arrive. Once the analyzer
+            // has finished, the results end and so does the run.
+            self.live = nil
             live.engine.stop()
             live.engine.inputNode.removeTap(onBus: 0)
             live.input.finish()
-            try? await live.analyzer.finalizeAndFinishThroughEndOfInput()
+            do {
+                try await live.analyzer.finalizeAndFinishThroughEndOfInput()
+            } catch {
+                await live.analyzer.cancelAndFinishNow()
+            }
+            await running?.value
         } else {
+            // Still setting up, which can mean waiting on a language download. End the stream now rather
+            // than wait: the run sees it is no longer current at its next step and cleans up after itself.
             running?.cancel()
+            stream?.finish()
         }
-        await running?.value
-        task = nil
     }
 
-    private func run(locale: Locale, output: AsyncStream<String>.Continuation) async {
+    private func run(locale: Locale, generation number: Int, output: AsyncStream<String>.Continuation) async {
         defer { output.finish() }
-        guard await requestPermission() == .granted,
-              let supported = await SpeechTranscriber.supportedLocale(equivalentTo: locale) else { return }
+        defer { tearDown(generation: number) }
+        guard await requestPermission() == .granted, number == generation,
+              let supported = await SpeechTranscriber.supportedLocale(equivalentTo: locale), number == generation else { return }
 
         let transcriber = SpeechTranscriber(locale: supported, preset: .progressiveTranscription)
         do {
             if await AssetInventory.status(forModules: [transcriber]) < .installed {
                 try await AssetInventory.assetInstallationRequest(supporting: [transcriber])?.downloadAndInstall()
             }
-            try Task.checkCancellation()
+            guard number == generation else { return }
 
+            // The input node reports the microphone's real format only once the session allows recording.
+            try activateAudioSession(for: number)
             let engine = AVAudioEngine()
             let inputFormat = engine.inputNode.outputFormat(forBus: 0)
-            guard let analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
-                compatibleWith: [transcriber], considering: inputFormat
-            ) else { return }
+            // a tap with an empty format ends the app, so a missing microphone just ends dictation
+            guard Self.canRecord(from: inputFormat),
+                  let analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
+                      compatibleWith: [transcriber], considering: inputFormat
+                  ),
+                  number == generation else { return }
 
             let analyzer = SpeechAnalyzer(modules: [transcriber])
             let (inputStream, inputContinuation) = AsyncStream.makeStream(of: AnalyzerInput.self)
-            let converter = AudioBufferConverter(from: inputFormat, to: analyzerFormat)
+            try await analyzer.start(inputSequence: inputStream)
+            guard number == generation else {
+                inputContinuation.finish()
+                await analyzer.cancelAndFinishNow()
+                return
+            }
 
-            try activateAudioSession()
+            let converter = AudioBufferConverter(from: inputFormat, to: analyzerFormat)
             engine.inputNode.installTap(
                 onBus: 0,
                 bufferSize: 4096,
                 format: inputFormat,
                 block: Self.tapHandler(converter: converter, continuation: inputContinuation)
             )
-            live = Live(engine: engine, analyzer: analyzer, input: inputContinuation)
-            try await analyzer.start(inputSequence: inputStream)
             engine.prepare()
-            try engine.start()
+            do {
+                try engine.start()
+            } catch {
+                engine.inputNode.removeTap(onBus: 0)
+                inputContinuation.finish()
+                await analyzer.cancelAndFinishNow()
+                return
+            }
+            live = Live(generation: number, engine: engine, analyzer: analyzer, input: inputContinuation)
 
             var transcript = DictationTranscript()
             for try await result in transcriber.results {
@@ -129,23 +176,30 @@ actor SpeechDictationService: Dictating {
         } catch {
             // no banner: the stream just ends and the keyboard stays available
         }
-        tearDown()
     }
 
-    private func tearDown() {
-        if let live {
+    /// Whether the input node has a microphone format a tap can use.
+    nonisolated static func canRecord(from format: AVAudioFormat) -> Bool {
+        format.sampleRate > 0 && format.channelCount > 0
+    }
+
+    private func tearDown(generation number: Int) {
+        if let live, live.generation == number {
             live.engine.stop()
             live.engine.inputNode.removeTap(onBus: 0)
             live.input.finish()
+            self.live = nil
         }
-        live = nil
+        guard sessionOwner == number else { return }
+        sessionOwner = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    private func activateAudioSession() throws {
+    private func activateAudioSession(for number: Int) throws {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
         try session.setActive(true, options: .notifyOthersOnDeactivation)
+        sessionOwner = number
     }
 
     /// Built outside the actor on purpose: the audio thread calls it, and a closure written inside

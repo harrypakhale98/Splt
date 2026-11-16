@@ -34,6 +34,8 @@ final class DictationController {
         stopRequested = false
         task = Task { [service] in
             let stream = await service.start(locale: locale)
+            // a stop sent before the service started had nothing to stop, so send it again
+            if stopRequested { await service.stop() }
             var heardSomething = false
             for await text in stream {
                 heardSomething = true

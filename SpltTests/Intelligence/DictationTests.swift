@@ -44,6 +44,20 @@ struct DictationTests {
         #expect(converted.frameLength > 1000 && converted.frameLength <= 1700)
     }
 
+    @Test func anEmptyMicrophoneFormatIsNeverTapped() throws {
+        let microphone = try #require(AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 48_000, channels: 1, interleaved: false))
+        #expect(SpeechDictationService.canRecord(from: microphone))
+        // what the input node reports before the session allows recording, or with no microphone
+        let empty = AVAudioFormat()
+        #expect(!SpeechDictationService.canRecord(from: empty))
+    }
+
+    @Test func stoppingWithNothingRunningReturnsAtOnce() async {
+        let service = SpeechDictationService()
+        await service.stop()
+        await service.stop()
+    }
+
     @Test func permissionIsNeverGrantedWithoutAUsageDescription() async {
         let hasDescription = Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") != nil
         guard !hasDescription else { return }
@@ -90,6 +104,32 @@ struct DictationTests {
         let controller = DictationController(service: FakeDictation(permission: .granted))
         _ = await run(controller)
         #expect(controller.notice?.contains("could not start") == true)
+    }
+
+    /// Listens until stopped, like the real service. A stop that comes before the start stops nothing.
+    private actor ListeningDictation: Dictating {
+        private var continuation: AsyncStream<String>.Continuation?
+        func requestPermission() async -> DictationPermission { .granted }
+        func start(locale: Locale) async -> AsyncStream<String> {
+            let (stream, continuation) = AsyncStream<String>.makeStream()
+            self.continuation = continuation
+            return stream
+        }
+        func stop() async {
+            continuation?.finish()
+            continuation = nil
+        }
+    }
+
+    @MainActor
+    @Test func aStopTappedRightAwayStillEndsDictation() async {
+        let controller = DictationController(service: ListeningDictation())
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            controller.toggle(locale: Locale(identifier: "en_US"), update: { _ in }, finished: { done.resume() })
+            controller.stop()
+        }
+        #expect(!controller.isListening)
+        #expect(controller.notice == nil)
     }
 
     @MainActor
