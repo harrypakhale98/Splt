@@ -13,9 +13,12 @@ final class FriendsStore {
     @ObservationIgnored private let people: any PersonRepository
     @ObservationIgnored private var observer: ContainerChangeObserver?
     @ObservationIgnored private var refreshScheduled = false
+    /// Scheduled reminders follow every refresh, so they keep up even while the Friends tab is closed.
+    @ObservationIgnored private let reminders: ReminderSweeper?
 
-    init(people: any PersonRepository, container: ModelContainer? = nil) {
+    init(people: any PersonRepository, container: ModelContainer? = nil, reminders: ReminderSweeper? = nil) {
         self.people = people
+        self.reminders = reminders ?? (container == nil ? nil : ReminderSweeper())
         if let container {
             observer = ContainerChangeObserver(container: container) { [weak self] in self?.scheduleRefresh() }
         }
@@ -33,6 +36,7 @@ final class FriendsStore {
                 return FriendSummary(person: friend, balance: balance?.total ?? [], byGroup: balance?.byGroup ?? [])
             }
             totals = BalanceTotals(amounts: summaries.flatMap(\.balance))
+            reminders?.update(summaries)
         } catch {}
     }
 

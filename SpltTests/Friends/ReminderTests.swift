@@ -8,6 +8,8 @@ private final class FakeReminderCenter: ReminderCenter {
     var authorized: Bool
     var grants: Bool
     var added: [ReminderRequest] = []
+    /// What is waiting to fire, by identifier, as the system would hold it.
+    var waiting: [String: ReminderRequest] = [:]
     var removed: [String] = []
     var removedPrefixes: [String] = []
     var asked = 0
@@ -25,9 +27,21 @@ private final class FakeReminderCenter: ReminderCenter {
         return grants
     }
 
-    func add(_ request: ReminderRequest) async throws { added.append(request) }
-    func remove(identifier: String) async { removed.append(identifier) }
+    func add(_ request: ReminderRequest) async throws {
+        added.append(request)
+        waiting[request.identifier] = request
+    }
+
+    func remove(identifier: String) async {
+        removed.append(identifier)
+        waiting[identifier] = nil
+    }
+
     func removeAll(withPrefix prefix: String) async { removedPrefixes.append(prefix) }
+
+    func pending(withPrefix prefix: String) async -> [ReminderRequest] {
+        waiting.values.filter { $0.identifier.hasPrefix(prefix) }.sorted { $0.identifier < $1.identifier }
+    }
 }
 
 @MainActor
@@ -172,13 +186,122 @@ struct ReminderTests {
         #expect(center.removed == [ReminderScheduler.identifier(for: fixture.sam.id)])
     }
 
-    @Test func remindersForSettledFriendsAreDropped() async throws {
+    private func waitingReminder(for friend: PersonID, body: String = "old") -> ReminderRequest {
+        ReminderRequest(
+            identifier: ReminderScheduler.identifier(for: friend), title: "Reminder", body: body,
+            fireDate: noon.addingTimeInterval(86_400), link: DeepLink.friend(friend.rawValue).url
+        )
+    }
+
+    private func sweeper(
+        _ center: FakeReminderCenter, enabled: Bool = true, hiding: @escaping @MainActor () -> Bool = { false },
+        visibility: FriendVisibilityStore = FriendVisibilityStore(defaults: isolatedDefaults()), observesApp: Bool = false
+    ) -> ReminderSweeper {
+        ReminderSweeper(
+            center: center, notificationsEnabled: { enabled }, isHidingDetails: hiding,
+            visibility: visibility, observesApp: observesApp
+        )
+    }
+
+    @Test func remindersFollowTheBalancesWithoutTheFriendsTab() async throws {
         let fixture = try Fixture()
         try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
-        fixture.services.friendsStore.refresh()
-        let model = FriendsViewModel(services: fixture.services, visibility: FriendVisibilityStore(defaults: isolatedDefaults()))
+        let gone = PersonID()
         let center = FakeReminderCenter()
-        await model.cancelRemindersForFriendsWhoOweNothing(using: scheduler(center))
-        #expect(center.removed == [ReminderScheduler.identifier(for: fixture.priya.id)])
+        for friend in [fixture.sam.id, fixture.priya.id, gone] {
+            center.waiting[ReminderScheduler.identifier(for: friend)] = waitingReminder(for: friend)
+        }
+        let reminders = sweeper(center)
+        // the store hands every refresh over, whichever screen is open
+        let store = FriendsStore(people: fixture.services.people, reminders: reminders)
+        await reminders.settle()
+        // Priya owes nothing and the third person no longer exists
+        #expect(Set(center.removed) == [ReminderScheduler.identifier(for: fixture.priya.id), ReminderScheduler.identifier(for: gone)])
+        let kept = try #require(center.waiting[ReminderScheduler.identifier(for: fixture.sam.id)])
+        #expect(kept.body.contains("15"))
+        #expect(kept.fireDate == noon.addingTimeInterval(86_400))
+        #expect(kept.link == DeepLink.friend(fixture.sam.id.rawValue).url)
+
+        // Sam pays you back on another device; the sync save refreshes the store
+        try fixture.services.payments.record(Payment(
+            groupID: fixture.group.id, payer: fixture.sam.id, receiver: fixture.me.id, amount: usdAmount(1500), date: fixture.clock.start
+        ))
+        store.refresh()
+        await reminders.settle()
+        #expect(center.waiting.isEmpty)
+    }
+
+    @Test func anUnrelatedSaveLeavesRemindersAlone() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
+        let center = FakeReminderCenter()
+        center.waiting[ReminderScheduler.identifier(for: fixture.sam.id)] = waitingReminder(for: fixture.sam.id)
+        let reminders = sweeper(center)
+        let store = FriendsStore(people: fixture.services.people, reminders: reminders)
+        await reminders.settle()
+        let written = center.added.count
+        store.refresh()
+        await reminders.settle()
+        #expect(center.added.count == written)
+    }
+
+    @Test func blockedFriendsLoseTheirReminderAndNothingHappensWhileTurnedOff() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
+        let center = FakeReminderCenter()
+        center.waiting[ReminderScheduler.identifier(for: fixture.sam.id)] = waitingReminder(for: fixture.sam.id)
+        let off = sweeper(center, enabled: false)
+        _ = FriendsStore(people: fixture.services.people, reminders: off)
+        await off.settle()
+        #expect(center.removed.isEmpty && center.added.isEmpty)
+
+        let visibility = FriendVisibilityStore(defaults: isolatedDefaults())
+        visibility.set(.blocked, for: fixture.sam.id)
+        let on = sweeper(center, visibility: visibility)
+        _ = FriendsStore(people: fixture.services.people, reminders: on)
+        await on.settle()
+        #expect(center.removed == [ReminderScheduler.identifier(for: fixture.sam.id)])
+    }
+
+    @Test func turningTheLockOnOrOffWritesPendingRemindersAgain() async throws {
+        let fixture = try Fixture()
+        try fixture.addExpense("Dinner", cents: 3000, splitBetween: [fixture.me.id, fixture.sam.id])
+        let center = FakeReminderCenter()
+        center.waiting[ReminderScheduler.identifier(for: fixture.sam.id)] = waitingReminder(for: fixture.sam.id)
+        @MainActor final class Lock { var on = false }
+        let lock = Lock()
+        let reminders = sweeper(center, hiding: { lock.on }, observesApp: true)
+        _ = FriendsStore(people: fixture.services.people, reminders: reminders)
+        await reminders.settle()
+        let written = center.added.count
+        lock.on = true
+        NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+        #expect(await eventually { center.added.count == written + 1 })
+        await reminders.settle()
+        #expect(center.added.last?.identifier == ReminderScheduler.identifier(for: fixture.sam.id))
+        lock.on = false
+        NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+        #expect(await eventually { center.added.count == written + 2 })
+    }
+
+    @Test func lockedRemindersSayNothingAboutAmounts() {
+        let store = isolatedDefaults()
+        store.set(true, forKey: Preferences.Key.biometricLockEnabled)
+        let request = NotificationPrivacy.apply(to: waitingReminder(for: PersonID(), body: "Sam may still owe you $15.00."), store: store)
+        #expect(request.title == "Splt")
+        #expect(request.body == NotificationPrivacy.genericBody)
+    }
+
+    @Test func turningNotificationsOffFindsEveryPaymentNotification() {
+        let payment = PaymentNotifier.identifier(for: UUID())
+        let wrapUp = PaymentNotifier.wrapUpPrefix + UUID().uuidString
+        let ids = [payment, wrapUp, PaymentNotifier.digestID, ReminderScheduler.identifier(for: PersonID()), "splt.activity.A1"]
+        #expect(PaymentNotifier.scheduledByThis(among: ids) == [payment, wrapUp, PaymentNotifier.digestID])
+    }
+
+    @Test func reminderIdentifiersNameTheirFriend() {
+        let friend = PersonID()
+        #expect(ReminderScheduler.friend(in: ReminderScheduler.identifier(for: friend)) == friend)
+        #expect(ReminderScheduler.friend(in: "splt.activity.A1") == nil)
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import SpltCore
 import UIKit
 
 /// Shows a friendly local notification when a change from another person arrives while the app is
@@ -9,6 +10,7 @@ final class RemoteChangeNotifier {
     private let isEnabled: @MainActor () -> Bool
     private let isInBackground: @MainActor () -> Bool
     private let now: @MainActor () -> Date
+    private let leftGroups: LeftGroupsStore
 
     init(
         poster: any LocalNotificationPosting = SystemNotificationPoster(),
@@ -16,17 +18,23 @@ final class RemoteChangeNotifier {
             UserDefaults.standard.bool(forKey: Preferences.Key.notificationsEnabled)
         },
         isInBackground: @escaping @MainActor () -> Bool = { UIApplication.shared.applicationState != .active },
-        now: @escaping @MainActor () -> Date = { Date() }
+        now: @escaping @MainActor () -> Date = { Date() },
+        leftGroups: LeftGroupsStore = LeftGroupsStore()
     ) {
         self.poster = poster
         self.isEnabled = isEnabled
         self.isInBackground = isInBackground
         self.now = now
+        self.leftGroups = leftGroups
     }
 
     func notify(for report: ApplyReport, services: DataServices?) {
         guard let services, isEnabled(), isInBackground() else { return }
-        let activities = report.inserted.filter { $0.recordType == .activity }
+        // a group you left can keep syncing until leaving its share goes through, but it is no longer yours to hear about
+        let activities = report.inserted.filter { payload in
+            payload.recordType == .activity
+                && !(payload.fields.uuid("groupID").map { leftGroups.contains(GroupID(rawValue: $0)) } ?? false)
+        }
         guard !activities.isEmpty else { return }
         let names = ChangeMessages.Names(
             me: try? services.people.me()?.id,
