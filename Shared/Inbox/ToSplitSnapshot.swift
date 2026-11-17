@@ -22,22 +22,30 @@ struct ToSplitSnapshot: Codable, Hashable, Sendable {
     /// The ones it decided are worth asking about.
     var counted: Set<UUID> = []
     var wrapUps: [WrapUp] = []
+    /// The group the app would split each payment into, by name, for the caption the list shows:
+    /// "2 hours ago · Lisbon".
+    var targets: [UUID: String] = [:]
     /// The Face ID lock is on, so widgets show how many payments wait but never what they were.
     var hidesDetails = false
 
-    init(reviewed: Set<UUID> = [], counted: Set<UUID> = [], wrapUps: [WrapUp] = [], hidesDetails: Bool = false) {
+    init(
+        reviewed: Set<UUID> = [], counted: Set<UUID> = [], wrapUps: [WrapUp] = [], targets: [UUID: String] = [:],
+        hidesDetails: Bool = false
+    ) {
         self.reviewed = reviewed
         self.counted = counted
         self.wrapUps = wrapUps
+        self.targets = targets
         self.hidesDetails = hidesDetails
     }
 
-    /// Reads one saved by an older build, which had only the first two.
+    /// Reads one saved by an older build, which may lack the later fields.
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         reviewed = try container.decodeIfPresent(Set<UUID>.self, forKey: .reviewed) ?? []
         counted = try container.decodeIfPresent(Set<UUID>.self, forKey: .counted) ?? []
         wrapUps = try container.decodeIfPresent([WrapUp].self, forKey: .wrapUps) ?? []
+        targets = try container.decodeIfPresent([UUID: String].self, forKey: .targets) ?? [:]
         hidesDetails = try container.decodeIfPresent(Bool.self, forKey: .hidesDetails) ?? false
     }
 

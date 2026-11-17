@@ -57,13 +57,25 @@ struct NotSharedIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        guard let id = UUID(uuidString: paymentID) else { return .result() }
-        PaymentInboxFile.shared.update { $0.resolve(id: id, as: .dismissed, now: Date()) }
+        guard let id = UUID(uuidString: paymentID), Self.markMine(id, in: .shared, now: Date()) else { return .result() }
         let nudge = [PendingPayment.notificationID(for: id)]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: nudge)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: nudge)
         WidgetCenter.shared.reloadAllTimelines()
         return .result()
+    }
+}
+
+extension NotSharedIntent {
+    /// Marks the payment as yours alone, as the list's Mine swipe does, and learns from it. False when it
+    /// was already split or kept, say from the app a moment before, so nothing else needs doing.
+    @discardableResult
+    static func markMine(_ id: UUID, in file: PaymentInboxFile, now: Date) -> Bool {
+        file.update { state -> Bool in
+            guard state.payment(id: id)?.status == .pending else { return false }
+            state.resolve(id: id, as: .dismissed, now: now)
+            return true
+        } ?? false
     }
 }
 

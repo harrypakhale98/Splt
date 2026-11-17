@@ -69,9 +69,17 @@ final class BalanceWidgetPublisher {
             summaries: store.summaries, totals: store.totals, hidden: visibility.hiddenOrBlocked,
             hidesDetails: NotificationPrivacy.isHidingDetails(), unitValues: services.rates.snapshot.unitValues()
         )
-        guard snapshot != BalanceWidgetSnapshot.load(from: defaults) else { return }
-        snapshot.save(to: defaults)
+        guard Self.saveIfChanged(snapshot, to: defaults) else { return }
         WidgetCenter.shared.reloadTimelines(ofKind: SpltWidgetKind.balance)
+    }
+
+    /// Saves the snapshot only when it differs from what the widget already has, so a save that changes
+    /// nothing it shows never makes the widget redraw. True when it saved.
+    @discardableResult
+    static func saveIfChanged(_ snapshot: BalanceWidgetSnapshot, to defaults: UserDefaults) -> Bool {
+        guard snapshot != BalanceWidgetSnapshot.load(from: defaults) else { return false }
+        snapshot.save(to: defaults)
+        return true
     }
 
     /// The same totals as the Friends tab hero, and the friends with the most money between you,

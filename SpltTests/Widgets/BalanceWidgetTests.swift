@@ -60,6 +60,17 @@ struct BalanceWidgetTests {
         #expect(NetPosition.sentence(owedToYou: [], youOwe: [usd(1_000)]).hasPrefix("You owe "))
     }
 
+    @Test func savesOnlyWhatChanged() throws {
+        let defaults = try #require(UserDefaults(suiteName: "BalanceWidgetTests.saves"))
+        defaults.removePersistentDomain(forName: "BalanceWidgetTests.saves")
+        let first = BalanceWidgetSnapshot(owedToYou: [usd(100)])
+        #expect(BalanceWidgetPublisher.saveIfChanged(first, to: defaults))
+        // the same balance again leaves the widget alone
+        #expect(!BalanceWidgetPublisher.saveIfChanged(first, to: defaults))
+        #expect(BalanceWidgetPublisher.saveIfChanged(BalanceWidgetSnapshot(owedToYou: [usd(250)]), to: defaults))
+        #expect(BalanceWidgetSnapshot.load(from: defaults)?.owedToYou == [usd(250)])
+    }
+
     @Test func survivesAWriteAndRead() throws {
         let defaults = try #require(UserDefaults(suiteName: "BalanceWidgetTests"))
         defaults.removePersistentDomain(forName: "BalanceWidgetTests")

@@ -65,6 +65,11 @@ struct BalanceWidget: Widget {
 }
 
 struct BalanceWidgetView: View {
+    /// What the number covers, in the Friends tab hero's words.
+    static let scope: LocalizedStringKey = "With friends"
+    /// Shown in place of the balance before the app has saved one, and while the Face ID lock is on.
+    static let hiddenNote: LocalizedStringKey = "Open Splt to see your balance."
+
     let entry: BalanceEntry
     @Environment(\.widgetFamily) private var family
 
@@ -89,11 +94,11 @@ struct BalanceWidgetView: View {
             if let shown {
                 Text(inlineText(shown)).privacySensitive()
             } else {
-                Text("Open Splt to see your balance.")
+                Text(Self.hiddenNote)
             }
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 1) {
-                Text("With friends")
+                Text(Self.scope)
                     .font(.caption)
                     .widgetAccentable()
                 if let shown {
@@ -107,7 +112,7 @@ struct BalanceWidgetView: View {
                             .privacySensitive()
                     }
                 } else {
-                    Text("Open Splt to see your balance.")
+                    Text(Self.hiddenNote)
                         .font(.body)
                 }
             }
@@ -138,7 +143,7 @@ struct BalanceWidgetView: View {
     /// beside the friend rows, the strip of who the money is between.
     private func summary(heroSize: CGFloat, withRows: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("With friends")
+            Text(Self.scope)
                 .font(.footnote)
                 .foregroundStyle(Ink.secondary)
             if let shown {
@@ -170,7 +175,7 @@ struct BalanceWidgetView: View {
                 }
             } else {
                 Spacer(minLength: 0)
-                Text("Open Splt to see your balance.")
+                Text(Self.hiddenNote)
                     .font(Typeface.heading)
                     .foregroundStyle(Ink.text)
             }

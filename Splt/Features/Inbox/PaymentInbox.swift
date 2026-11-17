@@ -182,6 +182,11 @@ extension ToSplitSnapshot {
             wrapUps: review.wrapUps.map {
                 WrapUp(groupID: $0.trip.id.rawValue, tripName: $0.trip.name, paymentIDs: $0.payments.map(\.id), offeredUntil: $0.offeredUntil)
             },
+            // named as the list's caption names it
+            targets: Dictionary(
+                review.toSplit.compactMap { row in row.target.map { (row.id, SettleLeg.displayName(of: $0)) } },
+                uniquingKeysWith: { first, _ in first }
+            ),
             hidesDetails: hidesDetails
         )
     }

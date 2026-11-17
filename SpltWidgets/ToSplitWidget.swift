@@ -11,6 +11,8 @@ struct ToSplitEntry: TimelineEntry {
     var payments: [PendingPayment] = []
     /// A trip that ended lately, offered first as in the app.
     var wrapUp: ToSplitSnapshot.WrapUp?
+    /// The group each payment would go to, for the caption.
+    var targets: [UUID: String] = [:]
     /// The Face ID lock is on: the count only, never what was bought.
     var hidesDetails = false
 }
@@ -61,6 +63,7 @@ struct ToSplitProvider: TimelineProvider {
                 count: toSplit.count,
                 payments: snapshot.hidesDetails ? [] : Array(toSplit.prefix(Self.mostShown)),
                 wrapUp: snapshot.hidesDetails ? nil : snapshot.wrapUps(in: pending, at: moment).first,
+                targets: snapshot.hidesDetails ? [:] : snapshot.targets,
                 hidesDetails: snapshot.hidesDetails
             )
         }
@@ -168,7 +171,7 @@ struct ToSplitWidgetView: View {
                 }
                 ForEach(Array(payments.enumerated()), id: \.element.id) { index, payment in
                     if index > 0 { Divider().overlay(Ink.hairline) }
-                    PaymentRow(payment: payment, now: entry.date)
+                    PaymentRow(payment: payment, target: entry.targets[payment.id], now: entry.date)
                 }
                 Spacer(minLength: 0)
                 let more = entry.count - payments.count
@@ -186,6 +189,8 @@ struct ToSplitWidgetView: View {
 /// One payment, laid out like a To Split row in the app, with the one action that needs no app.
 private struct PaymentRow: View {
     let payment: PendingPayment
+    /// The group the app would split it into, as the list's caption names it.
+    let target: String?
     /// When the row is shown, so "yesterday" is said as the app would say it then.
     let now: Date
 
@@ -204,9 +209,11 @@ private struct PaymentRow: View {
                             .foregroundStyle(Ink.text)
                             .lineLimit(1)
                             .privacySensitive()
-                        Text(Self.when(payment.date, now: now))
+                        Text(caption)
                             .font(.caption)
                             .foregroundStyle(Ink.secondary)
+                            .lineLimit(1)
+                            .privacySensitive()
                     }
                     Spacer(minLength: 4)
                     Text(MoneyFormatting.magnitudeString(payment.amount))
@@ -217,7 +224,7 @@ private struct PaymentRow: View {
                         .privacySensitive()
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(payment.merchant), \(MoneyFormatting.magnitudeString(payment.amount))")
+                .accessibilityLabel("\(payment.merchant), \(MoneyFormatting.magnitudeString(payment.amount)), \(caption)")
                 .accessibilityHint("Opens the expense, filled in.")
             }
             // the app's swipe action for the same thing: "Mine", with the person symbol
@@ -237,7 +244,14 @@ private struct PaymentRow: View {
         .padding(.vertical, 6)
     }
 
-    /// The app's caption: "2 hours ago", "yesterday".
+    /// The list's caption: "2 hours ago · Lisbon", or just when it was paid when there is no group to suggest.
+    private var caption: String {
+        let when = Self.when(payment.date, now: now)
+        guard let target else { return when }
+        return String(localized: "\(when) · \(target)")
+    }
+
+    /// When it was paid, as the app says it: "2 hours ago", "yesterday".
     static func when(_ date: Date, now: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.dateTimeStyle = .named

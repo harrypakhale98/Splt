@@ -121,10 +121,14 @@ enum PaymentNotifier {
         identifiers.filter { $0 == digestID || $0.hasPrefix(wrapUpPrefix) || $0.hasPrefix("\(categoryPrefix).") }
     }
 
-    /// The buttons that fit: "Split with <group>" only when there is a group to split into.
+    /// The buttons that fit: "Split with <group>" only when there is a group to split into. They say and look
+    /// like the To Split list's swipe actions and the widget: "Split with <group>" with two people, "Mine" with one.
     private static func category(for group: SplitGroup?) async -> String {
         let choose = UNNotificationAction(identifier: Action.choose, title: String(localized: "Choose…"), options: [.foreground])
-        let notShared = UNNotificationAction(identifier: Action.notShared, title: String(localized: "Not Shared"), options: [.destructive])
+        let notShared = UNNotificationAction(
+            identifier: Action.notShared, title: String(localized: "Mine"), options: [],
+            icon: UNNotificationActionIcon(systemImageName: "person")
+        )
         var actions = [choose, notShared]
         var identifier = categoryPrefix
         if let group {
@@ -132,7 +136,8 @@ enum PaymentNotifier {
             let split = UNNotificationAction(
                 identifier: Action.split,
                 title: String(localized: "Split with \(SettleLeg.displayName(of: group))"),
-                options: [.authenticationRequired]
+                options: [.authenticationRequired],
+                icon: UNNotificationActionIcon(systemImageName: "person.2")
             )
             actions.insert(split, at: 0)
         }

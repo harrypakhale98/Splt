@@ -34,6 +34,37 @@ struct WidgetIntentTests {
         #expect(SplitLastPaymentIntent.destination(pending: [], snapshot: ToSplitSnapshot(), now: now) == SpltWidgetKind.activityURL)
     }
 
+    @Test func mineKeepsThePaymentAndLearnsFromIt() throws {
+        let file = PaymentInboxFile(url: FileManager.default.temporaryDirectory.appending(path: "Mine-\(UUID().uuidString).json"))
+        defer { try? FileManager.default.removeItem(at: file.url) }
+        let caught = try #require(file.update {
+            $0.capture(merchant: "Blue Bottle", amount: Money(minorUnits: 640, currencyCode: "USD"), date: now, source: .wallet, now: now)
+        })
+        #expect(NotSharedIntent.markMine(caught.payment.id, in: file, now: now))
+        let state = file.read()
+        #expect(state.payment(id: caught.payment.id)?.status == .dismissed)
+        #expect(state.pending.isEmpty)
+        #expect(state.memory(for: caught.payment)?.dismissCount == 1)
+        // a second tap, or one after the app already split it, changes nothing
+        #expect(!NotSharedIntent.markMine(caught.payment.id, in: file, now: now))
+        #expect(file.read().memory(for: caught.payment)?.dismissCount == 1)
+    }
+
+    @Test func mineOnAPaymentThatIsGoneDoesNothing() {
+        let file = PaymentInboxFile(url: FileManager.default.temporaryDirectory.appending(path: "Mine-\(UUID().uuidString).json"))
+        defer { try? FileManager.default.removeItem(at: file.url) }
+        #expect(!NotSharedIntent.markMine(UUID(), in: file, now: now))
+    }
+
+    @Test func toSplitKeepsEachPaymentsGroupAndReadsOlderSaves() throws {
+        let id = UUID()
+        let snapshot = ToSplitSnapshot(counted: [id], targets: [id: "Lisbon"])
+        let data = try JSONEncoder().encode(snapshot)
+        #expect(try JSONDecoder().decode(ToSplitSnapshot.self, from: data).targets[id] == "Lisbon")
+        let older = Data(#"{"reviewed":[],"counted":[]}"#.utf8)
+        #expect(try JSONDecoder().decode(ToSplitSnapshot.self, from: older).targets.isEmpty)
+    }
+
     @Test func totalsAddUpPerCurrency() {
         let amounts = [
             Money(minorUnits: 1_000, currencyCode: "USD"), Money(minorUnits: 500, currencyCode: "EUR"),
