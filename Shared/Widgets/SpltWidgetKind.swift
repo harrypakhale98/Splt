@@ -3,7 +3,6 @@ import Foundation
 /// Shared names between the app and its widgets.
 enum SpltWidgetKind {
     static let inbox = "com.harrypakhale.splt.inbox"
-    static let inboxControl = "com.harrypakhale.splt.inbox-control"
     static let addExpenseControl = "com.harrypakhale.splt.add-expense-control"
     static let splitLastPaymentControl = "com.harrypakhale.splt.split-last-payment-control"
     static let balance = "com.harrypakhale.splt.balance"

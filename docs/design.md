@@ -12,6 +12,14 @@ Splt looks like a well-kept paper ledger: ink on warm paper, with big printed nu
 6. **Removing beats restyling.** If a screen works without an element, take the element out.
 7. **Motion confirms.** Things move because the user did something. Settling up is the one moment allowed to celebrate.
 
+## Widgets
+
+- **Each size says something the others don't.** Your Balance: small is how much, medium adds with whom, the Lock Screen gets the figure and the one inline line. To Split: the Lock Screen circular is how many, the Home Screen medium is which ones, with Mine. A size that only repeats another is cut (rule 6).
+- **The serif figure is money.** A count, like To Split's, is never set in the hero face on the Home Screen.
+- **One mark for To Split:** `tray.full`, on the circular and the Split Last Payment control. `wallet.pass`, `message` and `photo` only ever say where a payment came from.
+- **Paper, not system fills,** behind every Home Screen size, and the app's words: "With friends", "Owes you", "Mine", "Nothing to split".
+- **Private by default.** Names and amounts are `privacySensitive`, so iOS hides them while the iPhone is locked, and with the Face ID lock on the widgets show counts only.
+
 ## Color
 
 Use `Ink`, never raw colors or `systemGroupedBackground`.

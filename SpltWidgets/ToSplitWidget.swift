@@ -7,7 +7,7 @@ import WidgetKit
 struct ToSplitEntry: TimelineEntry {
     let date: Date
     let count: Int
-    /// Newest first, as many as any size can show.
+    /// Newest first, as many as the medium size shows.
     var payments: [PendingPayment] = []
     /// A trip that ended lately, offered first as in the app.
     var wrapUp: ToSplitSnapshot.WrapUp?
@@ -18,7 +18,7 @@ struct ToSplitEntry: TimelineEntry {
 /// Works out what waits from the inbox file, using what the app last decided about each payment.
 /// The timeline steps on as payments turn a week old and wrap-ups end, so it stays right while the app is closed.
 struct ToSplitProvider: TimelineProvider {
-    static let mostShown = 4
+    static let mostShown = 2
 
     func placeholder(in context: Context) -> ToSplitEntry {
         Self.sample()
@@ -70,8 +70,9 @@ struct ToSplitProvider: TimelineProvider {
 // MARK: Widget
 
 struct ToSplitWidget: Widget {
-    /// The one mark for To Split, here and on the control: payments caught from Wallet.
-    static let symbol = "wallet.pass"
+    /// The one mark for To Split, on the Lock Screen and the Split Last Payment control: things waiting here.
+    /// Not `wallet.pass`, `message` or `photo`, which only ever say where a payment came from.
+    static let symbol = "tray.full"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: SpltWidgetKind.inbox, provider: ToSplitProvider()) { entry in
@@ -79,7 +80,9 @@ struct ToSplitWidget: Widget {
         }
         .configurationDisplayName("To Split")
         .description("The payments waiting to be split. Mark one as yours without opening Splt.")
-        .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline, .systemSmall, .systemMedium, .systemLarge])
+        // each size says something the others don't: the Lock Screen how many, the Home Screen which ones.
+        // Your Balance has the inline slot, and a bare count or a longer list on the Home Screen added nothing.
+        .supportedFamilies([.accessoryCircular, .systemMedium])
     }
 }
 
@@ -91,7 +94,7 @@ struct ToSplitWidgetView: View {
         content
             .widgetURL(SpltWidgetKind.activityURL)
             .containerBackground(for: .widget) {
-                if family.isHomeScreen { Ink.paper }
+                if family == .systemMedium { Ink.paper }
             }
     }
 
@@ -117,21 +120,8 @@ struct ToSplitWidgetView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(countSentence)
-        case .accessoryInline:
-            Label(countSentence, systemImage: ToSplitWidget.symbol)
-        case .accessoryRectangular:
-            VStack(alignment: .leading, spacing: 2) {
-                Text("To Split")
-                    .font(.headline)
-                    .widgetAccentable()
-                Text(countSentence)
-                    .font(.body)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        case .systemSmall:
-            small
         default:
-            list(rows: family == .systemLarge ? ToSplitProvider.mostShown : 2)
+            list
         }
     }
 
@@ -141,35 +131,9 @@ struct ToSplitWidgetView: View {
             : String(localized: "^[\(entry.count) payment](inflect: true) to split")
     }
 
-    // MARK: Small
+    // MARK: Medium
 
-    private var small: some View {
-        // laid out like Your Balance: what it covers on top, the one number below
-        VStack(alignment: .leading, spacing: 4) {
-            Text("To Split")
-                .font(.footnote)
-                .foregroundStyle(Ink.secondary)
-            Spacer(minLength: 0)
-            if entry.count == 0 {
-                Text("Nothing to split")
-                    .font(Typeface.heading)
-                    .foregroundStyle(Ink.text)
-            } else {
-                Text("\(entry.count)")
-                    .font(Typeface.hero(size: 48))
-                    .monospacedDigit()
-                    .foregroundStyle(Ink.text)
-                    .widgetAccentable()
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(countSentence)
-    }
-
-    // MARK: Medium and large
-
-    private func list(rows: Int) -> some View {
+    private var list: some View {
         VStack(alignment: .leading, spacing: 0) {
             // the app's section header: no symbol, which only ever marks where a payment came from
             Text("To Split")
@@ -197,7 +161,7 @@ struct ToSplitWidgetView: View {
                     .foregroundStyle(Ink.secondary)
                 Spacer(minLength: 0)
             } else {
-                let payments = Array(entry.payments.prefix(rows - (entry.wrapUp == nil ? 0 : 1)))
+                let payments = Array(entry.payments.prefix(ToSplitProvider.mostShown - (entry.wrapUp == nil ? 0 : 1)))
                 if let wrapUp = entry.wrapUp {
                     WrapUpRow(wrapUp: wrapUp)
                     if !payments.isEmpty { Divider().overlay(Ink.hairline) }
@@ -314,15 +278,6 @@ private struct WrapUpRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 6)
-    }
-}
-
-private extension WidgetFamily {
-    var isHomeScreen: Bool {
-        switch self {
-        case .systemSmall, .systemMedium, .systemLarge, .systemExtraLarge: true
-        default: false
-        }
     }
 }
 

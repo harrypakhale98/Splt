@@ -5,7 +5,7 @@ import SwiftUI
 import WidgetKit
 
 /// The To Split list in the app. It reads and writes `PaymentInboxFile`, then brings notifications,
-/// widgets and the trip Live Activity in line with it.
+/// and widgets in line with it.
 @MainActor
 @Observable
 final class PaymentInbox {
@@ -113,7 +113,7 @@ final class PaymentInbox {
     }
 
     /// A trip's dates, an archived or deleted trip or a left group change which payments count and what the
-    /// trip shows, so To Split and the Live Activity follow the store too. A burst of saves catches up once.
+    /// trip shows, so To Split follows the store too. A burst of saves catches up once.
     private func scheduleStoreChange() {
         guard !state.pending.isEmpty else { return }
         pendingStoreChange?.cancel()
@@ -139,7 +139,6 @@ final class PaymentInbox {
         let review = InboxReview(state: state, services: services, now: now())
         ToSplitSnapshot(review, hidesDetails: hidesDetails).save(to: defaults)
         WidgetCenter.shared.reloadTimelines(ofKind: SpltWidgetKind.inbox)
-        TripLiveActivity.sync(review)
         Task {
             if let new, let row = review.row(for: new.id), row.priority == .high {
                 await PaymentNotifier.nudge(row, delay: row.isInActiveTrip ? 5 : PaymentNotifier.pause)
@@ -162,7 +161,7 @@ private struct PaymentInboxRefresh: ViewModifier {
                 PaymentInbox.shared.refresh()
             }
             .onChange(of: scenePhase) { _, phase in
-                // payments shared from another app, the evening summary and the trip Live Activity all catch up here
+                // payments shared from another app and the evening summary catch up here
                 if phase == .active { PaymentInbox.shared.refresh() }
             }
             // the widgets hide what was bought while the Face ID lock is on
@@ -189,7 +188,7 @@ extension ToSplitSnapshot {
 }
 
 extension View {
-    /// Keeps To Split, its notifications, widgets and trip Live Activity current whenever the app comes forward.
+    /// Keeps To Split, its notifications and widgets current whenever the app comes forward.
     func paymentInboxRefresh(services: DataServices?) -> some View {
         modifier(PaymentInboxRefresh(services: services))
     }

@@ -75,7 +75,7 @@ Fetched from the free ECB-backed Frankfurter API, cached on the device, and alwa
 | `Splt` | iOS app |
 | `SpltTests` | Unit tests |
 | `SpltUITests` | UI tests |
-| `SpltWidgets` | To Split widget (Lock Screen count; Home Screen list with a Mine button), Your Balance widget, To Split, Add Expense and Split Last Payment controls, trip Live Activity. It can't open the store, so it reads `Shared/Inbox`, the `ToSplitSnapshot` and the `BalanceWidgetSnapshot` the app saves (`BalanceWidgetPublisher` after every save and sync), and draws with `Shared/Design` and `Shared/Balance` |
+| `SpltWidgets` | Your Balance widget (small, medium, Lock Screen), To Split widget (Lock Screen count; Home Screen medium list with a Mine button), Add Expense and Split Last Payment controls. It can't open the store, so it reads `Shared/Inbox`, the `ToSplitSnapshot` and the `BalanceWidgetSnapshot` the app saves (`BalanceWidgetPublisher` after every save and sync), and draws with `Shared/Design` and `Shared/Balance` |
 | `SpltShare` | Share extension that reads a payment from a screenshot or text |
 | `SpltKit/SpltCore` | Shared logic package |
 
@@ -83,4 +83,4 @@ Siri and Shortcuts work through App Intents inside the app target.
 
 ### To Split
 
-Payments caught by Shortcuts automations (Wallet, Message, Email), the share extension or Siri wait in To Split, at the top of Activity. Everything lives in `Shared/Inbox`, a JSON file in the `group.com.harrypakhale.splt` app group that the app and both extensions read and write through `NSFileCoordinator`. It never syncs. `LogPaymentIntent` runs without Face ID, because Wallet runs it at the checkout, often on a locked phone, and it only adds to the inbox. The app (`Splt/Features/Inbox`) decides how loudly to ask about each payment, which group it goes to, when to nudge, the evening summary, and the trip wrap-up and Live Activity.
+Payments caught by Shortcuts automations (Wallet, Message, Email), the share extension or Siri wait in To Split, at the top of Activity. Everything lives in `Shared/Inbox`, a JSON file in the `group.com.harrypakhale.splt` app group that the app and both extensions read and write through `NSFileCoordinator`. It never syncs. `LogPaymentIntent` runs without Face ID, because Wallet runs it at the checkout, often on a locked phone, and it only adds to the inbox. The app (`Splt/Features/Inbox`) decides how loudly to ask about each payment, which group it goes to, when to nudge, the evening summary and the trip wrap-up.

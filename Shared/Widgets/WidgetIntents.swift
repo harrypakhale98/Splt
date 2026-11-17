@@ -5,18 +5,6 @@ import WidgetKit
 
 // Built into the app and the widgets, so a widget or control can run them and the app opens where it should.
 
-/// Opens Splt on the To Split list.
-struct OpenInboxIntent: AppIntent {
-    static let title: LocalizedStringResource = "Open To Split"
-    static let description = IntentDescription("Opens the payments waiting to be split.")
-    static let openAppWhenRun = true
-
-    @MainActor
-    func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(SpltWidgetKind.activityURL))
-    }
-}
-
 /// Opens a new expense, for the Add Expense control. Siri and Shortcuts use `AddExpenseIntent` instead.
 struct OpenAddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "New Expense"
@@ -30,16 +18,24 @@ struct OpenAddExpenseIntent: AppIntent {
     }
 }
 
-/// Opens Splt on the newest payment waiting to be split.
+/// Opens Splt on your last payment waiting to be split, or on To Split when none is waiting. For Siri,
+/// Shortcuts and the Split Last Payment control.
 struct SplitLastPaymentIntent: AppIntent {
     static let title: LocalizedStringResource = "Split Last Payment"
-    static let description = IntentDescription("Opens the newest payment in To Split, ready to split.")
+    static let description = IntentDescription("Opens your last payment waiting in To Split, ready to split.")
     static let openAppWhenRun = true
 
     @MainActor
     func perform() async throws -> some IntentResult & OpensIntent {
-        let newest = PaymentInboxFile.shared.read().pending.first
-        return .result(opensIntent: OpenURLIntent(newest.map { SpltWidgetKind.paymentURL($0.id) } ?? SpltWidgetKind.activityURL))
+        let pending = PaymentInboxFile.shared.read().pending
+        let snapshot = ToSplitSnapshot.load(from: PaymentInboxFile.sharedDefaults)
+        return .result(opensIntent: OpenURLIntent(Self.destination(pending: pending, snapshot: snapshot, now: Date())))
+    }
+
+    /// The payment the To Split list and widget would show first, so the control never opens one they leave out:
+    /// a week old, muted, or one the app decided not to ask about. To Split itself when nothing is waiting.
+    static func destination(pending: [PendingPayment], snapshot: ToSplitSnapshot, now: Date) -> URL {
+        snapshot.toSplit(in: pending, at: now).first.map { SpltWidgetKind.paymentURL($0.id) } ?? SpltWidgetKind.activityURL
     }
 }
 

@@ -68,7 +68,7 @@ struct TripWrapUpView: View {
     private var confirmTitle: String {
         let amounts = wrapUp.payments.filter { kept.contains($0.id) }.map(\.amount)
         guard !amounts.isEmpty else { return String(localized: "Done") }
-        return String(localized: "Split \(amounts.count) · \(TripLiveActivity.totalText(amounts))")
+        return String(localized: "Split \(amounts.count) · \(MoneyFormatting.total(amounts))")
     }
 
     private func binding(for id: UUID) -> Binding<Bool> {

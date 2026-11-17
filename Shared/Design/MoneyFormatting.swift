@@ -15,6 +15,15 @@ enum MoneyFormatting {
         money.formattedMagnitude(locale: locale)
     }
 
+    /// A total in each currency, joined: "€312.00 + £40.00".
+    static func total(_ amounts: [Money], locale: Locale = .current) -> String {
+        var sums: [String: Int64] = [:]
+        for amount in amounts { sums[amount.currencyCode, default: 0] &+= amount.minorUnits }
+        return sums.sorted { $0.key < $1.key }
+            .map { magnitudeString(Money(minorUnits: $0.value, currencyCode: $0.key), locale: locale) }
+            .joined(separator: " + ")
+    }
+
     /// A signed balance in words, so VoiceOver says who owes whom instead of "plus" or "minus".
     static func spokenBalance(_ money: Money, locale: Locale = .current) -> String {
         let amount = magnitudeString(money, locale: locale)
